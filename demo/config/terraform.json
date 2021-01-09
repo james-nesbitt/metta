@@ -1,0 +1,22 @@
+{
+    "id": "{user:user.id?user}-mtt-mcc-2",
+    "plan": {
+        "type": "local",
+        "path": "{_source_:mtt_common}/terraform/aws"
+    },
+    "state": {
+        "path": "{_source_:project}/terraform/{id}.terraform.state"
+    },
+    "options": {
+        "always_init": false
+    },
+    "vars_path": "{_source_:project}/terraform/{id}.tfvars.json",
+    "vars": {
+        "cluster_name": "{id}",
+        "master_count": 1,
+        "worker_count": 3,
+        "windows_worker_count": 0,
+        "admin_password": "orcaorcaorca",
+        "aws_region": "us-east-2"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "owner": "jnesbitt",
+    "options": {
+        "destroy-on-finish": false
+    },
+    "mtt": {
+        "conf": {
+            "modules": [
+                "mtt_common"
+            ]
+        }
+    }
+}

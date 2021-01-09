@@ -1,0 +1,2 @@
+recursive-include files, mirantis
+exclude tests, docs

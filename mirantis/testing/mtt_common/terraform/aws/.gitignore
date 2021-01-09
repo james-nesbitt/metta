@@ -1,0 +1,6 @@
+ssh_keys/*.pem
+.terraform/
+.terraform.*
+launchpad.yaml
+*terraform.tfstate*
+terraform.tfvars
