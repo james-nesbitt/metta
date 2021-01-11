@@ -1,6 +1,5 @@
 
 from mirantis.testing.toolbox.config import Config
-from .workload import DockerRunWorkload
 import docker
 import os
 
@@ -13,7 +12,3 @@ def docker_client_factory(conf: Config, *passed_args, **passed_kwargs):
     env["COMPOSE_TLS_VERSION"] = passed_kwargs["compose_tls_version"] if "compose_tls_version" in passed_kwargs else "TLSv1_2"
 
     return docker.from_env(environment=env)
-
-def docker_run_workload_factory(conf: Config):
-    """ return a new mtt_docker workload plugin instance """
-    return DockerRunWorkload(conf)

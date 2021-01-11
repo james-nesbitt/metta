@@ -7,7 +7,7 @@ Test that some clients work
 import logging
 import docker.models.containers
 
-logger.getLogger("test_clients")
+logger = logging.getLogger("test_clients")
 
 def test_launchpad_kubectl_client(provisioner_up):
     """ did we get a good kubectl client """
