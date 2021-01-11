@@ -129,27 +129,20 @@ class Config:
     @TODO allow more overrides of the templating system such as alt regex
     """
 
-    def __init__(self, sources: SourceList, additional_values: Dict[str, str] = {}):
+    def __init__(self, sources: SourceList):
         """ Constructor
 
         Arguments
         ---------
 
         sources -> SourceList:
-            an ordered list of sources for retrieving config
-
-        additional_keys => Dict[str, str]:
-            an additional list of key/values that can be retrieved directly or
-            used for templating.
+            a list of sources for retrieving config
 
         """
 
         # save all loaded config when it is first loaded
         self.loaded = {}
         """ LoadedConfig map for config that has been loaded """
-
-        self.additional_values = additional_values
-        """ values that will always return over loaded config """
 
         self.sources = sources
         """ sources to be used for config loading """
@@ -162,9 +155,11 @@ class Config:
         data = {}
         # merge in data from the higher priorty into the lower priority
         for source in self.sources.get_ordered_sources():
-            data = _tree_merge(data, source.handler.load(label))
+            source_data = source.handler.load(label)
+            data = _tree_merge(data, source_data)
 
-        data = _tree_merge(self.additional_values, data)
+        if not data:
+            raise KeyError("Config '%s' loaded data came out empty", label)
 
         return data
 
@@ -184,11 +179,12 @@ class Config:
         if force_reload or label not in self.loaded:
             if label == "_source_":
                 # This is a special case where the config source being requested
-                # is actually the source list itself
+                # is actually the source list itself, for those that have names
                 data = {}
                 for name in self.sources.source_names():
                     source = self.sources.source(name)
-                    data[name] = source.handler.name()
+                    if source:
+                        data[name] = source.handler.name()
             else:
                 data = self._get_config(label)
 
@@ -199,12 +195,6 @@ class Config:
 
         return self.loaded[label]
 
-    def get_path(key: str) -> str:
-        """ get a path based on its key
-
-        this doesn't seem necessary but it actually comes out as useful
-        """
-        return self.paths[key]
 
 class LoadedConfig:
     """ A loaded config which contains all of the file config for a single label
@@ -274,7 +264,14 @@ class LoadedConfig:
             Dict with child elements, an array or any other primitive.
             If the return is a string then it is formatted for variable
             substitution (see self.format_string())
+
+        Throws:
+
+        Can throw a KeyError if the key cannot be found (which also occurs if
+        all sources produced no data)
         """
+
+        value = ""
 
         try:
             value = _tree_get(self.data, key)
@@ -287,25 +284,22 @@ class LoadedConfig:
                 return None
 
         # try to format any string values
-        if format and isinstance(value, Dict):
-            value = self.format_dict(value)
-        if format and isinstance(value, str):
-            value = self.format_string(value)
+        value = self.format_value(value)
 
         return value
 
-    def format_dict(self, target: Dict[str, Any], strip_missing: bool = False):
-        """ format all strings in a Dict """
-        for key in target:
-            value = target[key]
-            if isinstance(value, Dict):
-                target[key] = self.format_dict(value, strip_missing)
-            if isinstance(value, str):
-                target[key] = self.format_string(value, strip_missing)
+    def format_value(self, target, strip_missing: bool = False):
+        """ Nested formatter for Any types """
+        if isinstance(target, Dict):
+            target = self.format_dict(target, strip_missing)
+        elif isinstance(target, List):
+            target = self.format_list(target, strip_missing)
+        elif isinstance(target, str):
+            target = self.format_string(target, strip_missing)
 
         return target
 
-    def format_string(self, string: str, strip_missing: bool = False):
+    def format_string(self, target: str, strip_missing: bool = False):
         """ Replace all "template variables" in the passed string with any
         found values in config.
         Think "".format() but with named patterns in the string that correlate
@@ -324,7 +318,6 @@ class LoadedConfig:
         Why do this?  Well it allows more separation of values across config
         sources, it allows some sources to be more privileged than others and
         it allows easier overrides.
-
         """
 
         # leave self in context for the closure
@@ -346,8 +339,19 @@ class LoadedConfig:
                 elif strip_missing:
                     return ''
                 else:
+                    # if a template string wasn't found then exception
                     raise e
-                    # just send back the matched string to put it back
-                    #return match.group(0)
 
-        return re.sub(CONFIG_DEFAULT_MATCH_PATTERN, find_replacement, string)
+        return re.sub(CONFIG_DEFAULT_MATCH_PATTERN, find_replacement, target)
+
+    def format_list(self, target: List[Any], strip_missing: bool = False):
+        """ format all strings in a List """
+        for index, value in enumerate(target):
+            target[index] = self.format_value(value, strip_missing)
+        return target
+
+    def format_dict(self, target: Dict[str, Any], strip_missing: bool = False):
+        """ format all strings in a Dict """
+        for key, value in target.items():
+            target[key] = self.format_value(value, strip_missing)
+        return target

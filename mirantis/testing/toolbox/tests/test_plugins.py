@@ -22,12 +22,11 @@ $/> pytest
 """
 
 import pytest
-from collections import OrderedDict
 from ... import toolbox
-from ..plugin import load_plugin, PluginType
+from ..plugin import PluginType
 
 @pytest.fixture()
-def dummy_conf(tmp_path):
+def dummy_conf():
     """ provide a config object for testing plugins
 
     @TODO we don't actually use the tmp_path and might be able to use
@@ -35,13 +34,13 @@ def dummy_conf(tmp_path):
 
     """
     sources = toolbox.new_sources()
-    sources = sources.add_filepath_source(tmp_path, "project")
-    return toolbox.config_from_settings(sources)
+    sources.add_dict_source({}, "dummy")
+    return toolbox.config_from_source_list(sources)
 
 @pytest.fixture()
 def dummy_provisioner(dummy_conf):
     """ get the dummy provisioner (use the dummy conf)"""
-    return load_plugin(dummy_conf, PluginType.PROVISIONER ,"dummy")
+    return toolbox.get_plugin(PluginType.PROVISIONER, "dummy", dummy_conf)
 
 def test_dummyplugins(dummy_provisioner):
     """ test that we can load some dummy plugins """

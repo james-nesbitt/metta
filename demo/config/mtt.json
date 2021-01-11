@@ -1,0 +1,6 @@
+{
+    "modules": [
+        "mtt_common",
+        "mtt_launchpad"
+    ]
+}

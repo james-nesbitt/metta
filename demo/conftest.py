@@ -16,15 +16,10 @@ logging.basicConfig(encoding='utf-8', level=logging.INFO)
 logger = logging.getLogger(__file__)
 
 @pytest.fixture(scope="session")
-def toolbox():
+def config():
     """ get an mtt toolbox """
     logger.debug("Creating a new toolbox fixture")
     project_path = os.path.dirname(os.path.realpath(__file__))
-
-    conf_sources = mirantis.testing.toolbox.new_sources()
-    conf_sources.add_filepath_source(project_path, "project")
-    conf_sources.add_filepath_source(os.path.join(project_path, CONFIG_FOLDER), "project_config")
-    logger.info("Creating MTT toolbox object")
 
     additional_config_values = {
         "user": {
@@ -32,23 +27,35 @@ def toolbox():
         }
     }
 
-    return mirantis.testing.toolbox.toolbox_from_settings(conf_sources=conf_sources, additional_config_values=additional_config_values)
+    conf_sources = mirantis.testing.toolbox.new_sources()
+    conf_sources.add_filepath_source(project_path, "project")
+    conf_sources.add_filepath_source(os.path.join(project_path, CONFIG_FOLDER), "project_config")
+    conf_sources.add_dict_source(additional_config_values, "additional", 80)
+
+    logger.info("Creating MTT toolbox object")
+    return mirantis.testing.toolbox.config_from_source_list(sources=conf_sources)
+
 
 @pytest.fixture(scope="session")
-def toolbox_up(toolbox):
-    """ get the toolbox but start the provisioner before returning
+def provisioner(config):
+    """ get a provisioner based on the config """
+    return mirantis.testing.toolbox.provisioner_from_config(config)
 
-    This is preferable to the raw toolbox in cases where you want a running
+@pytest.fixture(scope="session")
+def provisioner_up(config, provisioner):
+    """ get the provisioner but start the provisioner before returning
+
+    This is preferable to the raw provisioner in cases where you want a running
     cluster because the cluster startup cost does not get reflected in the
     first test case which uses the fixture.  Also it can tear itself down
     """
     logger.info("Running MTT provisioner up()")
 
-    conf = toolbox.config.load("config")
+    conf = config.load("config")
 
     try:
         logger.info("Starting up the testing cluster using the toolbox")
-        toolbox.provisioner().up()
+        provisioner.up()
     except Exception as e:
         logger.error("Provisioner failed to start: %s", e)
         raise
@@ -57,6 +64,6 @@ def toolbox_up(toolbox):
 
     if conf.get("options.destroy-on-finish", exception_if_missing=False):
         logger.info("Stopping the test cluster using the toolbox as directoed by config")
-        toolbox.provisioner().down()
+        provisioner.down()
     else:
         logger.info("Leaving test infrastructure in place on shutdown")

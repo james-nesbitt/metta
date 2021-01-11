@@ -8,13 +8,12 @@ import re
 import os.path
 import json
 import yaml
-from typing import List
+from typing import List, Dict, Any
 from .tools import _tree_merge
 
-# FileTypes that this class can use at this time
-# @see Config::Load()
-FILESOURCE_FILETYPES = [ "json", "yaml", "yml" ]
-""" Valid config types that the config loader can currently handled """
+
+CONFIG_SOURCE_DEFAULT_PRIORITY = 75
+
 
 class SourceList:
     """ An orderd list of paths """
@@ -28,9 +27,14 @@ class SourceList:
         for source in sources:
             self.add_source_object(source)
 
-    def add_filepath_source(self, path: str, key: str = "", priority: int = 75):
-        """ Add a path """
+    def add_filepath_source(self, path: str, key: str="", priority: int=CONFIG_SOURCE_DEFAULT_PRIORITY):
+        """ Add a path source """
         source = Source(ConfigSourceFileHandler(path), key, priority)
+        self.add_source_object(source)
+
+    def add_dict_source(self, data: Dict[str, Any], key: str="", priority: int=CONFIG_SOURCE_DEFAULT_PRIORITY):
+        """ Add a dict source.  Top level of the dict must be source labels, children are config data """
+        source = Source(ConfigSourceFixedSet(data, key), key, priority)
         self.add_source_object(source)
 
     def add_source_object(self, source: "Source"):
@@ -86,6 +90,57 @@ class Source:
         self.key = key
         self.priority = priority
 
+
+""" Config sources """
+
+class ConfigSourceFixedSet:
+    """
+
+    Config source loaded from a passed Dict tree
+
+    The top level of the tree represents `label`s that can be loaded, and the
+    children nodes are considered the label config
+
+    The purpose is to allow an interface for oinjecting config data calculated
+    in run time, as opposed to being pulled from a source
+
+    """
+
+    def __init__(self, data: Dict[str, Any], name: str=""):
+        """
+
+        data (Dict[str, Any]): source data used for load calls
+
+        name (str) : optional name used for template substitution calls
+
+        """
+        self.data = data
+        self._name = name
+
+    def name(self):
+        """ return the source optional name """
+        return self._name
+
+    def load(self, label: str):
+        """ load config for a name
+        Parameters:
+
+        label (str) : config label to load, top level of the passed data
+
+        returns:
+
+        Dict[str, Any], emtpty if label was not found
+
+        """
+        if label in self.data:
+            return self.data[label]
+        else:
+            return {}
+
+# FileTypes that this class can use at this time
+FILESOURCE_FILETYPES = [ "json", "yaml", "yml" ]
+""" Valid config types that the config loader can currently handled """
+
 class ConfigSourceFileHandler:
     """
 
@@ -131,8 +186,8 @@ class ConfigSourceFileHandler:
                     data = _tree_merge(file_config, data)
                 elif extension == ".yml" or extension == ".yaml":
                     try:
-                        file_config = yaml.load(matching_file)
-                    except json.decoder.JSONDecodeError as e:
+                        file_config = yaml.load(matching_file, Loader=yaml.FullLoader)
+                    except ImportError as e:
                         raise ValueError("Failed to parse one of the config files '{}': {}".format(os.path.join(self.path, file), e))
 
                     assert file_config, "Empty config in {} from file {}".format(self.path, file)
