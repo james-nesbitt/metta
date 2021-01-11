@@ -17,7 +17,7 @@ logger = logging.getLogger(__file__)
 
 @pytest.fixture(scope="session")
 def config():
-    """ get an mtt toolbox """
+    """ get an mtt config object """
     logger.debug("Creating a new toolbox fixture")
     project_path = os.path.dirname(os.path.realpath(__file__))
 
