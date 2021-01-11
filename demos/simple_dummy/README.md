@@ -11,6 +11,16 @@ PyTest fixtures are defined inline just to keep it simple
 You will need:
 
 1. install pytest
+2. get myy
+
+MTT can be installed using various methods
+```
+# pip global install (NOT YET REGISTERED)
+pip install mtt
+
+# OR pip install from a cloned/downloaded mtt
+pip install -e path/to/mtt
+```
 
 now just run pytest
 
