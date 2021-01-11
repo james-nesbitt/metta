@@ -1,6 +1,6 @@
 """
 
-Dummy test suite for testing out MKE/MSR clusters
+Demo test suite for testing out MKE/MSR clusters
 
 """
 import getpass
@@ -32,9 +32,8 @@ def config():
     conf_sources.add_filepath_source(os.path.join(project_path, CONFIG_FOLDER), "project_config")
     conf_sources.add_dict_source(additional_config_values, "additional", 80)
 
-    logger.info("Creating MTT toolbox object")
+    logger.info("Creating MTT config object")
     return mirantis.testing.toolbox.config_from_source_list(sources=conf_sources)
-
 
 @pytest.fixture(scope="session")
 def provisioner(config):
@@ -54,16 +53,16 @@ def provisioner_up(config, provisioner):
     conf = config.load("config")
 
     try:
-        logger.info("Starting up the testing cluster using the toolbox")
+        logger.info("Starting up the testing cluster using the provisioner")
         provisioner.up()
     except Exception as e:
         logger.error("Provisioner failed to start: %s", e)
         raise
 
-    yield toolbox
+    yield provisioner
 
     if conf.get("options.destroy-on-finish", exception_if_missing=False):
-        logger.info("Stopping the test cluster using the toolbox as directoed by config")
+        logger.info("Stopping the test cluster using the provisioner as directed by config")
         provisioner.down()
     else:
         logger.info("Leaving test infrastructure in place on shutdown")

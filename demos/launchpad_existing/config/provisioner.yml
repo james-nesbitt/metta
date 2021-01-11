@@ -1,0 +1,2 @@
+# use the launchpad provisioner, @see launchpad,yml
+plugin: launchpad

@@ -1,8 +1,8 @@
 {
-    "id": "{user:user.id?user}-mtt-mcc-3",
+    "id": "{user:id?user}-mtt-mcc-3",
     "plan": {
         "type": "local",
-        "path": "{_source_:mtt_common}/terraform/aws"
+        "path": "{mtt_common:terraform.plans.example}"
     },
     "state": {
         "path": "{_source_:project}/terraform/{id}.terraform.state"
