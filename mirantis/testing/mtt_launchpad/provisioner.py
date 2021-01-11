@@ -11,8 +11,13 @@ import logging
 import appdirs
 from typing import List
 from mirantis.testing.toolbox import PluginType, load_plugin
+from . import backend_existing
 
 logger = logging.getLogger("mirantis.testing.mtt_launchpad:provisioner")
+
+LAUNCHPAD_BACKEND_EXISTING_PLUGIN_NAME = "existing"
+""" If the laucnhpad backend plugin name is this value then we just create a
+class instance without a plugin load """
 
 def factory(conf):
     """ Launchpad provisioner plugin factory (see mtt/plugin/factory) """
@@ -28,16 +33,18 @@ class LaunchpadProvisioner:
         self.launchpad_config = conf.load("launchpad")
 
         self.backend_plugin_name = self.launchpad_config.get("backend.plugin", exception_if_missing=True)
-        logger.info("Launchpad provisioner now attempting to load %s backend plugin", self.backend_plugin_name)
-        self.backend = load_plugin(conf, PluginType.PROVISIONER, self.backend_plugin_name)
-        self.backend_output_name = self.launchpad_config.get("backend.output")
+        self.backend_output_name = self.launchpad_config.get("backend.output", exception_if_missing=False)
+        if not self.backend_output_name:
+            self.backend_output_name = "mke_cluster"
 
-        self.launchpad_cluster_name = self.launchpad_config.get("cluster_name", exception_if_missing=True)
         """ what launchpad thinks the name of the cluster is """
+        self.launchpad_cluster_name = self.launchpad_config.get("cluster_name", exception_if_missing=False)
+        if not self.launchpad_cluster_name:
+            self.launchpad_cluster_name = "mke_cluster"
 
         self.config_file = self.launchpad_config.get("config_file", exception_if_missing=False)
         if not self.config_file:
-            self.config_file = os.path.join(self.backend.working_dir, "launchpad.yml")
+            self.config_file =  os.path.realpath("./launchpad.yml")
 
         self.user_launchpad_path = os.path.join(os.path.expanduser("~"), ".mirantis-launchpad", "cluster", "launchpad-mke")
         """ the str path to where launchpad keeps its user config """
@@ -47,6 +54,14 @@ class LaunchpadProvisioner:
 
         self.client = None
         """ A LaunchpadClient configured """
+
+        if self.backend_plugin_name == "existing":
+            logger.info("Backend is existing, creating the class directly without plugin load")
+            self.backend = backend_existing.ExistingBackendProvisioner(output_name=self.backend_output_name, config_file=self.config_file)
+        else:
+            logger.info("Launchpad provisioner now attempting to load %s backend plugin", self.backend_plugin_name)
+            self.backend = load_plugin(conf, PluginType.PROVISIONER, self.backend_plugin_name)
+
 
     def prepare(self):
         """ prepare the provisioner to be brought up """
@@ -62,8 +77,8 @@ class LaunchpadProvisioner:
         output = self.backend.output(self.backend_output_name)
         if not output:
             raise ValueError("Launchpad did not get necessary config from the backend output '%s'", self.backend_output_name)
-        os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-        with open(self.config_file, 'w') as file:
+        os.makedirs(os.path.dirname(os.path.realpath(self.config_file)), exist_ok=True)
+        with open(os.path.realpath(self.config_file), 'w') as file:
             file.write(output if output else "")
 
         self.client = LaunchpadClient(config_file=self.config_file, working_dir=self.backend.working_dir)
