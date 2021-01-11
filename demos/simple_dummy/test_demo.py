@@ -54,6 +54,7 @@ def test_provisioner(provisioner):
 
     """
 
+    provisioner.prepare()
     provisioner.up()
 
     assert True, "This will never fail"
