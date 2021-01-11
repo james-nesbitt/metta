@@ -187,7 +187,7 @@ class ConfigSourceFileHandler:
                 elif extension == ".yml" or extension == ".yaml":
                     try:
                         file_config = yaml.load(matching_file, Loader=yaml.FullLoader)
-                    except ImportError as e:
+                    except yaml.YAMLError as e:
                         raise ValueError("Failed to parse one of the config files '{}': {}".format(os.path.join(self.path, file), e))
 
                     assert file_config, "Empty config in {} from file {}".format(self.path, file)

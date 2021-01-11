@@ -82,6 +82,19 @@ Interacting with the services and hosts on a cluster.
 Client plugins are used to interact with testing clusters.  They can be used to
 execute code in a system or to interact with an API or service.
 
+Clients are typically provided by provisioners/
+
+```
+
+docker_client = provisioner.get_plugin("docker")
+k8s_client.run( ... )
+
+kubernetes_client = provisioner.get_plugin("kubernetes")
+coreV1 = kubectl_client.get_CoreV1Api_client()
+
+ns = coreV1.read_namespace(name="kube-system")
+```
+
 ### Workload
 
 Workload plugins define a workload that can be applied to a testing cluster
