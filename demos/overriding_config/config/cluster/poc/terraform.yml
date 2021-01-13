@@ -1,0 +1,5 @@
+vars:
+    manager_count: 1
+    worker_count: 3
+    dtr_count: 0
+    windows_worker_count: 0

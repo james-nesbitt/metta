@@ -106,10 +106,16 @@ locals {
       hosts = concat(local.managers, local.workers, local.windows_workers)
     }
   }
+
+  mtt_output = {
+    clients = {
+
+    }
+  }
 }
 
 output "mtt" {
-  value = uamlencode(local.mtt_output)
+  value = yamlencode(local.mtt_output)
 }
 
 output "mke_cluster" {
