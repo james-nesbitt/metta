@@ -108,6 +108,10 @@ locals {
   }
 }
 
+output "mtt" {
+  value = uamlencode(local.mtt_output)
+}
+
 output "mke_cluster" {
   value = yamlencode(local.launchpad_tmpl)
 }
