@@ -1,6 +1,6 @@
 resource "aws_security_group" "worker" {
   name        = "${var.cluster_name}-workers"
-  description = "ucp cluster workers"
+  description = "mke cluster workers"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -16,13 +16,13 @@ locals {
 }
 
 
-resource "aws_instance" "ucp_worker" {
+resource "aws_instance" "mke_worker" {
   count = var.worker_count
 
   tags = {
     "Name"                    = "${var.cluster_name}-worker-${count.index + 1}"
     "Role"                    = "worker"
-    "${var.kube_cluster_tag}" = "shared"
+    (var.kube_cluster_tag)    = "shared"
     "project"                 = var.project
     "platform"                = var.platform
     "expire"                  = var.expire

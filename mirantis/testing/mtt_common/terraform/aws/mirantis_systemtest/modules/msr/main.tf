@@ -1,6 +1,6 @@
-resource "aws_security_group" "dtr" {
-  name        = "${var.cluster_name}-dtrs"
-  description = "ucp cluster dtrs"
+resource "aws_security_group" "msr" {
+  name        = "${var.cluster_name}-msrs"
+  description = "mke cluster msrs"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -16,23 +16,23 @@ locals {
 }
 
 
-resource "aws_instance" "dtr" {
-  count = var.dtr_count
+resource "aws_instance" "msr" {
+  count = var.msr_count
 
   tags = {
-    "Name"                    = "${var.cluster_name}-dtr-${count.index + 1}"
-    "Role"                    = "dtr"
-    "${var.kube_cluster_tag}" = "shared"
+    "Name"                    = "${var.cluster_name}-msr-${count.index + 1}"
+    "Role"                    = "msr"
+    (var.kube_cluster_tag)    = "shared"
     "project"                 = var.project
     "platform"                = var.platform
     "expire"                  = var.expire
   }
 
-  instance_type          = var.dtr_type
+  instance_type          = var.msr_type
   iam_instance_profile   = var.instance_profile_name
   ami                    = var.image_id
   key_name               = var.ssh_key
-  vpc_security_group_ids = [var.security_group_id, aws_security_group.dtr.id]
+  vpc_security_group_ids = [var.security_group_id, aws_security_group.msr.id]
   subnet_id              = var.subnet_ids[count.index % local.subnet_count]
   ebs_optimized          = true
   user_data              = <<EOF
@@ -50,6 +50,6 @@ EOF
 
   root_block_device {
     volume_type = "gp2"
-    volume_size = var.dtr_volume_size
+    volume_size = var.msr_volume_size
   }
 }
