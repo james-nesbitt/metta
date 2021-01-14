@@ -1,0 +1,4 @@
+vars:
+    engine_version: "19.03.12"
+    ucp_version: "3.3.3"
+    dtr_version: "2.8.3"

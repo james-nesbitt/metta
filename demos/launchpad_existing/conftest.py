@@ -25,6 +25,8 @@ def config():
 @pytest.fixture(scope="session")
 def provisioner(config):
     """ get a provisioner based on the config
+
+    Create the provisioner, and then prepare() and up() it.
     """
     provisioner = mirantis.testing.toolbox.provisioner_from_config(config)
 

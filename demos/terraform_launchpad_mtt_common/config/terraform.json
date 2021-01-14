@@ -1,5 +1,5 @@
 {
-    "id": "{user:id?user}-mtt-mcc-3",
+    "id": "{user:id?user}-mtt-mcc",
     "plan": {
         "type": "local",
         "path": "{mtt_common:terraform.plans.example}"

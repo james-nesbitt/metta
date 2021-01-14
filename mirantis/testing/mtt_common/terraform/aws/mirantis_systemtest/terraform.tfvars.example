@@ -1,0 +1,17 @@
+manager_count                  = 1
+worker_count                   = 3
+dtr_count                      = 0
+windows_worker_count           = 0
+admin_password                 = "abcd1234changeme"
+windows_administrator_password = "tfaws,,CHANGEME..Example"
+platform                       = "rhel_7.8"
+username                       = "alex"
+task_name                      = "ostrich"
+project                        = "ST-SZNG"
+expire_duration                = "72h"
+engine_version                 = "19.03.12"
+ucp_version                    = "3.3.3"
+kube_orchestration             = true
+dtr_version                    = "2.8.3"
+dtr_install_flags              = ["--ucp-insecure-tls"]
+platform_repo                  = "public"
