@@ -1,2 +1,6 @@
-recursive-include files, mirantis
-exclude tests, docs
+# Include all of the config paths
+recursive-include mirantis/testing/* config/*.json
+# mtt common has lots of terraform, but we don't want .terraform in the package
+recursive-include mirantis/testing/mtt_common/terraform *.tf *.tf.* *.json *.yml
+recursive-include mirantis/testing/mtt_common/terraform *.sh *.cfg
+prune .terraform __pycache__ *.py[ocd]
