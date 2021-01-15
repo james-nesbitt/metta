@@ -1,5 +1,5 @@
 ssh_keys/*.pem
-.terraform/
+.terraform
 .terraform.*
 launchpad.yaml
 *tfstate*

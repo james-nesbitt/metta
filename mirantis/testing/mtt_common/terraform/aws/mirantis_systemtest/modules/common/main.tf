@@ -53,7 +53,7 @@ data "aws_ami" "windows_2019" {
 
 resource "aws_security_group" "common" {
   name        = "${var.cluster_name}-common"
-  description = "ucp cluster common rules"
+  description = "mke cluster common rules"
   vpc_id      = var.vpc_id
 
   ingress {

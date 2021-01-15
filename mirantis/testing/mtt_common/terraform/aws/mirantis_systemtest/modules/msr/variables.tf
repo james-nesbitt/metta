@@ -24,14 +24,14 @@ variable "ssh_key" {
   description = "SSH key name"
 }
 
-variable "dtr_count" {
+variable "msr_count" {
   default = 1
 }
 
-variable "dtr_type" {
-  default = "m5.large"
+variable "msr_type" {
+  default = "m5.xlarge"
 }
 
-variable "dtr_volume_size" {
+variable "msr_volume_size" {
   default = 100
 }

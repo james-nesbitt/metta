@@ -61,9 +61,9 @@ module "workers" {
   expire                = local.expire
 }
 
-module "dtrs" {
-  source                = "./modules/dtr"
-  dtr_count             = var.dtr_count
+module "msrs" {
+  source                = "./modules/msr"
+  msr_count             = var.msr_count
   vpc_id                = module.vpc.id
   cluster_name          = local.cluster_name
   subnet_ids            = module.vpc.public_subnet_ids
@@ -72,7 +72,7 @@ module "dtrs" {
   kube_cluster_tag      = module.common.kube_cluster_tag
   ssh_key               = local.cluster_name
   instance_profile_name = module.common.instance_profile_name
-  dtr_type              = var.dtr_type
+  msr_type              = var.msr_type
   project               = var.project
   platform              = var.platform
   expire                = local.expire
@@ -101,17 +101,35 @@ locals {
   kube_orchestration = var.kube_orchestration ? "--default-node-orchestrator=kubernetes" : ""
   ami_obj            = var.platforms[var.platform_repo][var.platform]
   ami_obj_win        = var.platforms[var.platform_repo]["windows_2019"]
-  ucp_install_flags  = concat([
+  mke_install_flags  = concat([
       "--admin-username=${var.admin_username}",
       "--admin-password=${var.admin_password}",
       local.kube_orchestration,
       "--san=${module.managers.lb_dns_name}",
     ],
-    var.ucp_install_flags
+    var.mke_install_flags
   )
-  ucp_opts = [for f in local.ucp_install_flags : element(split("=", f), 1) if substr(f, 0, 18) == "--controller-port="]
-  controller_port = local.ucp_opts == [] ? "443" : element(local.ucp_opts, 1)
+  mke_opts = [for f in local.mke_install_flags : element(split("=", f), 1) if substr(f, 0, 18) == "--controller-port="]
+  controller_port = local.mke_opts == [] ? "443" : element(local.mke_opts, 1)
   key_path = var.ssh_key_file_path == "" ? "./ssh_keys/${local.cluster_name}.pem" : var.ssh_key_file_path
+
+  hosts = concat(local.managers, local.workers, local.windows_workers, local.msrs)
+  engine = {
+    version : var.engine_version
+    channel : var.engine_channel
+  }
+  mke = {
+    version : var.mke_version
+    imageRepo : var.mke_image_repo
+    installFlags : local.mke_install_flags
+  }
+  msr = {
+    version : var.msr_version
+    imageRepo : var.msr_image_repo
+    installFlags : var.msr_install_flags
+    replicaIDs : var.msr_replica_config
+  }
+
   managers = [
     for host in module.managers.machines : {
       address = host.public_ip
@@ -120,7 +138,6 @@ locals {
         keyPath = local.key_path
       }
       role             = host.tags["Role"]
-      privateInterface = local.ami_obj.interface
       hooks = {
         apply = {
           before = var.hooks_apply_before
@@ -148,7 +165,6 @@ locals {
         keyPath = local.key_path
       }
       role             = host.tags["Role"]
-      privateInterface = local.ami_obj.interface
       hooks = {
         apply = {
           before = var.hooks_apply_before
@@ -168,15 +184,14 @@ locals {
       role             = host.tags["Role"]
     }
   ]
-  dtrs = [
-    for host in module.dtrs.machines : {
+  msrs = [
+    for host in module.msrs.machines : {
       address = host.public_ip
       ssh = {
         user    = local.ami_obj.user
         keyPath = local.key_path
       }
       role             = host.tags["Role"]
-      privateInterface = local.ami_obj.interface
       hooks = {
         apply = {
           before = var.hooks_apply_before
@@ -185,8 +200,8 @@ locals {
       }
     }
   ]
-  _dtrs = [
-    for host in module.dtrs.machines : {
+  _msrs = [
+    for host in module.msrs.machines : {
       address = host.public_ip
       privateIp = host.private_ip
       ssh = {
@@ -206,7 +221,6 @@ locals {
         insecure = true
       }
       role = host.tags["Role"]
-      privateInterface = local.ami_obj_win.interface
     }
   ]
   _windows_workers = [
@@ -224,34 +238,22 @@ locals {
   ]
 }
 
-output "ucp_cluster" {
+output "mke_cluster" {
   value = {
-    apiVersion = "launchpad.mirantis.com/v1"
-    kind       = "DockerEnterprise"
+    apiVersion = "launchpad.mirantis.com/mke/v1.1"
+    kind       = "mke"
     spec = {
-      ucp = {
-        version : var.ucp_version
-        imageRepo : var.ucp_image_repo
-        installFlags : local.ucp_install_flags
-      }
-      dtr = {
-        version : var.dtr_version
-        imageRepo : var.dtr_image_repo
-        installFlags : var.dtr_install_flags
-        replicaConfig : var.dtr_replica_config
-      }
-      engine = {
-        version : var.engine_version
-        channel : var.engine_channel
-      }
-      hosts = concat(local.managers, local.workers, local.windows_workers, local.dtrs)
+      hosts = local.hosts,
+      engine = local.engine,
+      mke = local.mke,
+      msr = local.msr
     }
   }
 }
 
-output "_ucp_cluster" {
+output "_mke_cluster" {
   value = {
-    hosts = concat(local._managers, local._workers, local._windows_workers, local._dtrs)
+    hosts = concat(local._managers, local._workers, local._windows_workers, local._msrs)
   }
 }
 

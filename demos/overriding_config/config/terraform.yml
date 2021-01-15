@@ -9,7 +9,7 @@ vars_path: "{_source_:project}/terraform/{id}.tfvars.json"
 vars:
     manager_count: 1
     worker_count: 3
-    dtr_count: 0
+    msr_count: 0
     windows_worker_count: 0
     admin_password: "abcd1234changeme"
     windows_administrator_password: "tfaws,,CHANGEME..Example"
@@ -19,8 +19,8 @@ vars:
     project: "{global:project}"
     expire_duration: "72h"
     kube_orchestration: true
-    dtr_install_flags: ["--ucp-insecure-tls"]
+    msr_install_flags: ["--ucp-insecure-tls"]
     platform_repo: "public"
     engine_version: "19.03.12"
-    ucp_version: "3.3.3"
-    dtr_version: "2.8.3"
+    mke_version: "3.3.3"
+    msr_version: "2.8.3"

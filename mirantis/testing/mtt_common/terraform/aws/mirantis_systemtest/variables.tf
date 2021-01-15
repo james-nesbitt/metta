@@ -58,7 +58,7 @@ variable "worker_count" {
   description = "The number of UCP Linux workers to create."
 }
 
-variable "dtr_count" {
+variable "msr_count" {
   type        = number
   default     = 0
   description = "The number of DTR replicas to create."
@@ -72,7 +72,7 @@ variable "windows_worker_count" {
 
 variable "manager_type" {
   type        = string
-  default     = "m5.large"
+  default     = "m5.xlarge"
   description = "The AWS instance type to use for manager nodes."
 }
 
@@ -82,9 +82,9 @@ variable "worker_type" {
   description = "The AWS instance type to use for Linux/Windows worker nodes."
 }
 
-variable "dtr_type" {
+variable "msr_type" {
   type        = string
-  default     = "m5.large"
+  default     = "m5.xlarge"
   description = "The AWS instance type to use for DTR replica nodes."
 }
 
@@ -100,7 +100,7 @@ variable "worker_volume_size" {
   description = "The volume size (in GB) to use for worker nodes."
 }
 
-variable "dtr_volume_size" {
+variable "msr_volume_size" {
   type        = number
   default     = 100
   description = "The volume size (in GB) to use for DTR replica nodes."
@@ -130,19 +130,19 @@ variable "engine_channel" {
   description = "The channel to pull the engine installer from."
 }
 
-variable "ucp_version" {
+variable "mke_version" {
   type        = string
   default     = "3.3.3"
   description = "The UCP version to deploy."
 }
 
-variable "ucp_image_repo" {
+variable "mke_image_repo" {
   type        = string
   default     = "docker.io/mirantis"
   description = "The repository to pull the UCP images from."
 }
 
-variable "ucp_install_flags" {
+variable "mke_install_flags" {
   type        = list(string)
   default     = []
   description = "The UCP installer flags to use."
@@ -154,25 +154,25 @@ variable "kube_orchestration" {
   description = "The option to enable/disable Kubernetes as the default orchestrator."
 }
 
-variable "dtr_version" {
+variable "msr_version" {
   type        = string
   default     = "2.8.3"
   description = "The DTR version to deploy."
 }
 
-variable "dtr_image_repo" {
+variable "msr_image_repo" {
   type        = string
   default     = "docker.io/mirantis"
   description = "The repository to pull the DTR images from."
 }
 
-variable "dtr_install_flags" {
+variable "msr_install_flags" {
   type        = list(string)
   default     = ["--ucp-insecure-tls"]
   description = "The DTR installer flags to use."
 }
 
-variable "dtr_replica_config" {
+variable "msr_replica_config" {
   type        = string
   default     = "sequential"
   description = "Set to 'sequential' to generate sequential replica id's for cluster members, for example 000000000001, 000000000002, etc. ('random' otherwise)"

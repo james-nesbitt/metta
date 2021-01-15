@@ -43,7 +43,7 @@ locals {
 
 # Subnets (one per availability zone)
 resource "aws_subnet" "public" {
-  count = 2
+  count = 3
 
   vpc_id            = aws_vpc.network.id
   availability_zone = data.aws_availability_zones.all.names[count.index]

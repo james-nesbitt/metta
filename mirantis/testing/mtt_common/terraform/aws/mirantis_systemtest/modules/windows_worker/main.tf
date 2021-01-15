@@ -1,6 +1,6 @@
 resource "aws_security_group" "worker" {
   name        = "${var.cluster_name}-win-workers"
-  description = "ucp cluster windows workers"
+  description = "mke cluster windows workers"
   vpc_id      = var.vpc_id
 
   ingress {
@@ -15,7 +15,7 @@ locals {
   subnet_count = length(var.subnet_ids)
 }
 
-resource "aws_instance" "ucp_worker" {
+resource "aws_instance" "mke_worker" {
   count = var.worker_count
 
   tags = {
