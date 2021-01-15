@@ -66,7 +66,7 @@ def config_from_source_list(sources: SourceList, include_default_config_paths: b
 
     if include_default_config_paths:
         #this package contains default sane config
-        sources.add_filepath_source(pkg_resources.resource_filename("mirantis.testing.toolbox", "files/config"), "toolbox", MTT_PATHS_SYSTEM_PRIORITY)
+        sources.add_filepath_source(pkg_resources.resource_filename("mirantis.testing.toolbox", "config"), "toolbox", MTT_PATHS_SYSTEM_PRIORITY)
 
         # a user config path (like ~/.config/mtt) may contain config
         user_conf_path = appdirs.user_config_dir(MTT_TOOLBOX_APP_NAME)

@@ -1,0 +1,12 @@
+demos
+docs
+mtt.egg-info
+bin
+
+**/.git
+.gitignore
+
+**/.pytest*
+**/__pycache__
+**/.terraform
+**/*.tfstate

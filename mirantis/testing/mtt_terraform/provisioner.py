@@ -15,7 +15,7 @@ import subprocess
 from typing import Dict, List
 
 logger = logging.getLogger("mirantis.testing.mtt_terraform.provisioner")
- 
+
 class TerraformProvisioner:
     """ Dummy provisioner class """
 
@@ -66,13 +66,11 @@ class TerraformProvisioner:
 
     def down(self):
         """ pretend to brind a cluster down """
-
         logger.info("Running Terraform DESTROY")
         self.tf.destroy()
 
     def output(self, name: str):
         """ retrieve an output from terraform """
-
         logger.debug("Retrieving terraform output '%s'", name)
         return self.tf.output(name)
 
@@ -120,7 +118,7 @@ class TerraformClient:
     def destroy(self):
         """ Apply a terraform plan """
         try:
-            self._run(["apply", "-auto-approve"], with_state=True, with_vars=True, return_output=False)
+            self._run(["destroy", "-auto-approve"], with_state=True, with_vars=True, return_output=False)
         except subprocess.CalledProcessError as e:
             logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.stdout)
             raise e
