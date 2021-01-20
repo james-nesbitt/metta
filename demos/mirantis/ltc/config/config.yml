@@ -1,0 +1,4 @@
+# This config file is used only by this test suite.
+# @see conftest.py as an example
+options:
+    destroy-on-finish: false

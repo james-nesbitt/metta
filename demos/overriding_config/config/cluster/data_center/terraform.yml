@@ -1,5 +1,0 @@
-vars:
-    manager_count: 5
-    worker_count: 100
-    msr_count: 10
-    windows_worker_count: 0

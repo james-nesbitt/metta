@@ -1,4 +1,0 @@
-# tell the launchpad provisioner that the cluster exists already.
-# launchpad.yml should already be in place (default is launchpad.yml in root)
-backend:
-    plugin: "existing"

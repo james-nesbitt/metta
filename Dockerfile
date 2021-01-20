@@ -13,7 +13,7 @@ RUN mkdir -p /home/mtt/.local/bin \
  && chmod u+x /home/mtt/.local/bin/launchpad
 COPY --chown=mtt ./ /mtt_source
 
-RUN pip install --user --no-cache-dir --editable /mtt_source
+RUN pip install --user --no-cache-dir /mtt_source
 
 WORKDIR "/home/mtt"
 ENTRYPOINT ["pytest"]
