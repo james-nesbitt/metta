@@ -9,14 +9,6 @@ import docker.models.containers
 
 logger = logging.getLogger("test_clients")
 
-def test_paths(config, dir):
-
-    assert config.load('paths').get('project') == dir
-    assert config.load('variables').get('files_path') == dir
-    assert config.load('config').format_string("{paths:project}") == dir
-    assert config.load('config').format_string("{variables:files_path}") == dir
-    assert config.load('config').format_string("{variables:files_path?.}") == dir
-
 def test_launchpad_kubectl_client(provisioner_up):
     """ did we get a good kubectl client """
 
