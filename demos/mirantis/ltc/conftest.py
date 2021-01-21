@@ -22,12 +22,12 @@ import mirantis.testing.mtt_terraform as mtt_terraform
 
 """ Define our fixtures """
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def dir():
     """ quick access to project root path """
     return DIR
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def config():
     """
 
@@ -67,7 +67,7 @@ def config():
 
     return config
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def provisioner(config):
     """ Retrieve a provisioner object
 
@@ -82,7 +82,7 @@ def provisioner(config):
     """
     return mtt.new_provisioner_from_config(config, 'ltc_provisioner')
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def provisioner_up(config, provisioner):
     """ get the provisioner but start the provisioner before returning
 
@@ -115,7 +115,7 @@ def provisioner_up(config, provisioner):
     if conf.get("options.destroy-on-finish", exception_if_missing=False):
         try:
             logger.info("Stopping the test cluster using the provisioner as directed by config")
-            provisioner.down()
+            provisioner.destroy()
         except Exception as e:
             logger.error("Provisioner failed to stop: %s", e)
             raise e

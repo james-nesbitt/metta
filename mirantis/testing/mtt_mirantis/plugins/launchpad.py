@@ -145,8 +145,8 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
     def destroy(self):
         """ pretend to brind a cluster down """
-        logger.info("Launchpad provisioner bringing up cluster using %s backend plugin", self.backend_plugin_name)
-        self.backend.down()
+        logger.info("Launchpad provisioner bringing up cluster using %s backend plugin", self.backend_plugin_id)
+        self.backend.destroy()
         self.output = None
 
     """ CLUSTER INTERACTION """
