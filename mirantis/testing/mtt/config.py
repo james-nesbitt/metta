@@ -111,10 +111,11 @@ class Config():
         self.loaded = {}
         """ LoadedConfig map for config that has been loaded """
 
-    def copy():
+    def copy(self):
         """ return a copy of this Config object """
+        logger.debug("Config is copying")
         copy = Config()
-        copy.source = self.sources
+        copy.sources = self.sources.copy()
         return copy
 
     def add_source(self, plugin_id: str, instance_id: str = '', priority: int=CONFIG_SOURCE_DEFAULT_PRIORITY):
@@ -147,6 +148,7 @@ class Config():
         if not priority in self.sources:
             self.sources[priority] = []
         self.sources[priority].append(source)
+        self.reload_configs()
         return source
 
     def paths_label(self):
@@ -200,25 +202,18 @@ class Config():
         """
         if force_reload or label not in self.loaded:
             data = self._get_config_data(label)
-
-            if label in self.loaded:
-                self.loaded[label]._reload(data)
-            else:
-                self.loaded[label] = LoadedConfig(data=data, parent=self)
+            self.loaded[label] = LoadedConfig(data=data, parent=self)
 
         return self.loaded[label]
 
-    def reload_configs():
+    def reload_configs(self):
         """ Get new data for all loaded configs
 
         In case it isn't clear, this is expensive, but might be needed if you
         know that config has changed in the background.
 
         """
-        logger.debug("Config is re-loading")
-        for label in self.loaded.keys():
-            data = self._get_config(label)
-            self.loaded[label]._reload(data)
+        self.loaded = {}
 
     def _get_config_data(self, label: str):
         """ load data from all of the sources for a label """
@@ -280,7 +275,6 @@ class LoadedConfig:
         when new config paths are added, typically by boostrapping.
 
         Hopeully this is done before the config is really used
-
         """
         self.data = data
 

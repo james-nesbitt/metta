@@ -236,3 +236,48 @@ def test_variable_templating(loaded_config, loaded_variables):
 
     assert loaded_config.get("12") == loaded_variables.get("three")
     # test that default doesn't swap a positive search
+
+def test_copy_safety(config):
+    """ Test that config copy allows overloads and doesn't modify the source """
+
+    config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_DICT, 'orig', 80).set_data({
+        'copy': {
+            'one': 'orig 1'
+        }
+    })
+
+    config_copy_orig = config.load('copy')
+
+    copy1 = config.copy()
+    copy1.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_DICT, 'copy1', 80).set_data({
+        'copy': {
+            'one': 'copy1 1',
+            'two': 'copy1 2'
+        }
+    })
+    copy2 = config.copy()
+    copy2.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_DICT, 'copy2', 81).set_data({
+        'copy': {
+            'one': 'copy2 1',
+            'two': 'copy2 2'
+        }
+    })
+
+    config_copy_late = config.load('copy')
+    config1_copy = copy1.load('copy')
+    config2_copy = copy2.load('copy', force_reload=True)
+
+    logger.info('orig: %s',config_copy_orig.data )
+    logger.info('1: %s',config1_copy.data )
+    logger.info('2: %s',config2_copy.data )
+    logger.info('late: %s',config_copy_late.data )
+
+    # check original values
+    assert config_copy_orig.get('one') == 'orig 1'
+    assert config_copy_orig.get('two') == None
+    # check that copied config didn't modify original
+    assert config_copy_orig.get('one') == config_copy_late.get('one')
+    assert config_copy_orig.get('two') == config_copy_late.get('two')
+
+    assert config1_copy.get('one') == 'copy1 1'
+    assert config1_copy.get('two') == 'copy1 2'
