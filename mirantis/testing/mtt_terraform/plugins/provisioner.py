@@ -152,9 +152,33 @@ class TerraformClient:
             return None
 
     def init(self):
-        """ run terraform init """
+        """ run terraform init
+
+        init is something that can be run once for a number of jobs in parallel
+        we lock the process. If a lock is in place, then we just wait for an
+        unlock and return.
+        Other terraform actions lock themselves, and we want to fail if the
+        operation is locked, but here we just want to skip it.
+
+        """
         try:
-            self._run(["init"], with_vars=False, with_state=False)
+            lockfile = os.path.join(self.state_path, '.terraform.mtt_mirantis.init.lock')
+            if os.path.exists(lockfile):
+                logger.info('terraform .init lock file found.  Skipping init, but waiting for it to finish')
+                time_to_wait = 120
+                time_counter = 0
+                while not os.path.exists(lockfile):
+                    time.sleep(5)
+                    time_counter += 5
+                    if time_counter > time_to_wait:
+                        raise BlockingIOError('Timed out when waiting for init lock to go away')
+            else:
+                with open(lockfile, 'w') as lockfile_object:
+                    lockfile_object.write(str(os.getpid()))
+                    try:
+                        self._run(["init"], with_vars=False, with_state=False)
+                    finally:
+                        os.remove(lockfile)
         except subprocess.CalledProcessError as e:
             logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.stdout)
             raise e

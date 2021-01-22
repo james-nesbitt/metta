@@ -1,5 +1,5 @@
-resource_prefix: "{variables:id?mtt-lts}"
-files_prefix: "{variables:id?mtt-lts}"
+resource_prefix: "{variables:resource_prefix}"
+files_prefix: "{variables:files_prefix}"
 plan:
     type: local
     path: "{variables:terraform_plan}"
@@ -127,4 +127,4 @@ vars:
     #     - ""
 
     # description = "If non-empty, use this path/filename as the ssh key file instead of generating automatically."
-    ssh_key_file_path: ""
+    ssh_key_file_path: "{variables:files_path?.}/terraform/{files_prefix}.pem"

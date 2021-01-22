@@ -65,27 +65,31 @@ def config_interpret_mtt_mirantis(config:Config):
 
     mtt_mirantis_config = config.load(MTT_MIRANTIS_CONFIG_LABEL)
 
-    cluster = mtt_mirantis_config.get(MTT_MIRANTIS_CONFIG_CLUSTER_KEY, exception_if_missing=False)
-    if cluster:
-        cluster_path = os.path.join(MTT_MIRANTIS_CONFIG_CLUSTER_PATH, cluster)
-        try:
-            _config_add_mirantis_preset(config, cluster, cluster_path)
-        except KeyError as e:
-            raise KeyError("Requested MTT_Mirantis config variation not found: %s", cluster)
+    default_preset_priority = config.default_priority() - 5
+
+
 
     variation = mtt_mirantis_config.get(MTT_MIRANTIS_CONFIG_VARIATION_KEY, exception_if_missing=False)
     if variation:
         variation_path = os.path.join(MTT_MIRANTIS_CONFIG_VARIATION_PATH, variation)
         try:
-            _config_add_mirantis_preset(config, variation, variation_path)
+            _config_add_mirantis_preset(config, variation, variation_path, default_preset_priority)
         except KeyError as e:
-            raise KeyError("Requested MTT_Mirantis config variation not found: %s", variation)
+            raise KeyError("Requested MTT_Mirantis config variation not found: %s", variation-1)
+
+    cluster = mtt_mirantis_config.get(MTT_MIRANTIS_CONFIG_CLUSTER_KEY, exception_if_missing=False)
+    if cluster:
+        cluster_path = os.path.join(MTT_MIRANTIS_CONFIG_CLUSTER_PATH, cluster)
+        try:
+            _config_add_mirantis_preset(config, cluster, cluster_path, default_preset_priority)
+        except KeyError as e:
+            raise KeyError("Requested MTT_Mirantis config variation not found: %s", cluster)
 
     release = mtt_mirantis_config.get(MTT_MIRANTIS_CONFIG_RELEASE_KEY, exception_if_missing=False)
     if release:
         release_path = os.path.join(MTT_MIRANTIS_CONFIG_RELEASE_PATH, release)
         try:
-            _config_add_mirantis_preset(config, release, release_path)
+            _config_add_mirantis_preset(config, release, release_path, default_preset_priority)
         except KeyError as e:
             raise KeyError("Requested MTT_Mirantis config release not found: %s", release)
 
@@ -93,12 +97,12 @@ def config_interpret_mtt_mirantis(config:Config):
     if platform:
         platform_path = os.path.join(MTT_MIRANTIS_CONFIG_PLATFORM_PATH, platform)
         try:
-            _config_add_mirantis_preset(config, platform, platform_path)
+            _config_add_mirantis_preset(config, platform, platform_path, default_preset_priority)
         except KeyError as e:
             raise KeyError("Requested MTT_Mirantis config platform not found: %s", platform)
 
 
-def _config_add_mirantis_preset(config:Config, preset:str, preset_path:str):
+def _config_add_mirantis_preset(config:Config, preset:str, preset_path:str, priority: int):
     """ Use one of the mirantis config presets
 
     This functions by adding one of the config folders in this modules as a
@@ -108,8 +112,7 @@ def _config_add_mirantis_preset(config:Config, preset:str, preset_path:str):
 
     if os.path.isdir(preset_path):
         preset_instance_id = '{}-{}'.format(MTT_MIRANTIS_CONFIG_PREFIX, preset)
-        preset_priority = config.default_priority() - 5
         if not config.has_source(preset_instance_id):
-            config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_PATH, preset_instance_id, preset_priority).set_path(preset_path)
+            config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_PATH, preset_instance_id, priority).set_path(preset_path)
     else:
         raise KeyError("mtt_mirantis doesn't have a preset '%s'", preset)

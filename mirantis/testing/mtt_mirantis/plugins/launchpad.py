@@ -31,6 +31,8 @@ MTT_LAUNCHPAD_CONFIG_BACKEND_CONFIG_KEY = 'backend.config'
 """ Launchpad config backend config overrides """
 MTT_LAUNCHPAD_CLI_CONFIG_FILE_KEY = 'config_file'
 """ Launchpad config cli configuration file key """
+MTT_LAUNCHPAD_CLI_WORKING_DIR_KEY = 'working_dir'
+""" Launchpad config cli configuration file key """
 
 MTT_LAUNCHPAD_BACKEND_OUTPUT_NAME_DEFAULT = 'mke_cluster'
 """ Launchpad backend default output name for configuring launchpad """
@@ -76,6 +78,13 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
         """ load all of the launchpad configuration """
         launchpad_config = self.config.load(MTT_LAUNCHPAD_CONFIG_LABEL)
+
+        working_dir = launchpad_config.get(MTT_LAUNCHPAD_CLI_WORKING_DIR_KEY)
+        """ if launchpad needs to be run in a certain path, set it with this config """
+        if working_dir:
+            self.working_dir = working_dir
+        else:
+            self.working_dir = MTT_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT
 
         self.cluster_name = launchpad_config.get(MTT_LAUNCHPAD_CONFIG_BACKEND_CLUSTER_NAME_KEY)
 
@@ -133,7 +142,8 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         with open(os.path.realpath(self.config_file), 'w') as file:
             file.write(output if output else "")
 
-        self.client = LaunchpadClient(config_file=self.config_file, working_dir=self.backend.working_dir)
+
+        self.client = LaunchpadClient(config_file=self.config_file, working_dir=self.working_dir)
         logger.info("Using launchpad to install products onto backend cluster")
         try:
             self.client.install()
