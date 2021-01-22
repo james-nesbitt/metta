@@ -174,11 +174,11 @@ class TerraformClient:
                         raise BlockingIOError('Timed out when waiting for init lock to go away')
             else:
                 with open(lockfile, 'w') as lockfile_object:
-                    lockfile_object.write(str(os.getpid()))
-                    try:
-                        self._run(["init"], with_vars=False, with_state=False)
-                    finally:
-                        os.remove(lockfile)
+                    lockfile_object.write("{} is running init".format(str(os.getpid())))
+                try:
+                    self._run(["init"], with_vars=False, with_state=False)
+                finally:
+                    os.remove(lockfile)
         except subprocess.CalledProcessError as e:
             logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.stdout)
             raise e
