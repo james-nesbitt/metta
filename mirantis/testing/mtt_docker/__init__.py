@@ -1,14 +1,14 @@
 
-from mirantis.testing.toolbox.config import Config
-import docker
 import os
 
-def docker_client_factory(conf: Config, *passed_args, **passed_kwargs):
-    """ return a new docker client plugin instance """
-    env = os.environ.copy()
-    env["DOCKER_HOST"] = passed_kwargs["host"]
-    env["DOCKER_CERT_PATH"] = passed_kwargs["cert_path"]
-    env["DOCKER_TLS_VERIFY"] = "1" if "tls_verify" in passed_kwargs and passed_kwargs["tls_verify"] else "0"
-    env["COMPOSE_TLS_VERSION"] = passed_kwargs["compose_tls_version"] if "compose_tls_version" in passed_kwargs else "TLSv1_2"
+from mirantis.testing.mtt import plugin as mtt_plugin
+from mirantis.testing.mtt.config import Config
 
-    return docker.from_env(environment=env)
+from .plugins.client import DockerClientPlugin
+
+MTT_PLUGIN_ID_DOCKER_CLIENT='mtt_docker'
+""" client plugin_id for the mtt dummy plugin """
+@mtt_plugin.Factory(type=mtt_plugin.Type.CLIENT, plugin_id=MTT_PLUGIN_ID_DOCKER_CLIENT)
+def mtt_plugin_factory_client_docker(config: Config, instance_id: str = ''):
+    """ create an mtt client dict plugin """
+    return DockerClientPlugin(config, instance_id)

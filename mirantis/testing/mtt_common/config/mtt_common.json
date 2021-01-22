@@ -1,9 +1,0 @@
-{
-    "terraform" : {
-        "platform": "aws",
-        "plans" : {
-            "example" : "{_source_:mtt_common_root}/terraform/{terraform.platform}/launchpad_example",
-            "systemtest" : "{_source_:mtt_common_root}/terraform/{terraform.platform}/mirantis_systemtest"
-        }
-    }
-}

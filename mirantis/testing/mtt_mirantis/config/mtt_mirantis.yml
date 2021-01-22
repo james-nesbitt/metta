@@ -1,0 +1,6 @@
+terraform:
+    plans:
+        prodeng:
+            aws: "{paths:mtt_mirantis}/terraform/plans/prodeng/aws"
+        example:
+            aws: "{paths:mtt_mirantis}/terraform/plans/example/aws"
