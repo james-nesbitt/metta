@@ -5,6 +5,8 @@ A mock provisioner to act as a backend when the cluster is already provisioned
 """
 
 import yaml
+import json
+import re
 import logging
 import os.path
 import mirantis.testing.mtt as mtt
@@ -17,6 +19,9 @@ MTT_COMMON_PROVISIONER_EXISTING_CONFIG_KEY_OUTPUTS = 'outputs'
 """ what Config.load('provisioner').get(KEY) do we use to get a list of outputs for an existing system """
 MTT_COMMON_PROVISIONER_EXISTING_CONFIG_KEY_CLIENTS = 'clients'
 """ what Config.load('provisioner').get(KEY) do we use to get a list of clients for an existing system """
+MTT_COMMON_PROVISIONER_EXISTING_REGEX_OUTPUT_IS_A_FILE = r'^file:(?P<file>[\/~\w]*\.(json|yaml|yml))$'
+""" Default regex pattern used to string template, which needs to identify if an output value is a file """
+
 class ExistingBackendProvisionerPlugin(ProvisionerBase):
     """ Existing backend provisioner
 
@@ -69,10 +74,41 @@ class ExistingBackendProvisionerPlugin(ProvisionerBase):
         pass
 
     def output(self, output_id: str):
-        """ Return our mock output name """
+        """ Return our mock output name
 
+        if we have an output key stored in the mock output then return it.
+
+        if the output value matches our regex indicating that it is pointing to
+        a yaml/json file then return the parsed data.
+
+        We do not keep the parsed data, and will parse it again on the next request
+
+        """
         if output_id in self.outputs:
-            return self.outputs[output_id]
+            output = self.outputs[output_id]
+            match = re.match(MTT_COMMON_PROVISIONER_EXISTING_REGEX_OUTPUT_IS_A_FILE, output)
+            if match is not None:
+                file = match.group('file')
+                extension = os.path.splitext(file)[1].lower()
+                file_output = ''
+                with open(file) as matching_file:
+                    if extension == ".json":
+                        try:
+                            file_output = json.load(matching_file)
+                        except json.decoder.JSONDecodeError as e:
+                            raise ValueError("Failed to parse one of the config files '{}': {}".format(matching_file, e))
+                    elif extension == ".yml" or extension == ".yaml":
+                        try:
+                            file_output = yaml.load(matching_file, Loader=yaml.FullLoader)
+                        except yaml.YAMLError as e:
+                            raise ValueError("Failed to parse the output file '{}': {}".format(matching_file, e))
+                    else:
+                        raise ValueError("told to load '{}}', but could not intepret its extension".format(matching_file))
+
+                assert file_output, "Empty output from {}".format(matching_file)
+                return file_output
+            else:
+                return output
 
         raise KeyError("Existing provisioner plugin was not given the requested output: %s", output_id)
 

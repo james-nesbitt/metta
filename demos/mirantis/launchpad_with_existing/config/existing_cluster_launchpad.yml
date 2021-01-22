@@ -1,0 +1,28 @@
+THIS IS AN EXAMPLE FILE, REPLACE IT WITH YOUR LAUNCHPAD FILE
+
+"apiVersion": "launchpad.mirantis.com/mke/v1.1"
+"kind": "mke"
+"metadata":
+  "name": "existing" <== this has to match what we configure in launchpad.yml
+"spec":
+  "engine":
+    "channel": "stable"
+    "version": "19.03.14"
+  "hosts":
+
+      ... some hosts here ...
+
+  "mke":
+    "imageRepo": "docker.io/mirantis"
+    "installFlags":
+    - "--admin-username=admin"
+    - "--admin-password=orcaorcaorca"
+    - "--default-node-orchestrator=kubernetes"
+    - "--san=<get this from your backend>"
+    "version": "3.3.5"
+  "msr":
+    "imageRepo": "docker.io/mirantis"
+    "installFlags":
+    - "--ucp-insecure-tls"
+    "replicaIDs": "sequential"
+    "version": "2.8.5"

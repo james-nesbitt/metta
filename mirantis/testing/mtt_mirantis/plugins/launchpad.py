@@ -5,6 +5,7 @@ Launchpad MTT provisioner pluging
 """
 
 import json
+import yaml
 import os.path
 import subprocess
 import logging
@@ -21,7 +22,7 @@ logger = logging.getLogger("mirantis.testing.mtt_mirantis:launchpad_prov")
 
 MTT_LAUNCHPAD_CONFIG_LABEL = 'launchpad'
 """ Launchpad config label for configuration """
-MTT_LAUNCHPAD_CONFIG_BACKEND_CLUSTER_NAME_KEY = 'cluster_name'
+MTT_LAUNCHPAD_CONFIG_CLUSTER_NAME_KEY = 'cluster_name'
 """ Launchpad config backend cluster_name key """
 MTT_LAUNCHPAD_CONFIG_BACKEND_PLUGIN_ID_KEY = 'backend.plugin_id'
 """ Launchpad config backend plugin_id key """
@@ -86,7 +87,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         else:
             self.working_dir = MTT_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT
 
-        self.cluster_name = launchpad_config.get(MTT_LAUNCHPAD_CONFIG_BACKEND_CLUSTER_NAME_KEY)
+        self.cluster_name = launchpad_config.get(MTT_LAUNCHPAD_CONFIG_CLUSTER_NAME_KEY)
 
         self.backend_plugin_id = launchpad_config.get(
             MTT_LAUNCHPAD_CONFIG_BACKEND_PLUGIN_ID_KEY,
@@ -103,21 +104,25 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         if not self.config_file:
             self.config_file =  os.path.realpath(MTT_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT)
 
+        # here we try to create a provisioner plugin to act as the launchpad plugin.
+        # we rely on config from .load(launchpad) to pick a plugin and then we
+        # create a config object with config to override the actual provisioner
+        # If the launchpad config had some config then we use it, otherwise we
+        # make some provisioner config with just a plugin_id in it
         logger.info("Launchpad provisioner now attempting to load %s backend plugin", self.backend_plugin_id)
         backend_provisioner_instance_id = "{}_backend".format(self.instance_id)
-        backend_provisioner_config_label = "{}_launchpad_backend_provisioner".format(self.instance_id)
-
-        backend_provisioner_config_data = launchpad_config.get(MTT_LAUNCHPAD_CONFIG_BACKEND_CONFIG_KEY)
-        if not backend_provisioner_config_data:
-            backend_provisioner_config_data = {
-                backend_provisioner_config_label: {
+        backend_provisioner_config_priority = self.config.default_priority()+10
+        backend_provisioner_config = launchpad_config.get(MTT_LAUNCHPAD_CONFIG_BACKEND_CONFIG_KEY)
+        if not backend_provisioner_config:
+            backend_provisioner_config = {
+                mtt.MTT_PROVISIONER_CONFIG_LABEL_DEFAULT: {
                     mtt.MTT_PROVISIONER_CONFIG_KEY_PLUGINID: self.backend_plugin_id
                 }
             }
 
-        backend_provisioner_config_priority = self.config.default_priority()+10
-        self.config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_DICT, backend_provisioner_instance_id, backend_provisioner_config_priority).set_data(backend_provisioner_config_data)
-        self.backend = mtt.new_provisioner_from_config(self.config, backend_provisioner_instance_id, backend_provisioner_config_label)
+        backend_config = self.config.copy()
+        backend_config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_DICT, backend_provisioner_instance_id, backend_provisioner_config_priority).set_data(backend_provisioner_config)
+        self.backend = mtt.new_provisioner_from_config(backend_config, backend_provisioner_instance_id)
 
         if self.backend.instance_id == self.instance_id:
             raise Exception("It looks like the launchpad provisioner has itself registered as its own backend. This will create an infinite loop.")
@@ -140,6 +145,9 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             raise ValueError("Launchpad did not get necessary config from the backend output '%s'", self.backend_output_name)
         os.makedirs(os.path.dirname(os.path.realpath(self.config_file)), exist_ok=True)
         with open(os.path.realpath(self.config_file), 'w') as file:
+            if isinstance(output, dict):
+                output = yaml.dump(output)
+
             file.write(output if output else "")
 
 
@@ -233,8 +241,11 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             # doubles in the array are not a big deal
             self.downloaded_bundle_users.append(user)
 
-        with open(client_bundle_meta_file) as json_file:
-            data = json.load(json_file)
+        try:
+            with open(client_bundle_meta_file) as json_file:
+                data = json.load(json_file)
+        except FileNotFoundError as e:
+            raise ValueError("failed to open the launchpad client bundle meta file.  This usually means that the cluster_name doesn't match.") from e
 
         data['path'] = client_bundle_path
         data['tls_paths'] = {

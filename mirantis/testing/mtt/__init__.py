@@ -91,12 +91,18 @@ def new_workloads_from_config(config: Config, label:str=MTT_WORKLOAD_CONFIG_LABE
 
     """
 
-    workload_config = config.load(label)
-    workload_list = workload_config.get(key)
-
-    #assert isinstance(workload_list, Dict[str, Dict]), "workloads was expected to be a Dict of plugin configuration"
-
     workloads = {}
+
+    try:
+        workload_config = config.load(label)
+        workload_list = workload_config.get(key, exception_if_missing=True)
+    except KeyError as e:
+        # there is not config so we can ignore this
+        return workloads
+
+    if not instanceof(workload_list, dict):
+        return workloads
+
     for instance_id, workload_config in workload_list.items():
         plugin_id = workload_config[MTT_WORKLOAD_CONFIG_KEY_PLUGINID]
         workload = make_workload(plugin_id, config, instance_id)
@@ -122,14 +128,21 @@ def new_clients_from_config(config: Config, label:str=MTT_CLIENT_CONFIG_LABEL, k
     This method will interpret some config values as being usable to build a Dict
     of clients from.
     """
-    client_config = config.load(label)
-    client_list = client_config.get(key)
+    clients = {}
 
+    try:
+        client_config = config.load(label)
+        client_list = client_config.get(key, exception_if_missing=True)
+    except KeyError as e:
+        # there is not config so we can ignore this
+        return clients
+
+    if not client_list:
+        return clients
     if not isinstance(client_list, dict):
         raise ValueError('Did not receive a good dict of client config to make clients from: %s', client_list)
     #assert isinstance(client_list, Dict[str, Dict]), "clients was expected to be a Dict of plugin configuration"
 
-    clients = {}
     for instance_id, client_config in client_list.items():
         plugin_id = client_config[MTT_CLIENT_CONFIG_KEY_PLUGINID]
         client = make_client(plugin_id, config, instance_id)

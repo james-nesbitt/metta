@@ -162,7 +162,7 @@ class TerraformClient:
 
         """
         try:
-            lockfile = os.path.join(self.state_path, '.terraform.mtt_mirantis.init.lock')
+            lockfile = os.path.join(os.path.dirname(self.state_path), '.terraform.mtt_mirantis.init.lock')
             if os.path.exists(lockfile):
                 logger.info('terraform .init lock file found.  Skipping init, but waiting for it to finish')
                 time_to_wait = 120
