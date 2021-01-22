@@ -39,9 +39,6 @@ MTT_COMMON_DEFAULT_SOURCE_PRIORITY = 35
 def add_common_config(config: Config, priority:int=MTT_COMMON_DEFAULT_SOURCE_PRIORITY):
     """ Add some common configuration sources """
 
-    # add mtt_common/config as a set of default configs
-    config.add_source(MTT_PLUGIN_ID_CONFIGSOURCE_PATH, 'common', priority).set_path(MTT_COMMON_CONFIG_PATH)
-
     # a user config path (like ~/.config/mtt) may contain config
     user_conf_path = appdirs.user_config_dir(MTT_COMMON_APP_NAME)
     if os.path.exists(user_conf_path):
