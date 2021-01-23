@@ -210,7 +210,10 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             return docker_client
 
         else:
-            raise KeyError("Launchpad cannot create client, unknown type %s", type)
+            try:
+                return self.backend.get_client(type)
+            except Exception as e
+                raise KeyError("Launchpad cannot create client, unknown type %s", type) from e
 
     def _exec(self, target: str, cmd: List[str]):
         """ Execute a command on some of the hosts
