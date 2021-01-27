@@ -39,8 +39,14 @@ def make_workload(plugin_id: str, config: Config, instance_id: str = ''):
 
     """
     logger.debug("Creating workload plugin: %s:%s".format(plugin_id, instance_id))
-    workload_factory = PluginFactory(MTT_PLUGIN_ID_WORKLOAD, plugin_id)
-    workload = workload_factory.create(config, instance_id)
+    try:
+        workload_factory = PluginFactory(MTT_PLUGIN_ID_WORKLOAD, plugin_id)
+        workload = workload_factory.create(config, instance_id)
+
+    except NotImplementedError as e:
+        raise NotImplementedError("Could not create workload '{}' as that plugin_id could not be found.".format(plugin_id)) from e
+    except Exception as e:
+        raise Exception("Could not create workload '{}' as the plugin factory produced an exception".format(plugin_id)) from e
 
     if not isinstance(workload, WorkloadBase):
         logger.warn("Created workload plugin does not extend the WorkloadBase")

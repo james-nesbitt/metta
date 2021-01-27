@@ -40,13 +40,6 @@ MTT_LAUNCHPAD_BACKEND_OUTPUT_NAME_DEFAULT = 'mke_cluster'
 MTT_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT = './launchpad.yml'
 """ Launchpad config configuration file key """
 
-MTT_USER_LAUNCHPAD_CLUSTER_PATH = os.path.join(os.path.expanduser('~'), '.mirantis-launchpad', 'cluster')
-""" the str path to where launchpad keeps its user config """
-MTT_USER_LAUNCHPAD_BUNDLE_SUBPATH = 'bundle'
-""" str path to user bundle config can be found when it is downloaded """
-MTT_USER_LAUNCHPAD_BUNDLE_META_FILE = 'meta.json'
-""" str filename for the meta file in the client bundle path """
-
 class LaunchpadProvisionerPlugin(ProvisionerBase):
     """ Launchpad provisioner class
 
@@ -150,14 +143,11 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
             file.write(output if output else "")
 
-
+        logger.debug("Creating Launchpad API client")
         self.client = LaunchpadClient(config_file=self.config_file, working_dir=self.working_dir)
-        logger.info("Using launchpad to install products onto backend cluster")
         try:
+            logger.info("Using launchpad to install products onto backend cluster")
             self.client.install()
-            # forget about any bundles we downloaded as they may be invalid now
-            self.downloaded_bundle_users = []
-            pass
         except Exception as e:
             raise Exception("Launchpad failed to install") from e
 
@@ -178,15 +168,18 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         }
         return info
 
-    def get_client(self, type:str, user:str='admin'):
+    def get_client(self, type:str, user:str='admin', reload:bool=False):
         """ Make a client for interacting with the cluster """
+        logger.info("Launchpad provisioner retrieving a client {}".format(type))
 
-        bundle_info = self._mke_client_bundle(user)
-        client_bundle_path = self._mke_client_bundle_path(user)
+        assert self.client, "Don't have a launchpad client configured yet, can't retrieve a bundle until we install."
+
+        bundle_info = self._mke_client_bundle(user, reload)
+        """ holds retrieved bundle information from MKE """
 
         # @TODO get this into a public enum
         if type == mtt_kubernetes.MTT_PLUGIN_ID_KUBERNETES_CLIENT:
-            kube_config = os.path.join(client_bundle_path, "kube.yml")
+            kube_config = os.path.join(bundle_info['path'], "kube.yml")
             if not os.path.exists(kube_config):
                 raise NotImplemented("Launchpad was asked for a kubernetes client, but not kube config file was in the client bundle.  Are you sure this is a kube cluster?")
 
@@ -215,60 +208,30 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             except Exception as e:
                 raise KeyError("Launchpad cannot create client, unknown type %s", type) from e
 
-    def _exec(self, target: str, cmd: List[str]):
-        """ Execute a command on some of the hosts
-
-        A complicated operation for logistics.
-
-        Returns:
-
-        Dict[str,str] of responses for each node on which it was executed keyed
-        to the HOSTNAME of the node
-        """
-        pass
-
-    def _mke_client_bundle_path(self, user:str):
-        """ find teh path to a client bundle for a user """
-        return os.path.join(MTT_USER_LAUNCHPAD_CLUSTER_PATH, self.cluster_name,  MTT_USER_LAUNCHPAD_BUNDLE_SUBPATH, user)
 
     def _mke_client_bundle(self, user: str, reload: bool=False):
-        """ Retrieve the MKE Client bundle """
+        """ Retrieve the MKE Client bundle metadata using the client """
 
         assert self.client, "Don't have a launchpad client configured yet"
+        return self.client.bundle(user, reload)
 
-        client_bundle_path = self._mke_client_bundle_path(user)
-        client_bundle_meta_file = os.path.join(client_bundle_path, MTT_USER_LAUNCHPAD_BUNDLE_META_FILE)
 
-        if reload or not user in self.downloaded_bundle_users:
-            self.client.bundle(user)
-            # doubles in the array are not a big deal
-            self.downloaded_bundle_users.append(user)
-
-        try:
-            with open(client_bundle_meta_file) as json_file:
-                data = json.load(json_file)
-        except FileNotFoundError as e:
-            raise ValueError("failed to open the launchpad client bundle meta file.  This usually means that the cluster_name doesn't match.") from e
-
-        data['path'] = client_bundle_path
-        data['tls_paths'] = {
-            "docker": os.path.join(client_bundle_path, "tls", "docker"),
-            "kubernetes": os.path.join(client_bundle_path, "tls", "kubernetes"),
-        }
-
-        return data
-
-MTT_LAUNCHPADCLIENT_CONFIGFILE_DEFAULT = './launchpad.yml'
-""" Launchpad Client default config file """
 MTT_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT = '.'
 """ Launchpad Client default working dir """
 MTT_LAUNCHPADCLIENT_BIN_PATH = 'launchpad'
 """ Launchpad bin exec for the subprocess """
 
+MTT_USER_LAUNCHPAD_CLUSTER_PATH = os.path.expanduser(os.path.join('~', '.mirantis-launchpad', 'cluster'))
+""" the str path to where launchpad keeps its user config """
+MTT_USER_LAUNCHPAD_BUNDLE_SUBPATH = 'bundle'
+""" str path to user bundle config can be found when it is downloaded """
+MTT_USER_LAUNCHPAD_BUNDLE_META_FILE = 'meta.json'
+""" str filename for the meta file in the client bundle path """
+
 class LaunchpadClient:
     """ shell client for interacting with the launchpad bin """
 
-    def __init__(self, config_file:str=MTT_LAUNCHPADCLIENT_CONFIGFILE_DEFAULT,
+    def __init__(self, config_file:str=MTT_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
                  working_dir:str=MTT_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT):
         """
         Parameters:
@@ -289,18 +252,59 @@ class LaunchpadClient:
         self.bin = MTT_LAUNCHPADCLIENT_BIN_PATH
         """ shell execution target for launchpad """
 
+        self.downloaded_bundle_users = []
+        """ hold a list of bundles we've downloaded to avoid repeats """
+
+        try:
+            with open(config_file) as config_file_object:
+                self.config_data = yaml.load(config_file_object, Loader=yaml.FullLoader)
+                """ keep a parsed copy of the launchpad file """
+        except Exception as e:
+            raise ValueError(ValueError("Launchpad yaml file had unexpected contents: {}".format(config_file))) from e
+
+        if not isinstance(self.config_data, dict):
+            raise ValueError("Launchpad yaml file had unexpected contents: {}".format(config_file))
+
+        self.cluster_name = self.config_data['metadata']['name']
+        """ What does launchpad think the cluster name us """
+
     def install(self):
-        self.exec(["apply"])
+        """ Install using the launchpad client """
+        self._run(["apply"])
+        self.downloaded_bundle_users = []
 
-    def upgrade(self):
-        """ Upgrade the cluster """
-        pass
+    def bundle(self, user:str, reload:bool=False):
+        """ Retrieve a client bundle and return the metadata as a dict """
+        client_bundle_path = self._mke_client_bundle_path(user)
+        client_bundle_meta_file = os.path.join(client_bundle_path, MTT_USER_LAUNCHPAD_BUNDLE_META_FILE)
 
-    def bundle(self, user:str):
-        """ Upgrade the cluster """
-        self.exec(["client-config", user])
+        if reload or not os.path.isfile(client_bundle_meta_file) or not user in self.downloaded_bundle_users:
+            self._run(["client-config", user])
+            self.downloaded_bundle_users.append(user)
 
-    def exec(self, args:List[str]=['help']):
+        data = {}
+        """ Will hold data pulled from the client meta data file """
+        try:
+            with open(client_bundle_meta_file) as json_file:
+                data = json.load(json_file)
+        except FileNotFoundError as e:
+            raise ValueError("failed to open the launchpad client bundle meta file.") from e
+
+        # add some stuff that a client bundle always has
+        data['path'] = client_bundle_path
+        # this stuff should already be in the bundle, but it isn't """
+        data['tls_paths'] = {
+            "docker": os.path.join(client_bundle_path, "tls", "docker"),
+            "kubernetes": os.path.join(client_bundle_path, "tls", "kubernetes"),
+        }
+
+        return data
+
+    def _mke_client_bundle_path(self, user:str):
+        """ find the path to a client bundle for a user """
+        return os.path.join(MTT_USER_LAUNCHPAD_CLUSTER_PATH, self.cluster_name,  MTT_USER_LAUNCHPAD_BUNDLE_SUBPATH, user)
+
+    def _run(self, args:List[str]=['help']):
         """ Run a launchpad command
 
         Parameters:

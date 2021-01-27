@@ -84,5 +84,7 @@ class Factory():
             factory = self.registry[self.type.value][self.plugin_id]
         except KeyError:
             raise NotImplementedError("MTT Plugin instance '{}:{}' has not been registered.".format(self.type.value, self.plugin_id))
+        except Exception as e:
+            raise Exception("Could not create Plugin instance '{}:{}' as the plugin factory produced an exception".format(self.type.value, self.plugin_id)) from e
 
         return factory(config=config, instance_id=instance_id)
