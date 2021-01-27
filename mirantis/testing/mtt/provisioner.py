@@ -11,12 +11,25 @@ MTT_PLUGIN_ID_PROVISIONER = PluginType.PROVISIONER
 class ProvisionerBase(MTTPlugin):
     "Base Provisioner plugin class"
 
+    def prepare(self):
+        """ Prepare the provisioner to apply resources """
+        pass
+
     def apply(self):
         """ bring a cluster to the configured state """
         pass
 
     def destroy(self):
         """ remove all resources created for the cluster """
+        pass
+
+    def get_output(self, name:str):
+        """ retrieve an output from the provisioner """
+        pass
+
+    def get_client(self, type:str, index:str=''):
+        """ make a client of the type, and optionally of the index """
+        pass
 
 
 def make_provisioner(plugin_id:str, config:Config, instance_id:str=''):
@@ -52,8 +65,7 @@ def make_provisioner(plugin_id:str, config:Config, instance_id:str=''):
 
     except NotImplementedError as e:
         raise NotImplementedError("Could not create provisioner '{}' as that plugin_id could not be found.".format(plugin_id)) from e
-    except Exception as e:
-        raise Exception("Could not create provisioner '{}' as the plugin factory produced an exception".format(plugin_id)) from e
+
 
     if not isinstance(provisioner, ProvisionerBase):
         logger.warn("Created provisioner plugin does not extend the ProvisionerBase")

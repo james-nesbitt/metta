@@ -131,7 +131,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
         # @TODO make something less terraform specific to get the launchpad yml file
         try:
-            output = self.backend.output(self.backend_output_name)
+            output = self.backend.get_output(self.backend_output_name)
         except Exception as e:
             raise Exception("Launchpad could not retrieve YML configuration from the backend") from e
         if not output:
@@ -159,14 +159,9 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
     """ CLUSTER INTERACTION """
 
-    def info(self):
-        """ Get some readable info about the test cluster """
-        info = {
-            "provisioner": __file__,
-            "backend": self.backend_plugin_name,
-            "output": self.output
-        }
-        return info
+    def get_output(self, name:str):
+        """ Get the outputs, either the launchpad yml or a backend output """
+        pass
 
     def get_client(self, type:str, user:str='admin', reload:bool=False):
         """ Make a client for interacting with the cluster """

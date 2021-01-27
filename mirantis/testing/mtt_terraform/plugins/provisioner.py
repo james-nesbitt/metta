@@ -120,7 +120,9 @@ class TerraformProvisionerPlugin(ProvisionerBase):
         if os.isdir(dot_terraform):
             shutil.rmtree(dot_terraform)
 
-    def output(self, name: str):
+    """ Cluster Interaction """
+
+    def get_output(self, name: str):
         """ retrieve an output from terraform """
         logger.debug("Retrieving terraform output '%s'", name)
         return self.tf.output(name)

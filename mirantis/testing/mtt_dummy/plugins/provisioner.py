@@ -21,3 +21,12 @@ class DummyProvisionerPlugin(ProvisionerBase):
 
     def destroy(self):
         """ pretend to brind a cluster down """
+        pass
+
+    def get_output(self, name:str):
+        """ Retrieve a dummy output """
+        pass
+
+    def get_client(self, type:str, user:str='admin'):
+        """ Make a client as directed by the provisioner config """
+        pass
