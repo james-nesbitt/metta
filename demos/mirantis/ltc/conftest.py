@@ -112,7 +112,7 @@ def provisioner_up(config, provisioner):
 
     yield provisioner
 
-    if conf.get("options.destroy-on-finish", exception_if_missing=False):
+    if conf.get("destroy-on-finish", exception_if_missing=False):
         try:
             logger.info("Stopping the test cluster using the provisioner as directed by config")
             provisioner.destroy()

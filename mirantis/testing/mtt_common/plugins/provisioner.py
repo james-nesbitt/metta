@@ -112,7 +112,7 @@ class ExistingBackendProvisionerPlugin(ProvisionerBase):
 
         raise KeyError("Existing provisioner plugin was not given the requested output: %s", output_id)
 
-    def client(self, client_id: str):
+    def get_client(self, client_id: str):
         """ Create clients from the mock client configuration """
 
         if client_id in self.clients:
