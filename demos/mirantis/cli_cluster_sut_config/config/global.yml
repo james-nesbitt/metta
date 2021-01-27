@@ -1,0 +1,4 @@
+id: "oc"
+project: "TAR"
+
+kube_orchestration: true
