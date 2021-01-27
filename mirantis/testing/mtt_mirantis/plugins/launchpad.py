@@ -212,7 +212,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         else:
             try:
                 return self.backend.get_client(type)
-            except Exception as e
+            except Exception as e:
                 raise KeyError("Launchpad cannot create client, unknown type %s", type) from e
 
     def _exec(self, target: str, cmd: List[str]):
