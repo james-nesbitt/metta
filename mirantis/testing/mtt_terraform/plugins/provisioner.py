@@ -78,7 +78,6 @@ class TerraformProvisionerPlugin(ProvisionerBase):
         self.terraform_config = self.config.load(label)
 
         self.working_dir = self.terraform_config.get(MTT_TERRAFORM_PROVISIONER_CONFIG_PLAN_PATH_KEY)
-        # assert self.working_dir, "No terraform plan path was provided in the terraform configuration"
 
         state_path = self.terraform_config.get(MTT_TERRAFORM_PROVISIONER_CONFIG_STATE_PATH_KEY, exception_if_missing=False)
         if not state_path:
@@ -180,33 +179,32 @@ class TerraformClient:
                 finally:
                     os.remove(lockfile)
         except subprocess.CalledProcessError as e:
-            logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.stdout)
-            raise e
+            logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.output)
+            raise Exception("Terraform client failed to run init") from e
 
     def apply(self):
         """ Apply a terraform plan """
         try:
             self._run(["apply", "-auto-approve"], with_state=True, with_vars=True, return_output=False)
         except subprocess.CalledProcessError as e:
-            logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.stdout)
-            raise e
-
+            logger.error("Terraform client failed to run apply in %s: %s", self.working_dir, e.stderr)
+            raise Exception("Terraform client failed to run apply") from e
 
     def destroy(self):
         """ Apply a terraform plan """
         try:
             self._run(["destroy", "-auto-approve"], with_state=True, with_vars=True, return_output=False)
         except subprocess.CalledProcessError as e:
-            logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.stdout)
-            raise e
+            logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.output)
+            raise Exception("Terraform client failed to run destroy") from e
 
     def output(self, name: str):
         """ Destroy the terraform infra """
         try:
             return self._run(['output', '-raw'], [name], with_vars=False, return_output=True)
         except subprocess.CalledProcessError as e:
-            logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.stdout)
-            raise e
+            logger.error("Terraform client failed to run init in %s: %s", self.working_dir, e.output)
+            raise Exception("Terraform client failed to retrieve output") from e
 
     def _make_vars_file(self):
         """ write the vars file """
@@ -236,5 +234,5 @@ class TerraformClient:
             return exec.stdout.decode("utf-8")
         else:
             logger.debug("running terraform command: %s", " ".join(cmd))
-            exec = subprocess.run(cmd, cwd=self.working_dir)
+            exec = subprocess.run(cmd, cwd=self.working_dir, check=True, text=True)
             exec.check_returncode()

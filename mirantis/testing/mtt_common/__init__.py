@@ -8,9 +8,6 @@ from mirantis.testing.mtt.config import Config
 from .plugins.config import ConfigSourceDictPlugin, ConfigSourcePathPlugin
 from .plugins.provisioner import ExistingBackendProvisionerPlugin
 
-MTT_COMMON_CONFIG_PATH=pkg_resources.resource_filename("mirantis.testing.mtt_common", "config")
-""" Path to the MTT Mirantis config preset configurations """
-
 MTT_PLUGIN_ID_CONFIGSOURCE_DICT = 'dict'
 """ ConfigSource plugin_id for the mtt common dict plugin """
 @mtt_plugin.Factory(type=mtt_plugin.Type.CONFIGSOURCE, plugin_id=MTT_PLUGIN_ID_CONFIGSOURCE_DICT)

@@ -19,7 +19,7 @@ class ProvisionerBase(MTTPlugin):
         """ remove all resources created for the cluster """
 
 
-def make_provisioner(plugin_id: str, config: Config, instance_id: str = ''):
+def make_provisioner(plugin_id:str, config:Config, instance_id:str=''):
     """ Create a new provisioner plugin
 
     Parameters:
@@ -43,8 +43,17 @@ def make_provisioner(plugin_id: str, config: Config, instance_id: str = ''):
 
     """
     logger.debug("Creating provisioner plugin: %s:%s".format(plugin_id, instance_id))
-    provisioner_factory = PluginFactory(MTT_PLUGIN_ID_PROVISIONER, plugin_id)
-    provisioner = provisioner_factory.create(config, instance_id)
+
+    if not plugin_id:
+        raise KeyError("Could not create a provisioner as an invalid plugin_id was given: '{}'".format(plugin_id))
+    try:
+        provisioner_factory = PluginFactory(MTT_PLUGIN_ID_PROVISIONER, plugin_id)
+        provisioner = provisioner_factory.create(config, instance_id)
+
+    except NotImplementedError as e:
+        raise NotImplementedError("Could not create provisioner '{}' as that plugin_id could not be found.".format(plugin_id)) from e
+    except Exception as e:
+        raise Exception("Could not create provisioner '{}' as the plugin factory produced an exception".format(plugin_id)) from e
 
     if not isinstance(provisioner, ProvisionerBase):
         logger.warn("Created provisioner plugin does not extend the ProvisionerBase")

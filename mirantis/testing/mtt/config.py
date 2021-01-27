@@ -118,7 +118,7 @@ class Config():
         copy.sources = self.sources.copy()
         return copy
 
-    def add_source(self, plugin_id: str, instance_id: str = '', priority: int=CONFIG_SOURCE_DEFAULT_PRIORITY):
+    def add_source(self, plugin_id:str, instance_id:str='', priority:int=CONFIG_SOURCE_DEFAULT_PRIORITY):
         """ add a new config source to the config object and return it
 
         Parameters:
@@ -143,8 +143,19 @@ class Config():
         supports, and the code here doesn't need to get fancy with function arguments
 
         """
-        source_fac = PluginFactory(MTT_PLUGIN_ID_CONFIGSOURCE, plugin_id)
-        source = source_fac.create(self, instance_id)
+        if not plugin_id:
+            raise KeyError("Could not create a config source as an invalid plugin_id was given: '{}'".format(plugin_id))
+
+        try:
+            source_fac = PluginFactory(MTT_PLUGIN_ID_CONFIGSOURCE, plugin_id)
+            source = source_fac.create(self, instance_id)
+
+        except NotImplementedError as e:
+            raise NotImplementedError("Could not create config source '{}' as that plugin_id could not be found.".format(plugin_id)) from e
+        except Exception as e:
+            raise Exception("Could not create config source '{}' as the plugin factory produced an exception".format(plugin_id)) from e
+
+
         if not priority in self.sources:
             self.sources[priority] = []
         self.sources[priority].append(source)
