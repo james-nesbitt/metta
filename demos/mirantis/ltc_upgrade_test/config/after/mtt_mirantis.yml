@@ -1,0 +1,2 @@
+# this will tell mtt_mirantis to include mtt_mirantis/config/release/patch/202101
+release: patch/202012

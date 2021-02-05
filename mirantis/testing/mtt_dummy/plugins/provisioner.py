@@ -5,6 +5,7 @@ Dummy MTT provisioner plugin
 """
 
 import logging
+
 from mirantis.testing.mtt.provisioner import ProvisionerBase
 
 logger = logging.getLogger('mirantis.testing.mtt_dummy.provisioner')

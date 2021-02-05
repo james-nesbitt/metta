@@ -1,7 +1,8 @@
-
 import functools
 import logging
 from enum import Enum, unique
+
+from configerus.config import Config
 
 logger = logging.getLogger('mirantis.testing.mtt.plugin')
 
@@ -67,7 +68,7 @@ class Factory():
 
         wrapped function(config: Config)
         """
-        def wrapper(config, instance_id: str):
+        def wrapper(config:Config, instance_id: str):
             logger.debug("plugin factory exec: %s:%s", self.type.value, self.plugin_id)
             plugin = func(config=config, instance_id=instance_id)
             if not isinstance(plugin, MTTPlugin):
@@ -78,7 +79,7 @@ class Factory():
         self.registry[self.type.value][self.plugin_id] = wrapper
         return wrapper
 
-    def create(self, config, instance_id: str):
+    def create(self, config:Config, instance_id: str):
         """ Get an instance of a plugin as created by the decorated """
         try:
             factory = self.registry[self.type.value][self.plugin_id]

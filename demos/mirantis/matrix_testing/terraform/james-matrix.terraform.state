@@ -1,0 +1,2299 @@
+{
+  "version": 4,
+  "terraform_version": "0.14.4",
+  "serial": 33,
+  "lineage": "b707d1bc-d44d-0200-95dd-586b97e17b35",
+  "outputs": {
+    "_mke_cluster": {
+      "value": {
+        "hosts": [
+          {
+            "address": "3.12.150.136",
+            "privateIp": "172.31.0.77",
+            "role": "manager",
+            "ssh": {
+              "keyPath": "./ssh_keys/james-matrix.pem",
+              "user": "ec2-user"
+            }
+          },
+          {
+            "address": "3.139.239.237",
+            "privateIp": "172.31.0.172",
+            "role": "worker",
+            "ssh": {
+              "keyPath": "./ssh_keys/james-matrix.pem",
+              "user": "ec2-user"
+            }
+          },
+          {
+            "address": "18.188.164.213",
+            "privateIp": "172.31.1.213",
+            "role": "worker",
+            "ssh": {
+              "keyPath": "./ssh_keys/james-matrix.pem",
+              "user": "ec2-user"
+            }
+          },
+          {
+            "address": "52.15.253.129",
+            "privateIp": "172.31.2.138",
+            "role": "worker",
+            "ssh": {
+              "keyPath": "./ssh_keys/james-matrix.pem",
+              "user": "ec2-user"
+            }
+          }
+        ]
+      },
+      "type": [
+        "object",
+        {
+          "hosts": [
+            "tuple",
+            [
+              [
+                "object",
+                {
+                  "address": "string",
+                  "privateIp": "string",
+                  "role": "string",
+                  "ssh": [
+                    "object",
+                    {
+                      "keyPath": "string",
+                      "user": "string"
+                    }
+                  ]
+                }
+              ],
+              [
+                "object",
+                {
+                  "address": "string",
+                  "privateIp": "string",
+                  "role": "string",
+                  "ssh": [
+                    "object",
+                    {
+                      "keyPath": "string",
+                      "user": "string"
+                    }
+                  ]
+                }
+              ],
+              [
+                "object",
+                {
+                  "address": "string",
+                  "privateIp": "string",
+                  "role": "string",
+                  "ssh": [
+                    "object",
+                    {
+                      "keyPath": "string",
+                      "user": "string"
+                    }
+                  ]
+                }
+              ],
+              [
+                "object",
+                {
+                  "address": "string",
+                  "privateIp": "string",
+                  "role": "string",
+                  "ssh": [
+                    "object",
+                    {
+                      "keyPath": "string",
+                      "user": "string"
+                    }
+                  ]
+                }
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    "cluster_name": {
+      "value": "james-matrix",
+      "type": "string"
+    },
+    "mke_cluster": {
+      "value": {
+        "apiVersion": "launchpad.mirantis.com/mke/v1.1",
+        "kind": "mke",
+        "metadata": {
+          "name": "james-matrix"
+        },
+        "spec": {
+          "engine": {
+            "channel": "stable",
+            "version": "19.03.14"
+          },
+          "hosts": [
+            {
+              "address": "3.12.150.136",
+              "hooks": {
+                "apply": {
+                  "after": [
+                    ""
+                  ],
+                  "before": [
+                    ""
+                  ]
+                }
+              },
+              "role": "manager",
+              "ssh": {
+                "keyPath": "./ssh_keys/james-matrix.pem",
+                "user": "ec2-user"
+              }
+            },
+            {
+              "address": "3.139.239.237",
+              "hooks": {
+                "apply": {
+                  "after": [
+                    ""
+                  ],
+                  "before": [
+                    ""
+                  ]
+                }
+              },
+              "role": "worker",
+              "ssh": {
+                "keyPath": "./ssh_keys/james-matrix.pem",
+                "user": "ec2-user"
+              }
+            },
+            {
+              "address": "18.188.164.213",
+              "hooks": {
+                "apply": {
+                  "after": [
+                    ""
+                  ],
+                  "before": [
+                    ""
+                  ]
+                }
+              },
+              "role": "worker",
+              "ssh": {
+                "keyPath": "./ssh_keys/james-matrix.pem",
+                "user": "ec2-user"
+              }
+            },
+            {
+              "address": "52.15.253.129",
+              "hooks": {
+                "apply": {
+                  "after": [
+                    ""
+                  ],
+                  "before": [
+                    ""
+                  ]
+                }
+              },
+              "role": "worker",
+              "ssh": {
+                "keyPath": "./ssh_keys/james-matrix.pem",
+                "user": "ec2-user"
+              }
+            }
+          ],
+          "mke": {
+            "imageRepo": "docker.io/mirantis",
+            "installFlags": [
+              "--admin-username=admin",
+              "--admin-password=orcaorcaorca",
+              "--default-node-orchestrator=kubernetes",
+              "--san=james-matrix-manager-lb-54018fc526307bbb.elb.us-east-2.amazonaws.com"
+            ],
+            "version": "3.3.5"
+          },
+          "msr": {
+            "imageRepo": "docker.io/mirantis",
+            "installFlags": [
+              "--ucp-insecure-tls"
+            ],
+            "replicaIDs": "sequential",
+            "version": "2.8.5"
+          }
+        }
+      },
+      "type": [
+        "object",
+        {
+          "apiVersion": "string",
+          "kind": "string",
+          "metadata": [
+            "object",
+            {
+              "name": "string"
+            }
+          ],
+          "spec": [
+            "object",
+            {
+              "engine": [
+                "object",
+                {
+                  "channel": "string",
+                  "version": "string"
+                }
+              ],
+              "hosts": [
+                "tuple",
+                [
+                  [
+                    "object",
+                    {
+                      "address": "string",
+                      "hooks": [
+                        "object",
+                        {
+                          "apply": [
+                            "object",
+                            {
+                              "after": [
+                                "list",
+                                "string"
+                              ],
+                              "before": [
+                                "list",
+                                "string"
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "role": "string",
+                      "ssh": [
+                        "object",
+                        {
+                          "keyPath": "string",
+                          "user": "string"
+                        }
+                      ]
+                    }
+                  ],
+                  [
+                    "object",
+                    {
+                      "address": "string",
+                      "hooks": [
+                        "object",
+                        {
+                          "apply": [
+                            "object",
+                            {
+                              "after": [
+                                "list",
+                                "string"
+                              ],
+                              "before": [
+                                "list",
+                                "string"
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "role": "string",
+                      "ssh": [
+                        "object",
+                        {
+                          "keyPath": "string",
+                          "user": "string"
+                        }
+                      ]
+                    }
+                  ],
+                  [
+                    "object",
+                    {
+                      "address": "string",
+                      "hooks": [
+                        "object",
+                        {
+                          "apply": [
+                            "object",
+                            {
+                              "after": [
+                                "list",
+                                "string"
+                              ],
+                              "before": [
+                                "list",
+                                "string"
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "role": "string",
+                      "ssh": [
+                        "object",
+                        {
+                          "keyPath": "string",
+                          "user": "string"
+                        }
+                      ]
+                    }
+                  ],
+                  [
+                    "object",
+                    {
+                      "address": "string",
+                      "hooks": [
+                        "object",
+                        {
+                          "apply": [
+                            "object",
+                            {
+                              "after": [
+                                "list",
+                                "string"
+                              ],
+                              "before": [
+                                "list",
+                                "string"
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "role": "string",
+                      "ssh": [
+                        "object",
+                        {
+                          "keyPath": "string",
+                          "user": "string"
+                        }
+                      ]
+                    }
+                  ]
+                ]
+              ],
+              "mke": [
+                "object",
+                {
+                  "imageRepo": "string",
+                  "installFlags": [
+                    "tuple",
+                    [
+                      "string",
+                      "string",
+                      "string",
+                      "string"
+                    ]
+                  ],
+                  "version": "string"
+                }
+              ],
+              "msr": [
+                "object",
+                {
+                  "imageRepo": "string",
+                  "installFlags": [
+                    "list",
+                    "string"
+                  ],
+                  "replicaIDs": "string",
+                  "version": "string"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "mke_cluster_yaml": {
+      "value": "\"apiVersion\": \"launchpad.mirantis.com/mke/v1.1\"\n\"kind\": \"mke\"\n\"metadata\":\n  \"name\": \"james-matrix\"\n\"spec\":\n  \"engine\":\n    \"channel\": \"stable\"\n    \"version\": \"19.03.14\"\n  \"hosts\":\n  - \"address\": \"3.12.150.136\"\n    \"hooks\":\n      \"apply\":\n        \"after\":\n        - \"\"\n        \"before\":\n        - \"\"\n    \"role\": \"manager\"\n    \"ssh\":\n      \"keyPath\": \"./ssh_keys/james-matrix.pem\"\n      \"user\": \"ec2-user\"\n  - \"address\": \"3.139.239.237\"\n    \"hooks\":\n      \"apply\":\n        \"after\":\n        - \"\"\n        \"before\":\n        - \"\"\n    \"role\": \"worker\"\n    \"ssh\":\n      \"keyPath\": \"./ssh_keys/james-matrix.pem\"\n      \"user\": \"ec2-user\"\n  - \"address\": \"18.188.164.213\"\n    \"hooks\":\n      \"apply\":\n        \"after\":\n        - \"\"\n        \"before\":\n        - \"\"\n    \"role\": \"worker\"\n    \"ssh\":\n      \"keyPath\": \"./ssh_keys/james-matrix.pem\"\n      \"user\": \"ec2-user\"\n  - \"address\": \"52.15.253.129\"\n    \"hooks\":\n      \"apply\":\n        \"after\":\n        - \"\"\n        \"before\":\n        - \"\"\n    \"role\": \"worker\"\n    \"ssh\":\n      \"keyPath\": \"./ssh_keys/james-matrix.pem\"\n      \"user\": \"ec2-user\"\n  \"mke\":\n    \"imageRepo\": \"docker.io/mirantis\"\n    \"installFlags\":\n    - \"--admin-username=admin\"\n    - \"--admin-password=orcaorcaorca\"\n    - \"--default-node-orchestrator=kubernetes\"\n    - \"--san=james-matrix-manager-lb-54018fc526307bbb.elb.us-east-2.amazonaws.com\"\n    \"version\": \"3.3.5\"\n  \"msr\":\n    \"imageRepo\": \"docker.io/mirantis\"\n    \"installFlags\":\n    - \"--ucp-insecure-tls\"\n    \"replicaIDs\": \"sequential\"\n    \"version\": \"2.8.5\"\n",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "random_string",
+      "name": "random",
+      "provider": "provider[\"registry.terraform.io/hashicorp/random\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "id": "AZ510T",
+            "keepers": null,
+            "length": 6,
+            "lower": false,
+            "min_lower": 0,
+            "min_numeric": 2,
+            "min_special": 0,
+            "min_upper": 2,
+            "number": true,
+            "override_special": null,
+            "result": "AZ510T",
+            "special": false,
+            "upper": true
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ=="
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "data",
+      "type": "aws_ami",
+      "name": "linux",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architecture": "x86_64",
+            "arn": "arn:aws:ec2:us-east-2::image/ami-0d2bf41df19c4aac7",
+            "block_device_mappings": [
+              {
+                "device_name": "/dev/sda1",
+                "ebs": {
+                  "delete_on_termination": "true",
+                  "encrypted": "false",
+                  "iops": "0",
+                  "snapshot_id": "snap-047b78b5b29a7d5fe",
+                  "volume_size": "10",
+                  "volume_type": "gp2"
+                },
+                "no_device": "",
+                "virtual_name": ""
+              }
+            ],
+            "creation_date": "2020-09-18T07:21:28.000Z",
+            "description": "Provided by Red Hat, Inc.",
+            "executable_users": null,
+            "filter": [
+              {
+                "name": "name",
+                "values": [
+                  "RHEL-7.9_HVM*x86_64*Hourly2-GP2"
+                ]
+              },
+              {
+                "name": "virtualization-type",
+                "values": [
+                  "hvm"
+                ]
+              }
+            ],
+            "hypervisor": "xen",
+            "id": "ami-0d2bf41df19c4aac7",
+            "image_id": "ami-0d2bf41df19c4aac7",
+            "image_location": "309956199498/RHEL-7.9_HVM_GA-20200917-x86_64-0-Hourly2-GP2",
+            "image_owner_alias": null,
+            "image_type": "machine",
+            "kernel_id": null,
+            "most_recent": true,
+            "name": "RHEL-7.9_HVM_GA-20200917-x86_64-0-Hourly2-GP2",
+            "name_regex": null,
+            "owner_id": "309956199498",
+            "owners": [
+              "309956199498"
+            ],
+            "platform": null,
+            "product_codes": [],
+            "public": true,
+            "ramdisk_id": null,
+            "root_device_name": "/dev/sda1",
+            "root_device_type": "ebs",
+            "root_snapshot_id": "snap-047b78b5b29a7d5fe",
+            "sriov_net_support": "simple",
+            "state": "available",
+            "state_reason": {
+              "code": "UNSET",
+              "message": "UNSET"
+            },
+            "tags": {},
+            "virtualization_type": "hvm"
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "data",
+      "type": "aws_ami",
+      "name": "windows_2019",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "architecture": "x86_64",
+            "arn": "arn:aws:ec2:us-east-2::image/ami-0b9c6cee13f5d5fc0",
+            "block_device_mappings": [
+              {
+                "device_name": "/dev/sda1",
+                "ebs": {
+                  "delete_on_termination": "true",
+                  "encrypted": "false",
+                  "iops": "0",
+                  "snapshot_id": "snap-0274b51fba1fb7929",
+                  "volume_size": "30",
+                  "volume_type": "gp2"
+                },
+                "no_device": "",
+                "virtual_name": ""
+              },
+              {
+                "device_name": "xvdca",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral0"
+              },
+              {
+                "device_name": "xvdcb",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral1"
+              },
+              {
+                "device_name": "xvdcc",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral2"
+              },
+              {
+                "device_name": "xvdcd",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral3"
+              },
+              {
+                "device_name": "xvdce",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral4"
+              },
+              {
+                "device_name": "xvdcf",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral5"
+              },
+              {
+                "device_name": "xvdcg",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral6"
+              },
+              {
+                "device_name": "xvdch",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral7"
+              },
+              {
+                "device_name": "xvdci",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral8"
+              },
+              {
+                "device_name": "xvdcj",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral9"
+              },
+              {
+                "device_name": "xvdck",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral10"
+              },
+              {
+                "device_name": "xvdcl",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral11"
+              },
+              {
+                "device_name": "xvdcm",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral12"
+              },
+              {
+                "device_name": "xvdcn",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral13"
+              },
+              {
+                "device_name": "xvdco",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral14"
+              },
+              {
+                "device_name": "xvdcp",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral15"
+              },
+              {
+                "device_name": "xvdcq",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral16"
+              },
+              {
+                "device_name": "xvdcr",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral17"
+              },
+              {
+                "device_name": "xvdcs",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral18"
+              },
+              {
+                "device_name": "xvdct",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral19"
+              },
+              {
+                "device_name": "xvdcu",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral20"
+              },
+              {
+                "device_name": "xvdcv",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral21"
+              },
+              {
+                "device_name": "xvdcw",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral22"
+              },
+              {
+                "device_name": "xvdcx",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral23"
+              },
+              {
+                "device_name": "xvdcy",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral24"
+              },
+              {
+                "device_name": "xvdcz",
+                "ebs": {},
+                "no_device": "",
+                "virtual_name": "ephemeral25"
+              }
+            ],
+            "creation_date": "2021-01-13T23:00:12.000Z",
+            "description": "Microsoft Windows Server 2019 with Containers Locale English AMI provided by Amazon",
+            "executable_users": null,
+            "filter": [
+              {
+                "name": "name",
+                "values": [
+                  "Windows_Server-2019-English-Core-ContainersLatest-*"
+                ]
+              },
+              {
+                "name": "virtualization-type",
+                "values": [
+                  "hvm"
+                ]
+              }
+            ],
+            "hypervisor": "xen",
+            "id": "ami-0b9c6cee13f5d5fc0",
+            "image_id": "ami-0b9c6cee13f5d5fc0",
+            "image_location": "amazon/Windows_Server-2019-English-Core-ContainersLatest-2021.01.13",
+            "image_owner_alias": "amazon",
+            "image_type": "machine",
+            "kernel_id": null,
+            "most_recent": true,
+            "name": "Windows_Server-2019-English-Core-ContainersLatest-2021.01.13",
+            "name_regex": null,
+            "owner_id": "801119661308",
+            "owners": [
+              "801119661308"
+            ],
+            "platform": "windows",
+            "product_codes": [],
+            "public": true,
+            "ramdisk_id": null,
+            "root_device_name": "/dev/sda1",
+            "root_device_type": "ebs",
+            "root_snapshot_id": "snap-0274b51fba1fb7929",
+            "sriov_net_support": "simple",
+            "state": "available",
+            "state_reason": {
+              "code": "UNSET",
+              "message": "UNSET"
+            },
+            "tags": {},
+            "virtualization_type": "hvm"
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "data",
+      "type": "aws_availability_zones",
+      "name": "available",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "all_availability_zones": null,
+            "exclude_names": null,
+            "exclude_zone_ids": null,
+            "filter": null,
+            "group_names": [
+              "us-east-2"
+            ],
+            "id": "us-east-2",
+            "names": [
+              "us-east-2a",
+              "us-east-2b",
+              "us-east-2c"
+            ],
+            "state": null,
+            "zone_ids": [
+              "use2-az1",
+              "use2-az2",
+              "use2-az3"
+            ]
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "managed",
+      "type": "aws_iam_instance_profile",
+      "name": "profile",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::485146132295:instance-profile/james-matrix_host",
+            "create_date": "2021-01-21T20:27:44Z",
+            "id": "james-matrix_host",
+            "name": "james-matrix_host",
+            "name_prefix": null,
+            "path": "/",
+            "role": "james-matrix_host",
+            "unique_id": "AIPAXB5HWP5DVZ2VFUWF2"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.common.aws_iam_role.role"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::485146132295:role/james-matrix_host",
+            "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ec2.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}",
+            "create_date": "2021-01-21T20:27:43Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "james-matrix_host",
+            "max_session_duration": 3600,
+            "name": "james-matrix_host",
+            "name_prefix": null,
+            "path": "/",
+            "permissions_boundary": null,
+            "tags": null,
+            "unique_id": "AROAXB5HWP5DVPVVOJDY7"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "managed",
+      "type": "aws_iam_role_policy",
+      "name": "policy",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "james-matrix_host:james-matrix_host",
+            "name": "james-matrix_host",
+            "name_prefix": null,
+            "policy": "{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\"ec2:*\"],\n      \"Resource\": [\"*\"]\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\"elasticloadbalancing:*\"],\n      \"Resource\": [\"*\"]\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\"ecr:*\"],\n      \"Resource\": [\"*\"]\n    },\n    {\n      \"Effect\": \"Allow\",\n      \"Action\": [\n          \"autoscaling:DescribeLaunchConfigurations\",\n          \"autoscaling:DescribeAutoScalingGroups\",\n          \"autoscaling:DescribeAutoScalingInstances\",\n          \"autoscaling:DescribeTags\",\n          \"autoscaling:SetDesiredCapacity\",\n          \"autoscaling:TerminateInstanceInAutoScalingGroup\"\n      ],\n      \"Resource\": \"*\"\n    }\n  ]\n}\n",
+            "role": "james-matrix_host"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.common.aws_iam_role.role"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "managed",
+      "type": "aws_key_pair",
+      "name": "key",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:key-pair/james-matrix",
+            "fingerprint": "08:6c:1d:26:19:4f:9c:5a:e4:bd:a4:f9:18:91:bb:fd",
+            "id": "james-matrix",
+            "key_name": "james-matrix",
+            "key_name_prefix": null,
+            "key_pair_id": "key-08e8dd54090853a4c",
+            "public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDIp2pTL5RWAomV8PcQq/HEq2Sg0Aw4ZwUt54YLBR2E6nWTP4dEwmSG1hy1w34EkiwBK8UTRZkqUUO1Z2Ju+Qzxibw3w5q3NUQsZjGBJfwpXg0Zs0IGlRoJXPzeHlSVyx64FRcfuX8tXNLX+3++M1cs+PCtI5H19fO5ct8Ar3pagVt3dOhQin2975hYTOiWU84A8dP3O25Hf83xgGMrF58lAXq5y1i8GeD+Ie9er64YH/hGkaxpIBOGZfRgx9M7sP8HfNYOOztBn2GW7LV3UkWEtTU+uQhxZsCddyaUMhtG6TqB4+ERPOPyhf/0AjmhQRp4R2rmP3PwWsEU1+8L2+0liMfTjlY5ut+xBqoiCf4zK8INn3O7k+S23DdKjSyMfHZS1wNO3lvDTPJfZp4g4wL6G1/4ysKVbFofLS6fLWcYb2udYoOVCVuNHo4KVx2TSTFGty9GmT3O8AXgB3HHn0WKSkQDqjWx+toy8q9PQDigBVT4LeONfBwqutSD1tCSrF46m5T5Sh17wUpEg2YeqWnj+TAIT3t6wuo+PscYLFWy91ErRdGNyah91LqlXkBJSbMFxi5Wg3IdnhTiRa7V4whwPc0zhkqZHVN+RYBXL8MYP9IPmC0GLSsko8gvC/9i72kZKRQ/YrJTEVzFrFk5F++Hb+iB9tfGQwBNkuPlzcSLAQ==",
+            "tags": {
+              "Name": "james-matrix-keypair",
+              "Role": "bastion",
+              "expire": "2021-01-24T20:27:41Z",
+              "project": "PRODENG"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "module.common.tls_private_key.ssh_key"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "common",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:security-group/sg-0c368e40c88d8b74d",
+            "description": "mke cluster common rules",
+            "egress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": false,
+                "to_port": 0
+              }
+            ],
+            "id": "sg-0c368e40c88d8b74d",
+            "ingress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 22,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 22
+              },
+              {
+                "cidr_blocks": [],
+                "description": "",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": true,
+                "to_port": 0
+              }
+            ],
+            "name": "james-matrix-common",
+            "name_prefix": "",
+            "owner_id": "485146132295",
+            "revoke_rules_on_delete": false,
+            "tags": null,
+            "timeouts": null,
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "module.vpc.aws_vpc.network"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "managed",
+      "type": "local_file",
+      "name": "ssh_public_key",
+      "provider": "provider[\"registry.terraform.io/hashicorp/local\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "content": "-----BEGIN RSA PRIVATE KEY-----\n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\n-----END RSA PRIVATE KEY-----\n",
+            "content_base64": null,
+            "directory_permission": "0777",
+            "file_permission": "0777",
+            "filename": "./ssh_keys/james-matrix.pem",
+            "id": "32b8947eed093da4a8f19709d105b148965dc618",
+            "sensitive_content": null,
+            "source": null
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.common.tls_private_key.ssh_key"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.common",
+      "mode": "managed",
+      "type": "tls_private_key",
+      "name": "ssh_key",
+      "provider": "provider[\"registry.terraform.io/hashicorp/tls\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "algorithm": "RSA",
+            "ecdsa_curve": "P224",
+            "id": "0fff74d0e9d01e321ef19fe348eab0b8d3112c58",
+            "private_key_pem": "-----BEGIN RSA PRIVATE KEY-----\n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\n-----END RSA PRIVATE KEY-----\n",
+            "public_key_fingerprint_md5": "79:12:d8:98:e8:08:4b:09:c5:32:aa:3f:36:d4:ea:18",
+            "public_key_openssh": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDIp2pTL5RWAomV8PcQq/HEq2Sg0Aw4ZwUt54YLBR2E6nWTP4dEwmSG1hy1w34EkiwBK8UTRZkqUUO1Z2Ju+Qzxibw3w5q3NUQsZjGBJfwpXg0Zs0IGlRoJXPzeHlSVyx64FRcfuX8tXNLX+3++M1cs+PCtI5H19fO5ct8Ar3pagVt3dOhQin2975hYTOiWU84A8dP3O25Hf83xgGMrF58lAXq5y1i8GeD+Ie9er64YH/hGkaxpIBOGZfRgx9M7sP8HfNYOOztBn2GW7LV3UkWEtTU+uQhxZsCddyaUMhtG6TqB4+ERPOPyhf/0AjmhQRp4R2rmP3PwWsEU1+8L2+0liMfTjlY5ut+xBqoiCf4zK8INn3O7k+S23DdKjSyMfHZS1wNO3lvDTPJfZp4g4wL6G1/4ysKVbFofLS6fLWcYb2udYoOVCVuNHo4KVx2TSTFGty9GmT3O8AXgB3HHn0WKSkQDqjWx+toy8q9PQDigBVT4LeONfBwqutSD1tCSrF46m5T5Sh17wUpEg2YeqWnj+TAIT3t6wuo+PscYLFWy91ErRdGNyah91LqlXkBJSbMFxi5Wg3IdnhTiRa7V4whwPc0zhkqZHVN+RYBXL8MYP9IPmC0GLSsko8gvC/9i72kZKRQ/YrJTEVzFrFk5F++Hb+iB9tfGQwBNkuPlzcSLAQ==\n",
+            "public_key_pem": "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAyKdqUy+UVgKJlfD3EKvx\nxKtkoNAMOGcFLeeGCwUdhOp1kz+HRMJkhtYctcN+BJIsASvFE0WZKlFDtWdibvkM\n8Ym8N8OatzVELGYxgSX8KV4NGbNCBpUaCVz83h5UlcseuBUXH7l/LVzS1/t/vjNX\nLPjwrSOR9fXzuXLfAK96WoFbd3ToUIp9ve+YWEzollPOAPHT9ztuR3/N8YBjKxef\nJQF6uctYvBng/iHvXq+uGB/4RpGsaSAThmX0YMfTO7D/B3zWDjs7QZ9hluy1d1JF\nhLU1PrkIcWbAnXcmlDIbRuk6gePhETzj8oX/9AI5oUEaeEdq5j9z8FrBFNfvC9vt\nJYjH045WObrfsQaqIgn+MyvCDZ9zu5Pkttw3So0sjHx2UtcDTt5bw0zyX2aeIOMC\n+htf+MrClWxaHy0uny1nGG9rnWKDlQlbjR6OClcdk0kxRrcvRpk9zvAF4Adxx59F\nikpEA6o1sfraMvKvT0A4oAVU+C3jjXwcKrrUg9bQkqxeOpuU+Uode8FKRINmHqlp\n4/kwCE97esLqPj7HGCxVsvdRK0XRjcmofdS6pV5ASUmzBcYuVoNyHZ4U4kWu1eMI\ncD3NM4ZKmR1TfkWAVy/DGD/SD5gtBi0rJKPILwv/Yu9pGSkUP2KyUxFcxaxZORfv\nh2/ogfbXxkMATZLj5c3EiwECAwEAAQ==\n-----END PUBLIC KEY-----\n",
+            "rsa_bits": 4096
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "module": "module.managers",
+      "mode": "managed",
+      "type": "aws_instance",
+      "name": "mke_manager",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 1,
+          "attributes": {
+            "ami": "ami-0d2bf41df19c4aac7",
+            "arn": "arn:aws:ec2:us-east-2:485146132295:instance/i-0574f20e54df296ae",
+            "associate_public_ip_address": true,
+            "availability_zone": "us-east-2a",
+            "cpu_core_count": 2,
+            "cpu_threads_per_core": 2,
+            "credit_specification": [],
+            "disable_api_termination": false,
+            "ebs_block_device": [],
+            "ebs_optimized": true,
+            "enclave_options": [
+              {
+                "enabled": false
+              }
+            ],
+            "ephemeral_block_device": [],
+            "get_password_data": false,
+            "hibernation": false,
+            "host_id": null,
+            "iam_instance_profile": "james-matrix_host",
+            "id": "i-0574f20e54df296ae",
+            "instance_initiated_shutdown_behavior": null,
+            "instance_state": "running",
+            "instance_type": "m5.xlarge",
+            "ipv6_address_count": 0,
+            "ipv6_addresses": [],
+            "key_name": "james-matrix",
+            "metadata_options": [
+              {
+                "http_endpoint": "enabled",
+                "http_put_response_hop_limit": 1,
+                "http_tokens": "optional"
+              }
+            ],
+            "monitoring": false,
+            "network_interface": [],
+            "outpost_arn": "",
+            "password_data": "",
+            "placement_group": "",
+            "primary_network_interface_id": "eni-0ca8a960da49acb40",
+            "private_dns": "ip-172-31-0-77.us-east-2.compute.internal",
+            "private_ip": "172.31.0.77",
+            "public_dns": "ec2-3-12-150-136.us-east-2.compute.amazonaws.com",
+            "public_ip": "3.12.150.136",
+            "root_block_device": [
+              {
+                "delete_on_termination": true,
+                "device_name": "/dev/sda1",
+                "encrypted": false,
+                "iops": 300,
+                "kms_key_id": "",
+                "tags": null,
+                "throughput": 0,
+                "volume_id": "vol-0cb7e9408f1282fbd",
+                "volume_size": 100,
+                "volume_type": "gp2"
+              }
+            ],
+            "secondary_private_ips": [],
+            "security_groups": [],
+            "source_dest_check": true,
+            "subnet_id": "subnet-0357605bfd4fc692e",
+            "tags": {
+              "Name": "james-matrix-manager-1",
+              "Role": "manager",
+              "expire": "2021-01-24T20:27:41Z",
+              "kubernetes.io/cluster/james-matrix": "shared",
+              "platform": "rhel_7.9",
+              "project": "PRODENG"
+            },
+            "tenancy": "default",
+            "timeouts": null,
+            "user_data": "e68c2a421842ed7ecf74681263c5bfbadb38fef7",
+            "user_data_base64": null,
+            "volume_tags": null,
+            "vpc_security_group_ids": [
+              "sg-04ce68bd91c392fee",
+              "sg-0c368e40c88d8b74d"
+            ]
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMCwidXBkYXRlIjo2MDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "module.common.aws_iam_instance_profile.profile",
+            "module.common.aws_iam_role.role",
+            "module.common.aws_security_group.common",
+            "module.common.data.aws_ami.linux",
+            "module.managers.aws_lb.mke_manager",
+            "module.managers.aws_security_group.manager",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.managers",
+      "mode": "managed",
+      "type": "aws_lb",
+      "name": "mke_manager",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "access_logs": [
+              {
+                "bucket": "",
+                "enabled": false,
+                "prefix": ""
+              }
+            ],
+            "arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:loadbalancer/net/james-matrix-manager-lb/54018fc526307bbb",
+            "arn_suffix": "net/james-matrix-manager-lb/54018fc526307bbb",
+            "customer_owned_ipv4_pool": "",
+            "dns_name": "james-matrix-manager-lb-54018fc526307bbb.elb.us-east-2.amazonaws.com",
+            "drop_invalid_header_fields": null,
+            "enable_cross_zone_load_balancing": false,
+            "enable_deletion_protection": false,
+            "enable_http2": null,
+            "id": "arn:aws:elasticloadbalancing:us-east-2:485146132295:loadbalancer/net/james-matrix-manager-lb/54018fc526307bbb",
+            "idle_timeout": null,
+            "internal": false,
+            "ip_address_type": "ipv4",
+            "load_balancer_type": "network",
+            "name": "james-matrix-manager-lb",
+            "name_prefix": null,
+            "security_groups": [],
+            "subnet_mapping": [
+              {
+                "allocation_id": "",
+                "outpost_id": "",
+                "private_ipv4_address": "",
+                "subnet_id": "subnet-0357605bfd4fc692e"
+              },
+              {
+                "allocation_id": "",
+                "outpost_id": "",
+                "private_ipv4_address": "",
+                "subnet_id": "subnet-06c0a5d2b2874dc21"
+              },
+              {
+                "allocation_id": "",
+                "outpost_id": "",
+                "private_ipv4_address": "",
+                "subnet_id": "subnet-0cbc726003fe97e79"
+              }
+            ],
+            "subnets": [
+              "subnet-0357605bfd4fc692e",
+              "subnet-06c0a5d2b2874dc21",
+              "subnet-0cbc726003fe97e79"
+            ],
+            "tags": {
+              "Name": "james-matrix",
+              "Role": "manager",
+              "expire": "2021-01-24T20:27:41Z",
+              "kubernetes.io/cluster/james-matrix": "shared",
+              "project": "PRODENG"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0b43bae83b4fd3265",
+            "zone_id": "ZLMOA37VPKANP"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.managers",
+      "mode": "managed",
+      "type": "aws_lb_listener",
+      "name": "mke_kube_api",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:listener/net/james-matrix-manager-lb/54018fc526307bbb/578c3b4cac86c2b0",
+            "certificate_arn": null,
+            "default_action": [
+              {
+                "authenticate_cognito": [],
+                "authenticate_oidc": [],
+                "fixed_response": [],
+                "forward": [],
+                "order": 1,
+                "redirect": [],
+                "target_group_arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-kube-api/82639584cacfb953",
+                "type": "forward"
+              }
+            ],
+            "id": "arn:aws:elasticloadbalancing:us-east-2:485146132295:listener/net/james-matrix-manager-lb/54018fc526307bbb/578c3b4cac86c2b0",
+            "load_balancer_arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:loadbalancer/net/james-matrix-manager-lb/54018fc526307bbb",
+            "port": 6443,
+            "protocol": "TCP",
+            "ssl_policy": "",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsicmVhZCI6NjAwMDAwMDAwMDAwfX0=",
+          "dependencies": [
+            "module.managers.aws_lb.mke_manager",
+            "module.managers.aws_lb_target_group.mke_kube_api",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.managers",
+      "mode": "managed",
+      "type": "aws_lb_listener",
+      "name": "mke_manager_api",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:listener/net/james-matrix-manager-lb/54018fc526307bbb/e2653b2a6a69aebe",
+            "certificate_arn": null,
+            "default_action": [
+              {
+                "authenticate_cognito": [],
+                "authenticate_oidc": [],
+                "fixed_response": [],
+                "forward": [],
+                "order": 1,
+                "redirect": [],
+                "target_group_arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-api/ed281ba616303fe7",
+                "type": "forward"
+              }
+            ],
+            "id": "arn:aws:elasticloadbalancing:us-east-2:485146132295:listener/net/james-matrix-manager-lb/54018fc526307bbb/e2653b2a6a69aebe",
+            "load_balancer_arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:loadbalancer/net/james-matrix-manager-lb/54018fc526307bbb",
+            "port": 443,
+            "protocol": "TCP",
+            "ssl_policy": "",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsicmVhZCI6NjAwMDAwMDAwMDAwfX0=",
+          "dependencies": [
+            "module.managers.aws_lb.mke_manager",
+            "module.managers.aws_lb_target_group.mke_manager_api",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.managers",
+      "mode": "managed",
+      "type": "aws_lb_target_group",
+      "name": "mke_kube_api",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-kube-api/82639584cacfb953",
+            "arn_suffix": "targetgroup/james-matrix-kube-api/82639584cacfb953",
+            "deregistration_delay": 300,
+            "health_check": [
+              {
+                "enabled": true,
+                "healthy_threshold": 3,
+                "interval": 30,
+                "matcher": "",
+                "path": "",
+                "port": "traffic-port",
+                "protocol": "TCP",
+                "timeout": 10,
+                "unhealthy_threshold": 3
+              }
+            ],
+            "id": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-kube-api/82639584cacfb953",
+            "lambda_multi_value_headers_enabled": false,
+            "load_balancing_algorithm_type": null,
+            "name": "james-matrix-kube-api",
+            "name_prefix": null,
+            "port": 6443,
+            "protocol": "TCP",
+            "proxy_protocol_v2": false,
+            "slow_start": 0,
+            "stickiness": [
+              {
+                "cookie_duration": 0,
+                "enabled": false,
+                "type": "source_ip"
+              }
+            ],
+            "tags": null,
+            "target_type": "instance",
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.vpc.aws_vpc.network"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.managers",
+      "mode": "managed",
+      "type": "aws_lb_target_group",
+      "name": "mke_manager_api",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-api/ed281ba616303fe7",
+            "arn_suffix": "targetgroup/james-matrix-api/ed281ba616303fe7",
+            "deregistration_delay": 300,
+            "health_check": [
+              {
+                "enabled": true,
+                "healthy_threshold": 3,
+                "interval": 30,
+                "matcher": "",
+                "path": "",
+                "port": "traffic-port",
+                "protocol": "TCP",
+                "timeout": 10,
+                "unhealthy_threshold": 3
+              }
+            ],
+            "id": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-api/ed281ba616303fe7",
+            "lambda_multi_value_headers_enabled": false,
+            "load_balancing_algorithm_type": null,
+            "name": "james-matrix-api",
+            "name_prefix": null,
+            "port": 443,
+            "protocol": "TCP",
+            "proxy_protocol_v2": false,
+            "slow_start": 0,
+            "stickiness": [
+              {
+                "cookie_duration": 0,
+                "enabled": false,
+                "type": "source_ip"
+              }
+            ],
+            "tags": null,
+            "target_type": "instance",
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.managers.aws_lb.mke_manager",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.managers",
+      "mode": "managed",
+      "type": "aws_lb_target_group_attachment",
+      "name": "mke_kube_api",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "availability_zone": null,
+            "id": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-kube-api/82639584cacfb953-20210121203109333000000001",
+            "port": 6443,
+            "target_group_arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-kube-api/82639584cacfb953",
+            "target_id": "i-0574f20e54df296ae"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.common.aws_iam_instance_profile.profile",
+            "module.common.aws_iam_role.role",
+            "module.common.aws_security_group.common",
+            "module.common.data.aws_ami.linux",
+            "module.managers.aws_instance.mke_manager",
+            "module.managers.aws_lb.mke_manager",
+            "module.managers.aws_lb_target_group.mke_kube_api",
+            "module.managers.aws_security_group.manager",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.managers",
+      "mode": "managed",
+      "type": "aws_lb_target_group_attachment",
+      "name": "mke_manager_api",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "availability_zone": null,
+            "id": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-api/ed281ba616303fe7-20210121203109434100000002",
+            "port": 443,
+            "target_group_arn": "arn:aws:elasticloadbalancing:us-east-2:485146132295:targetgroup/james-matrix-api/ed281ba616303fe7",
+            "target_id": "i-0574f20e54df296ae"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.common.aws_iam_instance_profile.profile",
+            "module.common.aws_iam_role.role",
+            "module.common.aws_security_group.common",
+            "module.common.data.aws_ami.linux",
+            "module.managers.aws_instance.mke_manager",
+            "module.managers.aws_lb.mke_manager",
+            "module.managers.aws_lb_target_group.mke_manager_api",
+            "module.managers.aws_security_group.manager",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.managers",
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "manager",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:security-group/sg-04ce68bd91c392fee",
+            "description": "mke cluster managers",
+            "egress": [],
+            "id": "sg-04ce68bd91c392fee",
+            "ingress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 443,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 443
+              },
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 6443,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 6443
+              },
+              {
+                "cidr_blocks": [],
+                "description": "",
+                "from_port": 2379,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": true,
+                "to_port": 2380
+              }
+            ],
+            "name": "james-matrix-managers",
+            "name_prefix": "",
+            "owner_id": "485146132295",
+            "revoke_rules_on_delete": false,
+            "tags": null,
+            "timeouts": null,
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "module.managers.aws_lb.mke_manager",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.msrs",
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "msr",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:security-group/sg-09ddf53e6893d0626",
+            "description": "mke cluster msrs",
+            "egress": [],
+            "id": "sg-09ddf53e6893d0626",
+            "ingress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 443,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 443
+              }
+            ],
+            "name": "james-matrix-msrs",
+            "name_prefix": "",
+            "owner_id": "485146132295",
+            "revoke_rules_on_delete": false,
+            "tags": null,
+            "timeouts": null,
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "module.vpc.aws_vpc.network"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.vpc",
+      "mode": "data",
+      "type": "aws_availability_zones",
+      "name": "all",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "all_availability_zones": null,
+            "exclude_names": null,
+            "exclude_zone_ids": null,
+            "filter": null,
+            "group_names": [
+              "us-east-2"
+            ],
+            "id": "us-east-2",
+            "names": [
+              "us-east-2a",
+              "us-east-2b",
+              "us-east-2c"
+            ],
+            "state": null,
+            "zone_ids": [
+              "use2-az1",
+              "use2-az2",
+              "use2-az3"
+            ]
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    },
+    {
+      "module": "module.vpc",
+      "mode": "managed",
+      "type": "aws_internet_gateway",
+      "name": "gateway",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:internet-gateway/igw-01b42bf5d415184ad",
+            "id": "igw-01b42bf5d415184ad",
+            "owner_id": "485146132295",
+            "tags": {
+              "Name": "james-matrix",
+              "project": "PRODENG"
+            },
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.vpc.aws_vpc.network"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.vpc",
+      "mode": "managed",
+      "type": "aws_route_table",
+      "name": "default",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "rtb-039c2320a1ba0ad9e",
+            "owner_id": "485146132295",
+            "propagating_vgws": [],
+            "route": [
+              {
+                "cidr_block": "0.0.0.0/0",
+                "egress_only_gateway_id": "",
+                "gateway_id": "igw-01b42bf5d415184ad",
+                "instance_id": "",
+                "ipv6_cidr_block": "",
+                "local_gateway_id": "",
+                "nat_gateway_id": "",
+                "network_interface_id": "",
+                "transit_gateway_id": "",
+                "vpc_endpoint_id": "",
+                "vpc_peering_connection_id": ""
+              }
+            ],
+            "tags": {
+              "Name": "james-matrix",
+              "project": "PRODENG"
+            },
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.vpc.aws_internet_gateway.gateway",
+            "module.vpc.aws_vpc.network"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.vpc",
+      "mode": "managed",
+      "type": "aws_route_table_association",
+      "name": "public",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 0,
+          "attributes": {
+            "gateway_id": null,
+            "id": "rtbassoc-057a2486774c4a4b2",
+            "route_table_id": "rtb-039c2320a1ba0ad9e",
+            "subnet_id": "subnet-0357605bfd4fc692e"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.vpc.aws_internet_gateway.gateway",
+            "module.vpc.aws_route_table.default",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        },
+        {
+          "index_key": 1,
+          "schema_version": 0,
+          "attributes": {
+            "gateway_id": null,
+            "id": "rtbassoc-0c6d3a4f13f151bec",
+            "route_table_id": "rtb-039c2320a1ba0ad9e",
+            "subnet_id": "subnet-06c0a5d2b2874dc21"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.vpc.aws_internet_gateway.gateway",
+            "module.vpc.aws_route_table.default",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        },
+        {
+          "index_key": 2,
+          "schema_version": 0,
+          "attributes": {
+            "gateway_id": null,
+            "id": "rtbassoc-082f79a7f38ebab8d",
+            "route_table_id": "rtb-039c2320a1ba0ad9e",
+            "subnet_id": "subnet-0cbc726003fe97e79"
+          },
+          "sensitive_attributes": [],
+          "private": "bnVsbA==",
+          "dependencies": [
+            "module.vpc.aws_internet_gateway.gateway",
+            "module.vpc.aws_route_table.default",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.vpc",
+      "mode": "managed",
+      "type": "aws_subnet",
+      "name": "public",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:subnet/subnet-0357605bfd4fc692e",
+            "assign_ipv6_address_on_creation": false,
+            "availability_zone": "us-east-2a",
+            "availability_zone_id": "use2-az1",
+            "cidr_block": "172.31.0.0/24",
+            "id": "subnet-0357605bfd4fc692e",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_association_id": "",
+            "map_public_ip_on_launch": true,
+            "outpost_arn": "",
+            "owner_id": "485146132295",
+            "tags": {
+              "Name": "james-matrix",
+              "expire": "2021-01-24T20:27:41Z",
+              "kubernetes.io/cluster/james-matrix": "true",
+              "project": "PRODENG"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        },
+        {
+          "index_key": 1,
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:subnet/subnet-06c0a5d2b2874dc21",
+            "assign_ipv6_address_on_creation": false,
+            "availability_zone": "us-east-2b",
+            "availability_zone_id": "use2-az2",
+            "cidr_block": "172.31.1.0/24",
+            "id": "subnet-06c0a5d2b2874dc21",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_association_id": "",
+            "map_public_ip_on_launch": true,
+            "outpost_arn": "",
+            "owner_id": "485146132295",
+            "tags": {
+              "Name": "james-matrix",
+              "expire": "2021-01-24T20:27:41Z",
+              "kubernetes.io/cluster/james-matrix": "true",
+              "project": "PRODENG"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        },
+        {
+          "index_key": 2,
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:subnet/subnet-0cbc726003fe97e79",
+            "assign_ipv6_address_on_creation": false,
+            "availability_zone": "us-east-2c",
+            "availability_zone_id": "use2-az3",
+            "cidr_block": "172.31.2.0/24",
+            "id": "subnet-0cbc726003fe97e79",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_association_id": "",
+            "map_public_ip_on_launch": true,
+            "outpost_arn": "",
+            "owner_id": "485146132295",
+            "tags": {
+              "Name": "james-matrix",
+              "expire": "2021-01-24T20:27:41Z",
+              "kubernetes.io/cluster/james-matrix": "true",
+              "project": "PRODENG"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.vpc",
+      "mode": "managed",
+      "type": "aws_vpc",
+      "name": "network",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:vpc/vpc-0b43bae83b4fd3265",
+            "assign_generated_ipv6_cidr_block": true,
+            "cidr_block": "172.31.0.0/16",
+            "default_network_acl_id": "acl-0766196dc9c426022",
+            "default_route_table_id": "rtb-04e6b009e8b8a734d",
+            "default_security_group_id": "sg-017c5ca189e67d874",
+            "dhcp_options_id": "dopt-8e9525e5",
+            "enable_classiclink": null,
+            "enable_classiclink_dns_support": null,
+            "enable_dns_hostnames": true,
+            "enable_dns_support": true,
+            "id": "vpc-0b43bae83b4fd3265",
+            "instance_tenancy": "default",
+            "ipv6_association_id": "vpc-cidr-assoc-00b3f483186c5339d",
+            "ipv6_cidr_block": "2600:1f16:d38:2d00::/56",
+            "main_route_table_id": "rtb-04e6b009e8b8a734d",
+            "owner_id": "485146132295",
+            "tags": {
+              "Name": "james-matrix",
+              "project": "PRODENG"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ=="
+        }
+      ]
+    },
+    {
+      "module": "module.windows_workers",
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "worker",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:security-group/sg-01c9848da62aeae93",
+            "description": "mke cluster windows workers",
+            "egress": [],
+            "id": "sg-01c9848da62aeae93",
+            "ingress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 5985,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 5986
+              }
+            ],
+            "name": "james-matrix-win-workers",
+            "name_prefix": "",
+            "owner_id": "485146132295",
+            "revoke_rules_on_delete": false,
+            "tags": null,
+            "timeouts": null,
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "module.vpc.aws_vpc.network"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.workers",
+      "mode": "managed",
+      "type": "aws_instance",
+      "name": "mke_worker",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "index_key": 0,
+          "schema_version": 1,
+          "attributes": {
+            "ami": "ami-0d2bf41df19c4aac7",
+            "arn": "arn:aws:ec2:us-east-2:485146132295:instance/i-0668a8775f48cc100",
+            "associate_public_ip_address": true,
+            "availability_zone": "us-east-2a",
+            "cpu_core_count": 1,
+            "cpu_threads_per_core": 2,
+            "credit_specification": [],
+            "disable_api_termination": false,
+            "ebs_block_device": [],
+            "ebs_optimized": true,
+            "enclave_options": [
+              {
+                "enabled": false
+              }
+            ],
+            "ephemeral_block_device": [],
+            "get_password_data": false,
+            "hibernation": false,
+            "host_id": null,
+            "iam_instance_profile": "james-matrix_host",
+            "id": "i-0668a8775f48cc100",
+            "instance_initiated_shutdown_behavior": null,
+            "instance_state": "running",
+            "instance_type": "m5.large",
+            "ipv6_address_count": 0,
+            "ipv6_addresses": [],
+            "key_name": "james-matrix",
+            "metadata_options": [
+              {
+                "http_endpoint": "enabled",
+                "http_put_response_hop_limit": 1,
+                "http_tokens": "optional"
+              }
+            ],
+            "monitoring": false,
+            "network_interface": [],
+            "outpost_arn": "",
+            "password_data": "",
+            "placement_group": "",
+            "primary_network_interface_id": "eni-0182fe5ec803b3fb8",
+            "private_dns": "ip-172-31-0-172.us-east-2.compute.internal",
+            "private_ip": "172.31.0.172",
+            "public_dns": "ec2-3-139-239-237.us-east-2.compute.amazonaws.com",
+            "public_ip": "3.139.239.237",
+            "root_block_device": [
+              {
+                "delete_on_termination": true,
+                "device_name": "/dev/sda1",
+                "encrypted": false,
+                "iops": 300,
+                "kms_key_id": "",
+                "tags": null,
+                "throughput": 0,
+                "volume_id": "vol-0925a56ac9975dbe3",
+                "volume_size": 100,
+                "volume_type": "gp2"
+              }
+            ],
+            "secondary_private_ips": [],
+            "security_groups": [],
+            "source_dest_check": true,
+            "subnet_id": "subnet-0357605bfd4fc692e",
+            "tags": {
+              "Name": "james-matrix-worker-1",
+              "Role": "worker",
+              "expire": "2021-01-24T20:27:41Z",
+              "kubernetes.io/cluster/james-matrix": "shared",
+              "platform": "rhel_7.9",
+              "project": "PRODENG"
+            },
+            "tenancy": "default",
+            "timeouts": null,
+            "user_data": "e68c2a421842ed7ecf74681263c5bfbadb38fef7",
+            "user_data_base64": null,
+            "volume_tags": null,
+            "vpc_security_group_ids": [
+              "sg-07686579541075987",
+              "sg-0c368e40c88d8b74d"
+            ]
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMCwidXBkYXRlIjo2MDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "module.common.aws_iam_instance_profile.profile",
+            "module.common.aws_iam_role.role",
+            "module.common.aws_security_group.common",
+            "module.common.data.aws_ami.linux",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all",
+            "module.workers.aws_security_group.worker"
+          ]
+        },
+        {
+          "index_key": 1,
+          "schema_version": 1,
+          "attributes": {
+            "ami": "ami-0d2bf41df19c4aac7",
+            "arn": "arn:aws:ec2:us-east-2:485146132295:instance/i-00df8386af12582d8",
+            "associate_public_ip_address": true,
+            "availability_zone": "us-east-2b",
+            "cpu_core_count": 1,
+            "cpu_threads_per_core": 2,
+            "credit_specification": [],
+            "disable_api_termination": false,
+            "ebs_block_device": [],
+            "ebs_optimized": true,
+            "enclave_options": [
+              {
+                "enabled": false
+              }
+            ],
+            "ephemeral_block_device": [],
+            "get_password_data": false,
+            "hibernation": false,
+            "host_id": null,
+            "iam_instance_profile": "james-matrix_host",
+            "id": "i-00df8386af12582d8",
+            "instance_initiated_shutdown_behavior": null,
+            "instance_state": "running",
+            "instance_type": "m5.large",
+            "ipv6_address_count": 0,
+            "ipv6_addresses": [],
+            "key_name": "james-matrix",
+            "metadata_options": [
+              {
+                "http_endpoint": "enabled",
+                "http_put_response_hop_limit": 1,
+                "http_tokens": "optional"
+              }
+            ],
+            "monitoring": false,
+            "network_interface": [],
+            "outpost_arn": "",
+            "password_data": "",
+            "placement_group": "",
+            "primary_network_interface_id": "eni-07121b6abf64fc6bc",
+            "private_dns": "ip-172-31-1-213.us-east-2.compute.internal",
+            "private_ip": "172.31.1.213",
+            "public_dns": "ec2-18-188-164-213.us-east-2.compute.amazonaws.com",
+            "public_ip": "18.188.164.213",
+            "root_block_device": [
+              {
+                "delete_on_termination": true,
+                "device_name": "/dev/sda1",
+                "encrypted": false,
+                "iops": 300,
+                "kms_key_id": "",
+                "tags": null,
+                "throughput": 0,
+                "volume_id": "vol-0d144b735524b99a2",
+                "volume_size": 100,
+                "volume_type": "gp2"
+              }
+            ],
+            "secondary_private_ips": [],
+            "security_groups": [],
+            "source_dest_check": true,
+            "subnet_id": "subnet-06c0a5d2b2874dc21",
+            "tags": {
+              "Name": "james-matrix-worker-2",
+              "Role": "worker",
+              "expire": "2021-01-24T20:27:41Z",
+              "kubernetes.io/cluster/james-matrix": "shared",
+              "platform": "rhel_7.9",
+              "project": "PRODENG"
+            },
+            "tenancy": "default",
+            "timeouts": null,
+            "user_data": "e68c2a421842ed7ecf74681263c5bfbadb38fef7",
+            "user_data_base64": null,
+            "volume_tags": null,
+            "vpc_security_group_ids": [
+              "sg-07686579541075987",
+              "sg-0c368e40c88d8b74d"
+            ]
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMCwidXBkYXRlIjo2MDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "module.common.aws_iam_instance_profile.profile",
+            "module.common.aws_iam_role.role",
+            "module.common.aws_security_group.common",
+            "module.common.data.aws_ami.linux",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all",
+            "module.workers.aws_security_group.worker"
+          ]
+        },
+        {
+          "index_key": 2,
+          "schema_version": 1,
+          "attributes": {
+            "ami": "ami-0d2bf41df19c4aac7",
+            "arn": "arn:aws:ec2:us-east-2:485146132295:instance/i-03d85c3916e5cf807",
+            "associate_public_ip_address": true,
+            "availability_zone": "us-east-2c",
+            "cpu_core_count": 1,
+            "cpu_threads_per_core": 2,
+            "credit_specification": [],
+            "disable_api_termination": false,
+            "ebs_block_device": [],
+            "ebs_optimized": true,
+            "enclave_options": [
+              {
+                "enabled": false
+              }
+            ],
+            "ephemeral_block_device": [],
+            "get_password_data": false,
+            "hibernation": false,
+            "host_id": null,
+            "iam_instance_profile": "james-matrix_host",
+            "id": "i-03d85c3916e5cf807",
+            "instance_initiated_shutdown_behavior": null,
+            "instance_state": "running",
+            "instance_type": "m5.large",
+            "ipv6_address_count": 0,
+            "ipv6_addresses": [],
+            "key_name": "james-matrix",
+            "metadata_options": [
+              {
+                "http_endpoint": "enabled",
+                "http_put_response_hop_limit": 1,
+                "http_tokens": "optional"
+              }
+            ],
+            "monitoring": false,
+            "network_interface": [],
+            "outpost_arn": "",
+            "password_data": "",
+            "placement_group": "",
+            "primary_network_interface_id": "eni-04a8512bbd3ebad38",
+            "private_dns": "ip-172-31-2-138.us-east-2.compute.internal",
+            "private_ip": "172.31.2.138",
+            "public_dns": "ec2-52-15-253-129.us-east-2.compute.amazonaws.com",
+            "public_ip": "52.15.253.129",
+            "root_block_device": [
+              {
+                "delete_on_termination": true,
+                "device_name": "/dev/sda1",
+                "encrypted": false,
+                "iops": 300,
+                "kms_key_id": "",
+                "tags": null,
+                "throughput": 0,
+                "volume_id": "vol-06611a73123a2e348",
+                "volume_size": 100,
+                "volume_type": "gp2"
+              }
+            ],
+            "secondary_private_ips": [],
+            "security_groups": [],
+            "source_dest_check": true,
+            "subnet_id": "subnet-0cbc726003fe97e79",
+            "tags": {
+              "Name": "james-matrix-worker-3",
+              "Role": "worker",
+              "expire": "2021-01-24T20:27:41Z",
+              "kubernetes.io/cluster/james-matrix": "shared",
+              "platform": "rhel_7.9",
+              "project": "PRODENG"
+            },
+            "tenancy": "default",
+            "timeouts": null,
+            "user_data": "e68c2a421842ed7ecf74681263c5bfbadb38fef7",
+            "user_data_base64": null,
+            "volume_tags": null,
+            "vpc_security_group_ids": [
+              "sg-07686579541075987",
+              "sg-0c368e40c88d8b74d"
+            ]
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMCwidXBkYXRlIjo2MDAwMDAwMDAwMDB9LCJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "module.common.aws_iam_instance_profile.profile",
+            "module.common.aws_iam_role.role",
+            "module.common.aws_security_group.common",
+            "module.common.data.aws_ami.linux",
+            "module.vpc.aws_subnet.public",
+            "module.vpc.aws_vpc.network",
+            "module.vpc.data.aws_availability_zones.all",
+            "module.workers.aws_security_group.worker"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.workers",
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "worker",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:us-east-2:485146132295:security-group/sg-07686579541075987",
+            "description": "mke cluster workers",
+            "egress": [],
+            "id": "sg-07686579541075987",
+            "ingress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 443,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 443
+              }
+            ],
+            "name": "james-matrix-workers",
+            "name_prefix": "",
+            "owner_id": "485146132295",
+            "revoke_rules_on_delete": false,
+            "tags": null,
+            "timeouts": null,
+            "vpc_id": "vpc-0b43bae83b4fd3265"
+          },
+          "sensitive_attributes": [],
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6NjAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "module.vpc.aws_vpc.network"
+          ]
+        }
+      ]
+    }
+  ]
+}

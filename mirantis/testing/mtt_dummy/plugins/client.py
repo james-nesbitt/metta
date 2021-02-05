@@ -5,6 +5,7 @@ Dummy client plugin
 """
 
 import logging
+
 from mirantis.testing.mtt.client import ClientBase
 
 logger = logging.getLogger('mirantis.testing.mtt_dummy.client')

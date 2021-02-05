@@ -1,0 +1,2 @@
+# Use the dummy plugin which doesn't actually do anything
+plugin_id: "dummy"

@@ -1,6 +1,8 @@
 import logging
+
+from configerus.config import Config
+
 from .plugin import MTTPlugin, Type as PluginType, Factory as PluginFactory
-from .config import Config
 
 logger = logging.getLogger('mirantis.testing.mtt.client')
 
@@ -15,8 +17,7 @@ class ClientBase(MTTPlugin):
         raise NotImplemented('arguments() was not implemented for this client plugin')
 
 
-
-def make_client(plugin_id: str, config: Config, instance_id: str = ''):
+def make_client(plugin_id:str , config:Config, instance_id:str = ''):
     """ Create a new client plugin
 
     Parameters:

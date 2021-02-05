@@ -1,20 +1,52 @@
 
-from typing import Dict
-from .config import Config
+from typing import Dict, List
+
+from configerus import new_config as configerus_new_config
+from configerus.config import Config
+# We import common plugin ids to one place for easier imports by consumer
+# this also runs the contrib module decorators
+from configerus.contrib.dict import PLUGIN_ID_CONFIGSOURCE_DICT as CONFIGERUS_CONFIGSOURCE_DICT
+from configerus.contrib.files import PLUGIN_ID_CONFIGSOURCE_PATH as CONFIGERUS_CONFIGSOURCE_PATH
+
 from .provisioner import make_provisioner, ProvisionerBase
 from .client import make_client, ClientBase
 from .workload import make_workload, WorkloadBase
 
-def new_config():
+""" GENERATING CONFIG  """
+
+# Local shortcuts to the configerus contrib source plugins
+# which simplify imports for consumers
+CONFIGSOURCE_DICT = CONFIGERUS_CONFIGSOURCE_DICT
+""" Configerus plugin_id for Dict source """
+CONFIGSOURCE_PATH = CONFIGERUS_CONFIGSOURCE_PATH
+""" Configerus plugin_id for Path source """
+
+CONFIGERUS_BOOSTRAPS = [
+    'deep',
+    'get',
+    'jsonschema'
+]
+""" configerus bootstraps that we will use on config objects """
+
+def new_config(additional_bootstraps:List[str]=[]):
     """ Retrieve a new empty Config object
+
+    This method is just a shortcut into the configerus construction, to allow
+    simpler import approachs for mtt consumers.  Above are two module variables
+    that server the same purpose.
+    You don't need to use this if you are comfortable using configerus directly
+    but this allows a simple approach.
 
     Returns:
     --------
 
-    An empty .config.Config object
+    An empty configerus.config.Config object, bootstrapped with mtt preferred
+    bootstraps, and any passed in.
 
     """
-    return Config()
+    bootstraps = CONFIGERUS_BOOSTRAPS + additional_bootstraps
+    return configerus_new_config(bootstraps=bootstraps)
+
 
 MTT_PROVISIONER_CONFIG_LABEL_DEFAULT = 'provisioner'
 """ provisioner_from_config will load this config to decide how to build the provisioner plugin """
@@ -23,7 +55,7 @@ MTT_PROVISIONER_CONFIG_KEY_PLUGINID = 'plugin_id'
 MTT_PROVISIONER_FROMCONFIG_INSTANCEID_DEFAULT = 'fromconfig'
 """ what plugin instance_id to use for the provisioner from config """
 def new_provisioner_from_config(
-        config: Config,
+        config:Config,
         instance_id:str=MTT_PROVISIONER_FROMCONFIG_INSTANCEID_DEFAULT,
         config_label:str=MTT_PROVISIONER_CONFIG_LABEL_DEFAULT) -> ProvisionerBase:
     """ Create a new provisioner plugin from a config object
@@ -75,7 +107,7 @@ MTT_WORKLOAD_CONFIG_KEY_PLUGINID = 'plugin_id'
 """ new_workloads_from_config will use this Dict key from the worklaod config to decide what plugin to create """
 MTT_WORKLOAD_CONFIG_KEY_ARGS = 'arguments'
 """ new_workloads_from_config will use this Dict key from the worklaod config to decide what arguments to pass to the plugin """
-def new_workloads_from_config(config: Config, label:str=MTT_WORKLOAD_CONFIG_LABEL, key:str=MTT_WORKLOAD_CONFIG_KEY_WORKLOADS) -> Dict[str,WorkloadBase]:
+def new_workloads_from_config(config:Config, label:str=MTT_WORKLOAD_CONFIG_LABEL, key:str=MTT_WORKLOAD_CONFIG_KEY_WORKLOADS) -> Dict[str,WorkloadBase]:
     """ Retrieve a keyed Dict of workload plugins from config
 
     the config object is used to retrieve workload settings.  A Dict of workload
@@ -100,7 +132,7 @@ def new_workloads_from_config(config: Config, label:str=MTT_WORKLOAD_CONFIG_LABE
         # there is not config so we can ignore this
         return workloads
 
-    if not instanceof(workload_list, dict):
+    if not isinstance(workload_list, dict):
         return workloads
 
     for instance_id, workload_config in workload_list.items():
@@ -122,7 +154,7 @@ MTT_CLIENT_CONFIG_KEY_PLUGINID = 'plugin_id'
 """ clients_from_config will use this Dict key from the client config to decide what plugin to create """
 MTT_CLIENT_CONFIG_KEY_ARGS = 'arguments'
 """ new_clients_from_config will use this Dict key from the client config to decide what arguments to pass to the plugin """
-def new_clients_from_config(config: Config, label:str=MTT_CLIENT_CONFIG_LABEL, key:str=MTT_CLIENT_CONFIG_KEY_CLIENTS):
+def new_clients_from_config(config:Config, label:str=MTT_CLIENT_CONFIG_LABEL, key:str=MTT_CLIENT_CONFIG_KEY_CLIENTS):
     """ Create clients from some config
 
     This method will interpret some config values as being usable to build a Dict

@@ -1,6 +1,8 @@
 import logging
+
+from configerus.config import Config
+
 from .plugin import MTTPlugin, Type as PluginType, Factory as PluginFactory
-from .config import Config
 
 logger = logging.getLogger('mirantis.testing.mtt.workload')
 
@@ -15,7 +17,7 @@ class WorkloadBase(MTTPlugin):
         raise NotImplemented('arguments() was not implemented for this workload plugin')
 
 
-def make_workload(plugin_id: str, config: Config, instance_id: str = ''):
+def make_workload(plugin_id:str, config:Config, instance_id:str = ''):
     """ Create a new workload plugin
 
     Parameters:

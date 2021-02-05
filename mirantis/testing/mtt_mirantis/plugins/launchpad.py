@@ -14,7 +14,6 @@ from typing import List
 import mirantis.testing.mtt as mtt
 from mirantis.testing.mtt.client import make_client
 from mirantis.testing.mtt.provisioner import ProvisionerBase
-import mirantis.testing.mtt_common as mtt_common
 import mirantis.testing.mtt_docker as mtt_docker
 import mirantis.testing.mtt_kubernetes as mtt_kubernetes
 
@@ -114,7 +113,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             }
 
         backend_config = self.config.copy()
-        backend_config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_DICT, backend_provisioner_instance_id, backend_provisioner_config_priority).set_data(backend_provisioner_config)
+        backend_config.add_source(mtt.CONFIGSOURCE_DICT, backend_provisioner_instance_id, backend_provisioner_config_priority).set_data(backend_provisioner_config)
         self.backend = mtt.new_provisioner_from_config(backend_config, backend_provisioner_instance_id)
 
         if self.backend.instance_id == self.instance_id:

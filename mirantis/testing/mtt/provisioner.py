@@ -1,7 +1,14 @@
+"""
+
+Provisioning
+
+"""
 
 import logging
+
+from configerus.config import Config
+
 from .plugin import MTTPlugin, Type as PluginType, Factory as PluginFactory
-from .config import Config
 
 logger = logging.getLogger('mirantis.testing.mtt.provisioner')
 

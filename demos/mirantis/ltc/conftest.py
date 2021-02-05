@@ -7,18 +7,8 @@ import os.path
 
 logger = logging.getLogger('mtt ltc demo')
 
-DIR = str(pathlib.Path(__file__).parent.absolute())
-""" Absolute path to this file, used as a root path """
-
 # Import the mtt core
 import mirantis.testing.mtt as mtt
-# Import packages that we use
-# 1. this import some functions that we use
-# 2. this activates the module decorators, which registers plugins
-import mirantis.testing.mtt_common as mtt_common
-import mirantis.testing.mtt_mirantis as mtt_mirantis
-  # mtt_mirantis also import mtt_kubernetes and mtt_docker
-import mirantis.testing.mtt_terraform as mtt_terraform
 
 """ Define our fixtures """
 
@@ -29,41 +19,31 @@ def dir():
 
 @pytest.fixture(scope='session')
 def config():
+    """ Create a config object.
+
+    Bootstrap for:
+    - mtt_docker: we will want the docker client plugin registered
+    - mtt_kubernetes: we will want the kubernetes client plugin registered
+    - mtt_mirantis: add some common config and detect mtt_mirantis presets
+    - mtt_terraform: make its provisioner plugin availble for a launchapad
+        backend
     """
 
-    Create a config object.
+    # Use the mtt configerus.config.Config factory, but include the mtt
+    # bootstrapping for it.  See the bootstrappers such as the one ih
+    # mtt_mirantis/__init__.py
 
-    We add sources for:
-    - our own ./config
-    - some dynamic overrides
-    - we let mtt_common add some common paths
-    - we let mtt_mirantis interpet variation and release from its config
+    config = mtt.new_config(additional_bootstraps=[
+        'mtt_docker',
+        'mtt_kubernetes',
+        'mtt_mirantis',
+        'mtt_terraform'
+    ])
 
-    """
-
-    config = mtt.new_config()
-    # Add our ./config path as a config source
-    config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_PATH, 'project_config').set_path(os.path.join(DIR, 'config'))
-    # Add some dymanic values for config
-    config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_DICT, 'project_dynamic').set_data({
-        "user": {
-            "id": getpass.getuser() # override user id with a host value
-        },
-        "global": {
-            "datetime": datetime.now(), # use a single datetime across all checks
-        },
-        config.paths_label(): { # special config label for file paths, usually just 'paths'
-            "project": DIR  # you can use 'paths:project' in config to substitute this path
-        }
-    })
-
-    # adds user and mtt_common defaults
-    mtt_common.add_common_config(config)
-    # let mtt_mirantis interpret stuff from the mtt_mirantis config
-    mtt_mirantis.config_interpret_mtt_mirantis(config)
-    # of primary value is that mtt_mirantis can interpret ./config/mtt_mirantis
-    # to determing a cluster, variation and release, which adds more config from
-    # that module.
+    # This does a lot of magic, potentially too much.  We use this because we
+    # found that we had the same configerus building approach on a lot of test
+    # suites, so we put it all in a common place.
+    # Configerus provides bootstrap functionality for this purpose.
 
     return config
 
@@ -112,7 +92,7 @@ def provisioner_up(config, provisioner):
 
     yield provisioner
 
-    if conf.get("destroy-on-finish", exception_if_missing=False):
+    if not conf.get("keep-on-finish", exception_if_missing=False):
         try:
             logger.info("Stopping the test cluster using the provisioner as directed by config")
             provisioner.destroy()

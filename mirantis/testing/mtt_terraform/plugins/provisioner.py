@@ -76,24 +76,30 @@ class TerraformProvisionerPlugin(ProvisionerBase):
         logger.info("Preparing Terraform setting")
 
         self.terraform_config = self.config.load(label)
+        """ get a configerus LoadedConfig for the terraform label """
 
         self.working_dir = self.terraform_config.get(MTT_TERRAFORM_PROVISIONER_CONFIG_PLAN_PATH_KEY)
+        """ all subprocess commands for terraform will be run in this path """
 
         state_path = self.terraform_config.get(MTT_TERRAFORM_PROVISIONER_CONFIG_STATE_PATH_KEY, exception_if_missing=False)
+        """ terraform state path """
         if not state_path:
             state_path = os.path.join(self.working_dir, MTT_TERRAFORM_PROVISIONER_DEFAULT_STATE_SUBPATH)
 
         self.vars = self.terraform_config.get(MTT_TERRAFORM_PROVISIONER_CONFIG_VARS_KEY)
+        """ List of vars to pass to terraform.  Will be written to a file """
         if not self.vars:
             self.vars = {}
 
         vars_path = self.terraform_config.get(MTT_TERRAFORM_PROVISIONER_CONFIG_VARS_PATH_KEY, exception_if_missing=False)
+        """ vars file containing vars which will be written before running terraform """
         if not vars_path:
             vars_path = os.path.join(self.working_dir, MTT_TERRAFORM_PROVISIONER_DEFAULT_VARS_FILE)
 
         logger.info("Creating Terraform client")
 
         self.tf = TerraformClient(working_dir=self.working_dir, state_path=state_path, vars_path=vars_path, variables=self.vars)
+        """ TerraformClient instance """
 
         logger.info("Running Terraform INIT")
         self.tf.init()
@@ -211,9 +217,12 @@ class TerraformClient:
     def _make_vars_file(self):
         """ write the vars file """
         vars_path = self.vars_path
-        os.makedirs(os.path.dirname(os.path.abspath(vars_path)), exist_ok=True)
-        with open(vars_path, 'w') as var_file:
-            json.dump(self.vars, var_file, sort_keys=True, indent=4)
+        try:
+            os.makedirs(os.path.dirname(os.path.abspath(vars_path)), exist_ok=True)
+            with open(vars_path, 'w') as var_file:
+                json.dump(self.vars, var_file, sort_keys=True, indent=4)
+        except Exception as e:
+            raise Exception('Could not create terraform vars file: {} : {}'.format(vars_path, e)) from e
 
     def _run(self, args: List[str], append_args: List[str] = [], with_state=True, with_vars=True, return_output=False):
         """ Run terraform """

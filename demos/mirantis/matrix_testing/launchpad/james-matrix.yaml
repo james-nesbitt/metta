@@ -1,0 +1,67 @@
+"apiVersion": "launchpad.mirantis.com/mke/v1.1"
+"kind": "mke"
+"metadata":
+  "name": "james-matrix"
+"spec":
+  "engine":
+    "channel": "stable"
+    "version": "19.03.14"
+  "hosts":
+  - "address": "3.12.150.136"
+    "hooks":
+      "apply":
+        "after":
+        - ""
+        "before":
+        - ""
+    "role": "manager"
+    "ssh":
+      "keyPath": "./ssh_keys/james-matrix.pem"
+      "user": "ec2-user"
+  - "address": "3.139.239.237"
+    "hooks":
+      "apply":
+        "after":
+        - ""
+        "before":
+        - ""
+    "role": "worker"
+    "ssh":
+      "keyPath": "./ssh_keys/james-matrix.pem"
+      "user": "ec2-user"
+  - "address": "18.188.164.213"
+    "hooks":
+      "apply":
+        "after":
+        - ""
+        "before":
+        - ""
+    "role": "worker"
+    "ssh":
+      "keyPath": "./ssh_keys/james-matrix.pem"
+      "user": "ec2-user"
+  - "address": "52.15.253.129"
+    "hooks":
+      "apply":
+        "after":
+        - ""
+        "before":
+        - ""
+    "role": "worker"
+    "ssh":
+      "keyPath": "./ssh_keys/james-matrix.pem"
+      "user": "ec2-user"
+  "mke":
+    "imageRepo": "docker.io/mirantis"
+    "installFlags":
+    - "--admin-username=admin"
+    - "--admin-password=orcaorcaorca"
+    - "--default-node-orchestrator=kubernetes"
+    - "--san=james-matrix-manager-lb-54018fc526307bbb.elb.us-east-2.amazonaws.com"
+    "version": "3.3.5"
+  "msr":
+    "imageRepo": "docker.io/mirantis"
+    "installFlags":
+    - "--ucp-insecure-tls"
+    "replicaIDs": "sequential"
+    "version": "2.8.5"
