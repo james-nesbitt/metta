@@ -25,7 +25,7 @@ a provisioner object
 import mirantis.testing.mtt as mtt
 # Import any modules with decorators that you want activated
 import mirantis.testing.mtt_common as mtt_common
-import mirantis.testing.mtt_mirantis as mtt_mirantis
+import mirantis.testing.mtt as mtt
 # Maybe we'll ask for a docker client later
 import mirantis.testing.mtt_docker as mtt_docker
 
@@ -36,9 +36,9 @@ import getpass
 # New config
 config = mtt.new_config()
 # Add ./config path as a config source
-config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_PATH, 'project_config').set_path(os.path.join(DIR, 'config'))
+config.add_source(mtt_common.MTT_PLUGIN_ID_SOURCE_PATH, 'project_config').set_path(os.path.join(DIR, 'config'))
 # Add some dymanic values for config
-config.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_DICT, 'project_dynamic').set_data({
+config.add_source(mtt_common.MTT_PLUGIN_ID_SOURCE_DICT, 'project_dynamic').set_data({
     "user": {
         "id": getpass.getuser() # override user id with a host value
     },

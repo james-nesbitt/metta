@@ -1,0 +1,10 @@
+{
+    "launchpad": {
+        "backend": {
+            "type": "object"
+        }
+        "file": {
+            "type": "object"
+        }
+    }
+}

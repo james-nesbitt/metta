@@ -1,4 +1,4 @@
-FROM alpine:3.13
+FROM alpine:3
 
 ARG MTT_UID=1000
 

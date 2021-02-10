@@ -56,9 +56,9 @@ Any other request for a plugin will be passed to the backend,
 
 ### Variations
 
-The mtt_mirantis offers a variation concept, where common mirantis presets for
+The mtt offers a variation concept, where common mirantis presets for
 testing clusters is created as batches of config, which can be loaded as presets
-based on values in the config.load('mtt_mirantis').
+based on values in the config.load('mtt').
 
 The variation presets are meant to simplify configuration of systems by putting
 complexity in mtt-mirantis, and using `variables` config to provide simple
@@ -83,18 +83,18 @@ Platform : small preset options which overload `variables` for different server
 Cluster : small preset options which overload `variables` for different cluster
    sizes and MKE/MSR combinations.
 
-To consumer variations, populate an `mtt_mirantis` config with variation/release
-/platform/cluster ids, and then ask mtt_mirantis to process them and it will load
+To consumer variations, populate an `mtt` config with variation/release
+/platform/cluster ids, and then ask mtt to process them and it will load
 all the needed config to provide a valid provisioner.
 
 ## Terraform
 
 Mirantis uses a number of terraform charts with mtt.  These are provided with
-the mtt_mirantis module to give access.
-Additionally, there is some `mtt_mirantis` configuration meant to give easy path
+the mtt module to give access.
+Additionally, there is some `mtt` configuration meant to give easy path
 access to the terraform plans/charts.
 
-Look in` mtt_mirantis/config/mtt_mirantis` for the values.
+Look in` mtt/config/mtt` for the values.
 
 two useful charts are:
 

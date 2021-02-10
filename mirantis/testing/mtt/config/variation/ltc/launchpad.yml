@@ -1,0 +1,149 @@
+backend:
+    plugin_id: uctt_terraform
+
+    # Declare what backend output will give us our launchpad yml
+    launchpad_output: mke_cluster
+    # Override an output declaration for our needed output
+    outputs:
+        mke_cluster:
+            plugin_id: dict
+
+    # everythion below here is consumed by the terraform provider plugin
+    # as though this were the contents of ./terraform.yml
+
+    resource_prefix: "{variables:resource_prefix}"
+    plan:
+        type: local
+        path: "{variables:terraform_plan}"
+    state:
+        path: "{variables:files_path?.}/terraform/{variables:files_prefix}.terraform.state"
+
+    # Where will the vars be written
+    vars_path: "{variables:files_path?.}/terraform/{variables:files_prefix}.tfvars.json"
+    # Vars list for terraform
+    vars:
+        # description = "Name used to identify resources and passed to launchpad."
+        cluster_name: "{variables:cluster_name}"
+
+        # description = "A short name/initials which represents the engineer running the test."
+        username: "{variables:user}"
+        # description = "An arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'."
+        task_name: "{variables:task}"
+        # description = "One of the official cost-tracking project names. Without this, your cluster may get terminated without warning."
+        project: "{variables:project}"
+
+        # description = "The max time to allow this cluster to avoid early termination. Can use 'h', 'm', 's' in sane combinations, eg, '15h37m18s'."
+        expire_duration: "{variables:expire_duration}"
+
+        # description = "The AWS region to deploy to."
+        aws_region: "{variables:aws_region}"
+
+        # description = "The CIDR to use when creating the VPC."
+        vpc_cidr: "172.31.0.0/16"
+
+        # description = "The UCP admin username to use."
+        admin_username: admin
+
+        # description = "The UCP admin password to use."
+        admin_password: "{variables:admin_password}"
+
+        # description = "The number of UCP managers to create."
+        manager_count: "{variables:manager_count}"
+
+        # description = "The number of UCP Linux workers to create."
+        worker_count: "{variables:worker_count}"
+
+        # description = "The number of DTR replicas to create."
+        msr_count: "{variables:msr_count}"
+
+        # description = "The number of UCP Windows workers to create."
+        windows_worker_count: "{variables:windows_worker_count}"
+
+        #description = "The AWS instance type to use for manager nodes."
+        manager_type: "{variables:manager_count}"
+
+        # description = "The AWS instance type to use for Linux/Windows worker nodes."
+        worker_type: "{variables:worker_type}"
+
+        # description = "The AWS instance type to use for DTR replica nodes."
+        msr_type: "{variables:msr_type}"
+
+        # description = "The volume size (in GB) to use for manager nodes."
+        manager_volume_size: "{variables:manager_volume_size}"
+
+        # description = "The volume size (in GB) to use for worker nodes."
+        worker_volume_size: "{variables:worker_volume_size}"
+
+        # description = "The volume size (in GB) to use for DTR replica nodes."
+        msr_volume_size: "{variables:msr_volume_size}"
+
+        # description = "The Windows Administrator password to use."
+        windows_administrator_password: "{variables:windows_administrator_password}"
+
+        # description = "The Linux platform to use for manager/worker/DTR replica nodes"
+        platform: "{variables:platform}"
+
+        # description = "The engine version to deploy across all nodes in the cluster."
+        engine_version: "{variables:engine_version}"
+
+        # description = "The channel to pull the engine installer from."
+        engine_channel: "{variables:engine_channel}"
+
+        # description = "The UCP version to deploy."
+        mke_version: "{variables:mke_version}"
+
+        # description = "The repository to pull the UCP images from."
+        mke_image_repo: "{variables:mke_image_repo}"
+
+        # description = "The UCP installer flags to use."
+        mke_install_flags: []
+
+        # description = "The option to enable/disable Kubernetes as the default orchestrator."
+        kube_orchestration: true
+
+        # description = "The DTR version to deploy."
+        msr_version: "{variables:msr_version}"
+
+        # description = "The repository to pull the DTR images from."
+        msr_image_repo: "{variables:msr_image_repo}"
+
+        # description = "The DTR installer flags to use."
+        msr_install_flags:
+            - "--ucp-insecure-tls"
+
+        # description = "Set to 'sequential' to generate sequential replica id's for cluster members, for example 000000000001, 000000000002, etc. ('random' otherwise)"
+        # msr_replica_config: sequential
+
+        # description = "The JSON which describes AMI collections (see filename 'platforms.auto.tfvars.json' for details)"
+        # platforms:
+        #   map(
+        #     map(
+        #       object({
+        #         ami_name  = string
+        #         owner     = string
+        #         user      = string
+        #         interface = string
+        #       })
+        #     )
+        #   )
+
+        # description = "The selector for the applicable AMI subcollection (ie, 'public' vs 'mirantis')."
+        platform_repo: "{variables:platform_repo}"
+
+        # description = "A list of strings (shell commands) to be run before stages."
+        # hooks_apply_before:
+        #     - ""
+
+        # description = "A list of strings (shell commands) to be run after stages."
+        # hooks_apply_after:
+        #     - ""
+
+        # description = "If non-empty, use this path/filename as the ssh key file instead of generating automatically."
+        ssh_key_file_path: "{variables:files_path?.}/terraform/{variables:files_prefix}.pem"
+
+
+cli-options:
+    accept-license: true
+    disable-telemetry: true
+
+config_file: "{variables:files_path}/launchpad/{variables:files_prefix}.yaml"

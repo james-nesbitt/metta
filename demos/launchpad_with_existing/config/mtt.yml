@@ -1,0 +1,8 @@
+# This will tell mtt to include mtt/config/variation/existing
+variation: existing
+# this will tell mtt to include mtt/config/release/patch/202101
+release: patch/202012
+# This will tell mtt to include mtt/config/cluster/poc
+cluster: poc
+# This will tell mtt to include mtt/config/platform/public/ubuntu/18.04
+platform: public/ubuntu/18.04

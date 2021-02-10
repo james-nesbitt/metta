@@ -1,18 +1,33 @@
-# Using with pytest
+import mirantis.testing.mtt_terraform as mtt_terraform
+import mirantis.testing.mtt_common as mtt_common
+import mirantis.testing.mtt as mtt
+import logging
+import pytest
+import pathlib
+import getpass
+from datetime import datetime
+import os.path
 
-It is common to use mtt with pytest by injecting config provisioner and workload
-plugins as fixtures.
+logger = logging.getLogger('mtt ltc demo')
 
-If you are running tests using a single long running cluster then you can inject
-a provisioner fixture that has already started the cluster resources.
-Multiple provisioners can be used if you want to separate resources and run
-tests in parallel.
+DIR = str(pathlib.Path(__file__).parent.absolute())
+""" Absolute path to this file, used as a root path """
 
-## Config fixtures
+# Import the mtt core
+# Import packages that we use
+# 1. this import some functions that we use
+# 2. this activates the module decorators, which registers plugins
+# mtt also import mtt_kubernetes and mtt_docker
 
-A comprehensive config structure could be:
+""" Define our fixtures """
 
-```
+
+@pytest.fixture(scope='session')
+def dir():
+    """ quick access to project root path """
+    return DIR
+
+
 @pytest.fixture(scope='session')
 def config():
     """
@@ -29,16 +44,21 @@ def config():
 
     config = mtt.new_config()
     # Add our ./config path as a config source
-    config.add_source(mtt_common.MTT_PLUGIN_ID_SOURCE_PATH, 'project_config').set_path(os.path.join(DIR, 'config'))
+    config.add_source(
+        mtt_common.MTT_PLUGIN_ID_SOURCE_PATH,
+        'project_config').set_path(
+        os.path.join(
+            DIR,
+            'config'))
     # Add some dymanic values for config
     config.add_source(mtt_common.MTT_PLUGIN_ID_SOURCE_DICT, 'project_dynamic').set_data({
         "user": {
-            "id": getpass.getuser() # override user id with a host value
+            "id": getpass.getuser()  # override user id with a host value
         },
         "global": {
-            "datetime": datetime.now(), # use a single datetime across all checks
+            "datetime": datetime.now(),  # use a single datetime across all checks
         },
-        config.paths_label(): { # special config label for file paths, usually just 'paths'
+        config.paths_label(): {  # special config label for file paths, usually just 'paths'
             "project": DIR  # you can use 'paths:project' in config to substitute this path
         }
     })
@@ -52,27 +72,8 @@ def config():
     # that module.
 
     return config
-```
 
-This contains a config object which reads from the `./config` folder, as well as
-paths like `~/config/mtt/`.
-It is also configured to interpret config for the `mtt` label and load
-more config from `mtt/config`
-Some additional dynamic values have been added so that you can inject a username
-and a fixed datetime for consistent datetime labelling.
 
-The real mtt advantage is getting strong control over config, and then letting
-mtt do the rest by relying on that configuration.
-The actual config demands of the plugins may take some learning, but using things
-like the mtt presets should help a lot.
-
-## provisioner fixtures
-
-Provisioners are easy to get if you have your config object.
-
-Just use something like:
-
-```
 @pytest.fixture(scope='session')
 def provisioner(config):
     """ Retrieve a provisioner object
@@ -86,15 +87,9 @@ def provisioner(config):
     @see provisioner_up
 
     """
-    return mtt.new_provisioner_from_config(config, 'my_provisioner')
-```
+    return mtt.new_provisioner_from_config(config, 'ltc_provisioner')
 
-This will give a non-provisioned provisioner that you can bring as needed.
 
-If you want to keep provisioning times out of your test functions, then consider
-injecting a provisioner that has already provisoned your cluster.
-
-```
 @pytest.fixture(scope='session')
 def provisioner_up(config, provisioner):
     """ get the provisioner but start the provisioner before returning
@@ -125,13 +120,13 @@ def provisioner_up(config, provisioner):
 
     yield provisioner
 
-    if conf.get("options.destroy-on-finish", exception_if_missing=False):
+    if conf.get("destroy-on-finish", exception_if_missing=False):
         try:
-            logger.info("Stopping the test cluster using the provisioner as directed by config")
+            logger.info(
+                "Stopping the test cluster using the provisioner as directed by config")
             provisioner.destroy()
         except Exception as e:
             logger.error("Provisioner failed to stop: %s", e)
             raise e
     else:
         logger.info("Leaving test infrastructure in place on shutdown")
-```

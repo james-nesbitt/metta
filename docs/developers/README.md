@@ -34,7 +34,7 @@ as is the provisioner plugin for existing backends.
 
 Plugins that meet requirements for usage but don't actually do anything.
 
-### mtt_mirantis
+### mtt
 
 Mirantis specific functionality related to our products and how we test.
 

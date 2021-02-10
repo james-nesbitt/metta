@@ -1,0 +1,8 @@
+# This will tell mtt to include mtt/config/variation/ltc
+variation: ltc
+# This will tell mtt to include mtt/config/cluster/poc
+cluster: poc
+# This will tell mtt to include mtt/config/platform/public/ubuntu/18.04
+platform: public/ubuntu/18.04
+
+# release is set in both before/ and after/ folders
