@@ -1,155 +1,151 @@
+"""
 
-from typing import Dict
-from .config import Config
-from .provisioner import make_provisioner, ProvisionerBase
-from .client import make_client, ClientBase
-from .workload import make_workload, WorkloadBase
+MTT Mirantis
 
-def new_config():
-    """ Retrieve a new empty Config object
+
+"""
+
+from typing import List
+import os
+
+from configerus import new_config as configerus_new_config
+from configerus.config import Config as configerus_Config
+from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT as CONFIGERUS_SOURCE_DICT
+from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH as CONFIGERUS_SOURCE_PATH
+from uctt import bootstrap as uctt_bootstrap
+from uctt.plugin import Factory as uctt_Factory, Type as uctt_Type
+
+from .common import add_common_config
+from .presets import add_preset_config
+from .launchpad import LaunchpadProvisionerPlugin
+
+""" GENERATING CONFIG  """
+
+# Local shortcuts to the configerus contrib source plugins
+# which simplify imports for consumers
+SOURCE_DICT = CONFIGERUS_SOURCE_DICT
+""" Configerus plugin_id for Dict source """
+SOURCE_PATH = CONFIGERUS_SOURCE_PATH
+""" Configerus plugin_id for Path source """
+
+""" Configerus construction with bootstrapping """
+
+FIXED_CONFIGERUS_BOOSTRAPS = [
+    "deep",
+    "get",
+    "jsonschema",
+    "files"
+]
+""" configerus bootstraps that we will use on config objects """
+FIXED_UCTT_BOOTSTRAPS = [
+    "uctt_docker",
+    "uctt_kubernetes",
+    "uctt_terraform"
+]
+DEFAULT_ADDITIONAL_UCTT_BOOTSTRAPS = [
+    'mtt'
+]
+""" default overridable uctt bootstrap calls """
+
+
+def new_config(additional_uctt_bootstraps: List[str] = DEFAULT_ADDITIONAL_UCTT_BOOTSTRAPS,
+               additional_configerus_bootstraps: List[str] = []):
+    """ Retrieve a new empty configerus_Config object
+
+    This method is just a shortcut into the configerus construction, to allow
+    simpler import approachs for mtt consumers.
+    You don`t need to use this if you are comfortable using configerus directly
+    but this allows a simple approach.
+
+    Parameters
+    ----------
+
+    additional_uctt_bootstraps (List[str]) : run additiional uctt bootstraps
+        on the config object.  Defaults to the mtt bootstrap.
+
+    additional_configerus_bootstraps (List[str]) : run additional configerus
+        bootstrap entry_points
 
     Returns:
     --------
 
-    An empty .config.Config object
+    An empty configerus.config.Config object, bootstrapped with mtt preferred
+    bootstraps.
 
     """
-    return Config()
+    configerus_bootstraps = FIXED_CONFIGERUS_BOOSTRAPS + \
+        additional_configerus_bootstraps
+    config = configerus_new_config(bootstraps=configerus_bootstraps)
 
-MTT_PROVISIONER_CONFIG_LABEL_DEFAULT = 'provisioner'
-""" provisioner_from_config will load this config to decide how to build the provisioner plugin """
-MTT_PROVISIONER_CONFIG_KEY_PLUGINID = 'plugin_id'
-""" provisioner_from_config will .get() this key from the provisioner config to decide what plugin to create """
-MTT_PROVISIONER_FROMCONFIG_INSTANCEID_DEFAULT = 'fromconfig'
-""" what plugin instance_id to use for the provisioner from config """
-def new_provisioner_from_config(
-        config: Config,
-        instance_id:str=MTT_PROVISIONER_FROMCONFIG_INSTANCEID_DEFAULT,
-        config_label:str=MTT_PROVISIONER_CONFIG_LABEL_DEFAULT) -> ProvisionerBase:
-    """ Create a new provisioner plugin from a config object
+    uctt_bootstraps = list(
+        set(FIXED_UCTT_BOOTSTRAPS + additional_uctt_bootstraps))
+    uctt_bootstrap(config, uctt_bootstraps)
 
-    The config object is used decide what plugin to load.
+    return config
 
-    First we config.load('provisioner')
-    and then we ask for .get('plugin_id')
 
-    Parameters:
-    -----------
+MTT_LAUNCHPAD_PROVISIONER_PLUGIN_ID = "mtt_launchpad"
+""" provisioner plugin_id for the launchpad plugin """
 
-    config (Config) : used to decide what provisioner plugin to load, and also
-        passed to the provisioner plugin
 
-    instance_id (str) : give the provisioner plugins instance a specific name
+@uctt_Factory(type=uctt_Type.PROVISIONER,
+              plugin_id=MTT_LAUNCHPAD_PROVISIONER_PLUGIN_ID)
+def mtt_plugin_factory_provisioner_launchpad(
+        config: configerus_Config, instance_id: str = ""):
+    """ create a launchpad provisioner plugin """
+    return LaunchpadProvisionerPlugin(config, instance_id)
 
-    config_label (str) : load provisioner config from a specific config label
-        This allows you to configure multiple provisioners using a different
-        label per provisioner.
 
-    Returns:
-    --------
+""" UCTT BOOTSTRAPPERS """
 
-    a provisioner plugin instance created by the decorated factory method that
-    was registered for the plugin_id
+""" UCTT bootstraps that we will use on config objects """
 
-    Throws:
-    -------
 
-    If you ask for a plugin which has not been registered, then you're going to get
-    a NotImplementedError exception.
-    To make sure that your desired plugin is registered, make sure to import
-    the module that contains the factory method with a decorator.
+def uctt_bootstrap_all(config: configerus_Config):
+    """ MTT configerus bootstrap
 
-    See mtt_dummy for examples
-    """
+    Add some Mirantis specific config options
 
-    prov_config = config.load(config_label)
-    plugin_id = prov_config.get(MTT_PROVISIONER_CONFIG_KEY_PLUGINID)
-
-    return make_provisioner(plugin_id, config, instance_id)
-
-MTT_WORKLOAD_CONFIG_LABEL = 'workloads'
-""" new_workloads_from_config will load this config to decide how to build the worklaod plugin """
-MTT_WORKLOAD_CONFIG_KEY_WORKLOADS = 'workloads'
-""" new_workloads_from_config will get() this config to decide how to build each worklaod plugin """
-MTT_WORKLOAD_CONFIG_KEY_PLUGINID = 'plugin_id'
-""" new_workloads_from_config will use this Dict key from the worklaod config to decide what plugin to create """
-MTT_WORKLOAD_CONFIG_KEY_ARGS = 'arguments'
-""" new_workloads_from_config will use this Dict key from the worklaod config to decide what arguments to pass to the plugin """
-def new_workloads_from_config(config: Config, label:str=MTT_WORKLOAD_CONFIG_LABEL, key:str=MTT_WORKLOAD_CONFIG_KEY_WORKLOADS) -> Dict[str,WorkloadBase]:
-    """ Retrieve a keyed Dict of workload plugins from config
-
-    the config object is used to retrieve workload settings.  A Dict of workload
-    plugin conf is loaded, and each config is turned into a plugin.
-
-    Parameters:
-
-    config (Config) : Used to load and get the workload configuration
-
-    Returns:
-
-    Dict[str, WorkloadBase] of workload plugins
+    run bootstrapping for both common and presets
 
     """
+    uctt_bootstrap_common(config)
+    uctt_bootstrap_presets(config)
 
-    workloads = {}
 
-    try:
-        workload_config = config.load(label)
-        workload_list = workload_config.get(key, exception_if_missing=True)
-    except KeyError as e:
-        # there is not config so we can ignore this
-        return workloads
+""" UCTT bootstraps that we will use on config objects """
 
-    if not instanceof(workload_list, dict):
-        return workloads
 
-    for instance_id, workload_config in workload_list.items():
-        plugin_id = workload_config[MTT_WORKLOAD_CONFIG_KEY_PLUGINID]
-        workload = make_workload(plugin_id, config, instance_id)
+def uctt_bootstrap_common(config: configerus_Config):
+    """ MTT configerus bootstrap
 
-        if MTT_WORKLOAD_CONFIG_KEY_ARGS in workload_config:
-            workload.arguments(**workload_config[MTT_WORKLOAD_CONFIG_KEY_ARGS])
+    Add some common Mirantis specific config options
 
-        workloads[instance_id] = workload
+    Add some common configerus sources for common data and common config source
+    paths. Some of the added config is dynamic interpretation of environment,
+    while also some default config paths are added if they can be interpeted
 
-    return workloads
+    @see .config.add_common_config() for details
 
-MTT_CLIENT_CONFIG_LABEL = 'clients'
-""" pclients_from_config will load this config to decide how to build the provisioner plugin """
-MTT_CLIENT_CONFIG_KEY_CLIENTS = 'clients'
-""" clients will get() this config to decide how to build each provisioner plugin """
-MTT_CLIENT_CONFIG_KEY_PLUGINID = 'plugin_id'
-""" clients_from_config will use this Dict key from the client config to decide what plugin to create """
-MTT_CLIENT_CONFIG_KEY_ARGS = 'arguments'
-""" new_clients_from_config will use this Dict key from the client config to decide what arguments to pass to the plugin """
-def new_clients_from_config(config: Config, label:str=MTT_CLIENT_CONFIG_LABEL, key:str=MTT_CLIENT_CONFIG_KEY_CLIENTS):
-    """ Create clients from some config
-
-    This method will interpret some config values as being usable to build a Dict
-    of clients from.
     """
-    clients = {}
+    add_common_config(config)
 
-    try:
-        client_config = config.load(label)
-        client_list = client_config.get(key, exception_if_missing=True)
-    except KeyError as e:
-        # there is not config so we can ignore this
-        return clients
 
-    if not client_list:
-        return clients
-    if not isinstance(client_list, dict):
-        raise ValueError('Did not receive a good dict of client config to make clients from: %s', client_list)
-    #assert isinstance(client_list, Dict[str, Dict]), "clients was expected to be a Dict of plugin configuration"
+""" UCTT bootstraps that we will use on config objects """
 
-    for instance_id, client_config in client_list.items():
-        plugin_id = client_config[MTT_CLIENT_CONFIG_KEY_PLUGINID]
-        client = make_client(plugin_id, config, instance_id)
 
-        if MTT_CLIENT_CONFIG_KEY_ARGS in client_config:
-            client.arguments(**clients_config[MTT_CLIENT_CONFIG_KEY_ARGS])
+def uctt_bootstrap_presets(config: configerus_Config):
+    """ MTT configerus bootstrap
 
-        clients[instance_id] = client
+    Add some Mirantis specific config options for presets
 
-    return clients
+    Additional config sources may be added based on config.load("mtt")
+    which will try to add config for mtt `presets`
+    This gives access to "variation", "cluster", "platform" and "release"
+    presets.  You can dig deeper, but it might implicitly make sense if you look
+    at the config folder of this module.
+
+    @see .presets.add_preset_config() for details
+
+    """
+    add_preset_config(config)

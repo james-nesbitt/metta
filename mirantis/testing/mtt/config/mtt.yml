@@ -1,0 +1,6 @@
+terraform:
+    plans:
+        prodeng:
+            aws: "{paths:mtt}/terraform/plans/prodeng/aws"
+        example:
+            aws: "{paths:mtt}/terraform/plans/example/aws"

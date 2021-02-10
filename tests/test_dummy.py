@@ -1,24 +1,33 @@
 
+import mirantis.testing.mtt_dummy as mtt_dummy
+import mirantis.testing.mtt as mtt
+import configerus.config
 import logging
 import pytest
 
 logger = logging.getLogger(__file__)
 
-import mirantis.testing.mtt as mtt
-import mirantis.testing.mtt_common as mtt_common
+# we will use dummy plugins here so we need to import plugin ids
 
-# we will use dummy plugins here so we need to import them
-import mirantis.testing.mtt_dummy as mtt_dummy
 
 @pytest.fixture()
 def config():
     """ Create a common Config """
 
-    conf = mtt.new_config()
+    conf = mtt.new_config([
+        'mtt_dummy'
+    ])
 
-    conf.add_source(mtt_common.MTT_PLUGIN_ID_CONFIGSOURCE_DICT).set_data({
+    conf.add_source(mtt.SOURCE_DICT).set_data({
         'provisioner': {
-            'plugin_id': mtt_dummy.MTT_PLUGIN_ID_DUMMY
+            'plugin_id': mtt_dummy.MTT_PLUGIN_ID_DUMMY,
+            'config': {
+                'clients': {
+                    'one': {
+                        'plugin_id': mtt_dummy.MTT_PLUGIN_ID_DUMMY
+                    }
+                }
+            }
         },
         'workloads': {
             'workloads': {
@@ -31,26 +40,30 @@ def config():
 
     return conf
 
+
 @pytest.fixture()
 def provisioner(caplog, config):
     """ Create provisioner as defined by config """
-    caplog.set_level(logging.DEBUG)
     return mtt.new_provisioner_from_config(config)
+
 
 @pytest.fixture()
 def workloads(caplog, config):
     """ Create a Dict of workload plugins """
     return mtt.new_workloads_from_config(config)
 
+
 def test_config_is_sane(config):
     """ some config sanity tests """
 
-    assert isinstance(config, mtt.config.Config)
+    assert isinstance(config, configerus.config.Config)
+
 
 def test_workload_loading(workloads):
     """ Do some workload testing """
 
     assert 'dummy' in workloads
+
 
 def test_provisioner_run(caplog, provisioner):
     """ simulate a provisioned test run """
