@@ -8,7 +8,6 @@ MTT Mirantis
 from typing import List
 import os
 
-from configerus import new_config as configerus_new_config
 from configerus.config import Config as configerus_Config
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT as CONFIGERUS_SOURCE_DICT
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH as CONFIGERUS_SOURCE_PATH
@@ -27,62 +26,6 @@ SOURCE_DICT = CONFIGERUS_SOURCE_DICT
 """ Configerus plugin_id for Dict source """
 SOURCE_PATH = CONFIGERUS_SOURCE_PATH
 """ Configerus plugin_id for Path source """
-
-""" Configerus construction with bootstrapping """
-
-FIXED_CONFIGERUS_BOOSTRAPS = [
-    "deep",
-    "get",
-    "jsonschema",
-    "files"
-]
-""" configerus bootstraps that we will use on config objects """
-FIXED_UCTT_BOOTSTRAPS = [
-    "uctt_docker",
-    "uctt_kubernetes",
-    "uctt_terraform"
-]
-DEFAULT_ADDITIONAL_UCTT_BOOTSTRAPS = [
-    'mtt'
-]
-""" default overridable uctt bootstrap calls """
-
-
-def new_config(additional_uctt_bootstraps: List[str] = DEFAULT_ADDITIONAL_UCTT_BOOTSTRAPS,
-               additional_configerus_bootstraps: List[str] = []):
-    """ Retrieve a new empty configerus_Config object
-
-    This method is just a shortcut into the configerus construction, to allow
-    simpler import approachs for mtt consumers.
-    You don`t need to use this if you are comfortable using configerus directly
-    but this allows a simple approach.
-
-    Parameters
-    ----------
-
-    additional_uctt_bootstraps (List[str]) : run additiional uctt bootstraps
-        on the config object.  Defaults to the mtt bootstrap.
-
-    additional_configerus_bootstraps (List[str]) : run additional configerus
-        bootstrap entry_points
-
-    Returns:
-    --------
-
-    An empty configerus.config.Config object, bootstrapped with mtt preferred
-    bootstraps.
-
-    """
-    configerus_bootstraps = FIXED_CONFIGERUS_BOOSTRAPS + \
-        additional_configerus_bootstraps
-    config = configerus_new_config(bootstraps=configerus_bootstraps)
-
-    uctt_bootstraps = list(
-        set(FIXED_UCTT_BOOTSTRAPS + additional_uctt_bootstraps))
-    uctt_bootstrap(config, uctt_bootstraps)
-
-    return config
-
 
 MTT_LAUNCHPAD_PROVISIONER_PLUGIN_ID = "mtt_launchpad"
 """ provisioner plugin_id for the launchpad plugin """
