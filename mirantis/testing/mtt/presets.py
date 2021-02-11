@@ -15,6 +15,8 @@ MTT_CONFIG_PATH = pkg_resources.resource_filename(
 """ Path to the MTT Mirantis config preset configurations """
 MTT_CONFIG_SOURCE_INSTANCE_ID_PREFIX = "mtt_preset"
 """ All config that we add here will have its source instance_id prefixed with this """
+MTT_CONFIG_CONFIG_PRESET_BASE = 'presets'
+""" preset configuration will be found under this config .get() key """
 MTT_PRESETS = [
     ("variation", pkg_resources.resource_filename(
         "mirantis.testing.mtt", "config/variation")),
@@ -25,9 +27,10 @@ MTT_PRESETS = [
     ("release", pkg_resources.resource_filename(
         "mirantis.testing.mtt", "config/release"))
 ]
-""" List of available presets that you can include in load("mtt")
+""" List of available presets that you can include in load("mtt").get('presets')
     (key, preset_root_path):
-        key: config key that will find the preset value
+        key: config key that will find the preset value under the base value
+            from MTT_CONFIG_CONFIG_PRESET_BASE
         path: preset root path that should contains a path matching the value
             which will be added as a source config path
 """
@@ -89,7 +92,8 @@ def add_preset_config(config: configerus_Config,
         # and add the path as a config source.
 
         (preset_key, preset_root_path) = preset
-        preset_value = mtt_config.get(preset_key, exception_if_missing=False)
+        preset_value = mtt_config.get(
+            [MTT_CONFIG_CONFIG_PRESET_BASE, preset_key], exception_if_missing=False)
         if preset_value:
             preset_instance_id = "{}-{}-{}".format(
                 MTT_CONFIG_SOURCE_INSTANCE_ID_PREFIX, preset_key, preset_value)
@@ -99,6 +103,9 @@ def add_preset_config(config: configerus_Config,
                 # exists
                 preset_full_path = os.path.join(preset_root_path, preset_value)
                 if os.path.isdir(preset_full_path):
+                    logger.debug(
+                        "Using MTT preset {}:{} => {}".format(
+                            preset_key, preset_value, preset_full_path))
                     config.add_source(
                         CONFIGERUS_SOURCE_PATH,
                         preset_instance_id,
@@ -108,3 +115,6 @@ def add_preset_config(config: configerus_Config,
                         "mtt doesn't have a preset '%s:%s'",
                         preset_key,
                         preset_value)
+
+        else:
+            logger.debug("No MTT preset selected for {}".format(preset_key))

@@ -20,8 +20,11 @@ We also allow mtt_common to add some common config sources, such as its own
 sane defaults from `mtt_common/config` and some allowed overrides from you own
 user folder.
 
+### Presets
+
 The nature of the ltc config layout allows us to focus overriding its config
-with values primarily in our own `config/variables` config.
+with values by including other preset or in our own `config/variables` config.
+
 @see `mtt/config/variation/ltc`.
 
 ### Launchpad / Terraform
@@ -36,5 +39,12 @@ paths without having to build your own complex strings.
 
 ## Usage
 
+### Pytest
+
 The setup should be good to go if you get the requirements installed.  You
 should be able to run pytest as normal.
+
+### Cli
+
+There is a python `./cli.py` which you can use to interact with the uctt plugins
+directly

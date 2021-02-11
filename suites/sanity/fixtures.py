@@ -1,34 +1,30 @@
-import logging
-import pytest
+"""
 
-import mirantis.testing.mtt as mtt
+Centralize Fixtures so that they can be used without pytest
+
+"""
+
+import logging
+
 import uctt
 
-logger = logging.getLogger('mtt ltc demo')
 
-# Import the mtt core
-# mtt also imports mtt_kubernetes
-
-""" Define our fixtures """
-
-
-@pytest.fixture(scope='session')
 def config():
     """ Create a config object.
 
     Bootstrap for:
     - mtt_docker: we will want the docker client plugin registered
     - mtt_kubernetes: we will want the kubernetes client plugin registered
-    - mtt: add some common config and detect mtt presets and
-       we will use launchpad and existing provisioner plugins
+    - mtt: add some common config and detect mtt presets
+    - mtt_terraform: make its provisioner plugin availble for a launchapad
+        backend
     """
 
     # Use the mtt configerus.config.Config factory, but include the mtt
     # bootstrapping for it.  See the bootstrappers such as the one ih
     # mtt/__init__.py
 
-    config = mtt.new_config(additional_uctt_bootstraps=[
-        'uctt_dummy',
+    config = uctt.new_config(additional_uctt_bootstraps=[
         'uctt_docker',
         'uctt_kubernetes',
         'mtt'
@@ -42,8 +38,7 @@ def config():
     return config
 
 
-@pytest.fixture(scope='session')
-def provisioner(config):
+def provisioner(config, instance_id='ltc_provisioner'):
     """ Retrieve a provisioner object
 
     we only use one provisioned cluster in this test suite
@@ -56,10 +51,9 @@ def provisioner(config):
 
     """
     return uctt.new_provisioner_from_config(
-        config=config, instance_id='launchpad_existing_provisioner')
+        config=config, instance_id=instance_id)
 
 
-@pytest.fixture(scope='session')
 def provisioner_up(config, provisioner):
     """ get the provisioner but start the provisioner before returning
 
@@ -70,21 +64,31 @@ def provisioner_up(config, provisioner):
     You can still use provisioner.apply() update the resources if the provisioner
     can handle it.
     """
-    logger.info("Running MTT provisioner up()")
+
+    conf = config.load("config")
 
     try:
         logger.info("Preparing the testing cluster using the provisioner")
         provisioner.prepare()
     except Exception as e:
-        logger.error("Provisioner failed to init")
+        logger.error("Provisioner failed to init: %s", e)
         raise e
     try:
         logger.info("Starting up the testing cluster using the provisioner")
         provisioner.apply()
     except Exception as e:
-        logger.error("Provisioner failed to start")
+        logger.error("Provisioner failed to start: %s", e)
         raise e
 
     yield provisioner
 
-    logger.info("Leaving test infrastructure in place on shutdown")
+    if conf.get("keep-on-finish", exception_if_missing=False):
+        logger.info("Leaving test infrastructure in place on shutdown")
+    else:
+        try:
+            logger.info(
+                "Stopping the test cluster using the provisioner as directed by config")
+            provisioner.destroy()
+        except Exception as e:
+            logger.error("Provisioner failed to stop: %s", e)
+            raise e

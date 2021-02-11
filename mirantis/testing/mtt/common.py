@@ -13,7 +13,7 @@ import mirantis.testing.mtt as mtt
 
 logger = logging.getLogger("mtt.common")
 
-DIR = os.getcwd()
+DIR = os.path.abspath(os.getcwd())
 
 MTT_COMMON_APP_NAME = "mtt"
 """ used for some path building for config sources """
@@ -59,6 +59,8 @@ def add_common_config(config: configerus_Config):
 
     """
 
+    project_root_path = find_project_root_path()
+
     # a user config path (like ~/.config/mtt) may contain config
     user_conf_path = appdirs.user_config_dir(MTT_COMMON_APP_NAME)
     if not config.has_source(
@@ -69,12 +71,15 @@ def add_common_config(config: configerus_Config):
             MTT_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_path(user_conf_path)
 
     # Add a ${PWD}/config path as a config source if it exists
-    project_config_path = os.path.join(DIR, MTT_COMMON_PROJECT_CONFIG_SUBPATH)
+    project_config_path = os.path.join(
+        project_root_path,
+        MTT_COMMON_PROJECT_CONFIG_SUBPATH)
     if not config.has_source(
             MTT_COMMON_CONFIG_PROJECT_CONFIG_INSTANCE_ID) and os.path.isdir(project_config_path):
         config.add_source(
             CONFIGERUS_SOURCE_PATH,
             MTT_COMMON_CONFIG_PROJECT_CONFIG_INSTANCE_ID).set_path(project_config_path)
+
     # Add some dymanic values for config
     config.add_source(mtt.SOURCE_DICT, MTT_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID, MTT_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_data({
         "user": {
@@ -84,7 +89,8 @@ def add_common_config(config: configerus_Config):
             "datetime": datetime.now(),  # use a single datetime across all checks
         },
         config.paths_label(): {  # special config label for file paths, usually just "paths"
-            "project": DIR  # you can use "paths:project" in config to substitute this path
+            # you can use "paths:project" in config to substitute this path
+            "project": project_root_path
         }
     })
 
@@ -107,3 +113,35 @@ def add_common_config(config: configerus_Config):
         config.add_source(
             mtt.SOURCE_PATH,
             mtt_common_instance_id).set_path(MTT_CONFIG_PATH)
+
+
+def find_project_root_path():
+    """ try to find a project root path
+
+    We start looking in the cwd for certain marker files, and if we don't find
+    any then we check the parent, recursively.
+
+    If we never find a marker file then we assume that the current path is the
+    root.
+
+    """
+
+    MARKER_FILES = {
+        'uctt.py',
+        'conftest',
+        'pytest.ini',
+        'ucttc.py',
+    }
+
+    # Try to add a path from cwd and up that contains a ucttc.py file
+    check_path = DIR
+    while check_path:
+        if check_path == '/':
+            break
+
+        for MARKER_FILE in MARKER_FILES:
+            marker_path = os.path.join(check_path, MARKER_FILE)
+            if os.path.isfile(marker_path):
+                return check_path
+
+    return os.path.dirname(check_path)
