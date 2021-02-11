@@ -19,12 +19,12 @@ resource "aws_instance" "mke_worker" {
   count = var.worker_count
 
   tags = {
-    "Name"                    = "${var.cluster_name}-win-worker-${count.index + 1}"
-    "Role"                    = "worker"
-    (var.kube_cluster_tag)    = "shared"
-    "project"                 = var.project
-    "platform"                = var.platform
-    "expire"                  = var.expire
+    "Name"                 = "${var.cluster_name}-win-worker-${count.index + 1}"
+    "Role"                 = "worker"
+    (var.kube_cluster_tag) = "shared"
+    "project"              = var.project
+    "platform"             = var.platform
+    "expire"               = var.expire
   }
 
   instance_type          = var.worker_type

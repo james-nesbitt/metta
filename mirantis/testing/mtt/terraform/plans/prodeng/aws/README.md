@@ -35,48 +35,55 @@ While it would be helpful to be familiar with [the steps provided in the MCC rep
   * [Setup instructions from elsewhere in this repo](../system_test_toolbox/ansible)
 
 * AWS credentials
-  * if a command such as `aws ec2 describe-instances` is successful (doesn't throw an authentication error) then you should be good to go
+  * if a command such as `aws sts get-caller-identity` is successful (doesn't throw an authentication error) then you should be good to go
 
 ### Deploy
 
+`terraform` will use variables configured in one or more files, using the loading order [described on this page](https://www.terraform.io/docs/language/values/variables.html#variable-definition-precedence).
+
+A brief recap is as follows:
+
+> Terraform loads variables in the following order, with later sources taking precedence over earlier ones:
+>
+> * Environment variables
+> * The `terraform.tfvars` file, if present.
+> * The `terraform.tfvars.json` file, if present.
+> * Any `*.auto.tfvars` or `*.auto.tfvars.json` files, processed in lexical order of their filenames.
+> * Any `-var` and `-var-file` options on the command line, in the order they are provided. (This includes variables set by a Terraform Cloud workspace.)
+
+If the filename doesn't match the above format, it will get ignored. Other than that, any file ending in `.tf` will be considered as Terraform HCL configuration. Unless a config file specifies a subdirectory (eg, module) to consider, all subdirs will be ignored.
+
+In our case, most of the options you'll want or need to customize will belong in `terraform.tfvars`.
+
+How we use these files:
+
 * `terraform.tfvars`
-  * the main config file - this should be the first and likely only file you need to edit (based off `terraform.tfvars.example`):
+  * put most/all of your local config options in this file; use `terraform.tfvars.example` for inspiration
+  * you might find it preferable to create a separate file named `passwords.auto.tfvars` to hold the password data, eg:
 
     ```text
-    manager_count                  = 1
-    worker_count                   = 3
-    dtr_count                      = 0
-    windows_worker_count           = 0
     admin_password                 = "abcd1234changeme"
     windows_administrator_password = "tfaws,,CHANGEME..Example"
-    platform                       = "rhel_7.8"
-    username                       = "alex"
-    task_name                      = "ostrich"
-    project                        = "ST-SZNG"
-    expire_duration                = "72h"
-    engine_version                 = "19.03.12"
-    ucp_version                    = "3.3.3"
-    kube_orchestration             = true
-    dtr_version                    = "2.8.3"
-    dtr_install_flags              = ["--ucp-insecure-tls"]
-    platform_repo                  = "public"
     ```
 
-  * **Notes:**
-    * `windows_administrator_password` tends to be finicky; if you're experiencing Windows deployment issues, start here (and ask the team)
-    * `platform_name` popular choices include `rhel_8.2`, `rhel_7.8`, `ubuntu_18.04` - to see the full list, review `platforms.auto.tfvars.json`
+**Notes:**
 
-* `main.tf`
-  * located in the top-level dir (not in the `modules` subdirs)
-  * edit this only if you're not using the included shell scripts or the variants described below
+* variables of particular interest:
+  * `windows_administrator_password` tends to be finicky; if you're experiencing Windows deployment issues, start here (and ask the team)
+  * `platform_name` popular choices include `rhel_8.2`, `rhel_7.8`, `ubuntu_18.04` - to see the full list, review `platforms.auto.tfvars.json`
+  * `open_sg_for_myip` will add a SG rule which opens up your cluster to all ports/protocols from your IP (and only from your IP), in addition to the other minimalist SG rules; don't use this unless you have a need to access other ports (eg, troubleshooting, accessing a swarm or kube service you've created, etc)
 
 * `variables.tf`
-  * Contains all of the requisite inputs for the root module
+  * Config file with all of the requisite inputs for the root module
   * If you're not sure what variables you can set in `terraform.tfvars`, review (**DO NOT EDIT**) `variables.tf` for inspiration
+
+* `*.tf`
+  * these config files provide the configuration logic; don't edit unless you're working on a PR, or need to do a quick local hack
+  * the prefixes for files such as `main.tf`, `variables.tf`, `outputs.tf` are arbitrary otherwise, and are named mainly for human convenience
 
 * **Any** file ending in `.tf` will be seen by Terraform, so be mindful of any extra files you create in the root or any of the directories referenced by the root `*.tf` files
 
-* deployment script `deploy.sh` will do the right thing based on the above
+* utility script `deploy.sh` will do the right thing based on the above
 
 ### Teardown
 

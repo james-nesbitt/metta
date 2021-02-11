@@ -20,12 +20,12 @@ resource "aws_instance" "mke_worker" {
   count = var.worker_count
 
   tags = {
-    "Name"                    = "${var.cluster_name}-worker-${count.index + 1}"
-    "Role"                    = "worker"
-    (var.kube_cluster_tag)    = "shared"
-    "project"                 = var.project
-    "platform"                = var.platform
-    "expire"                  = var.expire
+    "Name"                 = "${var.cluster_name}-worker-${count.index + 1}"
+    "Role"                 = "worker"
+    (var.kube_cluster_tag) = "shared"
+    "project"              = var.project
+    "platform"             = var.platform
+    "expire"               = var.expire
   }
 
   instance_type          = var.worker_type
@@ -40,7 +40,7 @@ resource "aws_instance" "mke_worker" {
 # Use full qualified private DNS name for the host name.  Kube wants it this way.
 HOSTNAME=$(curl http://169.254.169.254/latest/meta-data/hostname)
 echo $HOSTNAME > /etc/hostname
-sed -i "s|\(127\.0\..\.. *\)localhost|\1$HOSTNAME|" /etc/hosts
+grep -q $HOSTNAME /etc/hosts || sed -ie "s|\(^127\.0\..\.. .*$\)|\1 $HOSTNAME|" /etc/hosts
 hostname $HOSTNAME
 EOF
 

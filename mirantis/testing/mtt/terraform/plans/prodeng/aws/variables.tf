@@ -1,9 +1,3 @@
-variable "cluster_name" {
-  type        = string
-  default     = "launchpad-mke"
-  description = "Name used to identify resources and passed to launchpad."
-}
-
 variable "username" {
   type        = string
   default     = "UNDEFINED"
@@ -94,12 +88,6 @@ variable "msr_type" {
   description = "The AWS instance type to use for DTR replica nodes."
 }
 
-variable "bastion_type" {
-  type        = string
-  default     = "m4.xlarge"
-  description = "The AWS instance type to use for bastion nodes."
-}
-
 variable "manager_volume_size" {
   type        = number
   default     = 100
@@ -130,16 +118,34 @@ variable "platform" {
   description = "The Linux platform to use for manager/worker/DTR replica nodes"
 }
 
-variable "engine_version" {
+variable "mcr_version" {
   type        = string
   default     = "19.03.12"
-  description = "The engine version to deploy across all nodes in the cluster."
+  description = "The mcr version to deploy across all nodes in the cluster."
 }
 
-variable "engine_channel" {
+variable "mcr_channel" {
   type        = string
   default     = "stable"
-  description = "The channel to pull the engine installer from."
+  description = "The channel to pull the mcr installer from."
+}
+
+variable "mcr_repo_url" {
+  type        = string
+  default     = "https://repos.mirantis.com"
+  description = "The repository to source the mcr installer."
+}
+
+variable "mcr_install_url_linux" {
+  type        = string
+  default     = "https://get.mirantis.com/"
+  description = "Location of Linux installer script."
+}
+
+variable "mcr_install_url_windows" {
+  type        = string
+  default     = "https://get.mirantis.com/install.ps1"
+  description = "Location of Windows installer script."
 }
 
 variable "mke_version" {
@@ -211,19 +217,25 @@ variable "platform_repo" {
 }
 
 variable "hooks_apply_before" {
-  type = list(string)
-  default = [""]
+  type        = list(string)
+  default     = [""]
   description = "A list of strings (shell commands) to be run before stages."
 }
 
 variable "hooks_apply_after" {
-  type = list(string)
-  default = [""]
+  type        = list(string)
+  default     = [""]
   description = "A list of strings (shell commands) to be run after stages."
 }
 
 variable "ssh_key_file_path" {
-  type = string
-  default = ""
+  type        = string
+  default     = ""
   description = "If non-empty, use this path/filename as the ssh key file instead of generating automatically."
+}
+
+variable "open_sg_for_myip" {
+  type        = bool
+  default     = false
+  description = "If true, allow ALL traffic, ANY protocol, originating from the terraform execution source IP. Use sparingly."
 }

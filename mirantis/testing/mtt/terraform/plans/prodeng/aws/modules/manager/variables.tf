@@ -21,7 +21,7 @@ variable "platform" {}
 variable "expire" {}
 
 variable "controller_port" {
-  type = string
+  type    = string
   default = "443"
 }
 

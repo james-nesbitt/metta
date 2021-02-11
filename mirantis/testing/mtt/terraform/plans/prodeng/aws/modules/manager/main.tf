@@ -33,12 +33,12 @@ resource "aws_instance" "mke_manager" {
   count = var.manager_count
 
   tags = {
-    "Name"                    = "${var.cluster_name}-manager-${count.index + 1}"
-    "Role"                    = "manager"
-    (var.kube_cluster_tag)    = "shared"
-    "project"                 = var.project
-    "platform"                = var.platform
-    "expire"                  = var.expire
+    "Name"                 = "${var.cluster_name}-manager-${count.index + 1}"
+    "Role"                 = "manager"
+    (var.kube_cluster_tag) = "shared"
+    "project"              = var.project
+    "platform"             = var.platform
+    "expire"               = var.expire
   }
 
   instance_type          = var.manager_type
@@ -53,7 +53,7 @@ resource "aws_instance" "mke_manager" {
 # Use full qualified private DNS name for the host name.  Kube wants it this way.
 HOSTNAME=$(curl http://169.254.169.254/latest/meta-data/hostname)
 echo $HOSTNAME > /etc/hostname
-sed -i "s|\(127\.0\..\.. *\)localhost|\1$HOSTNAME|" /etc/hosts
+grep -q $HOSTNAME /etc/hosts || sed -ie "s|\(^127\.0\..\.. .*$\)|\1 $HOSTNAME|" /etc/hosts
 hostname $HOSTNAME
 EOF
 
@@ -74,11 +74,11 @@ resource "aws_lb" "mke_manager" {
   subnets            = var.subnet_ids
 
   tags = {
-    "Name"                    = var.cluster_name
-    "Role"                    = "manager"
-    (var.kube_cluster_tag)    = "shared"
-    "project"                 = var.project
-    "expire"                  = var.expire
+    "Name"                 = var.cluster_name
+    "Role"                 = "manager"
+    (var.kube_cluster_tag) = "shared"
+    "project"              = var.project
+    "expire"               = var.expire
   }
 }
 
@@ -91,7 +91,7 @@ resource "aws_lb_target_group" "mke_manager_api" {
 
 resource "aws_lb_listener" "mke_manager_api" {
   load_balancer_arn = aws_lb.mke_manager.arn
-  port     = var.controller_port
+  port              = var.controller_port
   protocol          = "TCP"
 
   default_action {
@@ -104,7 +104,7 @@ resource "aws_lb_target_group_attachment" "mke_manager_api" {
   count            = var.manager_count
   target_group_arn = aws_lb_target_group.mke_manager_api.arn
   target_id        = aws_instance.mke_manager[count.index].id
-  port     = var.controller_port
+  port             = var.controller_port
 }
 
 resource "aws_lb_target_group" "mke_kube_api" {

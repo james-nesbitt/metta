@@ -25,8 +25,3 @@ output "kube_cluster_tag" {
 output "instance_profile_name" {
   value = aws_iam_instance_profile.profile.name
 }
-
-output "ssh_key" {
-  value     = tls_private_key.ssh_key
-  sensitive = true
-}

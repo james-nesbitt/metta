@@ -23,10 +23,10 @@ terraform apply -auto-approve
 timestamp "Terraform apply complete"
 
 timestamp "Create launchpad.yaml file from Terraform config"
-terraform output -json | yq r --prettyPrint - mke_cluster.value > launchpad.yaml
+terraform output -json "mke_cluster" | yq -y > launchpad.yaml
 
 timestamp "Create nodes.yaml file from Terraform config"
-terraform output -json | yq r --prettyPrint - _mke_cluster.value > nodes.yaml
+terraform output -json "_mke_cluster" | yq -y > nodes.yaml
 
 timestamp "Create Ansible inventory file"
 hosts_tmp="hosts.tmp"

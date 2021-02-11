@@ -52,10 +52,10 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    "Name"                      = var.cluster_name
+    "Name"                   = var.cluster_name
     (local.kube_cluster_tag) = "true"
-    "project"                   = var.project
-    "expire"                    = var.expire
+    "project"                = var.project
+    "expire"                 = var.expire
   }
 }
 
