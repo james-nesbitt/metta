@@ -32,8 +32,8 @@ platform: ubuntu_18.04
 
 # mirantis app versions and sources
 # typically overriden in a release config variables file
-engine_channel: stable
-engine_version: 19.03.12
+mcr_channel: stable
+mcr_version: 19.03.12
 mke_image_repo: docker.io/mirantis
 mke_version: 3.3.3
 msr_image_repo: docker.io/mirantis
@@ -55,3 +55,6 @@ msr_volume_size: 100
 # SSH/RDP admin passwords for nodes
 admin_password: orcaorcaorca
 windows_administrator_password: "tfaws,,ABC..Example"
+
+terraform_is_provisioned: false
+# If true, then launchpad will skip the prepare/apply on the backend

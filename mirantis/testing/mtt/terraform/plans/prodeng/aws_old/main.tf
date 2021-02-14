@@ -19,13 +19,14 @@ module "vpc" {
 }
 
 module "common" {
-  source           = "./modules/common"
-  cluster_name     = local.cluster_name
-  vpc_id           = module.vpc.id
-  ami_obj          = local.ami_obj
-  ami_obj_win      = local.ami_obj_win
-  key_path         = local.key_path
-  open_sg_for_myip = var.open_sg_for_myip
+  source       = "./modules/common"
+  cluster_name = local.cluster_name
+  vpc_id       = module.vpc.id
+  ami_obj      = local.ami_obj
+  ami_obj_win  = local.ami_obj_win
+  key_path     = local.key_path
+  project      = var.project
+  expire       = local.expire
 }
 
 module "managers" {
@@ -97,41 +98,32 @@ module "windows_workers" {
 }
 
 locals {
-  cluster_name       = var.cluster_name == "" ? "${var.username}-${var.task_name}-${random_string.random.result}" : var.cluster_name
+  cluster_name       = var.cluster_name
   expire             = timeadd(timestamp(), var.expire_duration)
   kube_orchestration = var.kube_orchestration ? "--default-node-orchestrator=kubernetes" : ""
   ami_obj            = var.platforms[var.platform_repo][var.platform]
   ami_obj_win        = var.platforms[var.platform_repo]["windows_2019"]
-  mke_install_flags = concat([
-    "--admin-username=${var.admin_username}",
-    "--admin-password=${var.admin_password}",
-    local.kube_orchestration,
-    "--san=${module.managers.lb_dns_name}",
+  mke_install_flags  = concat([
+      "--admin-username=${var.admin_username}",
+      "--admin-password=${var.admin_password}",
+      local.kube_orchestration,
+      "--san=${module.managers.lb_dns_name}",
     ],
     var.mke_install_flags
   )
-  mke_upgrade_flags = concat([
-    "--force-recent-backup",
-    "--force-minimums",
-    ]
-  )
-  mke_opts        = [for f in local.mke_install_flags : element(split("=", f), 1) if substr(f, 0, 18) == "--controller-port="]
+  mke_opts = [for f in local.mke_install_flags : element(split("=", f), 1) if substr(f, 0, 18) == "--controller-port="]
   controller_port = local.mke_opts == [] ? "443" : element(local.mke_opts, 1)
-  key_path        = var.ssh_key_file_path == "" ? "./ssh_keys/${local.cluster_name}.pem" : var.ssh_key_file_path
+  key_path = var.ssh_key_file_path == "" ? "./ssh_keys/${local.cluster_name}.pem" : var.ssh_key_file_path
 
   hosts = concat(local.managers, local.workers, local.windows_workers, local.msrs)
-  mcr = {
-    version : var.mcr_version
-    channel : var.mcr_channel
-    repoURL : var.mcr_repo_url
-    installURLLinux : var.mcr_install_url_linux
-    installURLWindows : var.mcr_install_url_windows
+  engine = {
+    version : var.engine_version
+    channel : var.engine_channel
   }
   mke = {
     version : var.mke_version
     imageRepo : var.mke_image_repo
     installFlags : local.mke_install_flags
-    upgradeFlags : local.mke_upgrade_flags
   }
   msr = {
     version : var.msr_version
@@ -147,24 +139,24 @@ locals {
         user    = local.ami_obj.user
         keyPath = local.key_path
       }
-      role = host.tags["Role"]
+      role             = host.tags["Role"]
       hooks = {
         apply = {
           before = var.hooks_apply_before
-          after  = var.hooks_apply_after
+          after = var.hooks_apply_after
         }
       }
     }
   ]
   _managers = [
     for host in module.managers.machines : {
-      address   = host.public_ip
+      address = host.public_ip
       privateIp = host.private_ip
       ssh = {
         user    = local.ami_obj.user
         keyPath = local.key_path
       }
-      role = host.tags["Role"]
+      role             = host.tags["Role"]
     }
   ]
   workers = [
@@ -174,24 +166,24 @@ locals {
         user    = local.ami_obj.user
         keyPath = local.key_path
       }
-      role = host.tags["Role"]
+      role             = host.tags["Role"]
       hooks = {
         apply = {
           before = var.hooks_apply_before
-          after  = var.hooks_apply_after
+          after = var.hooks_apply_after
         }
       }
     }
   ]
   _workers = [
     for host in module.workers.machines : {
-      address   = host.public_ip
+      address = host.public_ip
       privateIp = host.private_ip
       ssh = {
         user    = local.ami_obj.user
         keyPath = local.key_path
       }
-      role = host.tags["Role"]
+      role             = host.tags["Role"]
     }
   ]
   msrs = [
@@ -201,24 +193,24 @@ locals {
         user    = local.ami_obj.user
         keyPath = local.key_path
       }
-      role = host.tags["Role"]
+      role             = host.tags["Role"]
       hooks = {
         apply = {
           before = var.hooks_apply_before
-          after  = var.hooks_apply_after
+          after = var.hooks_apply_after
         }
       }
     }
   ]
   _msrs = [
     for host in module.msrs.machines : {
-      address   = host.public_ip
+      address = host.public_ip
       privateIp = host.private_ip
       ssh = {
         user    = local.ami_obj.user
         keyPath = local.key_path
       }
-      role = host.tags["Role"]
+      role             = host.tags["Role"]
     }
   ]
   windows_workers = [
@@ -235,7 +227,7 @@ locals {
   ]
   _windows_workers = [
     for host in module.windows_workers.machines : {
-      address   = host.public_ip
+      address = host.public_ip
       privateIp = host.private_ip
       winRM = {
         user     = local.ami_obj_win.user
@@ -250,15 +242,34 @@ locals {
 
 output "mke_cluster" {
   value = {
-    apiVersion = "launchpad.mirantis.com/mke/v1.2"
+    apiVersion = "launchpad.mirantis.com/mke/v1.1"
+    metadata = {
+        name = local.cluster_name
+    }
     kind       = "mke"
     spec = {
       hosts = local.hosts,
-      mcr   = local.mcr,
-      mke   = local.mke,
-      msr   = local.msr
+      engine = local.engine,
+      mke = local.mke,
+      msr = local.msr
     }
   }
+}
+
+output "mke_cluster_yaml" {
+  value = yamlencode({
+    apiVersion = "launchpad.mirantis.com/mke/v1.1"
+    metadata = {
+        name = local.cluster_name
+    }
+    kind       = "mke"
+    spec = {
+      hosts = local.hosts,
+      engine = local.engine,
+      mke = local.mke,
+      msr = local.msr
+    }
+  })
 }
 
 output "_mke_cluster" {

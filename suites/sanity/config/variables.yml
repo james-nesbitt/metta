@@ -37,3 +37,6 @@ expire_duration: 72h
 # SSH/RDP admin passwords for nodes
 admin_password: orcaorcaorca
 windows_administrator_password: "tfaws,,ABC..Example"
+
+terraform_is_provisioned: true
+# If true, then launchpad will skip the prepare/apply on the backend

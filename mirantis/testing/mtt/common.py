@@ -5,10 +5,10 @@ from datetime import datetime
 import pkg_resources
 
 import appdirs
-from configerus.config import Config as configerus_Config
-from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT as CONFIGERUS_SOURCE_DICT
-from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH as CONFIGERUS_SOURCE_PATH
 
+from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH as CONFIGERUS_SOURCE_PATH
+from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT as CONFIGERUS_SOURCE_DICT
+from uctt.environment import Environment
 import mirantis.testing.mtt as mtt
 
 logger = logging.getLogger("mtt.common")
@@ -36,7 +36,7 @@ MTT_CONFIG_PATH = pkg_resources.resource_filename(
 """ Path to the MTT Mirantis config preset configurations """
 
 
-def add_common_config(config: configerus_Config):
+def add_common_config(environment: Environment):
     """ Add some common configuration sources
 
     The following could be added:
@@ -55,7 +55,7 @@ def add_common_config(config: configerus_Config):
     Parameters:
     -----------
 
-    config (Config) : a configerus.config.Config object which will be modified
+    environment (Environment) : UCTT environment to be modified
 
     """
 
@@ -63,9 +63,9 @@ def add_common_config(config: configerus_Config):
 
     # a user config path (like ~/.config/mtt) may contain config
     user_conf_path = appdirs.user_config_dir(MTT_COMMON_APP_NAME)
-    if not config.has_source(
+    if not environment.config.has_source(
             MTT_COMMON_CONFIG_USER_INSTANCE_ID) and os.path.isdir(user_conf_path):
-        config.add_source(
+        environment.config.add_source(
             CONFIGERUS_SOURCE_PATH,
             MTT_COMMON_CONFIG_USER_INSTANCE_ID,
             MTT_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_path(user_conf_path)
@@ -74,21 +74,21 @@ def add_common_config(config: configerus_Config):
     project_config_path = os.path.join(
         project_root_path,
         MTT_COMMON_PROJECT_CONFIG_SUBPATH)
-    if not config.has_source(
+    if not environment.config.has_source(
             MTT_COMMON_CONFIG_PROJECT_CONFIG_INSTANCE_ID) and os.path.isdir(project_config_path):
-        config.add_source(
+        environment.config.add_source(
             CONFIGERUS_SOURCE_PATH,
             MTT_COMMON_CONFIG_PROJECT_CONFIG_INSTANCE_ID).set_path(project_config_path)
 
     # Add some dymanic values for config
-    config.add_source(mtt.SOURCE_DICT, MTT_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID, MTT_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_data({
+    environment.config.add_source(CONFIGERUS_SOURCE_DICT, MTT_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID, MTT_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_data({
         "user": {
             "id": getpass.getuser()  # override user id with a host value
         },
         "global": {
             "datetime": datetime.now(),  # use a single datetime across all checks
         },
-        config.paths_label(): {  # special config label for file paths, usually just "paths"
+        environment.config.paths_label(): {  # special config label for file paths, usually just "paths"
             # you can use "paths:project" in config to substitute this path
             "project": project_root_path
         }
@@ -99,9 +99,9 @@ def add_common_config(config: configerus_Config):
     # as a part of config.  For example we build paths to the terraform plans in
     # this module.
     mtt_paths_instance_id = "{}-paths".format(MTT_COMMON_APP_NAME)
-    if not config.has_source(mtt_paths_instance_id):
-        config.add_source(mtt.SOURCE_DICT, mtt_paths_instance_id).set_data({
-            config.paths_label(): {
+    if not environment.config.has_source(mtt_paths_instance_id):
+        environment.config.add_source(CONFIGERUS_SOURCE_DICT, mtt_paths_instance_id).set_data({
+            environment.config.paths_label(): {
                 MTT_PATH_NAME: MTT_PATH
             }
         })
@@ -109,9 +109,9 @@ def add_common_config(config: configerus_Config):
     # If we haven't already done it, add the mtt/config path as a
     # config source.  This allows us to provide config defaults in this module
     mtt_common_instance_id = MTT_COMMON_APP_NAME
-    if not config.has_source(mtt_common_instance_id):
-        config.add_source(
-            mtt.SOURCE_PATH,
+    if not environment.config.has_source(mtt_common_instance_id):
+        environment.config.add_source(
+            CONFIGERUS_SOURCE_PATH,
             mtt_common_instance_id).set_path(MTT_CONFIG_PATH)
 
 

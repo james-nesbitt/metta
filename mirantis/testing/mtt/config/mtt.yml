@@ -2,5 +2,7 @@ terraform:
     plans:
         prodeng:
             aws: "{paths:mtt}/terraform/plans/prodeng/aws"
+        prodeng_old:
+            aws: "{paths:mtt}/terraform/plans/prodeng/aws_old"
         example:
             aws: "{paths:mtt}/terraform/plans/example/aws"
