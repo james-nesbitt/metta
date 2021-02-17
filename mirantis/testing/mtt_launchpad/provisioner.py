@@ -27,12 +27,18 @@ MTT_LAUNCHPAD_CLI_CONFIG_FILE_KEY = 'config_file'
 """ Launchpad config cli key to tell us where to put the launchpad yml file """
 MTT_LAUNCHPAD_CLI_WORKING_DIR_KEY = 'working_dir'
 """ Launchpad config cli configuration working dir key """
+MTT_LAUNCHPAD_CLI_WORKING_CLUSTEROVERRIDE = 'cluster_name'
+""" If provided, this config key will override a cluster name pulled from yaml"""
 MTT_LAUNCHPAD_CONFIG_BACKEND_LAUNCHPADFILE_OUTPUT_KEY = 'backend.launchpad_output'
 """ which config key will tell me the id of the backend output that will give me launchpad yml """
 MTT_LAUNCHPAD_CONFIG_BACKEND_PLUGIN_KEY = 'backend.plugin'
 """ which config key will give config that can construct a provisioner fixture for the backend """
-MTT_LAUNCHPAD_CLI_CONFIG_BACKEND_ISPROVISIONED = 'backend.is_provisioned'
+MTT_LAUNCHPAD_CLI_CONFIG_ISPROVISIONED = 'is_provisioned'
 """ If True then launchpad won't prepare/apply the backend """
+MTT_LAUNCHPAD_CLI_CONFIG_ISINSTALLED = 'is_installed'
+""" If True then launchpad won't prepare/apply the backend """
+MTT_LAUNCHPAD_CLI_CONFIG_DOCKER_VERSION_DEFAULT = '1.40'
+""" Default value for the docker client version number.  IT would be best to discover or config this."""
 MTT_LAUNCHPAD_BACKEND_OUTPUT_INSTANCE_ID_DEFAULT = 'mke_cluster'
 """ Launchpad backend default output name for configuring launchpad """
 MTT_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT = './launchpad.yml'
@@ -66,6 +72,9 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         self.downloaded_bundle_users = []
         """ track user bundles that have been downloaded to avoid unecessary repeats """
 
+        self.config_label = label
+        self.config_base = base
+
         """ load all of the launchpad configuration """
         launchpad_config = self.environment.config.load(label)
 
@@ -83,12 +92,16 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         # We load the backend provisioenr as we would any provisioner, but pointing to
         # our backend config.
         self.backend_output_instance_id = '{}-backend'.format(self.instance_id)
-        self.backend = self.environment.add_fixture_from_config(
-            type=Type.PROVISIONER,
-            label=label,
-            base=[base, MTT_LAUNCHPAD_CONFIG_BACKEND_PLUGIN_KEY],
-            instance_id=self.backend_output_instance_id,
-            priority=self.environment.plugin_priority() - 5).plugin
+        try:
+            self.backend_fixture = self.environment.add_fixture_from_config(
+                type=Type.PROVISIONER,
+                label=label,
+                base=[base, MTT_LAUNCHPAD_CONFIG_BACKEND_PLUGIN_KEY],
+                instance_id=self.backend_output_instance_id,
+                priority=self.environment.plugin_priority() - 5)
+        except ValueError as e:
+            raise ValueError("Launchpad Provisioner was unable to create it's backend provisioner plugin: {}".format(e)) from e
+        self.backend = self.backend_fixture.plugin
 
         try:
             self.backend_output_name = launchpad_config.get(
@@ -110,15 +123,22 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             self.config_file = os.path.realpath(
                 MTT_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT)
 
-        self.backend_is_provisioned = launchpad_config.get(
-            [base, MTT_LAUNCHPAD_CLI_CONFIG_BACKEND_ISPROVISIONED], exception_if_missing=False)
+        cluster_name_override = launchpad_config.get([base, MTT_LAUNCHPAD_CLI_WORKING_CLUSTEROVERRIDE], exception_if_missing=False)
+        """ Can hardcode the cluster name if it can't be take from the yaml file """
+
+        logger.debug("Creating Launchpad API client")
+        self.client = LaunchpadClient(
+            config_file=self.config_file,
+            working_dir=self.working_dir,
+            cluster_name_override=cluster_name_override)
+
+        self.is_provisioned = launchpad_config.get(
+            [base, MTT_LAUNCHPAD_CLI_CONFIG_ISPROVISIONED], exception_if_missing=False)
         # in case launchpad has already been installed, we can try to
         # get a launchpad client in place, and make clients
-        try:
-            self._make_launchpad_client(self)
-            self._make_fixtures()
-        except Exception:
-            pass
+        self.is_installed = launchpad_config.get(
+            [base, MTT_LAUNCHPAD_CLI_CONFIG_ISINSTALLED], exception_if_missing=False)
+
 
     def prepare(self):
         """ Prepare the provisioning cluster for install
@@ -129,7 +149,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
 
         """
 
-        if not self.backend_is_provisioned:
+        if not self.is_provisioned:
             """ prepare the provisioner to be brought up """
             self.backend.prepare()
 
@@ -149,7 +169,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         Exception if launchpad fails.
 
         """
-        if not self.backend_is_provisioned:
+        if not self.is_provisioned:
             logger.info(
                 "Launchpad provisioner bringing up cluster using %s backend plugin",
                 self.backend_output_instance_id)
@@ -159,48 +179,53 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                 "Launchpad provisioner skipping %s backend run as configured",
                 self.backend_output_instance_id)
 
-        # Get the backend output that holds laucnhpad yaml
-        try:
-            output = self.backend.get_output(
-                instance_id=self.backend_output_name)
-        except KeyError as e:
-            raise Exception(
-                "Launchpad could not retrieve YML configuration from the backend [{}] : ".format(self.backend_output_name, e)) from e
-        if not output:
-            raise ValueError(
-                "Launchpad did not get necessary config from the backend output '%s'",
-                self.backend_output_name)
+        # Skip instalation if we are told to by config
+        if (self.is_provisioned and self.is_installed):
+            logger.info('Launchpad has configured to indicate that the backend already'
+                        'provisioned and launchpad has already installed, so no action'
+                        ' is being taken')
 
-        # if our output returns an output plugin (quack) then retrieve the
-        # actual output
-        if hasattr(output, 'get_output') and callable(
-                getattr(output, 'get_output')):
+        else:
+            # Get the backend output that holds laucnhpad yaml
             try:
-                output = output.get_output()
-            except AttributeError as e:
+                output = self.backend.get_output(
+                    instance_id=self.backend_output_name)
+            except KeyError as e:
+                raise Exception(
+                    "Launchpad could not retrieve YML configuration from the backend [{}] : ".format(self.backend_output_name, e)) from e
+            if not output:
                 raise ValueError(
-                    'Backend output for launchpad yaml had not been given any data.  Are you sure that the backend ran?')
-        if isinstance(output, dict):
-            output = yaml.dump(output)
+                    "Launchpad did not get necessary config from the backend output '%s'",
+                    self.backend_output_name)
 
-        os.makedirs(
-            os.path.dirname(
-                os.path.realpath(
-                    self.config_file)),
-            exist_ok=True)
-        with open(os.path.realpath(self.config_file), 'w') as file:
-            file.write(output if output else '')
+            # if our output returns an output plugin (quack) then retrieve the
+            # actual output
+            if hasattr(output, 'get_output') and callable(
+                    getattr(output, 'get_output')):
+                try:
+                    output = output.get_output()
+                except AttributeError as e:
+                    raise ValueError(
+                        'Backend output for launchpad yaml had not been given any data.  Are you sure that the backend ran?')
+            if isinstance(output, dict):
+                output = yaml.dump(output)
 
-        # as we have just written then launchpad file, we should recreate a
-        # client
-        self._make_launchpad_client()
+            os.makedirs(
+                os.path.dirname(
+                    os.path.realpath(
+                        self.config_file)),
+                exist_ok=True)
+            with open(os.path.realpath(self.config_file), 'w') as file:
+                file.write(output if output else '')
 
-        try:
-            logger.info(
-                "Using launchpad to install products onto backend cluster")
-            self.client.install()
-        except Exception as e:
-            raise Exception("Launchpad failed to install") from e
+            try:
+                logger.info(
+                    "Using launchpad to install products onto backend cluster")
+                self.client.install()
+            except Exception as e:
+                raise Exception("Launchpad failed to install") from e
+
+        self._make_fixtures()
 
     def destroy(self):
         """ Tell the backend to bring down any created resources """
@@ -215,26 +240,14 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
 
     """ CLUSTER INTERACTION """
 
-    def get_fixture(self, type: Type = None, instance_id: str = '', plugin_id: str = '',
-                    exception_if_missing: bool = True) -> UCTTPlugin:
-        """ retrieve an fixture plugin from the provisioner """
-        return self.fixtures.get_plugin(
-            type=type, plugin_id=plugin_id, instance_id=instance_id, exception_if_missing=exception_if_missing)
-
-    def _make_launchpad_client(self):
-        logger.debug("Creating Launchpad API client")
-        self.client = LaunchpadClient(
-            config_file=self.config_file,
-            working_dir=self.working_dir)
-
     def _make_fixtures(self, user: str = 'admin',
                        reload: bool = False) -> Fixtures:
-        """ Get all of the clients """
+        """ Build fixtures for all of the clients """
 
         bundle_info = self._mke_client_bundle(user, reload)
-        """ holds retrieved bundle information from MKE """
+        """ holds retrieved bundle information from MKE for all client configs. """
 
-        clients = Fixtures()
+        # KUBE Client
 
         kube_config = os.path.join(bundle_info['path'], 'kube.yml')
         if not os.path.exists(kube_config):
@@ -243,13 +256,18 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
 
         instance_id = "launchpad-{}-{}-{}-client".format(
             self.instance_id, UCTT_PLUGIN_ID_KUBERNETES_CLIENT, user)
-        fixture = self.environment.new_fixture(
+        fixture = self.environment.add_fixture(
             type=Type.CLIENT,
             plugin_id=UCTT_PLUGIN_ID_KUBERNETES_CLIENT,
             instance_id=instance_id,
             priority=80,
             arguments={'kube_config_file': kube_config})
-        clients.add_fixture(fixture)
+        self.fixtures.add_fixture(fixture)
+
+        # DOCKER CLIENT
+        #
+        # @NOTE we pass in a docker API constraint because I ran into a case where the
+        #   client failed because the python library was ahead in API version
 
         try:
             host = bundle_info['Endpoints']['docker']['Host']
@@ -262,31 +280,17 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
 
         instance_id = "launchpad-{}-{}-{}-client".format(
             self.instance_id, UCTT_PLUGIN_ID_DOCKER_CLIENT, user)
-        fixture = self.environment.new_fixture(
+        fixture = self.environment.add_fixture(
             type=Type.CLIENT,
             plugin_id=UCTT_PLUGIN_ID_DOCKER_CLIENT,
             instance_id=instance_id,
             priority=80,
-            arguments={'host': host, 'cert_path': cert_path})
-        clients.add_fixture(fixture)
+            arguments={'host': host, 'cert_path': cert_path, 'version': MTT_LAUNCHPAD_CLI_CONFIG_DOCKER_VERSION_DEFAULT})
+        self.fixtures.add_fixture(fixture)
 
-        return instances
-
-    def get_client(self, plugin_id: str = '', instance_id: str = '',
-                   exception_if_missing: bool = True, user='admin'):
-        """ Make a client for interacting with the cluster """
-
-        clients = self.get_clients(user)
-        plugin = clients.get_fixture(
-            type=Type.CLIENT,
-            plugin_id=plugin_id,
-            instance_id=instance_id,
-            exception_if_missing=exception_if_missing)
-        return plugin
 
     def _mke_client_bundle(self, user: str, reload: bool = False):
         """ Retrieve the MKE Client bundle metadata using the client """
-
         assert self.client, "Don't have a launchpad client configured yet"
         return self.client.bundle(user, reload)
 
@@ -309,7 +313,8 @@ class LaunchpadClient:
     """ shell client for interacting with the launchpad bin """
 
     def __init__(self, config_file: str = MTT_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
-                 working_dir: str = MTT_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT):
+                 working_dir: str = MTT_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT,
+                 cluster_name_override: str = ''):
         """
         Parameters:
 
@@ -328,6 +333,10 @@ class LaunchpadClient:
         """ Python subprocess working dir to execute launchpad in.
             This may be relevant in cases where ssh keys have a relative path """
 
+        self.cluster_name_override = cluster_name_override
+        """ if not empty this will be used as a cluster name instead of taking
+            it from the yaml file """
+
         self.bin = MTT_LAUNCHPADCLIENT_BIN_PATH
         """ shell execution target for launchpad """
 
@@ -345,9 +354,22 @@ class LaunchpadClient:
         client_bundle_meta_file = os.path.join(
             client_bundle_path, MTT_USER_LAUNCHPAD_BUNDLE_META_FILE)
 
-        if reload or not os.path.isfile(
-                client_bundle_meta_file) or not user in self.downloaded_bundle_users:
-            self._run(["client-config", user])
+        if reload or not os.path.isfile(client_bundle_meta_file) or not user in self.downloaded_bundle_users:
+
+            # @NOTE currently client bundle downloads are flaky.  They fail about 1/5 times
+            #    with unclear TLS issues.  Because the failures are intermittent, we should
+            #    just try again
+
+            for i in range(1,3):
+                try:
+                    self._run(["client-config", user])
+                    break
+                except Exception as e:
+                    logger.error("Attempt {} to download bundle.  Assuming flaky behaviour and trying again : {}".format(i, e))
+
+            else:
+                raise Exception("Numerous attempts to download the client bundle have failed.")
+
             self.downloaded_bundle_users.append(user)
 
         data = {}
@@ -380,21 +402,28 @@ class LaunchpadClient:
         @TODO we should cache it, but then do we need to invalidate cache?
 
         """
+
+        if self.cluster_name_override:
+            return self.cluster_name_override
+
         try:
             with open(self.config_file) as config_file_object:
                 self.config_data = yaml.load(
                     config_file_object, Loader=yaml.FullLoader)
                 """ keep a parsed copy of the launchpad file """
+        except FileNotFoundError as e:
+            raise ValueError("Launchpad yaml file could not be opened: {}".format(self.config_file)) from e
         except Exception as e:
-            raise ValueError(
-                ValueError(
-                    "Launchpad yaml file had unexpected contents: {}".format(config_file))) from e
+            raise ValueError("Launchpad yaml file had unexpected contents: {}".format(self.config_file)) from e
 
         if not isinstance(self.config_data, dict):
             raise ValueError(
-                "Launchpad yaml file had unexpected contents: {}".format(config_file))
+                "Launchpad yaml file had unexpected contents: {}".format(self.config_file))
 
-        return self.config_data['metadata']['name']
+        try:
+            return self.config_data['metadata']['name']
+        except KeyError:
+            raise ValueError('Launchpad yaml file did not container a cluster name')
 
     def _run(self, args: List[str] = ['help']):
         """ Run a launchpad command

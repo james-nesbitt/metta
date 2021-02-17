@@ -1,5 +1,5 @@
 
-# uctt.plugin.provisioner:
+# launchpad :: uctt.plugin.provisioner:
 launchpad:
     type: uctt.plugin.provisioner
     plugin_id: mtt_launchpad
@@ -16,6 +16,8 @@ launchpad:
         # Declare what backend output will give us our launchpad yml
         launchpad_output: mke_cluster
 
+
+
         # Provide full plugin configuration for the backend
         # this is isolated on its own to make it more flexible to manage
         plugin:
@@ -28,14 +30,19 @@ launchpad:
                 label: terraform
                 # base: some.path.in.the.file
 
+    cli-options:
+        accept-license: true
+        disable-telemetry: true
+
     is_provisioned: "{variables:terraform_is_provisioned}"
     # If true, then launchpad will skip the prepare/apply on the backend
     is_installed: "{variables:launchpad_is_installed}"
     # If true then launchpad will skip the install
 
+    cluster_name: "{variables:cluster_name}"
+    # Override cluster name which can be pulled from launchpad yaml
 
-    cli-options:
-        accept-license: true
-        disable-telemetry: true
-
+    # the example tf plans need launchpad to run in the plan root
+    working_dir: "{variables:terraform_plan}"
+    # put the launchpad yml file in the project folder
     config_file: "{variables:files_path}/launchpad/{variables:files_prefix}.yaml"

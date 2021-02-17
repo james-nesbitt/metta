@@ -1,0 +1,59 @@
+# Here this files is used to describe how the terraform provisioner should
+# be configured.  Note that launchpad is going to be used as the provisioner
+# but terraform will perform that 'backend' provisioner role.
+# Look in the fixtures.yml for the defined provisioner.
+
+
+# This file is not used for launchpad clusters.  look in launchpad.yml backend:
+plugin_id: uctt_terraform
+
+# everythion below here is consumed by the terraform provider plugin
+# as though this were the contents of ./terraform.yml
+
+resource_prefix: "{variables:resource_prefix}"
+plan:
+    type: local
+    path: "{variables:terraform_plan}"
+state:
+    path: "{variables:files_path?.}/terraform/{variables:files_prefix}.terraform.state"
+
+# Where will the vars be written
+vars_path: "{variables:files_path?.}/terraform/{variables:files_prefix}.tfvars.json"
+# Vars list for terraform
+vars:
+
+    # description = "Name used to identify resources and passed to launchpad."
+    cluster_name: "{variables:cluster_name}"
+
+    # description = "The AWS region to deploy to."
+    aws_region: "{variables:aws_region}"
+
+    # description = "The CIDR to use when creating the VPC."
+    vpc_cidr: "172.31.0.0/16"
+
+    # description = "The UCP admin username to use."
+    # admin_username: admin
+
+    # description = "The UCP admin password to use."
+    admin_password: "{variables:admin_password}"
+
+    # description = "The Windows Administrator password to use."
+    windows_administrator_password: "{variables:windows_administrator_password}"
+
+    # description = "The number of UCP managers to create."
+    master_count: "{variables:manager_count}"
+
+    # description = "The number of UCP Linux workers to create."
+    worker_count: "{variables:worker_count}"
+
+    # description = "The number of UCP managers to create."
+    master_count: "{variables:manager_count}"
+
+    # description = "The number of UCP Linux workers to create."
+    worker_count: "{variables:worker_count}"
+
+    # description = "The volume size (in GB) to use for manager nodes."
+    master_volume_size: "{variables:manager_volume_size}"
+
+    # description = "The volume size (in GB) to use for worker nodes."
+    worker_volume_size: "{variables:worker_volume_size}"

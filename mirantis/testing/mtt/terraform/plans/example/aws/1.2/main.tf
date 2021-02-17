@@ -106,18 +106,16 @@ locals {
       hosts = concat(local.managers, local.workers, local.windows_workers)
     }
   }
-
-  mtt_output = {
-    clients = {
-
-    }
-  }
 }
 
-output "mtt" {
-  value = yamlencode(local.mtt_output)
+output "cluster_name" {
+  value = var.cluster_name
 }
 
 output "mke_cluster" {
+  value = local.launchpad_tmpl
+}
+
+output "mke_cluster_yaml" {
   value = yamlencode(local.launchpad_tmpl)
 }

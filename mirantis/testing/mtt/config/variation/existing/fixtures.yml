@@ -1,0 +1,44 @@
+
+# launchpad :: uctt.plugin.provisioner:
+launchpad:
+    type: uctt.plugin.provisioner
+    plugin_id: mtt_launchpad
+
+    # Pass these values to the provisioner constructor.  The launchpad
+    # constructor accepts override for "where to get config".  The values
+    # here tell it to look back in this same location for config, instead of
+    # its default of looking in the ./launchpad.yml file
+    arguments:
+        label: fixtures
+        base: launchpad
+
+    backend:
+        # which output in the dummy backend will we use
+        launchpad_output: mke_cluster
+
+        plugin:
+            plugin_id: dummy
+            outputs:
+                ## as we want this dummy provisioner to
+                mke_cluster:
+                    plugin_id: dict
+                    arguments:
+                        # the file contents are embedded here
+                        # the path to the file is defined in the variables config file
+                        data: "[file:{variables:launchpad_source_path}]"
+
+    is_provisioned: True
+    # If true, then launchpad will skip the prepare/apply on the backend
+    # This is not strictly needed as we use a dummy plugin, but it doesn't hurt
+    is_installed: "{variables:launchpad_is_installed}"
+    # If true then launchpad will skip the install
+
+    cli-options:
+        accept-license: true
+        disable-telemetry: true
+
+    # This is the path to where mtt will write the values.  Even though we are
+    # using a passthrough file, we keep a copy of the last file used for diffs
+    # and restores, and also because it keeps the code the same for various
+    # backends which mau not start with a file
+    config_file: "{variables:files_path}/launchpad/{variables:files_prefix}.yaml"

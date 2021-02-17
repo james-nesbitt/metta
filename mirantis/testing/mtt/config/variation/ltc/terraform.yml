@@ -59,7 +59,7 @@ vars:
     windows_worker_count: "{variables:windows_worker_count}"
 
     #description = "The AWS instance type to use for manager nodes."
-    manager_type: "{variables:manager_count}"
+    manager_type: "{variables:manager_type}"
 
     # description = "The AWS instance type to use for Linux/Windows worker nodes."
     worker_type: "{variables:worker_type}"
@@ -88,6 +88,15 @@ vars:
     # description = "The channel to pull the engine installer from."
     mcr_channel: "{variables:mcr_channel}"
 
+    # description = "The repository to source the mcr installer."
+    mcr_repo_url: "{variables:mcr_repo_url}"
+
+    # description = "Location of Linux installer script."
+    mcr_install_url_linux: "{variables:mcr_install_url_linux}"
+
+    # description = "Location of Windows installer script."
+    mcr_install_url_windows: "{variables:mcr_install_url_windows}"
+
     # description = "The UCP version to deploy."
     mke_version: "{variables:mke_version}"
 
@@ -107,6 +116,7 @@ vars:
     msr_image_repo: "{variables:msr_image_repo}"
 
     # description = "The DTR installer flags to use."
+    # MSR likes to handle its own TLS and so will use self-signed certs unless giben certs
     msr_install_flags:
         - "--ucp-insecure-tls"
 

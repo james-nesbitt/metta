@@ -137,11 +137,11 @@ def find_project_root_path():
     check_path = DIR
     while check_path:
         if check_path == '/':
-            break
+            return DIR
 
         for MARKER_FILE in MARKER_FILES:
             marker_path = os.path.join(check_path, MARKER_FILE)
             if os.path.isfile(marker_path):
                 return check_path
 
-    return os.path.dirname(check_path)
+        check_path = os.path.dirname(check_path)

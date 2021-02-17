@@ -7,9 +7,9 @@ from uctt.plugin import Type
 
 logger = logging.getLogger('mtt ltc demo pytest')
 
-ENVIRONMENT_NAME = 'sanity'
+ENVIRONMENT_NAME = 'playground'
 """ What to call our UCTT Environment """
-PROVISIONER_INSTANCE_ID = "{}-provisioner".format(ENVIRONMENT_NAME)
+
 
 """ Define our fixtures """
 

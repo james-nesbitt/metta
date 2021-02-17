@@ -1,0 +1,14 @@
+variable "cluster_name" {}
+
+variable "project" {}
+
+variable "task_name" {}
+
+variable "username" {}
+
+variable "expire" {}
+
+variable "host_cidr" {
+  description = "CIDR IPv4 range to assign to EC2 nodes"
+  default     = "172.31.0.0/16"
+}

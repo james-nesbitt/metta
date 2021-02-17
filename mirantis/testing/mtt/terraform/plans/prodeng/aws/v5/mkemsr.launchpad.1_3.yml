@@ -1,0 +1,45 @@
+apiVersion: launchpad.mirantis.com/mke/v1.3
+kind: mke
+metadata:
+    name: $(local.cluster_name)
+spec:
+    hosts:
+%{ for host in hosts }
+  - role = $(host.tags["Role"])
+    privateInterface = $(host.private_ip)
+    ssh:
+        address = $(host.public_ip)
+        user    = $(local.ami_obj.user)
+        keyPath = $(local.key_path)
+    hooks:
+      apply:
+        after:
+    %{ for hooks in host.hooks.after }
+        - $(hook)
+    %{ endfor ~}
+        before:
+    %{ for hooks in host.hooks.before }
+    - $(hook)
+    %{ endfor ~}
+%{ endfor ~}
+  mke:
+    version: $(mke.version)
+    imageRepo: $(mke.imageRepo)
+    adminUsername: $(mke.adminUsername)
+    adminPassword: $(mke.adminPassword)
+    installFlags:
+%{ for installFlag in mke_installFlags }
+        -- $(installFlag)
+%{ endfor ~}
+    upgradeFlags:
+%{ for installFlag in upgradeFlags }
+    -- $(installFlag)
+%{ endfor ~}
+  mcr:
+    version: $(mcr.version)
+    repoURL: $(mcr.repoURL)
+    installURLLinux: $(mcr_installURLLinux)
+    installURLWindows: $(mcr_installURLWindows)
+    channel: $(mcr_channel)
+  cluster:
+    prune: $(cluster.prune)

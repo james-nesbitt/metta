@@ -130,13 +130,13 @@ variable "platform" {
   description = "The Linux platform to use for manager/worker/DTR replica nodes"
 }
 
-variable "engine_version" {
+variable "mcr_version" {
   type        = string
   default     = "19.03.12"
   description = "The engine version to deploy across all nodes in the cluster."
 }
 
-variable "engine_channel" {
+variable "mcr_channel" {
   type        = string
   default     = "stable"
   description = "The channel to pull the engine installer from."

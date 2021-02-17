@@ -1,8 +1,11 @@
 terraform:
     plans:
         prodeng:
-            aws: "{paths:mtt}/terraform/plans/prodeng/aws"
-        prodeng_old:
-            aws: "{paths:mtt}/terraform/plans/prodeng/aws_old"
+            aws:
+                v3: "{paths:mtt}/terraform/plans/prodeng/aws/v3"
+                v4: "{paths:mtt}/terraform/plans/prodeng/aws/v4"
+                v5: "{paths:mtt}/terraform/plans/prodeng/aws/v5"
         example:
-            aws: "{paths:mtt}/terraform/plans/example/aws"
+            aws:
+                v1_1: "{paths:mtt}/terraform/plans/example/aws/1.1"
+                v1_2: "{paths:mtt}/terraform/plans/example/aws/1.2"
