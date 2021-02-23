@@ -1,0 +1,46 @@
+
+# sanity_docker_run :: uctt.plugin.workload:
+sanity_docker_run:
+    type: uctt.plugin.workload
+    plugin_id: uctt_docker_run
+
+    # Pass these values to the provisioner constructor.
+    arguments:
+        label: fixtures
+        base: sanity_docker_run
+
+    run:
+        image: 'hello-world'
+
+# sanity_kubernetes_deployment :: uctt.plugin.workload:
+sanity_kubernetes_deployment:
+    type: uctt.plugin.workload
+    plugin_id: uctt_kubernetes_deployment
+
+    arguments:
+        label: fixtures
+        base: sanity_kubernetes_deployment
+
+    namespace: "default"
+    body:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: nginx-deployment
+        labels:
+          app: nginx
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: nginx
+        template:
+          metadata:
+            labels:
+              app: nginx
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.15.4
+              ports:
+              - containerPort: 80

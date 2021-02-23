@@ -24,11 +24,13 @@ def mtt_plugin_factory_provisioner_launchpad(
     """ create a launchpad provisioner plugin """
     return LaunchpadProvisionerPlugin(environment, instance_id, label, base)
 
+
 @Factory(type=Type.CLI, plugin_id=MTT_LAUNCHPAD_CLI_PLUGIN_ID)
 def uctt_terraform_factory_cli_launchpad(
         environment: Environment, instance_id: str = ''):
     """ create an launchpad cli plugin """
     return LaunchpadCliPlugin(environment, instance_id)
+
 
 """ UCTT BOOTSTRAPPERS """
 

@@ -1,0 +1,73 @@
+apiVersion: launchpad.mirantis.com/mke/v1.2
+kind: mke+msr
+metadata:
+  name: mtt-demo
+spec:
+  hosts:
+  - address: 3.141.37.117
+    hooks:
+      apply:
+        after:
+        - ''
+        before:
+        - ''
+    role: manager
+    ssh:
+      keyPath: mtt-demo.pem
+      user: ubuntu
+  - address: 3.138.175.188
+    hooks:
+      apply:
+        after:
+        - ''
+        before:
+        - ''
+    role: worker
+    ssh:
+      keyPath: mtt-demo.pem
+      user: ubuntu
+  - address: 3.128.182.17
+    hooks:
+      apply:
+        after:
+        - ''
+        before:
+        - ''
+    role: worker
+    ssh:
+      keyPath: mtt-demo.pem
+      user: ubuntu
+  - address: 18.220.185.51
+    hooks:
+      apply:
+        after:
+        - ''
+        before:
+        - ''
+    role: worker
+    ssh:
+      keyPath: mtt-demo.pem
+      user: ubuntu
+  mcr:
+    channel: test
+    installURLLinux: https://get.mirantis.com/
+    installURLWindows: https://get.mirantis.com/install.ps1
+    repoURL: https://repos-stage.mirantis.com/
+    version: 20.10.0-rc2
+  mke:
+    imageRepo: docker.io/mirantiseng
+    installFlags:
+    - --admin-username=admin
+    - --admin-password=orcaorcaorca
+    - --default-node-orchestrator=kubernetes
+    - --san=mtt-demo-manager-lb-d4d855086b761cd2.elb.us-east-2.amazonaws.com
+    upgradeFlags:
+    - --force-recent-backup
+    - --force-minimums
+    version: 3.4.0-rc1
+  msr:
+    imageRepo: docker.io/mirantiseng
+    installFlags:
+    - --ucp-insecure-tls
+    replicaIDs: sequential
+    version: 2.9.0-rc2

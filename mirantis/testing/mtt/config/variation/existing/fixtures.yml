@@ -1,5 +1,7 @@
 
 # launchpad :: uctt.plugin.provisioner:
+#
+# Laucnpad provisioner fixture, which will install MCR/MKE/MSR
 launchpad:
     type: uctt.plugin.provisioner
     plugin_id: mtt_launchpad
@@ -12,26 +14,12 @@ launchpad:
         label: fixtures
         base: launchpad
 
-    backend:
-        # which output in the dummy backend will we use
-        launchpad_output: mke_cluster
-
-        plugin:
-            plugin_id: dummy
-            outputs:
-                ## as we want this dummy provisioner to
-                mke_cluster:
-                    plugin_id: dict
-                    arguments:
-                        # the file contents are embedded here
-                        # the path to the file is defined in the variables config file
-                        data: "[file:{variables:launchpad_source_path}]"
-
-    is_provisioned: True
-    # If true, then launchpad will skip the prepare/apply on the backend
-    # This is not strictly needed as we use a dummy plugin, but it doesn't hurt
-    is_installed: "{variables:launchpad_is_installed}"
-    # If true then launchpad will skip the install
+    source_output:
+        # which output in the dummy backend will we use.  This output needs to
+        # exist by the time that .apply() is run on the launchpad proisioner.
+        # In this example that is always the case as we define a fixed dict
+        # output below.
+        instance_id: mke_cluster
 
     cli-options:
         accept-license: true
@@ -42,3 +30,23 @@ launchpad:
     # and restores, and also because it keeps the code the same for various
     # backends which mau not start with a file
     config_file: "{variables:files_path}/launchpad/{variables:files_prefix}.yaml"
+
+# mke_cluster : uctt.plugin.output:dict
+#
+# Fixed output that feeds the launchpad provisioner.
+# Here we actually just pipe a yaml file to the provisioner.
+mke_cluster:
+    type: uctt.plugin.output
+    plugin_id: dict
+    arguments:
+        # Here we define the structure of the output that feeds the launchpad
+        # provisioner.
+        # @NOTE the launchpad provisioner does not directly use the file path
+        # that we put here, but rather it stores the contents in a new location.
+        # This is a result of the way that the launchpad provisioner works, but
+        # it has an advantage in that we can always know the last structure used.
+        data: "[file:{variables:launchpad_source_path}]"
+        # The above syntax is a configerus instruction to dump the source path
+        # into the config structure passed to the output plugin.  The file
+        # contents are passed to the dict output plugion constructor, and the
+        # launchpad provisioner can pull them directly from the plugin.

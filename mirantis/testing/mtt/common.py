@@ -128,9 +128,9 @@ def find_project_root_path():
 
     MARKER_FILES = {
         'uctt.py',
-        'conftest',
-        'pytest.ini',
         'ucttc.py',
+        'conftest.py',
+        'pytest.ini',
     }
 
     # Try to add a path from cwd and up that contains a ucttc.py file

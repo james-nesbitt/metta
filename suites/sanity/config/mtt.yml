@@ -1,6 +1,6 @@
 presets:
     # This will tell mtt to include mtt/config/variation/ltc
-    variation: ltc
+    variation: tal
     # this will tell mtt to include mtt/config/release/patch/202101
     release: release/2021Q1
     # This will tell mtt to include mtt/config/cluster/poc

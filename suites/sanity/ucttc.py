@@ -23,11 +23,10 @@ import mirantis.testing.mtt_launchpad
 
 ENVIRONMENT_NAME = 'sanity'
 """ What to call our UCTT Environment """
-PROVISIONER_INSTANCE_ID = "{}-provisioner".format(ENVIRONMENT_NAME)
-
 
 """ Create and return the common environment. """
 environment = new_environment(name=ENVIRONMENT_NAME, additional_uctt_bootstraps=[
+    'uctt_ansible',
     'uctt_docker',
     'uctt_kubernetes',
     'uctt_terraform',

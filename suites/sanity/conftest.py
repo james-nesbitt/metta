@@ -9,7 +9,6 @@ logger = logging.getLogger('mtt ltc demo pytest')
 
 ENVIRONMENT_NAME = 'sanity'
 """ What to call our UCTT Environment """
-PROVISIONER_INSTANCE_ID = "{}-provisioner".format(ENVIRONMENT_NAME)
 
 """ Define our fixtures """
 
@@ -18,6 +17,7 @@ PROVISIONER_INSTANCE_ID = "{}-provisioner".format(ENVIRONMENT_NAME)
 def environment():
     """ Create and return the common environment. """
     environment = new_environment(name=ENVIRONMENT_NAME, additional_uctt_bootstraps=[
+        'uctt_ansible',
         'uctt_docker',
         'uctt_kubernetes',
         'uctt_terraform',
@@ -50,43 +50,85 @@ def provisioner(environment):
     If this raises a KeyError then we are probably using the wrong name.
 
     """
-    provisioner = environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='launchpad')
-    return provisioner
+    return environment.fixtures.get_plugin(
+        type=Type.PROVISIONER, instance_id='combo_provisioner')
 
 
 @pytest.fixture(scope='session')
-def provisioner_up(provisioner):
-    """ get the provisioner but start the provisioner before returning
+def launchpad(environment):
+    """ Retrieve the launchpad provisioner
+
+    Raises:
+    -------
+
+    If this raises a KeyError then we are probably using the wrong name.
+
+    """
+    return environment.fixtures.get_plugin(
+        type=Type.PROVISIONER, instance_id='launchpad')
+
+
+@pytest.fixture(scope='session')
+def ansible(environment):
+    """ Retrieve the ansible provisioner
+
+    Raises:
+    -------
+
+    If this raises a KeyError then we are probably using the wrong name.
+
+    """
+    return environment.fixtures.get_plugin(
+        type=Type.PROVISIONER, instance_id='ansible')
+
+
+@pytest.fixture(scope='session')
+def terraform(environment):
+    """ Retrieve the terraform provisioner
+
+    Raises:
+    -------
+
+    If this raises a KeyError then we are probably using the wrong name.
+
+    """
+    return environment.fixtures.get_plugin(
+        type=Type.PROVISIONER, instance_id='terraform')
+
+
+@pytest.fixture(scope='session')
+def environment_up(environment, terraform, ansible, launchpad):
+    """ get the environment but start the provisioners before returning
 
     This is preferable to the raw provisioner in cases where you want a running
     cluster so that the cluster startup cost does not get reflected in the
     first test case which uses the fixture.  Also it can tear itself down
 
-    You can still use provisioner.apply() update the resources if the provisioner
-    can handle it.
+    You can still use the provsioners to update the resources if the provisioner
+    plugins can handle it.
     """
 
-    # the provisioner has its own config object, which we will use to make
-    # some project decisions.  We could pull in the environment object and
-    # use its config, but this is simpler.
-    conf = provisioner.environment.config.load("config")
+    # We will use
+    conf = environment.config.load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
     try:
         logger.info("Preparing the testing cluster using the provisioner")
-        provisioner.prepare()
+        # terraform.prepare()
+        # ansible.prepare()
     except Exception as e:
         logger.error("Provisioner failed to init: %s", e)
         raise e
     try:
         logger.info("Starting up the testing cluster using the provisioner")
-        provisioner.apply()
+        # terraform.apply()
+        # ansible.apply()
+        # launchpad.apply()
     except Exception as e:
         logger.error("Provisioner failed to start: %s", e)
         raise e
 
-    yield provisioner
+    yield environment
 
     if conf.get("keep-on-finish", exception_if_missing=False):
         logger.info("Leaving test infrastructure in place on shutdown")
@@ -94,7 +136,7 @@ def provisioner_up(provisioner):
         try:
             logger.info(
                 "Stopping the test cluster using the provisioner as directed by config")
-            provisioner.destroy()
+            terraform.destroy()
         except Exception as e:
             logger.error("Provisioner failed to stop: %s", e)
             raise e
