@@ -17,20 +17,26 @@ The following are optional but a good idea
 'provisioner': a configured provisioner
 
 """
-import fixtures as local_fixtures
+from uctt import new_environment
 
+import mirantis.testing.mtt_launchpad
 
-def fixtures():
-    """ Provide the UCTT cli with fixtures
+ENVIRONMENT_NAME = 'sanity'
+""" What to call our UCTT Environment """
 
-    config : the config object from ./fixtures
-    provsioner : the provisioner object from ./fixtures
+""" Create and return the common environment. """
+environment = new_environment(name=ENVIRONMENT_NAME, additional_uctt_bootstraps=[
+    'uctt_ansible',
+    'uctt_docker',
+    'uctt_kubernetes',
+    'uctt_terraform',
+    'mtt',
+    'mtt_launchpad'
+])
+# This does a lot of magic, potentially too much.  We use this because we
+# found that we had the same configerus building approach on a lot of test
+# suites, so we put it all in a common place.
 
-    """
-    config = local_fixtures.config()
-    provisioner = local_fixtures.provisioner(config, instance_id='cli-prov')
-
-    return {
-        'config': config,
-        'provisioner': provisioner
-    }
+# Tell UCTT to look in the fixtures.yml file (configerus source) for
+# any fixtures defined there that should be added to the environment.
+environment.add_fixtures_from_config()

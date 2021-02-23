@@ -57,7 +57,7 @@ def provisioner(config):
     return provisioner
 
 
-def test_provisioner_sanit(provisioner):
+def test_provisioner_sanity(provisioner):
     """ make sure that our provisioner is good """
     assert isinstance(provisioner, ExistingBackendProvisionerPlugin)
 
