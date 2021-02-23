@@ -62,7 +62,7 @@ launchpad:
     # tell the plugin to put the launchpad yml
     #
     # @NOTE that relative paths are assumed to be relative to the working_dir
-    #   Basically a decision had to be made on the meaning of a relatice path.
+    #   Basically a decision had to be made on the meaning of a relative path.
     config_file: ./mtt-demo.yaml
 
 
