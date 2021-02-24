@@ -1,14 +1,7 @@
-# MTT
+# MTT Docs
 
-Welcome to the docs for the Mirantis Testing Toolbox
+Here we present more information on using MTT.
 
-The mirantis testing toolbox is a python framework for managing temporary cluster
-resources for the purpose of testing features of the cluster.
+See :
 
-The toolbox should allow any code to create and access cluster resources directly.
-
-Checkout our our `~./getting_started.md` introduction or move right into the
-deeper documentation
-
-Developers cant check out the `./developers` sectionm and testers can look at
-`./testers`.
+1. getting_started.md
