@@ -84,7 +84,11 @@ def add_preset_config(environment: Environment,
     # keys in the loaded config.
     # For each preset key found we try to add a path config source for the
     # value
-    mtt_config = environment.config.load(MTT_PRESET_CONFIG_LABEL)
+    try:
+        mtt_config = environment.config.load(MTT_PRESET_CONFIG_LABEL)
+    except KeyError:
+        logger.debug("MTT Presets found no usable config")
+        return
 
     for preset in MTT_PRESETS:
         # For each of the available presets, look in the loaded mtt

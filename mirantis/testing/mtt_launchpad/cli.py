@@ -15,11 +15,13 @@ logger = logging.getLogger('uctt.cli.launchpad')
 class LaunchpadCliPlugin(CliBase):
 
     def fire(self):
-        """ return a dict of commands """
+        """ return a dict of commands for aucnhpad provisioenrs if one hase been registered."""
         if self.environment.fixtures.get_fixture(
                 type=Type.PROVISIONER, plugin_id='mtt_launchpad', exception_if_missing=False) is not None:
             return {
-                'launchpad': LaunchpadGroup(self.environment)
+                'contrib': {
+                    'launchpad': LaunchpadGroup(self.environment)
+                }
             }
         else:
             return {}
@@ -43,19 +45,34 @@ class LaunchpadGroup():
     def info(self, provisioner: str = ''):
         """ get info about a provisioner plugin """
         fixture = self._select_provisioner(instance_id=provisioner)
-        plugin = fixture.plugin
 
-        info = {
+        provisioner_info = {
             'fixture': {
                 'type': fixture.type.value,
                 'plugin_id': fixture.plugin_id,
                 'instance_id': fixture.instance_id,
-                'priority': fixture.priority
+                'priority': fixture.priority,
             }
         }
-        info.update(plugin.info())
 
-        return json.dumps(info, indent=2)
+        if hasattr(fixture.plugin, 'info'):
+            provisioner_info.update(fixture.plugin.info())
+
+        return json.dumps(provisioner_info, indent=2)
+
+    def fixtures(self, provisioner: str = ''):
+        """ List all fixtures for this provisioner """
+        provisioner = self._select_provisioner(instance_id=provisioner).plugin
+        if not hasattr(provisioner, 'get_fixtures'):
+            raise ValueError('This provisioner does not keep fixtures.')
+        list = [{
+            'type': fixture.type.value,
+            'plugin_id': fixture.plugin_id,
+            'instance_id': fixture.instance_id,
+            'priority': fixture.priority,
+        } for fixture in provisioner.get_fixtures().to_list()]
+
+        json.dumps(list, indent=2)
 
     def config_file(self, provisioner: str = ''):
         """ get info about a provisioner plugin """
@@ -84,7 +101,7 @@ class LaunchpadGroup():
 
         if not hasattr(plugin, 'get_output'):
             raise ValueError(
-                "Found output '{}' but is cannot be exported in the cli.".format(
+                "Found output '{}' but it cannot be exported in the cli.".format(
                     plugin.instance_id))
 
         return json.dumps(plugin.get_output(), indent=2)

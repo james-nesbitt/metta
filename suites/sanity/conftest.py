@@ -1,14 +1,14 @@
 import pytest
 import logging
 
-from uctt import new_environment
+from uctt import get_environment
 from uctt.plugin import Type
 
+# We import constants, but uctt.py actually configures the environment
+# for both ptest and the ucttc cli executable.
+from .uctt import ENVIRONMENT_NAME
 
 logger = logging.getLogger('mtt ltc demo pytest')
-
-ENVIRONMENT_NAME = 'sanity'
-""" What to call our UCTT Environment """
 
 """ Define our fixtures """
 
@@ -16,22 +16,8 @@ ENVIRONMENT_NAME = 'sanity'
 @pytest.fixture(scope='session')
 def environment():
     """ Create and return the common environment. """
-    environment = new_environment(name=ENVIRONMENT_NAME, additional_uctt_bootstraps=[
-        'uctt_ansible',
-        'uctt_docker',
-        'uctt_kubernetes',
-        'uctt_terraform',
-        'mtt',
-        'mtt_launchpad'
-    ])
-    # This does a lot of magic, potentially too much.  We use this because we
-    # found that we had the same configerus building approach on a lot of test
-    # suites, so we put it all in a common place.
-
-    # Tell UCTT to load config from the fixtures.yml file, and use its contents
-    # to define what initial fixtures we want.
-    # We will want at least to define a provisioner.
-    environment.add_fixtures_from_config()
+    environment = get_environment(name=ENVIRONMENT_NAME)
+    # This environment was defined in ./uctt
 
     return environment
 
@@ -112,21 +98,24 @@ def environment_up(environment, terraform, ansible, launchpad):
     conf = environment.config.load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
-    try:
-        logger.info("Preparing the testing cluster using the provisioner")
-        # terraform.prepare()
-        # ansible.prepare()
-    except Exception as e:
-        logger.error("Provisioner failed to init: %s", e)
-        raise e
-    try:
-        logger.info("Starting up the testing cluster using the provisioner")
-        # terraform.apply()
-        # ansible.apply()
-        # launchpad.apply()
-    except Exception as e:
-        logger.error("Provisioner failed to start: %s", e)
-        raise e
+    if conf.get("already-running", exception_if_missing=False):
+        logger.info("test infrastructure is aready in place, and does not need to be provisioned.")
+    else:
+        try:
+            logger.info("Preparing the testing cluster using the provisioner")
+            terraform.prepare()
+            ansible.prepare()
+        except Exception as e:
+            logger.error("Provisioner failed to init: %s", e)
+            raise e
+        try:
+            logger.info("Starting up the testing cluster using the provisioner")
+            terraform.apply()
+            ansible.apply()
+            launchpad.apply()
+        except Exception as e:
+            logger.error("Provisioner failed to start: %s", e)
+            raise e
 
     yield environment
 

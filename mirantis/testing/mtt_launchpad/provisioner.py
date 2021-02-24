@@ -19,9 +19,12 @@ import datetime
 import os.path
 import subprocess
 import logging
+import shutil
 from typing import List, Dict, Any
 
 from configerus.loaded import LOADED_KEY_ROOT
+from configerus.contrib.jsonschema.validate import PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL
+from configerus.validator import ValidationError
 
 from uctt.plugin import UCTTPlugin, Type
 from uctt.fixtures import Fixtures, UCCTFixturesPlugin
@@ -52,6 +55,40 @@ MTT_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT = './launchpad.yml'
 MTT_LAUNCHPAD_CLI_CONFIG_ISINSTALLED = 'is_installed'
 """ Boolean config value that tells the provisioner to try to load clients before running apply """
 
+MTT_LAUNCHPAD_VALIDATE_JSONSCHEMA = {
+    'type': 'object',
+    'properties': {
+        'type': { 'type': 'string'},
+        'plugin_id': { 'type': 'string'},
+
+        'root': {
+            'type': 'object',
+            'properties': {
+                'path': { 'type': 'string'}
+            }
+        },
+        'source_output': {
+            'type': 'object',
+            'properties': {
+                'instance_id': { 'type': 'string'}
+            },
+            'required' : ['instance_id']
+        },
+        'cluster_name':{
+            'type': 'string'
+        },
+        'config_file':{
+            'type': 'string'
+        },
+        'working_dir':{
+            'type': 'string'
+        }
+    },
+    'required' : ['source_output']
+}
+""" Validation jsonschema for terraform config contents """
+MTT_LAUNCHPAD_VALIDATE_TARGET = "{}:{}".format(PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL, MTT_LAUNCHPAD_CONFIG_LABEL)
+""" configerus validation target to matche the above config, which relates to the bootstrap in __init__.py """
 
 class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
     """ Launchpad provisioner class
@@ -78,6 +115,12 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
 
         """ load all of the launchpad configuration """
         launchpad_config = self.environment.config.load(label)
+
+        # Run confgerus validation on the config using our above defined jsonschema
+        try:
+            launchpad_config.get(base, validator=MTT_LAUNCHPAD_VALIDATE_TARGET)
+        except ValidationError as e:
+            raise ValueError("Launchpad config failed validation: {}".format(e)) from e
 
         self.working_dir = launchpad_config.get(
             [base, MTT_LAUNCHPAD_CLI_WORKING_DIR_KEY])
@@ -122,10 +165,15 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             working_dir=self.working_dir,
             cluster_name_override=cluster_name_override)
 
+        # If we can, it makes sense to build the docker and k8s client fixtures now.
+        # This will only be possible in cases where we have an existing config file
+        # and we can download a client bundle.
+        # We try that here, even though it is verbose and ugly, so that we have
+        # the clients available for introspection.
+        # We probably shouldn't, but it allows some flexibility.
         if os.path.exists(self.config_file):
             try:
                 self._make_fixtures()
-                pass
             except BaseException:
                 logger.debug(
                     "Launchpad couldn't initialize some plugins as we don't have enough information to go on.")
@@ -237,8 +285,16 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         self._make_fixtures(reload=True)
 
     def destroy(self):
-        """ We don't bother uninstalling at this time """
-        os.remove(self.config_file)
+        """ We don't bother uninstalling at this time
+
+        we do:
+        1. delete the generated config file
+        2. ask the client to remove any downloaded client bundles
+
+        """
+        if os.path.exists(self.config_file):
+            os.remove(self.config_file)
+        self.client.rm_client_bundles()
 
     """ CLUSTER INTERACTION """
 
@@ -395,13 +451,28 @@ class LaunchpadClient:
 
         return data
 
+    def rm_client_bundles(self):
+        """ remove any downloaded client bundles """
+        try:
+            base = os.path.join(
+                MTT_USER_LAUNCHPAD_CLUSTER_PATH,
+                self._cluster_name(),
+                MTT_USER_LAUNCHPAD_BUNDLE_SUBPATH)
+        except:
+            # most likely we could't determine a cluster_name, because we don't
+            # have a config file.
+            return
+
+        if os.path.isdir(base):
+            shutil.rmtree(base)
+
     def _mke_client_bundle_path(self, user: str):
         """ find the path to a client bundle for a user whether or not it has been downloaded """
         return os.path.join(MTT_USER_LAUNCHPAD_CLUSTER_PATH,
                             self._cluster_name(), MTT_USER_LAUNCHPAD_BUNDLE_SUBPATH, user)
 
     def _mke_client_downloaded_bundle_user_paths(self) -> Dict[str, str]:
-        """ return a map of user names to dowqnloaded bundle paths """
+        """ return a map of user names to downloaded bundle paths """
         try:
             base = os.path.join(
                 MTT_USER_LAUNCHPAD_CLUSTER_PATH,
