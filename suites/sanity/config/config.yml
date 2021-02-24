@@ -2,3 +2,4 @@
 # @see conftest.py as an example where a value is used to decide
 #      if the cluster should be destroyed on exit
 keep-on-finish: true
+already-running: false

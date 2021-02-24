@@ -25,7 +25,7 @@ from uctt import new_environment
 
 import mirantis.testing.mtt_launchpad
 
-ENVIRONMENT_NAME = 'sanity'
+ENVIRONMENT_NAME = 'demo'
 """ What to call our UCTT Environment """
 
 RELEASE = '2021Q1'
