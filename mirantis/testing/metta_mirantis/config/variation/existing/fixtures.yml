@@ -1,0 +1,52 @@
+
+# launchpad :: metta.plugin.provisioner:
+#
+# Laucnpad provisioner fixture, which will install MCR/MKE/MSR
+launchpad:
+    type: metta.plugin.provisioner
+    plugin_id: metta_launchpad
+
+    # Pass these values to the provisioner constructor.  The launchpad
+    # constructor accepts override for "where to get config".  The values
+    # here tell it to look back in this same location for config, instead of
+    # its default of looking in the ./launchpad.yml file
+    arguments:
+        label: fixtures
+        base: launchpad
+
+    source_output:
+        # which output in the dummy backend will we use.  This output needs to
+        # exist by the time that .apply() is run on the launchpad proisioner.
+        # In this example that is always the case as we define a fixed dict
+        # output below.
+        instance_id: mke_cluster
+
+    cli-options:
+        accept-license: true
+        disable-telemetry: true
+
+    # This is the path to where metta will write the values.  Even though we are
+    # using a passthrough file, we keep a copy of the last file used for diffs
+    # and restores, and also because it keeps the code the same for various
+    # backends which mau not start with a file
+    config_file: "{variables:files_path}/launchpad/{variables:files_prefix}.yaml"
+
+# mke_cluster : metta.plugin.output:dict
+#
+# Fixed output that feeds the launchpad provisioner.
+# Here we actually just pipe a yaml file to the provisioner.
+mke_cluster:
+    type: metta.plugin.output
+    plugin_id: dict
+    arguments:
+        # Here we define the structure of the output that feeds the launchpad
+        # provisioner.
+        # @NOTE the launchpad provisioner does not directly use the file path
+        # that we put here, but rather it stores the contents in a new location.
+        # This is a result of the way that the launchpad provisioner works, but
+        # it has an advantage in that we can always know the last structure used.
+        data: "[file:{variables:launchpad_source_path}]"
+        # The above syntax is a configerus instruction to dump the source path
+        # into the config structure passed to the output plugin.  The file
+        # contents are passed to the dict output plugion constructor, and the
+        # launchpad provisioner can pull them directly from the plugin.

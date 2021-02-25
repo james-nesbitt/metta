@@ -1,8 +1,0 @@
-terraform:
-    plans:
-        prodeng:
-            aws:
-                v4: "{paths:mtt}/terraform/plans/prodeng/aws/v4"
-        example:
-            aws:
-                v1_2: "{paths:mtt}/terraform/plans/example/aws/1.2"

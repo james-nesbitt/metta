@@ -1,14 +1,14 @@
 import pytest
 import logging
 
-from uctt import get_environment
-from uctt.plugin import Type
+from mirantis.testing.metta import get_environment
+from mirantis.testing.metta.plugin import Type
 
-# We import constants, but uctt.py actually configures the environment
-# for both ptest and the ucttc cli executable.
-from .uctt import ENVIRONMENT_NAME
+# We import constants, but metta.py actually configures the environment
+# for both ptest and the mettac cli executable.
+from .metta import ENVIRONMENT_NAME
 
-logger = logging.getLogger('mtt ltc demo pytest')
+logger = logging.getLogger('metta ltc demo pytest')
 
 """ Define our fixtures """
 
@@ -17,7 +17,7 @@ logger = logging.getLogger('mtt ltc demo pytest')
 def environment():
     """ Create and return the common environment. """
     environment = get_environment(name=ENVIRONMENT_NAME)
-    # This environment was defined in ./uctt
+    # This environment was defined in ./metta
 
     return environment
 
@@ -94,12 +94,14 @@ def environment_up(environment, terraform, ansible, launchpad):
     plugins can handle it.
     """
 
-    # We will use
+    # We will use this config to make decisions about what we need to create
+    # and destroy for this environment up.
     conf = environment.config.load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("already-running", exception_if_missing=False):
-        logger.info("test infrastructure is aready in place, and does not need to be provisioned.")
+        logger.info(
+            "test infrastructure is aready in place, and does not need to be provisioned.")
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
@@ -109,7 +111,8 @@ def environment_up(environment, terraform, ansible, launchpad):
             logger.error("Provisioner failed to init: %s", e)
             raise e
         try:
-            logger.info("Starting up the testing cluster using the provisioner")
+            logger.info(
+                "Starting up the testing cluster using the provisioner")
             terraform.apply()
             ansible.apply()
             launchpad.apply()
@@ -125,6 +128,7 @@ def environment_up(environment, terraform, ansible, launchpad):
         try:
             logger.info(
                 "Stopping the test cluster using the provisioner as directed by config")
+            launchpad.destroy()
             terraform.destroy()
         except Exception as e:
             logger.error("Provisioner failed to stop: %s", e)
