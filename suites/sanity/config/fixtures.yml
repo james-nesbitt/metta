@@ -1,8 +1,8 @@
 
-# sanity_docker_run :: uctt.plugin.workload:
+# sanity_docker_run :: metta.plugin.workload:
 sanity_docker_run:
-    type: uctt.plugin.workload
-    plugin_id: uctt_docker_run
+    type: metta.plugin.workload
+    plugin_id: metta_docker_run
 
     # Pass these values to the provisioner constructor.
     arguments:
@@ -12,10 +12,10 @@ sanity_docker_run:
     run:
         image: 'hello-world'
 
-# sanity_kubernetes_deployment :: uctt.plugin.workload:
+# sanity_kubernetes_deployment :: metta.plugin.workload:
 sanity_kubernetes_deployment:
-    type: uctt.plugin.workload
-    plugin_id: uctt_kubernetes_deployment
+    type: metta.plugin.workload
+    plugin_id: metta_kubernetes_deployment
 
     arguments:
         label: fixtures

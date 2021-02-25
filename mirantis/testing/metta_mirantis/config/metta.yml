@@ -1,0 +1,12 @@
+# Include some paths to terraform plans in this package to make them easier to
+# FInd.  Just use variables from here as paths to the chart/plan.
+terraform:
+    plans:
+        # Terraform plans crated by the prodeng team.
+        prodeng:
+            aws:
+                v4: "{paths:metta_mirantis}/terraform/plans/prodeng/aws/v4"
+        # Launchpad example terraform charts.
+        example:
+            aws:
+                v1_2: "{paths:metta_mirantis}/terraform/plans/example/aws/1.2"

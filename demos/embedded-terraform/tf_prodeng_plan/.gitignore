@@ -1,0 +1,5 @@
+*.pem
+.terraform*
+*.terraform.state*
+*.tfvars.json
+*.yaml

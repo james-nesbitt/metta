@@ -1,0 +1,48 @@
+# Used in terraform resource tagging
+user: "{user:id?anon}"
+#  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
+task: "ltc"
+# One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.
+project: "default"
+
+
+# used for resource naming in various places
+id: "{user}-metta-ltc"
+# where to put terraform and launchpad state/var/config files
+files_path: .
+# prefix for terraform/launchpad files to allow variations
+files_prefix: "{id}"
+
+# The Linux platform to use for manager/worker/DTR replica nodes
+# Typically overridden in a platform config variables file
+platform_repo: public
+platform: ubuntu_18.04
+
+# mirantis app versions and sources
+# typically overriden in a release config variables file
+mcr_channel: stable
+mcr_version: 19.03.12
+mke_image_repo: docker.io/mirantis
+mke_version: 3.3.3
+msr_image_repo: docker.io/mirantis
+msr_version: 2.8.3
+
+# machine/node counts to use
+# typically overridden in a cluster config variables file
+manager_count: 1
+manager_type: m5.xlarge
+manager_volume_size: 100
+worker_count: 3
+worker_type: m5.large
+worker_volume_size: 100
+windows_worker_count: 0
+msr_count: 0
+msr_type: m5.xlarge
+msr_volume_size: 100
+
+# SSH/RDP admin passwords for nodes
+admin_password: orcaorcaorca
+windows_administrator_password: "tfaws,,ABC..Example"
+
+terraform_is_provisioned: false
+# If true, then launchpad will skip the prepare/apply on the backend

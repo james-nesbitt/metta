@@ -1,9 +1,0 @@
-presets:
-    # This will tell mtt to include mtt/config/variation/ltc
-    variation: tal
-    # this will tell mtt to include mtt/config/release/patch/202101
-    release: release/2021Q1
-    # This will tell mtt to include mtt/config/cluster/poc
-    cluster: poc
-    # This will tell mtt to include mtt/config/platform/public/ubuntu/18.04
-    platform: public/ubuntu/20.04

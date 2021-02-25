@@ -1,6 +1,0 @@
-*.pem
-.terraform*
-*.terraform.state
-*.terraform.state.backup
-*.tfvars.json
-*.yaml
