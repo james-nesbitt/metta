@@ -4,23 +4,21 @@ terraform:
     type: metta.plugin.provisioner
     plugin_id: metta_terraform
 
-    # Terraform will configure itself from the ./terraform.yml file
+    # Tell terraform to configure itself from the ./terraform.yml file
     # This is actually its default but this demonstrates that we have
     # the option of setting any config path desired, including that we
     # could embed the terraform.yml file here.
-    arguments:
+    from_config:
         label: terraform
-        # base: some.path.in.the.file
+        # base: some.path.in.the.terraform.file
 
 # ansible :: metta.plugin.provisioner:
 ansible:
     type: metta.plugin.provisioner
     plugin_id: metta_ansible
 
-    # Pass these values to the provisioner constructor.
-    arguments:
-        label: fixtures
-        base: ansible
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
 
 # launchpad :: metta.plugin.provisioner:
 launchpad:
@@ -31,9 +29,8 @@ launchpad:
     # constructor accepts override for "where to get config".  The values
     # here tell it to look back in this same location for config, instead of
     # its default of looking in the ./launchpad.yml file
-    arguments:
-        label: fixtures
-        base: launchpad
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
 
     # Declare which output from the environment will give us our launchpad yml
     # The output needs to exist by the time the launchpad provisioner .apply()
@@ -72,10 +69,8 @@ sanity_docker_run:
     type: metta.plugin.workload
     plugin_id: metta_docker_run
 
-    # Pass these values to the provisioner constructor.
-    arguments:
-        label: fixtures
-        base: sanity_docker_run
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
 
     run:
         image: 'hello-world'
@@ -85,9 +80,8 @@ sanity_kubernetes_deployment:
     type: metta.plugin.workload
     plugin_id: metta_kubernetes_deployment
 
-    arguments:
-        label: fixtures
-        base: sanity_kubernetes_deployment
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
 
     namespace: "default"
     body:

@@ -49,6 +49,9 @@ FIXTURE_VALIDATION_TARGET_FORMAT_STRING = 'jsonschema:{key}'
 METTA_BOOTSTRAP_ENTRYPOINT = 'metta.bootstrap'
 """ SetupTools entry_point used for METTA bootstrap """
 
+METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG = "from_config"
+""" config key that indicates that the plugin will be build from aconfig label/key pair """
+
 
 class Environment:
     """ A testing environment, usually composed of a config and plugins """
@@ -413,6 +416,31 @@ class Environment:
         except KeyError as e:
             raise KeyError("Could not load plugin config source.") from e
         """ loaded configuration for the plugin """
+
+        # If arguments were given then pass them on
+        config_arguments = plugin_loaded.get(
+            [base, METTA_PLUGIN_CONFIG_KEY_ARGUMENTS])
+        if config_arguments is None and not arguments:
+            # if no arguments were specified, then consider a special case of
+            # 'from_config' which build arguments for a config based plugin
+            # which will take a config label/base-key pair as config arguments
+            #
+            # There is a special case where if the passed from_config is not a
+            # dict then the same config label/base received is used.
+            config_fromconfig = plugin_loaded.get(
+                [base, METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG])
+            if config_fromconfig is not None:
+                if isinstance(config_fromconfig, dict):
+                    logger.debug(
+                        "Using from_config, and passing label/base as arguments")
+                    arguments = config_fromconfig
+                else:
+                    logger.debug(
+                        "Using from_config, and passing current label/base as arguments")
+                    arguments = {
+                        'label': label,
+                        'base': base
+                    }
 
         return self.add_fixture_from_loadedconfig(loaded=plugin_loaded, base=base, type=type,
                                                   instance_id=instance_id, priority=priority, validator=validator, arguments=arguments)

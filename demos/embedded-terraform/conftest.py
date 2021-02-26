@@ -7,7 +7,7 @@ from mirantis.testing.metta.plugin import Type
 
 # We import constants, but metta.py actually configures the environment
 # for both ptest and the mettac cli executable.
-from .metta import ENVIRONMENT_NAME, RELEASE
+from metta import ENVIRONMENT_NAME, RELEASE
 
 logger = logging.getLogger('metta-suite-demo')
 
