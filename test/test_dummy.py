@@ -22,9 +22,9 @@ from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
 
 # imports used only for type testing
-from mirantis.testing.metta.contrib.dummy.provisioner import DummyProvisionerPlugin
-from mirantis.testing.metta.contrib.dummy.client import DummyClientPlugin
-from mirantis.testing.metta.contrib.dummy.workload import DummyWorkloadPlugin
+from mirantis.testing.metta_dummy.provisioner import DummyProvisionerPlugin
+from mirantis.testing.metta_dummy.client import DummyClientPlugin
+from mirantis.testing.metta_dummy.workload import DummyWorkloadPlugin
 
 logger = logging.getLogger("test_dummy")
 logger.setLevel(logging.INFO)

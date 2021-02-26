@@ -32,12 +32,12 @@ FIXED_CONFIGERUS_BOOSTRAPS = [
 """ configerus bootstraps that we will use on config objects """
 FIXED_METTA_BOOTSTRAPS = [
     "metta_validation",
-    "metta_dummy",
     "metta_common"
 ]
 DEFAULT_ADDITIONAL_METTA_BOOTSTRAPS = [
     "metta_ansible",
     "metta_docker",
+    "metta_dummy",
     "metta_kubernetes",
     "metta_terraform"
 ]
