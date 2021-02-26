@@ -67,6 +67,7 @@ def add_common_config(environment: Environment):
     project_config_path = os.path.join(
         project_root_path,
         METTA_COMMON_PROJECT_CONFIG_SUBPATH)
+
     if not environment.config.has_source(
             METTA_COMMON_CONFIG_PROJECT_CONFIG_INSTANCE_ID) and os.path.isdir(project_config_path):
         environment.config.add_source(

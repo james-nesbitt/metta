@@ -16,7 +16,7 @@ from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 from mirantis.testing.metta import new_environment, environment_names, get_environment
 from mirantis.testing.metta.plugin import Type, Factory
 # We import this so that we don't need to guess on plugin_ids, but not needed
-from mirantis.testing.metta.contrib.dummy import METTA_PLUGIN_ID_DUMMY
+from mirantis.testing.metta_dummy import METTA_PLUGIN_ID_DUMMY
 
 # Imports used for type hinting
 from mirantis.testing.metta.environment import Environment
@@ -26,9 +26,9 @@ from mirantis.testing.metta.provisioner import METTA_PROVISIONER_CONFIG_PROVISIO
 from mirantis.testing.metta.client import METTA_CLIENT_CONFIG_CLIENTS_LABEL, METTA_CLIENT_CONFIG_CLIENT_LABEL
 from mirantis.testing.metta.workload import METTA_WORKLOAD_CONFIG_WORKLOADS_LABEL, METTA_WORKLOAD_CONFIG_WORKLOAD_LABEL
 # imports used only for type testing
-from mirantis.testing.metta.contrib.dummy.provisioner import DummyProvisionerPlugin
-from mirantis.testing.metta.contrib.dummy.client import DummyClientPlugin
-from mirantis.testing.metta.contrib.dummy.workload import DummyWorkloadPlugin
+from mirantis.testing.metta_dummy.provisioner import DummyProvisionerPlugin
+from mirantis.testing.metta_dummy.client import DummyClientPlugin
+from mirantis.testing.metta_dummy.workload import DummyWorkloadPlugin
 
 logger = logging.getLogger("test_dummy")
 logger.setLevel(logging.INFO)

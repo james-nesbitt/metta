@@ -3,7 +3,7 @@ from typing import Dict, Any
 
 import json
 
-from mirantis.testing.metta import environment_names
+from mirantis.testing.metta import environment_names, get_environment
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.cli import CliBase
 
@@ -31,3 +31,17 @@ class EnvironmentGroup():
             return names
         else:
             return json.dumps(names)
+
+    def _environment(self, environment: str = ''):
+        """ select an environment """
+        if not environment:
+            return self.environment
+        return get_environment(environment)
+
+    def bootstraps(self, environment: str = ''):
+        """ List bootstraps that have been applied to the environment """
+        environment = self._environment(environment)
+
+        list = [bootstrap for bootstrap in environment.bootstrapped]
+
+        return json.dumps(list, indent=2, default=lambda X: "{}".format(X))

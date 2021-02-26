@@ -1,0 +1,59 @@
+---
+prov1:
+  type: PROVISIONER
+  plugin_id: dummy
+
+  arguments:
+    fixtures:
+
+      client1:
+        type: client
+        plugin_id: dummy
+
+        arguments:
+          fixtures:
+
+            output1:
+              type: output
+              plugin_id: text
+
+              arguments:
+                text: prov client one output one
+
+            output2:
+              type: metta.plugin.output
+              plugin_id: dict
+
+              arguments:
+                data:
+                  '1':
+                    '1': prov client one output two data one.one
+
+      output1:
+        type: metta.plugin.output
+        plugin_id: text
+
+        arguments:
+          text: prov dummy output one
+
+work1:
+  type: metta.plugin.workload
+  plugin_id: dummy
+
+work2:
+  type: workload
+  plugin_id: dummy
+
+  arguments:
+    fixtures:
+
+      output1:
+        type: output
+        plugin_id: text
+
+        arguments:
+          text: workload two dummy output one
+
+      client1:
+        type: client
+        plugin_id: dummy

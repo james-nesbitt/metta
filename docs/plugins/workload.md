@@ -23,3 +23,14 @@ can ask the provisioner directly for the plugins that it needs.
 an example would be a kubernetes yaml spec workload.  Such a plugin would ask
 a client for the kubernetes client, and then it would ask the client for
 resources to apply the yaml to.
+
+## Design
+
+A Workload plugin itself is meant to be a long lasting instance that can produce
+any number of workload instances.  The instance is produced by passing a fixtures
+list to the workload.
+The instances itself can be started/stopped.
+
+This design is meant to prevent confusion about workloads states and multiple
+run management.  It should also allow a workload plugin to keep track of its
+own creations for garbage collection.

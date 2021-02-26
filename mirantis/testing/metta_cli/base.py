@@ -18,7 +18,14 @@ FILES = {
 
 
 class Base:
-    """ A Fire compatible base component """
+    """ The Metta CLI program
+
+    This CLI let's you interact with a metta environment for the purpose of
+    introspection, debugging and manual interaction.
+
+    All groups and commands come from metta CLI plugins.
+
+    """
 
     def __init__(self, environment: str = ''):
         """
@@ -43,11 +50,18 @@ class Base:
         try:
             if environment == '':
                 environment = environment_names()[0]
-                self._environment = get_environment(environment)
         except (KeyError, IndexError) as e:
             logger.warn(
                 "No environment object has been defined (making one now.) Are you in a project folder?")
-            self._environment = new_environment()
+            environment = 'empty'
+            new_environment(environment)
+
+        try:
+            self._environment = get_environment(environment)
+        except KeyError:
+            raise ValueError(
+                "Could not load environment '{}', not found; Existing environments: {}".format(
+                    environment, environment_names()))
 
         # collect any comands from all discovered cli plugins
         self._collect_commands()
