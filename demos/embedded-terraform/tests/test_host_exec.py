@@ -21,7 +21,7 @@ def test_launchpad_exec_client_hosts(environment_up):
                                                      plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID)
 
     hosts = exec_client.hosts()
-    assert len(hosts) == 5
+    assert len(hosts) > 0
 
     print(json.dumps(hosts, indent=2))
 
