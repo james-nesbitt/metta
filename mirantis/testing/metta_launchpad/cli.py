@@ -42,7 +42,7 @@ class LaunchpadGroup():
             return self.environment.fixtures.get_fixture(
                 type=Type.PROVISIONER, plugin_id='metta_launchpad')
 
-    def info(self, provisioner: str = ''):
+    def info(self, provisioner: str = '', deep: bool = False):
         """ get info about a provisioner plugin """
         fixture = self._select_provisioner(instance_id=provisioner)
 
@@ -55,10 +55,64 @@ class LaunchpadGroup():
             }
         }
 
-        if hasattr(fixture.plugin, 'info'):
-            provisioner_info.update(fixture.plugin.info())
+        if deep:
+            if hasattr(fixture.plugin, 'info'):
+                provisioner_info.update(fixture.plugin.info(True))
 
         return json.dumps(provisioner_info, indent=2)
+
+    def hosts(self, provisioner: str = '', deep: bool = False):
+        """ list the hosts in the cluster """
+        fixture = self._select_provisioner(instance_id=provisioner)
+        plugin = fixture.plugin
+        client = plugin.client
+
+        config = client.describe_config()
+
+        if deep:
+            list = [host for host in config['spec']['hosts']]
+        else:
+            list = []
+            for host in config['spec']['hosts']:
+                list_host = {
+                    'role': host['role']
+                }
+                if 'ssh' in host:
+                    list_host.update({
+                        'is_windows': False,
+                        'address': host['ssh']['address']
+                    })
+                if 'winrm' in host:
+                    list_host.update({
+                        'is_windows': True,
+                        'address': host['winrm']['address']
+                    })
+
+                list.append(list_host)
+
+        return json.dumps(list, indent=2)
+
+    def exec(self, cmd: str, provisioner: str = '',
+             host: int = 0, interactive: bool = False):
+        """ Exec a command """
+        fixture = self._select_provisioner(instance_id=provisioner)
+        plugin = fixture.plugin
+        client = plugin.client
+
+        cmds = cmd.split(' ')
+
+        client.exec(host_index=host, cmds=cmds)
+
+    def exec_interactive(self, cmd: str, provisioner: str = '',
+                         host: int = 0, interactive: bool = False):
+        """ Exec a command """
+        fixture = self._select_provisioner(instance_id=provisioner)
+        plugin = fixture.plugin
+        client = plugin.client
+
+        cmds = cmd.split(' ')
+
+        client.exec_interactive(host_index=host, cmds=cmds)
 
     def fixtures(self, provisioner: str = ''):
         """ List all fixtures for this provisioner """
@@ -91,20 +145,15 @@ class LaunchpadGroup():
 
         return json.dumps(config_data, indent=2)
 
-    def output(self, output: str, provisioner: str = ''):
-        """ Interact with provisioner outputs """
+    def version(self, provisioner: str = ''):
+        """ Output a launchpad cli report """
         provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        if not hasattr(provisioner, 'get_output'):
-            raise ValueError('This provisioner does not keep outputs.')
+        provisioner.client.version()
 
-        plugin = provisioner.get_output(instance_id=output)
-
-        if not hasattr(plugin, 'get_output'):
-            raise ValueError(
-                "Found output '{}' but it cannot be exported in the cli.".format(
-                    plugin.instance_id))
-
-        return json.dumps(plugin.get_output(), indent=2)
+    def describe(self, report: str, provisioner: str = ''):
+        """ Output a launchpad cli report """
+        provisioner = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner.client.describe(report)
 
     def fixtures(self, provisioner: str = '', type: Type = None, plugin_id: str = '',
                  instance_id: str = ''):
