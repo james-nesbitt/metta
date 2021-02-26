@@ -13,6 +13,7 @@ from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 
 logger = logging.getLogger("test_clients")
 
+
 @pytest.mark.second
 def test_launchpad_docker_client(environment_up):
     """ did we get a good docker client ? """
@@ -42,6 +43,7 @@ def test_launchpad_docker_client(environment_up):
             container.short_id,
             container.image.short_id,
             container.status) for container in ps)
+
 
 @pytest.mark.second
 def test_docker_run_workload(environment_up):

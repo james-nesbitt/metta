@@ -11,6 +11,7 @@ from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
 logger = logging.getLogger("test_clients")
 
+
 @pytest.mark.second
 def test_launchpad_kubectl_client(environment_up):
     """ did we get a good kubectl client """
@@ -24,6 +25,7 @@ def test_launchpad_kubectl_client(environment_up):
     print("NS: {}".format(ns))
 
     assert ns.metadata.name == "kube-system", "Wrong namespace given"
+
 
 @pytest.mark.second
 def test_kubernetes_deployment_workload(environment_up):
