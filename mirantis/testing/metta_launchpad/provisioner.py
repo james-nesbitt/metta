@@ -15,11 +15,8 @@ use a provisioner such as the terraform provisioner before this one.
 
 import json
 import yaml
-import datetime
 import os.path
-import subprocess
 import logging
-import shutil
 from typing import List, Dict, Any
 
 from configerus.loaded import LOADED_KEY_ROOT
@@ -31,6 +28,9 @@ from mirantis.testing.metta.fixtures import Fixtures, UCCTFixturesPlugin
 from mirantis.testing.metta.provisioner import ProvisionerBase
 from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
+
+from .launchpad import LaunchpadClient, METTA_USER_LAUNCHPAD_CLUSTER_PATH
+from .exec_client import METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID
 
 logger = logging.getLogger('mirantis.testing.metta.provisioner:launchpad')
 
@@ -50,8 +50,6 @@ METTA_LAUNCHPAD_CLI_CONFIG_DOCKER_VERSION_DEFAULT = '1.40'
 """ Default value for the docker client version number.  It would be best to discover or config this."""
 METTA_LAUNCHPAD_BACKEND_OUTPUT_INSTANCE_ID_DEFAULT = 'mke_cluster'
 """ Launchpad backend default output name for configuring launchpad """
-METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT = './launchpad.yml'
-""" Launchpad config configuration file key """
 METTA_LAUNCHPAD_CLI_CONFIG_ISINSTALLED = 'is_installed'
 """ Boolean config value that tells the provisioner to try to load clients before running apply """
 
@@ -186,7 +184,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                 # we most likely failed because we don't have enough info get
                 # make fixtures from
 
-    def info(self, provisioner: str = ''):
+    def info(self, deep: bool = False):
         """ get info about a provisioner plugin """
         plugin = self
         client = self.client
@@ -201,31 +199,34 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             },
             'client': {
                 'cluster_name_override': client.cluster_name_override,
+                'user_cluster_path': client._mke_client_bundle_root(),
                 'config_file': client.config_file,
                 'working_dir': client.working_dir,
                 'bin': client.bin
-            },
-            'bundles': {
-                user: client.bundle(user) for user in client.bundle_users()
             }
         }
 
-        fixtures = {}
-        for fixture in self.get_fixtures().to_list():
-            fixture_info = {
-                'fixture': {
-                    'type': fixture.type.value,
-                    'plugin_id': fixture.plugin_id,
-                    'instance_id': fixture.instance_id,
-                    'priority': fixture.priority,
+        if deep:
+            info['config'] = client.describe_config()
+            info['bundles'] = {user: client.bundle(
+                user) for user in client.bundle_users()}
+
+            fixtures = {}
+            for fixture in self.get_fixtures().to_list():
+                fixture_info = {
+                    'fixture': {
+                        'type': fixture.type.value,
+                        'plugin_id': fixture.plugin_id,
+                        'instance_id': fixture.instance_id,
+                        'priority': fixture.priority,
+                    }
                 }
-            }
-            if hasattr(fixture.plugin, 'info'):
-                plugin_info = fixture.plugin.info()
-                if isinstance(plugin_info, dict):
-                    fixture_info.update(plugin_info)
-            fixtures[fixture.instance_id] = plugin_info
-        info['fixtures'] = fixtures
+                if hasattr(fixture.plugin, 'info'):
+                    plugin_info = fixture.plugin.info()
+                    if isinstance(plugin_info, dict):
+                        fixture_info.update(plugin_info)
+                fixtures[fixture.instance_id] = plugin_info
+            info['fixtures'] = fixtures
 
         info['helper'] = {
             'commands': {
@@ -373,194 +374,19 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             arguments={'host': host, 'cert_path': cert_path, 'version': METTA_LAUNCHPAD_CLI_CONFIG_DOCKER_VERSION_DEFAULT})
         self.fixtures.add_fixture(fixture)
 
+        # EXEC CLIENT
+        #
+        instance_id = "launchpad-{}-{}-{}-client".format(
+            self.instance_id, METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID, user)
+        fixture = self.environment.add_fixture(
+            type=Type.CLIENT,
+            plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
+            instance_id=instance_id,
+            priority=70,
+            arguments={'client': self.client})
+        self.fixtures.add_fixture(fixture)
+
     def _mke_client_bundle(self, user: str, reload: bool = False):
         """ Retrieve the MKE Client bundle metadata using the client """
         assert self.client, "Don't have a launchpad client configured yet"
         return self.client.bundle(user, reload)
-
-
-METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT = '.'
-""" Launchpad Client default working dir """
-METTA_LAUNCHPADCLIENT_BIN_PATH = 'launchpad'
-""" Launchpad bin exec for the subprocess """
-
-METTA_USER_LAUNCHPAD_CLUSTER_PATH = os.path.expanduser(
-    os.path.join('~', '.mirantis-launchpad', 'cluster'))
-""" the str path to where launchpad keeps its user config """
-METTA_USER_LAUNCHPAD_BUNDLE_SUBPATH = 'bundle'
-""" str path to user bundle config can be found when it is downloaded """
-METTA_USER_LAUNCHPAD_BUNDLE_META_FILE = 'meta.json'
-""" str filename for the meta file in the client bundle path """
-
-
-class LaunchpadClient:
-    """ shell client for interacting with the launchpad bin """
-
-    def __init__(self, config_file: str = METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
-                 working_dir: str = METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT,
-                 cluster_name_override: str = ''):
-        """
-        Parameters:
-
-        config_file (str) : path to launchpad config file, typically
-            launchpad.yml
-
-        working_dir (str) : full config file path.
-            this typically plays a role in interpreting file paths from the
-            config for things like ssh keys.  The client will use that path for
-            python subprocess execution
-
-        """
-        self.config_file = config_file
-        """ Path to config file """
-        self.working_dir = working_dir
-        """ Python subprocess working dir to execute launchpad in.
-            This may be relevant in cases where ssh keys have a relative path """
-
-        self.cluster_name_override = cluster_name_override
-        """ if not empty this will be used as a cluster name instead of taking
-            it from the yaml file """
-
-        self.bin = METTA_LAUNCHPADCLIENT_BIN_PATH
-        """ shell execution target for launchpad """
-
-    def install(self):
-        """ Install using the launchpad client """
-        self._run(['apply'])
-
-    def bundle_users(self):
-        """ list bundle users which have been downloaded """
-        return self._mke_client_downloaded_bundle_user_paths().keys()
-
-    def bundle(self, user: str, reload: bool = False):
-        """ Retrieve a client bundle and return the metadata as a dict """
-        client_bundle_path = self._mke_client_bundle_path(user)
-        client_bundle_meta_file = os.path.join(
-            client_bundle_path, METTA_USER_LAUNCHPAD_BUNDLE_META_FILE)
-
-        if reload or not os.path.isfile(client_bundle_meta_file):
-
-            # @NOTE currently client bundle downloads are flaky.  They fail about 1/5 times
-            #    with unclear TLS issues.  Because the failures are intermittent, we should
-            #    just try again
-
-            for i in range(1, 4):
-                try:
-                    self._run(["client-config", user])
-                    break
-                except Exception as e:
-                    logger.warn(
-                        "Attempt {} to download bundle.  Assuming flaky behaviour and trying again : {}".format(
-                            i, e))
-
-            else:
-                raise Exception(
-                    "Numerous attempts to download the client bundle have failed.")
-
-        data = {}
-        """ Will hold data pulled from the client meta data file """
-        try:
-            with open(client_bundle_meta_file) as json_file:
-                data = json.load(json_file)
-        except FileNotFoundError as e:
-            raise ValueError(
-                "failed to open the launchpad client bundle meta file.") from e
-
-        # add some stuff that a client bundle always has
-        data['path'] = client_bundle_path
-        data['modified'] = datetime.datetime.fromtimestamp(
-            os.path.getmtime(client_bundle_meta_file)).strftime("%Y-%m-%d %H:%M:%S")
-        # this stuff should already be in the bundle, but it isn't
-        data['tls_paths'] = {
-            'docker': os.path.join(client_bundle_path, 'tls', 'docker'),
-            'kubernetes': os.path.join(client_bundle_path, 'tls', 'kubernetes'),
-        }
-
-        return data
-
-    def rm_client_bundles(self):
-        """ remove any downloaded client bundles """
-        try:
-            base = os.path.join(
-                METTA_USER_LAUNCHPAD_CLUSTER_PATH,
-                self._cluster_name(),
-                METTA_USER_LAUNCHPAD_BUNDLE_SUBPATH)
-        except BaseException:
-            # most likely we could't determine a cluster_name, because we don't
-            # have a config file.
-            return
-
-        if os.path.isdir(base):
-            shutil.rmtree(base)
-
-    def _mke_client_bundle_path(self, user: str):
-        """ find the path to a client bundle for a user whether or not it has been downloaded """
-        return os.path.join(METTA_USER_LAUNCHPAD_CLUSTER_PATH,
-                            self._cluster_name(), METTA_USER_LAUNCHPAD_BUNDLE_SUBPATH, user)
-
-    def _mke_client_downloaded_bundle_user_paths(self) -> Dict[str, str]:
-        """ return a map of user names to downloaded bundle paths """
-        try:
-            base = os.path.join(
-                METTA_USER_LAUNCHPAD_CLUSTER_PATH,
-                self._cluster_name(),
-                METTA_USER_LAUNCHPAD_BUNDLE_SUBPATH)
-            return {userdir: os.path.join(base, userdir) for userdir in os.listdir(
-                base) if os.path.isdir(os.path.join(base, userdir))}
-        except (ValueError, FileNotFoundError) as e:
-            logger.debug(
-                "Could not get user bundles names as there is no launchpad targets to check against.")
-            return {}
-
-    def _cluster_name(self):
-        """ get the cluster name from the config file
-
-        @TODO we should cache it, but then do we need to invalidate cache?
-
-        """
-
-        if self.cluster_name_override:
-            return self.cluster_name_override
-
-        try:
-            with open(self.config_file) as config_file_object:
-                self.config_data = yaml.load(
-                    config_file_object, Loader=yaml.FullLoader)
-                """ keep a parsed copy of the launchpad file """
-        except FileNotFoundError as e:
-            raise ValueError(
-                "Launchpad yaml file could not be opened: {}".format(
-                    self.config_file)) from e
-        except Exception as e:
-            raise ValueError(
-                "Launchpad yaml file had unexpected contents: {}".format(
-                    self.config_file)) from e
-
-        if not isinstance(self.config_data, dict):
-            raise ValueError(
-                "Launchpad yaml file had unexpected contents: {}".format(self.config_file))
-
-        try:
-            return self.config_data['metadata']['name']
-        except KeyError:
-            raise ValueError(
-                'Launchpad yaml file did not container a cluster name')
-
-    def _run(self, args: List[str] = ['help']):
-        """ Run a launchpad command
-
-        Parameters:
-
-        args (List[str]) : arguments to pass to the launchpad bin using
-            subprocess
-
-        """
-
-        """ if the command passed uses a config file, add the flag for it """
-        if not args[0] in ['help']:
-            args = [args[0]] + ['-c', self.config_file] + args[1:]
-
-        cmd = [self.bin] + args
-        print("{}".format(cmd))
-        exec = subprocess.run(cmd, cwd=self.working_dir)
-        exec.check_returncode()
