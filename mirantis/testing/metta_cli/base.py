@@ -3,7 +3,7 @@ import os
 import importlib.util
 import sys
 
-from mirantis.testing.metta import environment_names, get_environment, new_environment
+from mirantis.testing.metta import environment_names, get_environment, new_environments_from_discover, new_environment
 from mirantis.testing.metta.plugin import Type, Factory
 
 
@@ -38,14 +38,8 @@ class Base:
 
         """
 
-        self._paths = {}
-        """ key value pair of paths to module namespaces where we can look for injection """
-
-        # Look for any paths that we can use to source init code
-        self._add_project_root_path()
-        # run any init code found in _paths to get ourselves in a state that
-        # matches a project
-        self._project_init()
+        # Try to make an environment using
+        new_environments_from_discover()
 
         try:
             if environment == '':
@@ -113,57 +107,3 @@ class Base:
                         continue
 
                     setattr(self, command_name, command)
-
-    def _project_init(self):
-        """ initialize the project by looking for path base injections
-
-        Look for any of our cli module files, and if found import/exec them
-        using core Python module management.
-
-        The modules are expected to interact directly METTA environments, which
-        the CLI will then discover.
-
-        """
-        if len(self._paths):
-            for (path_module_name, path) in self._paths.items():
-                for (file_module_name, file) in FILES.items():
-                    module_name = '{}.{}'.format(
-                        path_module_name, path_module_name)
-                    module_path = os.path.join(path, file)
-
-                    logger.debug(
-                        "Checking for fixtures in: {}".format(module_path))
-
-                    if os.path.isfile(module_path):
-
-                        if path not in sys.path:
-                            sys.path.append(path)
-
-                        spec = importlib.util.spec_from_file_location(
-                            module_name, module_path)
-                        module = importlib.util.module_from_spec(spec)
-                        spec.loader.exec_module(module)
-
-                        # Note that the module is responsible for interacting
-                        # directly with METTA and creating environments that
-                        # The CLI will interact with
-
-    def _add_project_root_path(self):
-        """ Find a string path to the project root
-
-        Start at the cwd() and search upwards until we find a path that contains
-        one of the Marker files in FILES
-
-        """
-
-        check_path = os.path.abspath(os.getcwd())
-        while check_path:
-            if check_path == '/':
-                break
-
-            for marker_file in FILES.values():
-                marker_path = os.path.join(check_path, marker_file)
-                if os.path.isfile(marker_path):
-                    self._paths['pwd'] = check_path
-                    return
-            check_path = os.path.dirname(check_path)

@@ -1,12 +1,8 @@
 import pytest
 import logging
 
-from mirantis.testing.metta import get_environment
+from mirantis.testing.metta import new_environments_from_discover, get_environment
 from mirantis.testing.metta.plugin import Type
-
-# We import constants, but metta.py actually configures the environment
-# for both ptest and the mettac cli executable.
-from .metta import ENVIRONMENT_NAME
 
 logger = logging.getLogger('metta ltc demo pytest')
 
@@ -14,76 +10,24 @@ logger = logging.getLogger('metta ltc demo pytest')
 
 
 @pytest.fixture(scope='session')
-def environment():
-    """ Create and return the common environment. """
-    environment = get_environment(name=ENVIRONMENT_NAME)
-    # This environment was defined in ./metta
-
-    return environment
-
-
-@pytest.fixture(scope='session')
-def provisioner(environment):
-    """ Retrieve a provisioner object
-
-    The 'ltc' key matches the provisioner name as defined in the fixtures
-    file.  We could just use the first Provisioner plugin, but this is more
-    explicit.
-
-    Raises:
-    -------
-
-    If this raises a KeyError then we are probably using the wrong name.
-
-    """
-    return environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='combo_provisioner')
+def environment_discover():
+    """ discover the metta environments """
+    # Tell metta to scan for automatic configuration of itself.
+    # It starts my looking in paths upwards for a 'metta.yml' file; if it finds
+    # one then it uses that path as a root source of config
+    new_environments_from_discover()
 
 
 @pytest.fixture(scope='session')
-def launchpad(environment):
-    """ Retrieve the launchpad provisioner
-
-    Raises:
-    -------
-
-    If this raises a KeyError then we are probably using the wrong name.
-
-    """
-    return environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='launchpad')
+def environment(environment_discover):
+    """ get the metta environment """
+    # we don't use the discover fixture, we just need it to run first
+    # we don't pass an environment name, which gives us the default environment
+    return get_environment()
 
 
 @pytest.fixture(scope='session')
-def ansible(environment):
-    """ Retrieve the ansible provisioner
-
-    Raises:
-    -------
-
-    If this raises a KeyError then we are probably using the wrong name.
-
-    """
-    return environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='ansible')
-
-
-@pytest.fixture(scope='session')
-def terraform(environment):
-    """ Retrieve the terraform provisioner
-
-    Raises:
-    -------
-
-    If this raises a KeyError then we are probably using the wrong name.
-
-    """
-    return environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='terraform')
-
-
-@pytest.fixture(scope='session')
-def environment_up(environment, terraform, ansible, launchpad):
+def environment_up(environment):
     """ get the environment but start the provisioners before returning
 
     This is preferable to the raw provisioner in cases where you want a running
@@ -93,6 +37,15 @@ def environment_up(environment, terraform, ansible, launchpad):
     You can still use the provsioners to update the resources if the provisioner
     plugins can handle it.
     """
+
+    launchpad = environment.fixtures.get_plugin(
+        type=Type.PROVISIONER, instance_id='launchpad')
+
+    ansible = environment.fixtures.get_plugin(
+        type=Type.PROVISIONER, instance_id='ansible')
+
+    terraform = environment.fixtures.get_plugin(
+        type=Type.PROVISIONER, instance_id='terraform')
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.

@@ -10,7 +10,7 @@ from mirantis.testing.metta.environment import Environment
 
 logger = logging.getLogger("metta_mirantis.common")
 
-METTA_MIRANTIS_COMMON_NAME = "metta_mirantis"
+METTA_MIRANTIS_COMMON_NAME = "metta-mirantis"
 """ used for some path building for config sources """
 METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS = 35
 """ Config source priority for added common config """

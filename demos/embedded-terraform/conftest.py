@@ -2,26 +2,29 @@ import pytest
 import logging
 import os.path
 
-from mirantis.testing.metta import get_environment
+from mirantis.testing.metta import new_environments_from_discover, get_environment
 from mirantis.testing.metta.plugin import Type
 
-# We import constants, but metta.py actually configures the environment
-# for both ptest and the mettac cli executable.
-from metta import ENVIRONMENT_NAME, RELEASE
-
-logger = logging.getLogger('metta-suite-demo')
+logger = logging.getLogger('metta-embedded-tf')
 
 """ Define our fixtures """
 
 
 @pytest.fixture(scope='session')
-def environment():
-    """ Return the common environment.
+def environment_discover():
+    """ discover the metta environment s"""
+    # Tell metta to scan for automatic configuration of itself.
+    # It starts my looking in paths upwards for a 'metta.yml' file; if it finds
+    # one then it uses that path as a root source of config
+    new_environments_from_discover()
 
-    The environment was created in the .metta import, and is loaded here.
 
-    """
-    return get_environment(name=ENVIRONMENT_NAME)
+@pytest.fixture(scope='session')
+def environment(environment_discover):
+    """ get the metta environment """
+    # we don't use the discover fixture, we just need it to run first
+    # we don't pass an environment name, which gives us the default environment
+    return get_environment()
 
 
 @pytest.fixture(scope='session')
