@@ -56,7 +56,7 @@ METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG = "from_config"
 class Environment:
     """ A testing environment, usually composed of a config and plugins """
 
-    def __init__(self, config: Config):
+    def __init__(self, name: str, config: Config):
         """
 
         Parameters:
@@ -67,6 +67,8 @@ class Environment:
 
         """
 
+        self.name = name
+        """ what does the environment call itself """
         self.config = config
         """ Config object that defines the environment """
         self.fixtures = Fixtures()

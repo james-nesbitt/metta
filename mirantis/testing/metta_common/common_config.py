@@ -19,8 +19,6 @@ METTA_COMMON_APP_NAME = "metta"
 """ used for some path building for config sources """
 METTA_COMMON_CONFIG_USER_INSTANCE_ID = "user"
 """ config source instance id for user path """
-METTA_COMMON_CONFIG_PROJECT_CONFIG_INSTANCE_ID = "project_config"
-""" config source instance id for project config path """
 METTA_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID = "project_dynamic"
 """ config source instance id for dynamic dict of commonly used value """
 METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS = 35
@@ -63,21 +61,13 @@ def add_common_config(environment: Environment):
             METTA_COMMON_CONFIG_USER_INSTANCE_ID,
             METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_path(user_conf_path)
 
-    # Add a ${PWD}/config path as a config source if it exists
-    project_config_path = os.path.join(
-        project_root_path,
-        METTA_COMMON_PROJECT_CONFIG_SUBPATH)
-
-    if not environment.config.has_source(
-            METTA_COMMON_CONFIG_PROJECT_CONFIG_INSTANCE_ID) and os.path.isdir(project_config_path):
-        environment.config.add_source(
-            CONFIGERUS_SOURCE_PATH,
-            METTA_COMMON_CONFIG_PROJECT_CONFIG_INSTANCE_ID).set_path(project_config_path)
-
     # Add some dymanic values for config
     environment.config.add_source(CONFIGERUS_SOURCE_DICT, METTA_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID, priority=METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_data({
         "user": {
             "id": getpass.getuser()  # override user id with a host value
+        },
+        'environment': {
+            'name': environment.name
         },
         "global": {
             "datetime": datetime.now(),  # use a single datetime across all checks

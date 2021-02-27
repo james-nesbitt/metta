@@ -10,7 +10,7 @@ logger = logging.getLogger("metta_mirantis.presets")
 
 METTA_PRESET_CONFIG_LABEL = "metta"
 """ This config label will be loaded to interpret config in add_preset_config """
-METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX = "metta_preset"
+METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX = "metta_mirantis-preset"
 """ All config that we add here will have its source instance_id prefixed with this """
 METTA_CONFIG_CONFIG_PRESET_BASE = 'presets'
 """ preset configuration will be found under this config .get() key """

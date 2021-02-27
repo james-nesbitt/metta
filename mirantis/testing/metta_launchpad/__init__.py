@@ -49,7 +49,7 @@ def metta_terraform_factory_cli_launchpad(
 LAUNCHPAD_VALIDATION_CONFIG_SOURCE_INSTANCE_ID = "launchpad_validation"
 
 
-def metta_bootstrap(environment: Environment):
+def bootstrap(environment: Environment):
     """ metta configerus bootstrap
 
     What we do here is collect jsonschema for components such as 'provisioner'

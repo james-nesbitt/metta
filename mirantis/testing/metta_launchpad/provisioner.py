@@ -199,7 +199,6 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             },
             'client': {
                 'cluster_name_override': client.cluster_name_override,
-                'user_cluster_path': client._mke_client_bundle_root(),
                 'config_file': client.config_file,
                 'working_dir': client.working_dir,
                 'bin': client.bin
@@ -207,9 +206,12 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         }
 
         if deep:
-            info['config'] = client.describe_config()
-            info['bundles'] = {user: client.bundle(
-                user) for user in client.bundle_users()}
+            try:
+                info['config'] = client.describe_config()
+                info['bundles'] = {user: client.bundle(
+                    user) for user in client.bundle_users()}
+            except Exception:
+                pass
 
             fixtures = {}
             for fixture in self.get_fixtures().to_list():

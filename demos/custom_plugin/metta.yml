@@ -1,0 +1,19 @@
+project:
+  name: metta-custom-plugin
+
+# Also include the following sources of configuration
+config:
+  sources:
+  # include ./config as a config source.  This is where we will put all of our
+  # actual project config, although we could just inline it all here.
+  - plugin_id: path
+    instance_id: project-config
+    priority: 70
+    path: "{paths:project}/config"
+
+# Include/Import some python modules based on path
+# in order to get local code included in namespace
+imports:
+  # import ./plugins/custom.py as module "my_custom_plugin"
+  my_custom_plugin:
+    path: "{paths:project}/plugins/custom.py"

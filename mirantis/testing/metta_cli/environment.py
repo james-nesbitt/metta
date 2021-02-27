@@ -38,6 +38,11 @@ class EnvironmentGroup():
             return self.environment
         return get_environment(environment)
 
+    def name(self, environment: str = ''):
+        """ return env name """
+        environment = self._environment(environment)
+        return environment.name
+
     def bootstraps(self, environment: str = ''):
         """ List bootstraps that have been applied to the environment """
         environment = self._environment(environment)

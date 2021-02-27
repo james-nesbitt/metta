@@ -27,8 +27,6 @@ def test_workloads_outputs(workloads):
 
 def test_provisioner_outputs(provisioner):
     """ test that the provisioner produces the needed clients """
-    provisioner.prepare()
-
     # check that we can get an output from a provisioner
     provisioner_output_dummy = provisioner.get_output(instance_id='output1')
     assert provisioner_output_dummy.get_output() == "prov dummy output one"
