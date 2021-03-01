@@ -2,7 +2,7 @@
 # @see conftest.py as an example where a value is used to decide
 
 # Don't run the provisioner_down, keep the cluster running and installed
-keep-on-finish: true
+keep-on-finish: false
 # don't run environment_up in conftest, to avoid wasting time installing onto
 # a cluster which has already been provisioned.
 already-running: false

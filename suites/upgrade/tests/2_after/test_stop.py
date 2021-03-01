@@ -12,13 +12,13 @@ from mirantis.testing.metta.plugin import Type
 logger = logging.getLogger("test_stop")
 
 
-@pytest.order(2)
+@pytest.mark.order(2)
 def test_after_up(environment_after_up):
     """ confirm that phase 2 has started """
     pass
 
 
-@pytest.order(2)
+@pytest.mark.order(2)
 def test_kube_workload_still_running(environment_after_up):
     """ did we get a good kubectl client """
 
