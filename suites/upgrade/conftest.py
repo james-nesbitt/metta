@@ -4,30 +4,63 @@ import logging
 from mirantis.testing.metta import get_environment
 from mirantis.testing.metta.plugin import Type
 
+<<<<<<< Updated upstream
 # We import constants, but metta.py actually configures the environment
 # for both ptest and the mettac cli executable.
 from .metta import ENVIRONMENT_NAME_BEFORE, ENVIRONMENT_NAME_AFTER
 
 logger = logging.getLogger('metta ltc demo pytest')
+=======
+logger = logging.getLogger('upgrade-suite')
+>>>>>>> Stashed changes
 
 """ Define our fixtures """
 
 
-@pytest.fixture()
-def environment_before():
-    """ Create and return the first environment. """
-    environment = get_environment(name=ENVIRONMENT_NAME_BEFORE)
-    # This environment was defined in ./metta
+@pytest.fixture(scope='session')
+def environment_discover():
+    """ discover the metta environments """
+    # Tell metta to scan for automatic configuration of itself.
+    # It starts my looking in paths upwards for a 'metta.yml' file; if it finds
+    # one then it uses that path as a root source of config
+    new_environments_from_discover()
 
-    return environment
 
+@pytest.fixture(scope='session')
+def environment(environment_discover):
+    """ get the metta environment """
+    # we don't use the discover fixture, we just need it to run first
+    # we don't pass an environment name, which gives us the default environment
+    return get_environment()
+
+@pytest.fixture(scope="")
+dev phase_handler(environment_discover):
+    pass
+
+class PhaseHandler:
+
+    def __init__(environment, phases):
+        self.environment = environment
+        self.environment_config = environment.config
+        self.phases = phases
+        self.active_phase = -1
+
+<<<<<<< Updated upstream
 @pytest.fixture()
 def environment_before():
     """ Create and return the second environment. """
     environment = get_environment(name=ENVIRONMENT_NAME_AFTER)
     # This environment was defined in ./metta
+=======
+    def get_environment(self):
+        return self.environment
 
-    return environment
+    def phase_bump(self, delta = 1):
+        new_active_phase = self.active_phase + delta
+        if new_active_phase < 0 or new_active_phase >= len(self.phases)
+            raise ValueError("Tried to bump to a phase that doesn't exist")
+>>>>>>> Stashed changes
+
 
 
 @pytest.fixture(scope='session')

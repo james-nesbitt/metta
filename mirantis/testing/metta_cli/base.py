@@ -3,7 +3,7 @@ import os
 import importlib.util
 import sys
 
-from mirantis.testing.metta import environment_names, get_environment, new_environments_from_discover, new_environment
+from mirantis.testing.metta import environment_names, get_environment, discover, new_environment
 from mirantis.testing.metta.plugin import Type, Factory
 
 
@@ -39,7 +39,7 @@ class Base:
         """
 
         # Try to make an environment using
-        new_environments_from_discover()
+        discover()
 
         try:
             if environment == '':

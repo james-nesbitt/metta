@@ -1,5 +1,5 @@
 project:
-  name: dummy-demo-pytest
+  name: embedterr-pytest
 
 # Also include the following sources of configuration
 config:
