@@ -41,7 +41,9 @@ DEFAULT_ENVIRONMENT_ROOT_CONFIG_IF_NO_ROOT_IS_FOUND = {
 }
 """ If no root is found then this config is passed back as a data source """
 
-def discover_project_root(config: Config, start_path: str, marker_files: List[str] = METTA_ROOT_FILES):
+
+def discover_project_root(config: Config, start_path: str,
+                          marker_files: List[str] = METTA_ROOT_FILES):
     """ try to find a project root path
 
     We start looking in the start_path for certain marker files, and if we don't find
@@ -96,12 +98,16 @@ def discover_project_root(config: Config, start_path: str, marker_files: List[st
         instance_id = "environment_none"
         logger.info(
             "No project config found, creating a dummy: {}".format(instance_id))
-        config.add_source(plugin_id=PLUGIN_ID_SOURCE_DICT, instance_id=instance_id, priority=priority).set_data(DEFAULT_ENVIRONMENT_ROOT_CONFIG_IF_NO_ROOT_IS_FOUND)
+        config.add_source(
+            plugin_id=PLUGIN_ID_SOURCE_DICT,
+            instance_id=instance_id,
+            priority=priority).set_data(DEFAULT_ENVIRONMENT_ROOT_CONFIG_IF_NO_ROOT_IS_FOUND)
 
     return config
 
 
-def discover_sources_from_config(config: Config, label: str = METTA_CONFIG_LABEL, base: str = METTA_CONFIG_SOURCES_KEY):
+def discover_sources_from_config(
+        config: Config, label: str = METTA_CONFIG_LABEL, base: str = METTA_CONFIG_SOURCES_KEY):
     """ Discover more config sources by loading and processing config
 
     Run this is you want to add config sources to a config object as defined in config itself
@@ -122,12 +128,11 @@ def discover_sources_from_config(config: Config, label: str = METTA_CONFIG_LABEL
         for instance_id in config_sources.keys():
             instance_base = [base, instance_id]
 
-            plugin_id = metta_config.get([instance_base, METTA_PLUGIN_CONFIG_KEY_PLUGINID], exception_if_missing=True)
-            instance_id = metta_config.get([instance_base, METTA_PLUGIN_CONFIG_KEY_INSTANCEID])
-            priority =  metta_config.get([instance_base, METTA_PLUGIN_CONFIG_KEY_PRIORITY])
+            plugin_id = metta_config.get(
+                [instance_base, METTA_PLUGIN_CONFIG_KEY_PLUGINID], exception_if_missing=True)
+            priority = metta_config.get(
+                [instance_base, METTA_PLUGIN_CONFIG_KEY_PRIORITY])
 
-            if instance_id is None:
-                instance_id = 'unnamed'
             if priority is None:
                 priority = DEFAULT_SOURCE_CONFIG_PRIORITY
 
@@ -140,14 +145,17 @@ def discover_sources_from_config(config: Config, label: str = METTA_CONFIG_LABEL
                 priority=priority)
 
             if plugin_id == PLUGIN_ID_SOURCE_PATH:
-                source_path = metta_config.get([instance_base, 'path'], exception_if_missing=True)
+                source_path = metta_config.get(
+                    [instance_base, 'path'], exception_if_missing=True)
                 plugin.set_path(path=source_path)
             elif plugin_id == PLUGIN_ID_SOURCE_DICT:
-                source_data = metta_config.get([instance_base, CONFIGERUS_DICT_DATA_KEY], exception_if_missing=True)
+                source_data = metta_config.get(
+                    [instance_base, CONFIGERUS_DICT_DATA_KEY], exception_if_missing=True)
                 plugin.set_data(data=source_data)
 
 
-def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL, base: str = METTA_CONFIG_IMPORTS_KEY):
+def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
+                     base: str = METTA_CONFIG_IMPORTS_KEY):
     """ Look in config for module imports
 
     Use this if you want to dynamically import some modules defined in config.
@@ -170,7 +178,8 @@ def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL, base: str 
     imports_config = metta_config.get(base)
     if imports_config is not None:
         for import_name in imports_config:
-            module_path = metta_config.get([base, import_name, CONFIGERUS_PATH_KEY], exception_if_missing=True)
+            module_path = metta_config.get(
+                [base, import_name, CONFIGERUS_PATH_KEY], exception_if_missing=True)
             if os.path.isdir(module_path):
                 if path not in sys.path:
                     sys.path.append(path)

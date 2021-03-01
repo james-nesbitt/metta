@@ -2,7 +2,7 @@ presets:
     # This will tell metta to include metta/config/variation/ltc
     variation: tal
     # this will tell metta to include metta/config/release/patch/202101
-    #release: release/2021Q1 <- take this from the phase
+    release: release/2021Q1-rc1
     # This will tell metta to include metta/config/cluster/poc
     cluster: poc
     # This will tell metta to include metta/config/platform/public/ubuntu/18.04

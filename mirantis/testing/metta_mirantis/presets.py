@@ -8,13 +8,13 @@ from mirantis.testing.metta.environment import Environment
 
 logger = logging.getLogger("metta_mirantis.presets")
 
-METTA_PRESET_CONFIG_LABEL = "metta"
+METTA_PRESET_CONFIG_LABEL = "metta_mirantis"
 """ This config label will be loaded to interpret config in add_preset_config """
 METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX = "metta_mirantis-preset"
 """ All config that we add here will have its source instance_id prefixed with this """
 METTA_CONFIG_CONFIG_PRESET_BASE = 'presets'
 """ preset configuration will be found under this config .get() key """
-METTA_PRESET_DEFAULT_PRIORITY = 65
+METTA_PRESET_DEFAULT_PRIORITY = 60
 """ Default priority to use for preset config sources """
 METTA_PRESET_PACKAGE = 'mirantis.testing.metta_mirantis'
 
@@ -104,7 +104,7 @@ def add_preset_config(environment: Environment,
 
         if preset_value:
             preset_instance_id = "{}-{}-{}".format(
-                METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX, preset_key, preset_value)
+                METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX, preset_key, preset_value.replace('/', '_'))
             # quick check to see if we've already added this preset.
             if not environment.config.has_source(preset_instance_id):
                 # build a preset config path and add it as a source if it

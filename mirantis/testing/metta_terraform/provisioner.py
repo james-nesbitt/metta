@@ -73,10 +73,9 @@ TERRAFORM_VALIDATE_JSONSCHEMA = {
     }
 }
 """ Validation jsonschema for terraform config contents """
-TERRAFORM_VALIDATE_TARGET = "{}:{}".format(
-    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL,
-    TERRAFORM_PROVISIONER_CONFIG_LABEL)
-""" configerus validation target to matche the above config, which relates to the bootstrap in __init__.py """
+TERRAFORM_VALIDATE_TARGET = {
+    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: TERRAFORM_VALIDATE_JSONSCHEMA}
+""" configerus validation target to match the above config """
 
 
 class TerraformProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):

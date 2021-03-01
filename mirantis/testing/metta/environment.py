@@ -18,6 +18,7 @@ from importlib import metadata
 from configerus.config import Config
 from configerus.loaded import Loaded, LOADED_KEY_ROOT
 from configerus.validator import ValidationError
+from configerus.contrib.jsonschema import PLUGIN_ID_VALIDATE_JSONSCHEMA
 
 from .plugin import (
     Factory,
@@ -34,7 +35,8 @@ from .fixtures import (
     Fixtures,
     Fixture,
     METTA_FIXTURES_CONFIG_FIXTURE_KEY,
-    METTA_FIXTURES_CONFIG_FIXTURES_LABEL)
+    METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
+    METTA_FIXTURE_VALIDATION_JSONSCHEMA)
 
 
 import logging
@@ -49,6 +51,8 @@ FIXTURE_VALIDATION_TARGET_FORMAT_STRING = 'jsonschema:{key}'
 METTA_BOOTSTRAP_ENTRYPOINT = 'metta.bootstrap'
 """ SetupTools entry_point used for METTA bootstrap """
 
+METTA_PLUGIN_CONFIG_LABEL_ENVIRONMENTS = "environments"
+""" config label discover a list of environments in a loaded config """
 METTA_PLUGIN_CONFIG_KEY_ENVIRONMENTS = "environments"
 """ this key could be used to discover a list of environments in a loaded config """
 METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG = "from_config"
@@ -57,10 +61,12 @@ METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG = "from_config"
 DEFAULT_SOURCE_PRIORITY = 40
 """ If the environment constructor finds config sources to add, this is their default priority """
 
+
 class Environment:
     """ A testing environment, usually composed of a config and plugins """
 
-    def __init__(self, name: str, config: Config, bootstraps: List[str] = [], config_label: str = '', config_base: str = LOADED_KEY_ROOT, copy_config=True):
+    def __init__(self, name: str, config: Config, bootstraps: List[str] = [
+    ], config_label: str = '', config_base: str = LOADED_KEY_ROOT, copy_config=True):
         """
 
         Parameters:
@@ -97,6 +103,11 @@ class Environment:
         """ what does the environment call itself """
         self.config = config
         """ Config object that defines the environment """
+        self.config_label = config_label
+        self.config_base = config_base
+        """ environment config label/key pair.  Not always passed, but if it is this
+            can play a role in extensible environment configuration """
+
         self.fixtures = Fixtures()
         """ fixtures/plugins that can interact with the environment """
         self.default_plugin_priority = DEFAULT_PLUGIN_PRIORITY
@@ -104,35 +115,63 @@ class Environment:
         self.bootstrapped = []
         """ list of bootstraps that have already been applied to prevent repetition """
 
+        logger.info(
+            "New environment created: {} ({}:{})".format(
+                name,
+                config_label,
+                '.'.join(config_base)))
+
         if config_label:
             """ If True, then we will read the config object to add to the environment """
             config_environment = config.load(config_label)
 
+            try:
+                test = config_environment.get(
+                    config_base, exception_if_missing=True)
+            except ValueError:
+                raise ValueError(
+                    "Environment config didn't contain passed label/key: {}:{}".format(label, base))
+
             # Check to see if we should add any config to the environment
-            config_sources = config_environment.get([config_base, 'config.sources'], exception_if_missing=False)
+            config_sources = config_environment.get(
+                [config_base, 'config.sources'], exception_if_missing=False)
             if config_sources is not None:
                 for instance_id in config_sources.keys():
-                    instance_base = [config_base, 'config.sources', instance_id]
+                    instance_base = [
+                        config_base, 'config.sources', instance_id]
 
-                    plugin_id = config_environment.get([instance_base, 'plugin_id'], exception_if_missing=True)
-                    priority = config_environment.get([instance_base, 'priority'], exception_if_missing=False)
+                    plugin_id = config_environment.get(
+                        [instance_base, 'plugin_id'], exception_if_missing=True)
+                    priority = config_environment.get(
+                        [instance_base, 'priority'], exception_if_missing=False)
                     if priority is None:
                         priority = DEFAULT_SOURCE_PRIORITY
 
                     logger.debug(
-                        "Adding metta sourced config plugin to environment: {}:{}".format(plugin_id, instance_id))
-                    plugin = config.add_source(plugin_id=plugin_id, instance_id=instance_id, priority=priority)
+                        "Adding metta sourced config plugin to '{}' environment: {}:{}".format(name, plugin_id, instance_id))
+                    plugin = config.add_source(
+                        plugin_id=plugin_id, instance_id=instance_id, priority=priority)
 
                     if plugin_id == 'path':
-                        path = config_environment.get([instance_base, 'path'], exception_if_missing=True)
+                        path = config_environment.get(
+                            [instance_base, 'path'], exception_if_missing=True)
                         plugin.set_path(path=path)
                     elif plugin_id == 'dict':
-                        data = config_environment.get([instance_base, 'data'], exception_if_missing=True)
+                        data = config_environment.get(
+                            [instance_base, 'data'], exception_if_missing=True)
                         plugin.set_data(data=data)
+                    elif hasattr(plugin, set_data):
+                        data = config_environment.get(
+                            [instance_base, 'data'], exception_if_missing=True)
+                        plugin.set_data(data=data)
+                    else:
+                        logger.warn(
+                            "had no way of configuring new source plugin.")
 
             # Check to see if we should pass any bootstraps to the environment
             # factory.
-            environment_metta_bootstraps = config_environment.get([config_base, 'bootstraps.metta'])
+            environment_metta_bootstraps = config_environment.get(
+                [config_base, 'bootstraps.metta'])
             if environment_metta_bootstraps is not None:
                 bootstraps += environment_metta_bootstraps
 
@@ -141,15 +180,15 @@ class Environment:
             # Check to see if we should load any fixtures
             if config_environment.has([config_base, 'fixtures']):
 
-                metta_fixtures_from_config = config_environment.get([config_base, 'fixtures', 'from_config'])
+                metta_fixtures_from_config = config_environment.get(
+                    [config_base, 'fixtures', 'from_config'])
                 if metta_fixtures_from_config is None:
                     pass
                 elif isinstance(metta_fixtures_from_config, dict):
                     label = metta_fixtures_from_config['label'] if 'label' in metta_fixtures_from_config else 'metta'
                     base = metta_fixtures_from_config['base'] if 'base' in metta_fixtures_from_config else ''
-                    self.add_fixtures_from_config(label=label, base=base, exception_if_missing=True)
-
-
+                    self.add_fixtures_from_config(
+                        label=label, base=base, exception_if_missing=True)
 
     def bootstrap(self, entrypoints: List[str] = []):
         """ BootStrap some METTA distributions
@@ -204,7 +243,7 @@ class Environment:
                             entrypoint))
 
     def plugin_priority(self, delta: int = 0):
-        """ Return a default pluging priority with a delta """
+        """ Return a default plugin priority with a delta """
         return DEFAULT_PLUGIN_PRIORITY + delta
 
     """
@@ -654,8 +693,7 @@ class Environment:
                 "Cannot build plugin as provided config was empty.")
 
         validators = [
-            FIXTURE_VALIDATION_TARGET_FORMAT_STRING.format(
-                key=METTA_FIXTURES_CONFIG_FIXTURE_KEY)]
+            {PLUGIN_ID_VALIDATE_JSONSCHEMA: METTA_FIXTURE_VALIDATION_JSONSCHEMA}]
         config_validators = loaded.get(
             [base, METTA_PLUGIN_CONFIG_KEY_VALIDATORS])
         if config_validators:
