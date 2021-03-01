@@ -1,12 +1,11 @@
 
-environments:
-  # Create an environment called 'default'
-  default:
-    bootstraps:
-      metta:
-      - metta_dummy
+# Create an environment called 'default'
+default:
+  bootstraps:
+    metta:
+    - metta_dummy
 
-    fixtures:
-      from_config:
-        # Load the fixtures from fixtures(.yml) source.
-        label: fixtures
+  fixtures:
+    from_config:
+      # Load the fixtures from fixtures(.yml) source.
+      label: fixtures

@@ -3,9 +3,9 @@ my_messages:
     type: metta.plugin.client
     plugin_id: my_client
 
-    arguments:
-      label: fixtures
-      base: my_messages
+    # for plugisn that take a label/key pair as factory arguments, this points
+    # them to this configuration.
+    from_config: true
 
     messages:
     - Zombie ipsum reversus ab viral inferno, nam rick grimes malum cerebro.

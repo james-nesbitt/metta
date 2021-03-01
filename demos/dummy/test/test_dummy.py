@@ -6,6 +6,15 @@ from mirantis.testing.metta_dummy.client import DummyClientPlugin
 from mirantis.testing.metta_dummy.workload import DummyWorkloadPlugin
 
 
+def test_dummy_config_basics(environment):
+    """ some sanity testing on the environment config object """
+    dummy_config = environment.config.load('fixtures')
+
+    assert dummy_config.get('prov1.plugin_id') == 'dummy'
+    # Retrieve some of the config and run the plugin validator on it
+    dummy_config.get('work1', validator="jsonschema:plugin")
+
+
 def test_provisioner_workflow(provisioner):
     """ test that the provisioner can follow a decent workflow """
 
