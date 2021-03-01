@@ -1,3 +1,0 @@
-presets:
-    # this will tell metta to include metta/config/release/patch/202101
-    release: release/2021Q1

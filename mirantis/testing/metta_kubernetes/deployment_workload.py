@@ -61,8 +61,12 @@ class KubernetesDeploymentWorkloadPlugin(WorkloadBase):
 
         """
 
-        client = fixtures.get_plugin(
-            type=Type.CLIENT, plugin_id='metta_kubernetes')
+        try:
+            client = fixtures.get_plugin(
+                type=Type.CLIENT, plugin_id='metta_kubernetes')
+        except KeyError as e:
+            raise NotImplementedError(
+                "Workload could not find the needed client: {}".format('metta_kubernetes'))
 
         workload_config = self.environment.config.load(self.config_label)
 
@@ -106,6 +110,24 @@ class KubernetesDeploymentWorkloadInstance(WorkloadInstanceBase):
         self.name = name
         self.body = body
 
+        self.deployment = None
+
+        self.read()
+
+    def read(self):
+        """ retrieve the deployment job """
+        if self.deployment is None:
+            k8s_apps_v1 = kubernetes.client.AppsV1Api(
+                self.client.api_client)
+
+            try:
+                self.deployment = k8s_apps_v1.read_namespaced_deployment(
+                    self.name, self.namespace)
+            except Exception:
+                self.deployment = None
+
+        return self.deployment
+
     def apply(self):
         """ Run the workload
 
@@ -131,5 +153,7 @@ class KubernetesDeploymentWorkloadInstance(WorkloadInstanceBase):
             self.client.api_client)
         self.status = k8s_apps_v1.delete_namespaced_deployment(
             name=self.name, namespace=self.namespace, body=body)
+
+        self.deployment = None
 
         return self.status

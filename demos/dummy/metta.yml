@@ -8,6 +8,5 @@ config:
     # actual project config, although we could just inline it all here.
     project-config:
       plugin_id: path
-      instance_id:
       priority: 70
       path: "{paths:project}/config"
