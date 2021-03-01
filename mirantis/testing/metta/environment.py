@@ -133,7 +133,7 @@ class Environment:
             # Check to see if we should pass any bootstraps to the environment
             # factory.
             environment_metta_bootstraps = config_environment.get([config_base, 'bootstraps.metta'])
-            if environment_metta_bootstraps is None:
+            if environment_metta_bootstraps is not None:
                 bootstraps += environment_metta_bootstraps
 
             self.bootstrap(bootstraps)

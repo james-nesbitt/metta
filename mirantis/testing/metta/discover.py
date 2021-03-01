@@ -1,6 +1,7 @@
 import os.path
 import sys
 import logging
+import importlib.util
 from typing import List
 
 from configerus import new_config as configerus_new_config
