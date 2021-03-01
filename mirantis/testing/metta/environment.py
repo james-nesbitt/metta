@@ -49,14 +49,18 @@ FIXTURE_VALIDATION_TARGET_FORMAT_STRING = 'jsonschema:{key}'
 METTA_BOOTSTRAP_ENTRYPOINT = 'metta.bootstrap'
 """ SetupTools entry_point used for METTA bootstrap """
 
+METTA_PLUGIN_CONFIG_KEY_ENVIRONMENTS = "environments"
+""" this key could be used to discover a list of environments in a loaded config """
 METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG = "from_config"
 """ config key that indicates that the plugin will be build from aconfig label/key pair """
 
+DEFAULT_SOURCE_PRIORITY = 40
+""" If the environment constructor finds config sources to add, this is their default priority """
 
 class Environment:
     """ A testing environment, usually composed of a config and plugins """
 
-    def __init__(self, name: str, config: Config):
+    def __init__(self, name: str, config: Config, bootstraps: List[str] = [], config_label: str = '', config_base: str = LOADED_KEY_ROOT, copy_config=True):
         """
 
         Parameters:
@@ -65,7 +69,29 @@ class Environment:
         config (configerus.Config) : A single config object which will be used
             to define the environment.
 
+        bootstraps (List[str]) : a list of metta bootstraps to run. This will be
+            combined with a default set, and may also be combined with a set
+            from config.
+
+        copy_config (bool) : If True, then the config object will be deep copied.
+            This is appropriate to do in most scenarios as you may want to pass
+            the config object to many different contexts, without each context
+            making changes that affect the others
+
+        # Config Context : the following two parameters will tell the Environment
+            object to examine config for additional actions to take.  For example
+            additional config source may be added, and fixtures may be created.
+
+        Label (str) : Config label to load to find environment config.
+
+        Base (str) : config base key to use to find environment config.
+
         """
+
+        # make a copy of the config object as it will likely be shared across contexts
+        # that we don't want to have impact this environment obect
+        if copy_config:
+            config = config.copy()
 
         self.name = name
         """ what does the environment call itself """
@@ -77,6 +103,53 @@ class Environment:
         """ Default integer priority for new fixtures """
         self.bootstrapped = []
         """ list of bootstraps that have already been applied to prevent repetition """
+
+        if config_label:
+            """ If True, then we will read the config object to add to the environment """
+            config_environment = config.load(config_label)
+
+            # Check to see if we should add any config to the environment
+            config_sources = config_environment.get([config_base, 'config.sources'], exception_if_missing=False)
+            if config_sources is not None:
+                for instance_id in config_sources.keys():
+                    instance_base = [config_base, 'config.sources', instance_id]
+
+                    plugin_id = config_environment.get([instance_base, 'plugin_id'], exception_if_missing=True)
+                    priority = config_environment.get([instance_base, 'priority'], exception_if_missing=False)
+                    if priority is None:
+                        priority = DEFAULT_SOURCE_PRIORITY
+
+                    logger.debug(
+                        "Adding metta sourced config plugin to environment: {}:{}".format(plugin_id, instance_id))
+                    plugin = config.add_source(plugin_id=plugin_id, instance_id=instance_id, priority=priority)
+
+                    if plugin_id == 'path':
+                        path = config_environment.get([instance_base, 'path'], exception_if_missing=True)
+                        plugin.set_path(path=path)
+                    elif plugin_id == 'dict':
+                        data = config_environment.get([instance_base, 'data'], exception_if_missing=True)
+                        plugin.set_data(data=data)
+
+            # Check to see if we should pass any bootstraps to the environment
+            # factory.
+            environment_metta_bootstraps = config_environment.get([config_base, 'bootstraps.metta'])
+            if environment_metta_bootstraps is not None:
+                bootstraps += environment_metta_bootstraps
+
+            self.bootstrap(bootstraps)
+
+            # Check to see if we should load any fixtures
+            if config_environment.has([config_base, 'fixtures']):
+
+                metta_fixtures_from_config = config_environment.get([config_base, 'fixtures', 'from_config'])
+                if metta_fixtures_from_config is None:
+                    pass
+                elif isinstance(metta_fixtures_from_config, dict):
+                    label = metta_fixtures_from_config['label'] if 'label' in metta_fixtures_from_config else 'metta'
+                    base = metta_fixtures_from_config['base'] if 'base' in metta_fixtures_from_config else ''
+                    self.add_fixtures_from_config(label=label, base=base, exception_if_missing=True)
+
+
 
     def bootstrap(self, entrypoints: List[str] = []):
         """ BootStrap some METTA distributions

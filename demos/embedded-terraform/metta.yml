@@ -1,12 +1,13 @@
 project:
-  name: dummy-demo-pytest
+  name: embedterr-pytest
 
 # Also include the following sources of configuration
 config:
   sources:
   # include ./config as a config source.  This is where we will put all of our
   # actual project config, although we could just inline it all here.
-  - plugin_id: path
-    instance_id: project-config
-    priority: 70
-    path: "{paths:project}/config"
+    project-config:
+      plugin_id: path
+      instance_id:
+      priority: 70
+      path: "{paths:project}/config"

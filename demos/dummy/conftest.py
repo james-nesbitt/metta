@@ -1,6 +1,6 @@
 import pytest
 
-from mirantis.testing.metta import new_environments_from_discover, get_environment
+from mirantis.testing.metta import discover, get_environment
 from mirantis.testing.metta.plugin import Type
 
 
@@ -10,7 +10,7 @@ def environment_discover():
     # Tell metta to scan for automatic configuration of itself.
     # It starts my looking in paths upwards for a 'metta.yml' file; if it finds
     # one then it uses that path as a root source of config
-    new_environments_from_discover()
+    discover()
 
 
 @pytest.fixture()
