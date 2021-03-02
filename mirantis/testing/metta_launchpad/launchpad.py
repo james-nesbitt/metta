@@ -95,7 +95,8 @@ class LaunchpadClient:
 
     def reset(self):
         """ Uninstall using the launchpad client """
-        self._run(['reset'])
+        if os.path.isfile(self.config_file):
+            self._run(['reset', '--force'])
 
     def register(self, name: str, email: str, company: str):
         """ Uninstall using the launchpad client """

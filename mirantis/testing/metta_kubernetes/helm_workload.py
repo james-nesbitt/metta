@@ -83,13 +83,11 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
 
         values = workload_config.get(
             [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUES], exception_if_missing=False)
-
         if values is None:
             values = {}
 
         repos_config = workload_config.get(
             [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS], exception_if_missing=False)
-
         if repos_config is None:
             repos_config = {}
 
