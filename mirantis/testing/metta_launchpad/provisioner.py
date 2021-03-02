@@ -325,6 +325,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         if os.path.exists(self.config_file):
             os.remove(self.config_file)
         self.client.rm_client_bundles()
+        self.client.reset()
 
     """ CLUSTER INTERACTION """
 
