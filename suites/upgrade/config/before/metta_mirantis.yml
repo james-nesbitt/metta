@@ -1,0 +1,25 @@
+# use these for metta_mirantis presets
+#
+# This preset list sets the components for the testing cluster which is used
+# by all upgrade environments.  The different environments keep the same
+# confguration primarily, and differ only in presets.  This means that they
+# share assets (terraform/ansible/launchpad) and are effectively declarative
+# for their state and can be used indepentently.
+#
+# Each environment contains overrides for the release preset, so we leave that
+# out.
+presets:
+
+    # release preset is set per environment, so we ignore it heres
+    # this will tell metta to include metta/config/release/release/2021Q1
+    release: release/2021Q1-rc1
+
+# The above release preset is equivalent to the following:
+#     mcr_channel: test
+#     mcr_version: 20.10.0-rc2
+#     mke_image_repo: docker.io/mirantiseng
+#     mke_version: 3.4.0-rc1
+#     msr_image_repo: docker.io/mirantiseng
+#     msr_version: 2.9.0-rc1
+#
+# you could remove the metta_mirantis preset and use this in variables.yml instead
