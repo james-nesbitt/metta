@@ -22,27 +22,10 @@ before:
 
   config:
     sources:
-      beforepreset-config:
-        plugin_id: dict
-        priority: 75
-        data:
-          metta_mirantis:
-            # use these for metta_mirantis presets
-            presets:
-                # this will tell metta to include metta/config/release/release/2021Q1-rc1
-                # Which has the 2-21 Q1 release but RC1 versions
-                release: release/2021Q1-rc1
-
-          # The above preset is equivalent to the following:
-          # variables:
-          #     mcr_channel: test
-          #     mcr_version: 20.10.0-rc2
-          #     mke_image_repo: docker.io/mirantiseng
-          #     mke_version: 3.4.0-rc1
-          #     msr_image_repo: docker.io/mirantiseng
-          #     msr_version: 2.9.0-rc1
-          #
-          # you could remove the metta_mirantis preset and use this instead
+      project-config-before:
+        plugin_id: path
+        priority: 80
+        path: "{paths:project-config}/before"
 
   fixtures:
     from_config:
@@ -71,16 +54,10 @@ after:
 
   config:
     sources:
-      after-preset-config:
-        plugin_id: dict
-        priority: 75
-        data:
-          metta_mirantis:
-            # use these for metta_mirantis presets
-            presets:
-                # this will tell metta to include metta/config/release/release/2021Q1
-                # This preset contains the latest 2021Q1 definitions
-                release: release/2021Q1
+      project-config-after:
+        plugin_id: path
+        priority: 80
+        path: "{paths:project-config}/after"
 
   fixtures:
     from_config:

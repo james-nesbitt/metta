@@ -4,10 +4,10 @@ import logging
 
 from mirantis.testing.metta.client import ClientBase
 
-logger = logging.getLogger('metta.contrib.kubernetes.client')
+logger = logging.getLogger('metta.contrib.kubernetes.client.kubeapi')
 
 
-class KubernetesClientPlugin(ClientBase):
+class KubernetesApiClientPlugin(ClientBase):
     """ metta Client plugin for Kubernetes
 
     Construction:

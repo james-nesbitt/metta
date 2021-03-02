@@ -149,6 +149,9 @@ class LaunchpadClient:
             raise ValueError(
                 "failed to open the launchpad client bundle meta file.") from e
 
+        # Not sure why this isn't in there:
+        data['Endpoints']['kubernetes']['kubeconfig'] = os.path.join(
+            client_bundle_path, 'kube.yml')
         # add some stuff that a client bundle always has
         data['path'] = client_bundle_path
         data['modified'] = datetime.datetime.fromtimestamp(

@@ -13,8 +13,9 @@ from typing import List, Any
 from mirantis.testing.metta.plugin import Factory, Type
 from mirantis.testing.metta.environment import Environment
 
-from .client import KubernetesClientPlugin
+from .kubeapi_client import KubernetesApiClientPlugin
 from .deployment_workload import KubernetesDeploymentWorkloadPlugin, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_LABEL, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_BASE
+from .helm_workload import KubernetesHelmWorkloadPlugin, KUBERNETES_HELM_WORKLOAD_CONFIG_LABEL, KUBERNETES_HELM_WORKLOAD_CONFIG_BASE
 
 METTA_PLUGIN_ID_KUBERNETES_CLIENT = 'metta_kubernetes'
 """ client plugin_id for the metta dummy plugin """
@@ -24,7 +25,8 @@ METTA_PLUGIN_ID_KUBERNETES_CLIENT = 'metta_kubernetes'
 def metta_plugin_factory_client_kubernetes(
         environment: Environment, instance_id: str = '', kube_config_file: str = ''):
     """ create an metta kubernetes client plugin """
-    return KubernetesClientPlugin(environment, instance_id, kube_config_file)
+    return KubernetesApiClientPlugin(
+        environment, instance_id, kube_config_file)
 
 
 METTA_PLUGIN_ID_KUBERNETES_DEPLOYMENT_WORKLAOD = 'metta_kubernetes_deployment'
@@ -37,6 +39,19 @@ def metta_plugin_factory_workload_kubernetes_deployment(
         environment: Environment, instance_id: str = '', label: str = KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_LABEL, base: Any = KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_BASE):
     """ create an metta kubernetes spec workload plugin """
     return KubernetesDeploymentWorkloadPlugin(
+        environment, instance_id, label=label, base=base)
+
+
+METTA_PLUGIN_ID_KUBERNETES_HELM_WORKLAOD = 'metta_kubernetes_helm'
+""" workload plugin_id for the metta_kubernetes helm plugin """
+
+
+@Factory(type=Type.WORKLOAD,
+         plugin_id=METTA_PLUGIN_ID_KUBERNETES_HELM_WORKLAOD)
+def metta_plugin_factory_workload_kubernetes_helm(
+        environment: Environment, instance_id: str = '', label: str = KUBERNETES_HELM_WORKLOAD_CONFIG_LABEL, base: Any = KUBERNETES_HELM_WORKLOAD_CONFIG_BASE):
+    """ create an metta kubernetes spec workload plugin """
+    return KubernetesHelmWorkloadPlugin(
         environment, instance_id, label=label, base=base)
 
 
