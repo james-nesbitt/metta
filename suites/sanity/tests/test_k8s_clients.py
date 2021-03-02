@@ -27,7 +27,7 @@ def test_launchpad_kubectl_client(environment_up):
 
 
 def test_kubernetes_deployment_workload(environment_up):
-    """ test that we can get a k8s workload to run """
+    """ test that we can get a k8s deployment workload to run """
 
     sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(type=Type.WORKLOAD,
                                                                       instance_id='sanity_kubernetes_deployment')
@@ -44,3 +44,18 @@ def test_kubernetes_deployment_workload(environment_up):
     assert status is not None
     assert status.code is None
     print(status)
+
+
+def test_kubernetes_help_workload(environment_up):
+    """ test that we can get a helm workload to run """
+
+    metrics_helm_workload = environment_up.fixtures.get_plugin(type=Type.WORKLOAD,
+                                                               instance_id='metrics-helm-workload')
+    """ workload plugin """
+
+    instance = metrics_helm_workload.create_instance(
+        environment_up.fixtures)
+
+    instance.apply()
+
+    instance.destroy()

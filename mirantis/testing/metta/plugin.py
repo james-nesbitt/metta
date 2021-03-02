@@ -8,6 +8,7 @@ METTA Plugin definition and management
 
 """
 import logging
+import functools
 from enum import Enum, unique
 
 logger = logging.getLogger('metta.plugin')
@@ -169,6 +170,8 @@ class Factory():
         Decorated construction function(config: Config)
 
         """
+        functools.update_wrapper(self, func)
+
         def wrapper(environment: object, instance_id: str, *args, **kwargs):
             logger.debug(
                 "plugin factory exec: %s:%s",

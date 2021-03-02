@@ -19,8 +19,8 @@ DOCKER_RUN_WORKLOAD_CONFIG_BASE = 'workload.run'
 """ Configerus get base for retrieving the default run workload """
 
 
-class DockerRunWorkloadPlugin(WorkloadBase):
-    """ Docker Run workload class """
+class DockerPyRunWorkloadPlugin(WorkloadBase):
+    """ Docker Run workload class for the DockerPy """
 
     def __init__(self, environment: Environment, instance_id: str,
                  label: str = DOCKER_RUN_WORKLOAD_CONFIG_LABEL, base: Any = DOCKER_RUN_WORKLOAD_CONFIG_BASE):

@@ -13,8 +13,6 @@ from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.workload import WorkloadBase, WorkloadInstanceBase
 
-from .client import KubernetesClientPlugin
-
 logger = logging.getLogger('metta.contrib.kubernetes.workload.deployment')
 
 KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_LABEL = 'kubernetes'

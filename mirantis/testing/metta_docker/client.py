@@ -4,13 +4,12 @@ from docker import DockerClient
 import logging
 import os
 
-logger = logging.getLogger('metta.contrib.docker.client')
+logger = logging.getLogger('metta.contrib.docker.client.dockerpy')
 
 
-class DockerClientPlugin(ClientBase, DockerClient):
-    """ metta Client plugin for docker
+class DockerPyClientPlugin(ClientBase, DockerClient):
+    """ metta Client plugin for docker using the docker-py library
 
-    We need to have the ClientBase constructor called, not the DockerClient one
 
     """
 
@@ -26,6 +25,8 @@ class DockerClientPlugin(ClientBase, DockerClient):
 
         This also lets us easily include any other env variables that might be in
         scope.
+
+        @Note that we don't run the docker-py constructor as we build our own client.
 
         Parameters:
         -----------
