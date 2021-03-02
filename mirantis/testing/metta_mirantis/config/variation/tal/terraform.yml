@@ -15,10 +15,10 @@ plan:
     type: local
     path: "{variables:terraform_plan}"
 state:
-    path: "{variables:files_path?.}/terraform/{variables:files_prefix}.terraform.state"
+    path: "{variables:files_path?.}/.metta/{variables:files_prefix}.terraform.state"
 
 # Where will the vars be written
-vars_path: "{variables:files_path?.}/terraform/{variables:files_prefix}.tfvars.json"
+vars_path: "{variables:files_path?.}/.metta/{variables:files_prefix}.tfvars.json"
 # Vars list for terraform
 vars:
     # description = "Name used to identify resources and passed to launchpad."
