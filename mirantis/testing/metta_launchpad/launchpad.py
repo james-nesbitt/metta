@@ -121,6 +121,8 @@ class LaunchpadClient:
         client_bundle_path = self._mke_client_bundle_path(user)
         client_bundle_meta_file = os.path.join(
             client_bundle_path, METTA_USER_LAUNCHPAD_BUNDLE_META_FILE)
+        client_bundle_kubeconfig_file = os.path.join(
+            client_bundle_path, 'kube.yml')
 
         if reload or not os.path.isfile(client_bundle_meta_file):
 
@@ -146,13 +148,14 @@ class LaunchpadClient:
         try:
             with open(client_bundle_meta_file) as json_file:
                 data = json.load(json_file)
+                # helm complains if this file has loose permissions
+                os.chmod(client_bundle_kubeconfig_file, 0o600)
         except FileNotFoundError as e:
             raise ValueError(
                 "failed to open the launchpad client bundle meta file.") from e
 
         # Not sure why this isn't in there:
-        data['Endpoints']['kubernetes']['kubeconfig'] = os.path.join(
-            client_bundle_path, 'kube.yml')
+        data['Endpoints']['kubernetes']['kubeconfig'] = client_bundle_kubeconfig_file
         # add some stuff that a client bundle always has
         data['path'] = client_bundle_path
         data['modified'] = datetime.datetime.fromtimestamp(

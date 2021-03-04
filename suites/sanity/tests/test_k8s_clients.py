@@ -46,7 +46,7 @@ def test_kubernetes_deployment_workload(environment_up):
     print(status)
 
 
-def test_kubernetes_help_workload(environment_up):
+def test_kubernetes_helm_workload(environment_up):
     """ test that we can get a helm workload to run """
 
     metrics_helm_workload = environment_up.fixtures.get_plugin(type=Type.WORKLOAD,
