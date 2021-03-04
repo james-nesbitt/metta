@@ -7,7 +7,7 @@ terraform:
     # Terraform will configure itself from the ./terraform.yml file
     # This is actually its default but this demonstrates that we have
     # the option.
-    arguments:
+    from_config:
         label: terraform
         # base: some.path.in.the.file
 
@@ -16,8 +16,10 @@ ansible:
     type: metta.plugin.provisioner
     plugin_id: metta_ansible
 
-    # Pass these values to the provisioner constructor.
-    arguments:
+    # The ansible plugin is setup to pull config from a label/base pair, but
+    # as it currently doesn't do anything, it is just pointed to pull directly
+    # this files.  No need for an ansible file.
+    from_config:
         label: fixtures
         base: ansible
 
@@ -28,26 +30,9 @@ launchpad:
 
     # Pass these values to the provisioner constructor.  The launchpad
     # constructor accepts override for "where to get config".  The values
-    # here tell it to look back in this same location for config, instead of
-    # its default of looking in the ./launchpad.yml file
-    arguments:
-        label: fixtures
-        base: launchpad
-
-    # Declare which output from the environment will give us our launchpad yml
-    # The output needs to exist by the time the launchpad provisioner .apply()
-    # runs.
-    source_output:
-      instance_id: mke_cluster
-
-    cli-options:
-        accept-license: true
-        disable-telemetry: true
-
-    # the example tf plans need launchpad to run in the plan root
-    working_dir: "{variables:terraform_plan}"
-    # put the launchpad yml file in the project folder
-    config_file: "{variables:files_path}/.metta/{variables:files_prefix}.yaml"
+    # here tell it to look in the launchpad.yml
+    from_config:
+        label: launchpad
 
 # Here we use a combo provisioner with  a high priority to act as a primary
 # provisioner to manage all of the others
@@ -56,17 +41,15 @@ launchpad:
 #   so make sure that it comes last in creation
 # @NOTE you probably want this plugin to be a higher priority than the others
 #   so that a get_plugins)provisioner) retreives this one first.
-# combo_provisioner:
-#     type: metta.plugin.provisioner
-#     plugin_id: combo
-#     priority: 95
-#
-#     arguments:
-#       # tell the plugin to load config from "here"
-#       label: fixtures
-#       base: combo_provisioner
-#
-#     backends:
-#     - instance_id: terraform
-#     - instance_id: ansible
-#     - instance_id: launchpad
+combo_provisioner:
+    type: metta.plugin.provisioner
+    plugin_id: combo
+    priority: 95
+
+    # tell the plugin to load config from "here"
+    from_config: true
+
+    backends:
+    - instance_id: terraform
+    - instance_id: ansible
+    - instance_id: launchpad

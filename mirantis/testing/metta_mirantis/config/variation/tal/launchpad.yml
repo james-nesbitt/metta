@@ -1,0 +1,14 @@
+# Declare which output from the environment will give us our launchpad yml
+# The output needs to exist by the time the launchpad provisioner .apply()
+# runs.
+source_output:
+    instance_id: mke_cluster
+
+cli-options:
+    accept-license: true
+    disable-telemetry: true
+
+# the example tf plans need launchpad to run in the plan root
+working_dir: "{variables:terraform_plan}"
+# put the launchpad yml file in the project folder
+config_file: "{variables:files_path}/{variables:files_prefix}.launchpad.yaml"

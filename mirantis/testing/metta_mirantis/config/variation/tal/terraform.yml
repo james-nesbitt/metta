@@ -3,10 +3,6 @@
 # but terraform will perform that 'backend' provisioner role.
 # Look in the fixtures.yml for the defined provisioner.
 
-
-# This file is not used for launchpad clusters.  look in launchpad.yml backend:
-plugin_id: metta_terraform
-
 # everythion below here is consumed by the terraform provider plugin
 # as though this were the contents of ./terraform.yml
 
@@ -15,10 +11,10 @@ plan:
     type: local
     path: "{variables:terraform_plan}"
 state:
-    path: "{variables:files_path?.}/.metta/{variables:files_prefix}.terraform.state"
+    path: "{variables:files_path?.}/{variables:files_prefix}.terraform.state"
 
 # Where will the vars be written
-vars_path: "{variables:files_path?.}/.metta/{variables:files_prefix}.tfvars.json"
+vars_path: "{variables:files_path?.}/{variables:files_prefix}.tfvars.json"
 # Vars list for terraform
 vars:
     # description = "Name used to identify resources and passed to launchpad."
@@ -148,11 +144,4 @@ vars:
     #     - ""
 
     # description = "If non-empty, use this path/filename as the ssh key file instead of generating automatically."
-    ssh_key_file_path: "{variables:files_path?.}/terraform/{variables:files_prefix}.pem"
-
-
-cli-options:
-accept-license: true
-disable-telemetry: true
-
-config_file: "{variables:files_path}/launchpad/{variables:files_prefix}.yaml"
+    ssh_key_file_path: "{variables:files_path?.}/{variables:files_prefix}.host.pem"
