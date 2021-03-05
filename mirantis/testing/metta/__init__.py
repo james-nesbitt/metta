@@ -31,6 +31,7 @@ logger = logging.getLogger('metta')
 FIXED_CONFIGERUS_BOOSTRAPS = [
     "deep",
     "get",
+    "env",
     "jsonschema",
     "files"
 ]

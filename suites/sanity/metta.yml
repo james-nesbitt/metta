@@ -10,3 +10,10 @@ config:
       plugin_id: path
       priority: 70
       path: "{paths:project}/config"
+    # include Environemnt variables as a source of config if they use the format
+    # METTA_LABEL[_STEP]*
+    # config.get(mylabel).get(one.two.three) would be METTA_MYLABEL_ONE_TWO_THREE
+    metta-env:
+      plugin_id: env
+      priority: 90
+      base: "METTA"

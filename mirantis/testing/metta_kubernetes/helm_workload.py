@@ -188,5 +188,5 @@ class KubernetesHelmV3WorkloadInstance:
         else:
             logger.debug("running launchpad command: %s", " ".join(cmd))
             exec = subprocess.run(
-                cmd, env=env,cwd=self.working_dir, check=True, text=True)
+                cmd, env=env, cwd=self.working_dir, check=True, text=True)
             exec.check_returncode()

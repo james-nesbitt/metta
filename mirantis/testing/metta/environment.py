@@ -19,6 +19,9 @@ from configerus.config import Config
 from configerus.loaded import Loaded, LOADED_KEY_ROOT
 from configerus.validator import ValidationError
 from configerus.contrib.jsonschema import PLUGIN_ID_VALIDATE_JSONSCHEMA
+from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH, CONFIGERUS_PATH_KEY
+from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT, CONFIGERUS_DICT_DATA_KEY
+from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV, CONFIGERUS_ENV_BASE_KEY
 
 from .plugin import (
     Factory,
@@ -140,6 +143,9 @@ class Environment:
                     instance_base = [
                         config_base, 'config.sources', instance_id]
 
+                    # Keep in mind that the following plugin metadata is about
+                    # configerus plugins, not metta plugins.
+
                     plugin_id = config_environment.get(
                         [instance_base, 'plugin_id'], exception_if_missing=True)
                     priority = config_environment.get(
@@ -152,14 +158,18 @@ class Environment:
                     plugin = config.add_source(
                         plugin_id=plugin_id, instance_id=instance_id, priority=priority)
 
-                    if plugin_id == 'path':
+                    if plugin_id == PLUGIN_ID_SOURCE_PATH:
                         path = config_environment.get(
-                            [instance_base, 'path'], exception_if_missing=True)
+                            [instance_base, CONFIGERUS_PATH_KEY], exception_if_missing=True)
                         plugin.set_path(path=path)
-                    elif plugin_id == 'dict':
+                    elif plugin_id == PLUGIN_ID_SOURCE_DICT:
                         data = config_environment.get(
-                            [instance_base, 'data'], exception_if_missing=True)
+                            [instance_base, CONFIGERUS_DICT_DATA_KEY], exception_if_missing=True)
                         plugin.set_data(data=data)
+                    elif plugin_id == PLUGIN_ID_SOURCE_ENV:
+                        source_base = metta_config.get(
+                            [instance_base, CONFIGERUS_ENV_BASE_KEY], exception_if_missing=True)
+                        plugin.set_base(base=source_base)
                     elif hasattr(plugin, set_data):
                         data = config_environment.get(
                             [instance_base, 'data'], exception_if_missing=True)
