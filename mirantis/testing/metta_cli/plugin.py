@@ -6,10 +6,10 @@ import inspect
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.cli import CliBase
 
-logger = logging.getLogger('metta.cli.metta')
+logger = logging.getLogger('metta.cli.plugin')
 
 
-class MettaCliPlugin(CliBase):
+class PluginCliPlugin(CliBase):
     """ metta Cli info plugin
 
     """
@@ -17,18 +17,18 @@ class MettaCliPlugin(CliBase):
     def fire(self):
         """ return a dict of commands """
         return {
-            'metta': MettaCoreCli()
+            'plugin': PluginCoreCli()
         }
 
 
-class MettaCoreCli:
-    """ Interact with the metta core """
+class PluginCoreCli:
+    """ Interact with the plugins """
 
     def hello(self, raw: bool = True):
         """ sanity test on bootstrap """
         return "Hello World, I was able to bootstrap"
 
-    def plugins(self):
+    def list(self):
         """ List plugins that have been registered with the environment """
 
         list = {}
