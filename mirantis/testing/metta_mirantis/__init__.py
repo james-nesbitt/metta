@@ -13,10 +13,10 @@ from mirantis.testing.metta.environment import Environment
 from .common import add_common_config
 from .presets import add_preset_config
 
-from .plugins.mke_client import MKEAPIClientPlugin
-from .plugins.msr_client import MSRAPIClientPlugin
+from .mke_client import MKEAPIClientPlugin
+from .msr_client import MSRAPIClientPlugin
 
-""" PLugin factories """
+""" Plugin factories """
 
 METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID = 'metta_mirantis_client_mke'
 """ Mirantis MKE API Client plugin id """
