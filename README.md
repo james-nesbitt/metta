@@ -1,6 +1,6 @@
 # Mirantis Testing Toolbox
 
-The Mirantis Tessting tooblox cluster management framework for creating test
+The Mirantis Testing tooblox cluster management framework for creating test
 harnesses to test against.
 
 ## Dependencies

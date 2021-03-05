@@ -62,7 +62,7 @@ class LaunchpadClient:
         """ Output launchpad client version """
         self._run(['version'])
 
-    def install(self):
+    def apply(self):
         """ Install using the launchpad client """
         self._run(['apply'])
 

@@ -9,7 +9,7 @@ import logging
 from mirantis.testing.metta.plugin import Type, Factory
 from mirantis.testing.metta.environment import Environment
 
-from .metta import MettaCliPlugin
+from .plugin import PluginCliPlugin
 from .config import ConfigCliPlugin
 from .environment import EnvironmentCliPlugin
 from .fixtures import FixturesCliPlugin
@@ -18,15 +18,15 @@ from .provisioner import ProvisionerCliPlugin
 
 logger = logging.getLogger('metta.cli')
 
-METTA_PLUGIN_ID_CLI_METTA = 'metta'
-""" cli plugin_id for the metta plugin """
+METTA_PLUGIN_ID_CLI_PLUGIN = 'metta'
+""" cli plugin_id for the plugin plugin """
 
 
-@Factory(type=Type.CLI, plugin_id=METTA_PLUGIN_ID_CLI_METTA)
-def metta_plugin_factory_cli_metta(
+@Factory(type=Type.CLI, plugin_id=METTA_PLUGIN_ID_CLI_PLUGIN)
+def metta_plugin_factory_cli_plugin(
         environment: Environment, instance_id: str = ''):
     """ create an info cli plugin """
-    return MettaCliPlugin(environment, instance_id)
+    return PluginCliPlugin(environment, instance_id)
 
 
 METTA_PLUGIN_ID_CLI_CONFIG = 'config'

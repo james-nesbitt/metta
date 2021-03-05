@@ -308,7 +308,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         try:
             logger.info(
                 "Using launchpad to install products onto backend cluster")
-            self.client.install()
+            self.client.apply()
         except Exception as e:
             raise Exception("Launchpad failed to install") from e
 
