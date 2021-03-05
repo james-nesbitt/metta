@@ -8,7 +8,7 @@ from mirantis.testing.metta.environment import Environment
 
 logger = logging.getLogger("metta_mirantis.presets")
 
-METTA_PRESET_CONFIG_LABEL = "metta_mirantis"
+METTA_PRESET_CONFIG_LABEL = "mirantis"
 """ This config label will be loaded to interpret config in add_preset_config """
 METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX = "metta_mirantis-preset"
 """ All config that we add here will have its source instance_id prefixed with this """

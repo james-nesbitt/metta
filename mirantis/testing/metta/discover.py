@@ -5,10 +5,12 @@ import importlib.util
 from typing import List
 
 from configerus import new_config as configerus_new_config
+from configerus.plugin import Type as ConfigerusType
 from configerus.config import Config
 from configerus.loaded import LOADED_KEY_ROOT
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH, CONFIGERUS_PATH_KEY
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT, CONFIGERUS_DICT_DATA_KEY
+from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV, CONFIGERUS_ENV_BASE_KEY
 
 from .plugin import METTA_PLUGIN_CONFIG_KEY_PLUGINID, METTA_PLUGIN_CONFIG_KEY_INSTANCEID, METTA_PLUGIN_CONFIG_KEY_PRIORITY
 
@@ -34,8 +36,13 @@ DEFAULT_SOURCE_CONFIG_PRIORITY = 70
 
 DEFAULT_ENVIRONMENT_ROOT_CONFIG_IF_NO_ROOT_IS_FOUND = {
     'metta': {
-        'environments': {
+        'project': {
             'name': 'none'
+        }
+    },
+    'environments': {
+        'none': {
+
         }
     }
 }
@@ -94,14 +101,16 @@ def discover_project_root(config: Config, start_path: str,
         # move up one directory and try again
         check_path = os.path.dirname(check_path)
 
-    if len(config.plugins) == 0:
+    try:
+        config.plugins.get_plugins(type=ConfigerusType.SOURCE)
+    except KeyError as e:
         instance_id = "environment_none"
-        logger.info(
+        logger.warn(
             "No project config found, creating a dummy: {}".format(instance_id))
         config.add_source(
             plugin_id=PLUGIN_ID_SOURCE_DICT,
             instance_id=instance_id,
-            priority=priority).set_data(DEFAULT_ENVIRONMENT_ROOT_CONFIG_IF_NO_ROOT_IS_FOUND)
+            priority=config.default_priority()).set_data(DEFAULT_ENVIRONMENT_ROOT_CONFIG_IF_NO_ROOT_IS_FOUND)
 
     return config
 
@@ -146,12 +155,16 @@ def discover_sources_from_config(
 
             if plugin_id == PLUGIN_ID_SOURCE_PATH:
                 source_path = metta_config.get(
-                    [instance_base, 'path'], exception_if_missing=True)
+                    [instance_base, CONFIGERUS_PATH_KEY], exception_if_missing=True)
                 plugin.set_path(path=source_path)
             elif plugin_id == PLUGIN_ID_SOURCE_DICT:
                 source_data = metta_config.get(
                     [instance_base, CONFIGERUS_DICT_DATA_KEY], exception_if_missing=True)
                 plugin.set_data(data=source_data)
+            elif plugin_id == PLUGIN_ID_SOURCE_ENV:
+                source_base = metta_config.get(
+                    [instance_base, CONFIGERUS_ENV_BASE_KEY], exception_if_missing=True)
+                plugin.set_base(base=source_base)
 
 
 def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
