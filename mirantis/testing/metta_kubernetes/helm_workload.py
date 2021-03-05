@@ -2,6 +2,7 @@ from typing import Any, List
 import logging
 import os
 import subprocess
+import json
 
 import kubernetes
 
@@ -29,6 +30,11 @@ KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART = 'chart'
 """ config key for helm chart, either local path or http(s) """
 KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUES = 'values'
 """ config key for helm chart values """
+KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_NAMESPACE = 'namespace'
+""" config key for namespace to install to """
+
+KUBERNETES_HELM_WORKLOAD_DEFAULT_NAMESPACE = 'default'
+""" default namespace to install to if no namespace was passed """
 
 
 class KubernetesHelmWorkloadPlugin(WorkloadBase):
@@ -78,6 +84,11 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
 
         kubeconfig = client.config_file
 
+        namespace = workload_config.get(
+            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_NAMESPACE], exception_if_missing=False)
+        if not namespace:
+            namespace = KUBERNETES_HELM_WORKLOAD_DEFAULT_NAMESPACE
+
         chart = workload_config.get(
             [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART], exception_if_missing=True)
 
@@ -86,13 +97,13 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
         if values is None:
             values = {}
 
-        repos_config = workload_config.get(
+        repos = workload_config.get(
             [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS], exception_if_missing=False)
-        if repos_config is None:
-            repos_config = {}
+        if repos is None:
+            repos = {}
 
         return KubernetesHelmV3WorkloadInstance(
-            kubeconfig, self.instance_id, repos_config, chart, values)
+            kubeconfig, namespace, self.instance_id, repos, chart, values)
 
     def info(self):
         """ Return dict data about this plugin for introspection """
@@ -101,7 +112,7 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
         return {
             'workload': {
                 'deployment': {
-                    'repos_config': workload_config.get(
+                    'repos': workload_config.get(
                         [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS]),
                     'chart': workload_config.get(
                         [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART]),
@@ -120,7 +131,7 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
 
 class KubernetesHelmV3WorkloadInstance:
 
-    def __init__(self, kubeconfig, name, repos_config, chart, values):
+    def __init__(self, kubeconfig, namespace, name, repos, chart, values):
         """
 
         Parameters:
@@ -128,7 +139,7 @@ class KubernetesHelmV3WorkloadInstance:
 
         kubeconfig (str) : Path to the kubeinfo file
 
-        repos_config (dict[str, str]) : name->path for repos to add
+        repos (dict[str, str]) : name->path for repos to add
 
         chart (str) : local or http(s) path to a chart
 
@@ -138,17 +149,18 @@ class KubernetesHelmV3WorkloadInstance:
 
         self.kubeconfig = kubeconfig
         self.name = name
-        self.repos_config = repos_config
+        self.namespace = namespace
+        self.repos = repos
         self.chart = chart
         self.values = values
 
         self.bin = 'helm'
         self.working_dir = '.'
 
-    def apply(self):
+    def apply(self, wait: bool = True):
         """ Apply the helm chart """
 
-        for repo_name, repo_url in self.repos_config.items():
+        for repo_name, repo_url in self.repos.items():
             self._run(cmd=['repo', 'add', repo_name, repo_url])
 
         if len(self.values):
@@ -158,12 +170,32 @@ class KubernetesHelmV3WorkloadInstance:
         else:
             values = []
 
-        cmd = ['install'] + values + [self.name, self.chart]
-        self._run(cmd=cmd)
+        cmd = ['install']
+        cmd += [self.name, self.chart]
+        cmd += ['--namespace', self.namespace]
+
+        if wait:
+            cmd += ['--wait']
+
+        cmd += values
+
+        try:
+            self._run(cmd=cmd)
+        except Exception as e:
+            raise RuntimeError('Helm failed to install the relese: {}'.format(e)) from e
 
     def destroy(self):
         """ remove an installed helm release """
         self._run(cmd=['uninstall', self.name])
+
+    def test(self):
+        """ test an installed helm release """
+        self._run(cmd=['test', self.name])
+
+    def status(self):
+        """ status of an installed helm release """
+        return json.loads(
+            self._run(cmd=['status', self.name, '--output', 'json'], return_output=True))
 
     def _run(self, cmd: List[str], return_output: bool = False):
         """ run a helm v3 command """

@@ -52,6 +52,7 @@ metrics-helm-workload:
     repos:
       bitnami: https://charts.bitnami.com/bitnami
 
+    namespace: default
     chart: bitnami/metrics-server
     values:
       apiService.create: true

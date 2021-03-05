@@ -3,13 +3,15 @@
 Test that some clients work
 
 """
-
+import json
 import logging
 
 from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
 logger = logging.getLogger("test_clients")
+
+DEFAULT_K8S_NAMESPACE = 'default'
 
 
 def test_launchpad_kubectl_client(environment_up):
@@ -20,10 +22,10 @@ def test_launchpad_kubectl_client(environment_up):
                                                         plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
 
     coreV1 = kubectl_client.get_CoreV1Api_client()
-    ns = coreV1.read_namespace(name="kube-system")
+    ns = coreV1.read_namespace(name=DEFAULT_K8S_NAMESPACE)
     print("NS: {}".format(ns))
 
-    assert ns.metadata.name == "kube-system", "Wrong namespace given"
+    assert ns.metadata.name == DEFAULT_K8S_NAMESPACE, "Wrong namespace given"
 
 
 def test_kubernetes_deployment_workload(environment_up):
@@ -56,6 +58,18 @@ def test_kubernetes_helm_workload(environment_up):
     instance = metrics_helm_workload.create_instance(
         environment_up.fixtures)
 
-    instance.apply()
+    try:
+        instance.apply(wait=True)
+        instance.test()
+
+        status = instance.status()
+
+        assert status['name'] == instance.name
+        assert status['info']['status'] == 'deployed'
+
+        print(json.dumps(status['info'], indent=2))
+
+    except Exception as e:
+        logger.error("helm operations failed: {}".format(e))
 
     instance.destroy()
