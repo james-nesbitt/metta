@@ -182,7 +182,8 @@ class KubernetesHelmV3WorkloadInstance:
         try:
             self._run(cmd=cmd)
         except Exception as e:
-            raise RuntimeError('Helm failed to install the relese: {}'.format(e)) from e
+            raise RuntimeError(
+                'Helm failed to install the relese: {}'.format(e)) from e
 
     def destroy(self):
         """ remove an installed helm release """

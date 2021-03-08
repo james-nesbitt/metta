@@ -41,7 +41,7 @@ launchpad:
 #   so make sure that it comes last in creation
 # @NOTE you probably want this plugin to be a higher priority than the others
 #   so that a get_plugins)provisioner) retreives this one first.
-combo_provisioner:
+combo:
     type: metta.plugin.provisioner
     plugin_id: combo
     priority: 95

@@ -85,9 +85,9 @@ METTA_LAUNCHPAD_VALIDATE_JSONSCHEMA = {
     'required': ['source_output']
 }
 """ Validation jsonschema for terraform config contents """
-METTA_LAUNCHPAD_VALIDATE_TARGET = "{}:{}".format(
-    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL,
-    METTA_LAUNCHPAD_CONFIG_LABEL)
+METTA_LAUNCHPAD_VALIDATE_TARGET = {
+    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: METTA_LAUNCHPAD_VALIDATE_JSONSCHEMA
+}
 """ configerus validation target to matche the above config, which relates to the bootstrap in __init__.py """
 
 

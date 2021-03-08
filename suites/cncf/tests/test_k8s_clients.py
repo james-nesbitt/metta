@@ -28,7 +28,7 @@ def test_launchpad_kubectl_client(environment_up):
     assert ns.metadata.name == DEFAULT_K8S_NAMESPACE, "Wrong namespace given"
 
 
-def test_kubernetes_deployment_workload(environment_up):
+def test_kubernetes_deployment_workload(environment_up, benchmark):
     """ test that we can get a k8s deployment workload to run """
 
     sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(type=Type.WORKLOAD,
@@ -38,7 +38,7 @@ def test_kubernetes_deployment_workload(environment_up):
     instance = sanity_kubernetes_deployment.create_instance(
         environment_up.fixtures)
 
-    deployment = instance.apply()
+    deployment = benchmark( instance.apply() )
     assert deployment is not None
     print(deployment.metadata.name)
 
@@ -48,7 +48,7 @@ def test_kubernetes_deployment_workload(environment_up):
     print(status)
 
 
-def test_kubernetes_helm_workload(environment_up):
+def test_kubernetes_helm_workload(environment_up, benchmark):
     """ test that we can get a helm workload to run """
 
     metrics_helm_workload = environment_up.fixtures.get_plugin(type=Type.WORKLOAD,
@@ -59,7 +59,7 @@ def test_kubernetes_helm_workload(environment_up):
         environment_up.fixtures)
 
     try:
-        instance.apply(wait=True)
+        benchmark( instance.apply(wait=True) )
         instance.test()
 
         status = instance.status()
@@ -67,7 +67,7 @@ def test_kubernetes_helm_workload(environment_up):
         assert status['name'] == instance.name
         assert status['info']['status'] == 'deployed'
 
-        print(json.dumps(status['info'], indent=2))
+        logger.info(json.dumps(status['info'], indent=2))
 
     except Exception as e:
         logger.error("helm operations failed: {}".format(e))
