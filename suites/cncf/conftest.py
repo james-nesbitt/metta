@@ -38,14 +38,7 @@ def environment_up(environment):
     plugins can handle it.
     """
 
-    launchpad = environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='launchpad')
-
-    ansible = environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='ansible')
-
-    terraform = environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='terraform')
+    provisioner = environment.fixtures.get_plugin(type=Type.PROVISIONER)
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
@@ -58,17 +51,14 @@ def environment_up(environment):
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
-            terraform.prepare()
-            ansible.prepare()
+            provisioner.prepare()
         except Exception as e:
             logger.error("Provisioner failed to init: %s", e)
             raise e
         try:
             logger.info(
                 "Starting up the testing cluster using the provisioner")
-            terraform.apply()
-            ansible.apply()
-            launchpad.apply()
+            provisioner.apply()
         except Exception as e:
             logger.error("Provisioner failed to start: %s", e)
             raise e
@@ -81,8 +71,7 @@ def environment_up(environment):
         try:
             logger.info(
                 "Stopping the test cluster using the provisioner as directed by config")
-            launchpad.destroy()
-            terraform.destroy()
+            provisioner.destroy()
         except Exception as e:
             logger.error("Provisioner failed to stop: %s", e)
             raise e

@@ -1,1 +1,1 @@
-pytest -s --junitxml=./reports/pytest_juni.xml --html=./reports/pytest_report.html $@
+pytest -s --junitxml=./reports/pytest_junit.xml --html=./reports/pytest_report.html $@

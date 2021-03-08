@@ -1,6 +1,6 @@
 
-# Create an environment called 'sanity'
-conformance:
+# Create an environment called 'cncf'
+cncf:
   bootstraps:
     metta:
     - metta_common

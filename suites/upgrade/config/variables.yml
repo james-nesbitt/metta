@@ -26,8 +26,6 @@ files_prefix: "{id}"
 # this is different than {id} to allow character limits to be avoided
 resource_prefix: "{user}-metta"
 
-terraform_plan: "{metta:terraform.plans.prodeng.aws.v4}"
-
 # AWS region for resources
 aws_region: us-east-2
 
