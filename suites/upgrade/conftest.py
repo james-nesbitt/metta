@@ -78,7 +78,7 @@ def environment_up(environment):
     terraform = environment.fixtures.get_plugin(
         type=Type.PROVISIONER, instance_id='terraform')
 
-    if conf.get("already-running", exception_if_missing=False):
+    if conf.get("alreadyrunning", exception_if_missing=False):
         logger.info(
             "test infrastructure is aready in place, and does not need to be provisioned.")
         current_up_environment = environment.name
@@ -127,7 +127,7 @@ def environment_down(environment):
     terraform = environment.fixtures.get_plugin(
         type=Type.PROVISIONER, instance_id='terraform')
 
-    if conf.get("keep-on-finish", exception_if_missing=False):
+    if conf.get("keepwhenfinish", exception_if_missing=False):
         logger.info("Leaving test infrastructure in place on shutdown")
         current_up_environment = ''
     else:

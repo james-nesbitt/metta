@@ -36,12 +36,13 @@ pipeline {
     parameters {
         choice(name: 'TEST_SUITE', choices: ['sanity', 'upgrade'], description: 'Pick a test suite to run')
         booleanParam(name: 'DEBUG_BUILD', defaultValue: false, description: 'Make output verbose')
+        text(name: 'TEST', defaultValue: '', description: 'PyTest tests to run.  Leave blank to run all ')
     }
     environment {
         DOCKER_BUILDKIT = '1'
     }
     stages {
-        stage('Build') {
+        stage('Test Execute') {
             when { not { changeRequest() } }
             environment {
               METTA_VARIABLES_ID="sandbox-metta-${env.BUILD_NUMBER}"
@@ -49,7 +50,10 @@ pipeline {
             steps {
                 container('docker') {
                     script {
-                        git branch: 'main', url: 'https://github.com/james-nesbitt/metta.git'
+                        // Allow this jenkinsfile to be run without job SCM configured
+                        if (!fileExists('setup.cfg')) {
+                            git branch: 'main', url: 'https://github.com/james-nesbitt/metta.git'
+                        }
 
                         sh(
                             label: "Installing metta (pip)",
@@ -57,6 +61,14 @@ pipeline {
                               pip install --upgrade .
                             """
                         )
+                        dir('suites') {
+                            sh(
+                                label: "Installing metta-suites",
+                                script: """
+                                  pip install --upgrade .
+                                """
+                            )
+                        }
 
                         withCredentials([
                             [ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-infra-test', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
@@ -67,13 +79,13 @@ pipeline {
 
                                 try {
 
-
                                     sh(
                                         label: "Running sanity test",
                                         script: """
-                                            pytest ${params.DEBUG_BUILD ? '-s' : ''} --junitxml=./reports/${env.METTA_VARIABLES_ID}.pytest_junit.xml --html=./reports/${env.METTA_VARIABLES_ID}.pytest_report.html
+                                            pytest ${params.DEBUG_BUILD ? '-s' : ''} --junitxml=reports/${env.METTA_VARIABLES_ID}.junit.xml --html=reports/${env.METTA_VARIABLES_ID}.pytest.html ${params.TEST}
                                         """
                                     )
+
                                 } catch (Exception e) {
 
                                     dir('error') {
@@ -112,6 +124,15 @@ pipeline {
                                 } finally {
 
                                     archiveArtifacts artifacts: 'reports', allowEmptyArchive: true
+                                    publishHTML (target : [allowMissing: false,
+                                        alwaysLinkToLastBuild: true,
+                                        keepAll: true,
+                                        reportDir: 'reports',
+                                        reportFiles: 'pytest.html',
+                                        reportName: 'PyTest Report',
+                                        reportTitles: 'PyTest Report']
+                                    )
+                                    junit 'reports/junit.xml'
 
                                 }
                             }

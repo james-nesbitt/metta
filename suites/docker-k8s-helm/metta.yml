@@ -1,0 +1,19 @@
+project:
+  name: sanity-pytest
+
+# Also include the following sources of configuration
+config:
+  sources:
+    # include ./config as a config source.  This is where we will put all of our
+    # actual project config, although we could just inline it all here.
+    project-config:
+      plugin_id: path
+      priority: 70
+      path: "{paths:project}/config"
+    # include Environemnt variables as a source of config if they use the format
+    # METTA_LABEL[_STEP]*
+    # config.get(mylabel).get(one.two.three) would be METTA_MYLABEL_ONE_TWO_THREE
+    metta-env:
+      plugin_id: env
+      priority: 90
+      base: "METTA"
