@@ -100,7 +100,7 @@ vars:
     mke_image_repo: "{variables:mke_image_repo}"
 
     # description = "The UCP installer flags to use."
-    mke_install_flags: []
+    mke_install_flags: "{variables:mke_install_flags}"
 
     # description = "The option to enable/disable Kubernetes as the default orchestrator."
     kube_orchestration: true

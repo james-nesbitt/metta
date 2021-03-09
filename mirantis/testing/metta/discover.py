@@ -193,9 +193,14 @@ def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
         for import_name in imports_config:
             module_path = metta_config.get(
                 [base, import_name, CONFIGERUS_PATH_KEY], exception_if_missing=True)
+
             if os.path.isdir(module_path):
-                if path not in sys.path:
-                    sys.path.append(path)
+                module_path_dir = os.path.dirname(module_path)
+                module_path_basename = os.path.basename(module_path)
+                if module_path_dir not in sys.path:
+                    sys.path.append(module_path_dir)
+                importlib.import_module(module_path_basename)
+
             elif os.path.isfile(module_path):
                 spec = importlib.util.spec_from_file_location(
                     import_name, module_path)

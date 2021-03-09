@@ -17,3 +17,12 @@ config:
       plugin_id: env
       priority: 90
       base: "METTA"
+
+# Include/Import some python modules based on path
+# in order to get local code included in namespace
+imports:
+  # import ./plugins package as "sonobuoy"
+  sonobuoy:
+    # because this is a directory, the parent folder will be added to sys,path
+    # and the 'plugins' will be imported as a package
+    path: "plugins"

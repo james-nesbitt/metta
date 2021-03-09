@@ -11,7 +11,7 @@ pipeline {
             emptyDir: {}
           containers:
           - name: docker
-            image: jamesnmirantis/dockerized-builds:0.1.9
+            image: jamesnmirantis/dockerized-builds:0.1.11
             command:
             - sleep
             args:
@@ -82,7 +82,7 @@ pipeline {
                                     sh(
                                         label: "Running sanity test",
                                         script: """
-                                            pytest ${params.DEBUG_BUILD ? '-s' : ''} --junitxml=reports/${env.METTA_VARIABLES_ID}.junit.xml --html=reports/${env.METTA_VARIABLES_ID}.pytest.html ${params.TEST}
+                                            pytest ${params.DEBUG_BUILD ? '-s' : ''} --junitxml=reports/junit.xml --html=reports/pytest.html ${params.TEST}
                                         """
                                     )
 
@@ -124,15 +124,14 @@ pipeline {
                                 } finally {
 
                                     archiveArtifacts artifacts: 'reports', allowEmptyArchive: true
-                                    publishHTML (target : [allowMissing: false,
+                                    junit 'reports/junit.xml'
+                                    publishHTML (target : [
+                                        allowMissing: false,
                                         alwaysLinkToLastBuild: true,
                                         keepAll: true,
                                         reportDir: 'reports',
-                                        reportFiles: 'pytest.html',
-                                        reportName: 'PyTest Report',
-                                        reportTitles: 'PyTest Report']
-                                    )
-                                    junit 'reports/junit.xml'
+                                        reportName: 'PyTest Report'
+                                    ])
 
                                 }
                             }
