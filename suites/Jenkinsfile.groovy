@@ -1,42 +1,40 @@
 #!groovy
 pipeline {
-  agent {
-    kubernetes {
-      yaml """\
-        apiVersion: v1
-        kind: Pod
-        spec:
-          volumes:
-          - name: docker-socket
-            emptyDir: {}
-          containers:
-          - name: docker
-            image: jamesnmirantis/dockerized-builds:0.1.11
-            command:
-            - sleep
-            args:
-            - 99d
-            volumeMounts:
-            - name: docker-socket
-              mountPath: /var/run
-          - name: docker-daemon
-            image: docker:dind
-            securityContext:
-              privileged: true
-            volumeMounts:
-            - name: docker-socket
-              mountPath: /var/run
-        """.stripIndent()
+    agent {
+        kubernetes {
+          yaml """\
+            apiVersion: v1
+            kind: Pod
+            spec:
+              volumes:
+              - name: docker-socket
+                emptyDir: {}
+              containers:
+              - name: docker
+                image: jamesnmirantis/dockerized-builds:0.1.11
+                command:
+                - sleep
+                args:
+                - 99d
+                volumeMounts:
+                - name: docker-socket
+                  mountPath: /var/run
+              - name: docker-daemon
+                image: docker:dind
+                securityContext:
+                  privileged: true
+                volumeMounts:
+                - name: docker-socket
+                  mountPath: /var/run
+            """.stripIndent()
+        }
     }
-  }
 
     options {
         timeout(time: 2, unit: 'HOURS')
     }
     parameters {
-        choice(name: 'TEST_SUITE', choices: ['sanity', 'upgrade'], description: 'Pick a test suite to run')
-        booleanParam(name: 'DEBUG_BUILD', defaultValue: false, description: 'Make output verbose')
-        text(name: 'TEST', defaultValue: '', description: 'PyTest tests to run.  Leave blank to run all ')
+        choice(name: 'TEST_SUITE', choices: ['sanity', 'upgrade', 'cncf', 'docker-k8s-helm'], description: 'Pick a test suite to run')
     }
     environment {
         DOCKER_BUILDKIT = '1'
@@ -46,6 +44,7 @@ pipeline {
             when { not { changeRequest() } }
             environment {
               METTA_VARIABLES_ID="sandbox-metta-${env.BUILD_NUMBER}"
+              METTA_USER_ID="sandbox-ci"
             }
             steps {
                 container('docker') {
@@ -82,7 +81,7 @@ pipeline {
                                     sh(
                                         label: "Running sanity test",
                                         script: """
-                                            pytest ${params.DEBUG_BUILD ? '-s' : ''} --junitxml=reports/junit.xml --html=reports/pytest.html ${params.TEST}
+                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html
                                         """
                                     )
 
@@ -124,6 +123,8 @@ pipeline {
                                 } finally {
 
                                     archiveArtifacts artifacts: 'reports', allowEmptyArchive: true
+                                    archiveArtifacts artifacts: 'results', allowEmptyArchive: true
+
                                     junit 'reports/junit.xml'
                                     publishHTML (target : [
                                         allowMissing: false,

@@ -209,8 +209,7 @@ class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
         if wait:
             cmd += ['--wait={}'.format(1440)]
 
-        logger.error("Starting Sonobuoy run : {}".format(cmd))
-        # raise Exception('STOP HERE')
+        logger.debug("Starting Sonobuoy run : {}".format(cmd))
         try:
             self._create_k8s_crb()
             self._run(cmd)
@@ -433,3 +432,5 @@ class Status(Enum):
     """ testing has failed """
     COMPLETE = 'complete'
     """ testing has completed without failure """
+    PASSED = 'passed'
+    """ testing has passed """
