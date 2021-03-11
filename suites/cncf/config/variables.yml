@@ -25,7 +25,7 @@ files_path: "{paths:project}/.metta"
 files_prefix: "{id}"
 # Prefix all created resources with this so that we can id them
 # this is different than {id} to allow character limits to be avoided
-resource_prefix: "{user}-cncf"
+resource_prefix: "{id}"
 
 terraform_plan: "{mirantis:terraform.plans.prodeng.aws.v4}"
 

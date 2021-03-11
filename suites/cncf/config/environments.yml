@@ -12,6 +12,7 @@ cncf:
     - metta_common_config
     - metta_mirantis_common
     - metta_mirantis_presets
+    - metta_sonobuoy
 
   fixtures:
     from_config:
