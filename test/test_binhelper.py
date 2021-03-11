@@ -29,34 +29,42 @@ CONFIG_DATA = {
                 'local': "THIS WILL GET SET IN setUpClass",
                 'add_to_path': True,
             },
-            'bins': {
-                'kubectl': {
-                    'url': 'https://dl.k8s.io/release/v1.20.4/bin/linux/amd64/kubectl',
-                    'version': 'v1.20.4',
-                },
-                'launchpad': {
-                    'url': 'https://github.com/Mirantis/launchpad/releases/download/1.2.0-rc.1/launchpad-linux-x64',
-                    'version': '1.2.0-rc.1',
-                    'copy': {
-                        'launchpad': 'launchpad-linux-x64'
-                    }
-                },
-                'helm': {
-                    'url': 'https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz',
-                    'version': 'v3.5.3',
-                    'copy': {
-                        'helm': 'linux-amd64/helm'
-                    }
-                },
-                'terraform': {
-                    'url': 'https://releases.hashicorp.com/terraform/0.14.7/terraform_0.14.7_linux_amd64.zip',
-                    'version': '0.14.7',
-                    'copy': {
-                        'terraform': 'terraform'
+            'platforms': {
+                'Linux-x86_64': {
+                    'kubectl': {
+                        'url': 'https://dl.k8s.io/release/v1.20.4/bin/linux/amd64/kubectl',
+                        'version': 'v1.20.4',
+                    },
+                    'launchpad': {
+                        'url': 'https://github.com/Mirantis/launchpad/releases/download/1.2.0-rc.1/launchpad-linux-x64',
+                        'version': '1.2.0-rc.1',
+                        'copy': {
+                            'launchpad': 'launchpad-linux-x64'
+                        }
+                    },
+                    'helm': {
+                        'url': 'https://get.helm.sh/helm-v3.5.3-linux-amd64.tar.gz',
+                        'version': 'v3.5.3',
+                        'copy': {
+                            'helm': 'linux-amd64/helm'
+                        }
+                    },
+                    'terraform': {
+                        'url': 'https://releases.hashicorp.com/terraform/0.14.7/terraform_0.14.7_linux_amd64.zip',
+                        'version': '0.14.7',
+                        'copy': {
+                            'terraform': 'terraform'
+                        }
+                    },
+                    'sonobuoy': {
+                        'url': 'https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.20.0/sonobuoy_0.20.0_linux_amd64.tar.gz',
+                        'version': 'v0.20.0',
+                        'copy': {
+                            'sonobuoy': 'sonobuoy'
+                        }
                     }
                 }
             }
-
         }
     }
 }
@@ -125,7 +133,8 @@ class BinHelperTest(unittest.TestCase):
 
         self.assertTrue(self.temp_bin_dir in os.environ['PATH'])
 
-        self.assertEqual(len(fixtures_config.get('bin-helper.bins').keys()), 4)
+        self.assertEqual(len(fixtures_config.get('bin-helper.platforms').keys()), 1)
+        self.assertEqual(len(fixtures_config.get('bin-helper.platforms.Linux-x86_64').keys()), 5)
 
         print('Path: {}'.format(self.temp_bin_dir))
 
@@ -136,9 +145,11 @@ class BinHelperTest(unittest.TestCase):
         self.assertIsNotNone(shutil.which('launchpad'))
         self.assertIsNotNone(shutil.which('terraform'))
         self.assertIsNotNone(shutil.which('helm'))
+        self.assertIsNotNone(shutil.which('sonobuoy'))
 
         list_dir = os.listdir(self.temp_bin_dir)
         self.assertTrue('kubectl' in list_dir)
         self.assertTrue('launchpad' in list_dir)
         self.assertTrue('terraform' in list_dir)
         self.assertTrue('helm' in list_dir)
+        self.assertTrue('sonobuoy' in list_dir)

@@ -2,6 +2,7 @@ import os
 import logging
 import getpass
 from datetime import datetime
+import platform
 
 import appdirs
 
@@ -74,6 +75,13 @@ def add_common_config(environment: Environment):
         environment.config.paths_label(): {  # special config label for file paths, usually just "paths"
             # you can use "paths:project" in config to substitute this path
             "project": project_root_path
+        },
+        'platform': {
+            'machine': platform.machine(),
+            'system': platform.system(),
+            'processor': platform.processor(),
+            'version': platform.version(),
+            'uname': platform.uname()
         }
     })
 
