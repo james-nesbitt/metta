@@ -35,7 +35,7 @@ pipeline {
     }
     parameters {
         string(name: 'GIT_TARGET', defaultValue: 'main', description:'When checking out METTA, what target to pick. Can be a tag, branch or commit id.')
-        choice(name: 'TEST_SUITE', choices: ['sanity', 'upgrade', 'cncf', 'docker-k8s-helm'], description: 'Pick a test suite to run')
+        choice(name: 'TEST_SUITE', choices: ['dummy', 'sanity', 'upgrade', 'cncf', 'docker-k8s-helm'], description: 'Pick a test suite to run')
         text(name: 'METTA_CONFIGJSON', description: 'Include JSON config to override config options.  This will be consumed as an ENV variable.')
     }
     environment {
@@ -50,6 +50,8 @@ pipeline {
             steps {
                 container('docker') {
                     script {
+                        currentBuild.displayName = "${params.TEST_SUITE} (${params.GIT_TARGET})"
+
                         // Allow this jenkinsfile to be run without job SCM configured
                         if (!fileExists('setup.cfg')) {
                             git branch: "${params.GIT_TARGET}", url: 'https://github.com/james-nesbitt/metta.git'
@@ -126,11 +128,14 @@ pipeline {
                                     archiveArtifacts artifacts: 'reports', allowEmptyArchive: true
                                     archiveArtifacts artifacts: 'results', allowEmptyArchive: true
 
-                                    junit 'reports/junit.xml'
+                                    if ( fileExists('reports/junit.xml') ) {
+                                        junit 'reports/junit.xml'
+                                    }
                                     publishHTML (target : [
                                         allowMissing: false,
                                         alwaysLinkToLastBuild: true,
                                         keepAll: true,
+                                        reportFiles: 'pytest.html',
                                         reportDir: 'reports',
                                         reportName: 'PyTest Report'
                                     ])
