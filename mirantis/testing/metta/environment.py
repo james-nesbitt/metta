@@ -173,17 +173,17 @@ class Environment:
                             [instance_base, CONFIGERUS_DICT_DATA_KEY], exception_if_missing=True)
                         plugin.set_data(data=data)
                     elif plugin_id == PLUGIN_ID_SOURCE_ENV_SPECIFIC:
-                        source_base = metta_config.get(
+                        source_base = config_environment.get(
                             [instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY], exception_if_missing=True)
                         plugin.set_base(base=source_base)
+                    elif plugin_id == PLUGIN_ID_SOURCE_ENV_JSON:
+                        source_env = config_environment.get(
+                            [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY], exception_if_missing=True)
+                        plugin.set_env(env=source_env)
                     elif hasattr(plugin, set_data):
                         data = config_environment.get(
                             [instance_base, 'data'], exception_if_missing=True)
                         plugin.set_data(data=data)
-                    elif plugin_id == PLUGIN_ID_SOURCE_ENV_JSON:
-                        source_env = metta_config.get(
-                            [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY], exception_if_missing=True)
-                        plugin.set_env(env=source_env)
                     else:
                         logger.warn(
                             "had no way of configuring new source plugin.")

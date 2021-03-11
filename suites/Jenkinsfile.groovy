@@ -34,24 +34,25 @@ pipeline {
         timeout(time: 2, unit: 'HOURS')
     }
     parameters {
+        string(name: 'GIT_TARGET', defaultValue: 'main', description:'When checking out METTA, what target to pick. Can be a tag, branch or commit id.')
         choice(name: 'TEST_SUITE', choices: ['sanity', 'upgrade', 'cncf', 'docker-k8s-helm'], description: 'Pick a test suite to run')
+        text(name: 'METTA_CONFIGJSON', description: 'Include JSON config to override config options.  This will be consumed as an ENV variable.')
     }
     environment {
         DOCKER_BUILDKIT = '1'
+        METTA_CONFIGJSON="${params.METTA_CONFIGJSON}"
+        METTA_VARIABLES_ID="ci-${params.TEST_SUITE}-${env.BUILD_NUMBER}"
+        METTA_USER_ID="sandbox-ci"
     }
     stages {
         stage('Test Execute') {
             when { not { changeRequest() } }
-            environment {
-              METTA_VARIABLES_ID="ci-${params.TEST_SUITE}-${env.BUILD_NUMBER}"
-              METTA_USER_ID="sandbox-ci"
-            }
             steps {
                 container('docker') {
                     script {
                         // Allow this jenkinsfile to be run without job SCM configured
                         if (!fileExists('setup.cfg')) {
-                            git branch: 'main', url: 'https://github.com/james-nesbitt/metta.git'
+                            git branch: "${params.GIT_TARGET}", url: 'https://github.com/james-nesbitt/metta.git'
                         }
 
                         sh(
@@ -71,7 +72,7 @@ pipeline {
 
                         withCredentials([
                             [ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-infra-test', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
-                            usernamePassword(credentialsId: 'dockerhub-ci', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')
+                            usernamePassword(credentialsId: 'docker-hub-generic-up', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')
                         ]) {
 
                             dir("suites/${params.TEST_SUITE}") {
