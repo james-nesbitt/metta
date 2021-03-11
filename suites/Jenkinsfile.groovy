@@ -43,7 +43,7 @@ pipeline {
         stage('Test Execute') {
             when { not { changeRequest() } }
             environment {
-              METTA_VARIABLES_ID="sandbox-metta-${env.BUILD_NUMBER}"
+              METTA_VARIABLES_ID="ci-${params.TEST_SUITE}-${env.BUILD_NUMBER}"
               METTA_USER_ID="sandbox-ci"
             }
             steps {

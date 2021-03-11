@@ -14,6 +14,7 @@ from .common_config import add_common_config
 from .dict_output import DictOutputPlugin
 from .text_output import TextOutputPlugin
 from .combo_provisioner import ComboProvisionerPlugin, COMBO_PROVISIONER_CONFIG_LABEL
+from .binhelper_utility import DownloadableExecutableUtility, METTA_PLUGIN_ID_UTILITY_BINHELPER, BINHELPER_UTILITY_CONFIG_LABEL
 
 METTA_PLUGIN_ID_OUTPUT_DICT = 'dict'
 """ output plugin_id for the dict plugin """
@@ -46,6 +47,14 @@ def metta_plugin_factory_provisioner_combo(
         environment: Environment, instance_id: str = '', label: str = COMBO_PROVISIONER_CONFIG_LABEL, base: Any = LOADED_KEY_ROOT):
     """ create a provisioner combo plugin """
     return ComboProvisionerPlugin(
+        environment, instance_id, label=label, base=base)
+
+
+@Factory(type=Type.UTILITY, plugin_id=METTA_PLUGIN_ID_UTILITY_BINHELPER)
+def metta_plugin_factory_utility_binhelper(
+        environment: Environment, instance_id: str = '', label: str = BINHELPER_UTILITY_CONFIG_LABEL, base: Any = LOADED_KEY_ROOT):
+    """ create a bin-helper utility plugin """
+    return DownloadableExecutableUtility(
         environment, instance_id, label=label, base=base)
 
 

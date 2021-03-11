@@ -6,6 +6,7 @@ from mirantis.testing.metta.environment import Environment
 from .sonobuoy import SonobuoyWorkloadPlugin, METTA_PLUGIN_ID_SONOBUOY_WORKLOAD, SONOBUOY_WORKLOAD_CONFIG_LABEL, SONOBUOY_WORKLOAD_CONFIG_BASE
 from .cli import SonobuoyCliPlugin, METTA_PLUGIN_ID_SONOBUOY_cli
 
+
 @Factory(type=Type.WORKLOAD,
          plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD)
 def metta_plugin_factory_workload_sonobuoy(

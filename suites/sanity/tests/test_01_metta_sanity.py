@@ -52,7 +52,8 @@ def test_provisioners(environment):
     assert isinstance(combo, ComboProvisionerPlugin)
 
     # Also test that the combo provisioner is the default one
-    assert environment.fixtures.get_plugin(type=Type.PROVISIONER).instance_id == 'combo'
+    assert environment.fixtures.get_plugin(
+        type=Type.PROVISIONER).instance_id == 'combo'
 
     launchpad_fixture = environment.fixtures.get_fixture(
         type=Type.PROVISIONER, instance_id='launchpad')
@@ -77,6 +78,7 @@ def test_provisioners(environment):
     assert terraform_fixture.plugin_id == METTA_TERRAFORM_PROVISIONER_PLUGIN_ID
     assert terraform.instance_id == 'terraform'
     assert isinstance(terraform, TerraformProvisionerPlugin)
+
 
 def test_workload(environment):
     """ did we get the epxected environment workload fixtures """

@@ -38,7 +38,7 @@ def test_kubernetes_deployment_workload(environment_up, benchmark):
     instance = sanity_kubernetes_deployment.create_instance(
         environment_up.fixtures)
 
-    deployment = benchmark( instance.apply() )
+    deployment = benchmark(instance.apply())
     assert deployment is not None
     print(deployment.metadata.name)
 
@@ -59,7 +59,7 @@ def test_kubernetes_helm_workload(environment_up, benchmark):
         environment_up.fixtures)
 
     try:
-        benchmark( instance.apply(wait=True) )
+        benchmark(instance.apply(wait=True))
         instance.test()
 
         status = instance.status()

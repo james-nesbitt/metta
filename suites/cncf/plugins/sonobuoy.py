@@ -126,24 +126,36 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
 
         # Validate the config overall
         try:
-            sonobuoy_config = loaded.get(self.config_base, validator=SONOBUOY_VALIDATE_TARGET ,exception_if_missing=True)
+            sonobuoy_config = loaded.get(
+                self.config_base,
+                validator=SONOBUOY_VALIDATE_TARGET,
+                exception_if_missing=True)
         except ValidationError as e:
-            raise ValueError("Invalid sonobuoy config received: {}".format(e)) from e
+            raise ValueError(
+                "Invalid sonobuoy config received: {}".format(e)) from e
 
         kubeclient = fixtures.get_plugin(
             type=Type.CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
 
-        mode = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_MODE] ,exception_if_missing=True)
-        kubernetes_version = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION] ,exception_if_missing=True)
-        plugins = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_PLUGINS] ,exception_if_missing=False)
-        plugin_envs = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS] ,exception_if_missing=False)
+        mode = loaded.get([self.config_base,
+                           SONOBUOY_CONFIG_KEY_MODE],
+                          exception_if_missing=True)
+        kubernetes_version = loaded.get(
+            [self.config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION], exception_if_missing=True)
+        plugins = loaded.get([self.config_base,
+                              SONOBUOY_CONFIG_KEY_PLUGINS],
+                             exception_if_missing=False)
+        plugin_envs = loaded.get([self.config_base,
+                                  SONOBUOY_CONFIG_KEY_PLUGINENVS],
+                                 exception_if_missing=False)
 
         if not plugins:
             plugins = []
         if not plugin_envs:
             plugin_envs = []
 
-        return SonobuoyConformanceWorkloadInstance(kubeclient=kubeclient, mode=mode, kubernetes_version=kubernetes_version, plugins=plugins, plugin_envs=plugin_envs)
+        return SonobuoyConformanceWorkloadInstance(
+            kubeclient=kubeclient, mode=mode, kubernetes_version=kubernetes_version, plugins=plugins, plugin_envs=plugin_envs)
 
     def info(self, deep: bool = False):
         """ Return dict data about this plugin for introspection """
@@ -151,7 +163,8 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
         loaded = self.environment.config.load(self.config_label)
         """ get a configerus LoadedConfig for the sonobuoy label """
 
-        sonobuoy_config = loaded.get(self.config_base, exception_if_missing=True)
+        sonobuoy_config = loaded.get(
+            self.config_base, exception_if_missing=True)
 
         kubeclient = self.environment.fixtures.get_plugin(
             type=Type.CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
@@ -169,15 +182,18 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
             }
         }
 
+
 SONOBUOY_BIN = 'sonobuoy'
 """ Bin Name for running sonobuoy """
 SONOBUOY_PACKAGE = 'https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.20.0/sonobuoy_0.20.0_linux_amd64.tar.gz'
 """ we should write somethign to download this automatically """
 
+
 class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
     """ A conformance workload instance for a docker run """
 
-    def __init__(self, kubeclient: object, mode:str, kubernetes_version: str, plugins: List[str] = [], plugin_envs: List[str] = []):
+    def __init__(self, kubeclient: object, mode: str, kubernetes_version: str,
+                 plugins: List[str] = [], plugin_envs: List[str] = []):
         self.kubeclient = kubeclient
         self.mode = mode
         self.kubernetes_version = kubernetes_version
@@ -198,13 +214,16 @@ class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
             cmd += ['--mode={}'.format(self.mode)]
 
         if self.kubernetes_version:
-            cmd += ['--kube-conformance-image-version={}'.format(self.kubernetes_version)]
+            cmd += ['--kube-conformance-image-version={}'.format(
+                self.kubernetes_version)]
 
         if self.plugins:
-            cmd += ['--plugin={}'.format(plugin_id) for plugin_id in self.plugins]
+            cmd += ['--plugin={}'.format(plugin_id)
+                    for plugin_id in self.plugins]
 
         if self.plugin_envs:
-            cmd += ['--plugin-env={}'.format(plugin_env) for plugin_env in self.plugin_envs]
+            cmd += ['--plugin-env={}'.format(plugin_env)
+                    for plugin_env in self.plugin_envs]
 
         if wait:
             cmd += ['--wait={}'.format(1440)]
@@ -216,16 +235,14 @@ class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
         except Exception as e:
             raise RuntimeError("Sonobuoy RUN failed: {}".format(e)) from e
 
-
     def status(self):
         """ sonobuoy status return """
-        cmd = ['status','--json']
+        cmd = ['status', '--json']
         status = self._run(cmd, return_output=True)
         if status:
             return SonobuoyStatus(json.loads(status))
         else:
             return None
-
 
     def logs(self, follow: bool = True):
         """ sonobuoy logs """
@@ -236,7 +253,6 @@ class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
 
         self._run(cmd)
 
-
     def retrieve(self):
         """ retrieve sonobuoy results """
         logger.debug("retrieving sonobuoy results")
@@ -244,11 +260,12 @@ class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
             cmd = ['retrieve', self.results_path]
             file = self._run(cmd=cmd, return_output=True).rstrip("\n")
             if not os.path.isfile(file):
-                raise RuntimeError('Sonobuoy did not retrieve a results tarball.')
+                raise RuntimeError(
+                    'Sonobuoy did not retrieve a results tarball.')
             return SonobuoyResults(tarball=file, folder=self.results_path)
         except Exception as e:
-            raise RuntimeError("Could not retrieve sonobuoy results: {}".format(e)) from e
-
+            raise RuntimeError(
+                "Could not retrieve sonobuoy results: {}".format(e)) from e
 
     def destroy(self, wait: bool = False):
         """ delete sonobuoy resources """
@@ -260,8 +277,8 @@ class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
         self._run(cmd)
         self._delete_k8s_crb()
 
-
-    def _run(self, cmd: List[str], ignore_errors: bool = True, return_output: bool = False):
+    def _run(self, cmd: List[str], ignore_errors: bool = True,
+             return_output: bool = False):
         """ run a sonobuoy command """
 
         kubeconfig = self.kubeclient.config_file
@@ -295,23 +312,37 @@ class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
         """ create the cluster role binding that sonobuoy needs """
         # Sonobuoy requires an admin cluster role binding
         # @TODO Do this with the kubectl client properly
-        crb_cmds = ['kubectl', 'create', 'clusterrolebinding', 'sonobuoy-serviceaccount-cluster-admin', '--clusterrole=cluster-admin', '--serviceaccount=sonobuoy:sonobuoy-serviceaccount']
+        crb_cmds = [
+            'kubectl',
+            'create',
+            'clusterrolebinding',
+            'sonobuoy-serviceaccount-cluster-admin',
+            '--clusterrole=cluster-admin',
+            '--serviceaccount=sonobuoy:sonobuoy-serviceaccount']
         env = os.environ.copy()
         env['KUBECONFIG'] = self.kubeclient.config_file
-        logger.debug("creating sonobuoy cluster_role_binding: %s", " ".join(crb_cmds))
+        logger.debug(
+            "creating sonobuoy cluster_role_binding: %s",
+            " ".join(crb_cmds))
         try:
             exec = subprocess.run(crb_cmds, env=env, check=True, text=True)
             # exec.check_returncode()
-        except:
+        except BaseException:
             pass
 
     def _delete_k8s_crb(self):
         """ create the cluster role binding that sonobuoy needs """
         # @TODO Do this with the kubectl client properly
-        crb_cmds = ['kubectl', 'delete', 'clusterrolebinding', 'sonobuoy-serviceaccount-cluster-admin']
+        crb_cmds = [
+            'kubectl',
+            'delete',
+            'clusterrolebinding',
+            'sonobuoy-serviceaccount-cluster-admin']
         env = os.environ.copy()
         env['KUBECONFIG'] = self.kubeclient.config_file
-        logger.debug("creating sonobuoy cluster_role_binding: %s", " ".join(crb_cmds))
+        logger.debug(
+            "creating sonobuoy cluster_role_binding: %s",
+            " ".join(crb_cmds))
         exec = subprocess.run(
             crb_cmds, env=env, check=True, text=True)
         exec.check_returncode()
@@ -352,7 +383,8 @@ class SonobuoyResults:
         base = os.path.splitext(tarball)[0]
 
         logger.debug("un-tarring retrieved results: {}".format(tarball))
-        exec = subprocess.run(['tar', '-xzf', tarball, '-C', folder], check=True, text=True)
+        exec = subprocess.run(
+            ['tar', '-xzf', tarball, '-C', folder], check=True, text=True)
         exec.check_returncode()
 
         self.results_path = folder
@@ -374,7 +406,8 @@ class SonobuoyResults:
 
     def plugin(self, plugin_id):
         """ return the results for a single plugin """
-        return SonobuoyResultsPlugin(os.path.join(self.results_path, 'plugins', plugin_id))
+        return SonobuoyResultsPlugin(os.path.join(
+            self.results_path, 'plugins', plugin_id))
 
 
 class SonobuoyResultsPlugin:
@@ -399,7 +432,8 @@ class SonobuoyResultsPlugin:
 
     def __getitem__(self, instance_id: Any) -> object:
         """ get item details from the plugin results """
-        return SonobuoyResultsPluginItem(item_dict=self.summary['items'][instance_id])
+        return SonobuoyResultsPluginItem(
+            item_dict=self.summary['items'][instance_id])
 
 
 class SonobuoyResultsPluginItem:
@@ -415,6 +449,7 @@ class SonobuoyResultsPluginItem:
     def meta_file_path(self):
         """ get the path to the error item file """
         return self.meta['file']
+
     def meta_file(self):
         """ get the contents of the file """
         with open(self.meta_file_path()) as f:
