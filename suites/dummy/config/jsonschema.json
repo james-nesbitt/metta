@@ -1,0 +1,11 @@
+{
+    "plugin": {
+        "type": "object",
+        "properties": {
+            "type": {"type": "string"},
+            "plugin_id": {"type": "string"},
+            "arguments": {"type": "object"}
+        },
+        "required": ["type", "plugin_id"]
+    }
+}
