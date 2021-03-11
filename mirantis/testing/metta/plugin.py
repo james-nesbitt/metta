@@ -68,6 +68,8 @@ class Type(Enum):
     """ A cluster provisioner plugin """
     WORKLOAD = 'metta.plugin.workload'
     """ Plugins which use clients/provisioners to apply a workload to a cluster """
+    UTILITY = 'metta.plugins.utility'
+    """ plugins that are used for tooling around testing, but don't directly participate in testing """
     CLI = 'metta.plugin.cli'
     """ Plugins extend the metta cli """
 

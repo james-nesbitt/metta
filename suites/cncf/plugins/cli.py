@@ -15,6 +15,7 @@ logger = logging.getLogger('metta.cli.sonobuoy')
 METTA_PLUGIN_ID_SONOBUOY_cli = 'metta_sonobuoy_cli'
 """ cli plugin_id for the sonobuoy plugin """
 
+
 class SonobuoyCliPlugin(CliBase):
 
     def fire(self):
@@ -48,8 +49,8 @@ class SonobuoyGroup():
                     type=Type.WORKLOAD, plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD)
 
         except KeyError as e:
-            raise ValueError("No usable kubernetes client was found for sonobuoy to pull a kubeconfig from: {}".format(e)) from e
-
+            raise ValueError(
+                "No usable kubernetes client was found for sonobuoy to pull a kubeconfig from: {}".format(e)) from e
 
     def _select_instance(self, instance_id: str = ''):
         """ create a sonobuoy workload plugin instance """
@@ -58,7 +59,6 @@ class SonobuoyGroup():
         # @TODO allow filtering of kubernetes client instances
         instance = plugin.create_instance(self.environment.fixtures)
         return instance
-
 
     def info(self, instance_id: str = '', deep: bool = False):
         """ get info about a provisioner plugin """
@@ -86,7 +86,7 @@ class SonobuoyGroup():
 
         status_info = {
             'status': status.status.value,
-            'plugins': {plugin_id: status.plugin(plugin_id)  for plugin_id in status.plugin_list()}
+            'plugins': {plugin_id: status.plugin(plugin_id) for plugin_id in status.plugin_list()}
         }
 
         return json.dumps(status_info, indent=2)
@@ -100,12 +100,10 @@ class SonobuoyGroup():
         else:
             instance._create_k8s_crb()
 
-
     def run(self, instance_id: str = '', wait: bool = False):
         """ remove all sonobuoy infrastructure """
         instance = self._select_instance(instance_id=instance_id)
         instance.run(wait=wait)
-
 
     def wait(self, instance_id: str = '', step: int = 5, limit: int = 1000):
         """ wait until no longer running """
@@ -115,10 +113,10 @@ class SonobuoyGroup():
             status = instance.status()
             status_info = {
                 'status': status.status.value,
-                'plugins': {plugin_id: status.plugin(plugin_id)['status']  for plugin_id in status.plugin_list()}
+                'plugins': {plugin_id: status.plugin(plugin_id)['status'] for plugin_id in status.plugin_list()}
             }
 
-            print("{}: {},".format(i,status_info))
+            print("{}: {},".format(i, status_info))
             if status.status not in [Status.RUNNING]:
                 break
 
@@ -130,12 +128,10 @@ class SonobuoyGroup():
         instance = self._select_instance(instance_id=instance_id)
         instance.destroy(wait=wait)
 
-
     def logs(self, instance_id: str = '', follow: bool = False):
         """ sonobuoy logs """
         instance = self._select_instance(instance_id=instance_id)
         instance.logs(follow=follow)
-
 
     def retrieve(self, instance_id: str = ''):
         """ sonobuoy logs """

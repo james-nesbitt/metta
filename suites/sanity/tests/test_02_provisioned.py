@@ -14,6 +14,7 @@ from mirantis.testing.metta_launchpad import METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_
 
 logger = logging.getLogger('sanity:Provisioning')
 
+
 def test_01_environment_prepare(environment):
     """ get the environment but prepare the provisioners before returning
 
@@ -85,49 +86,52 @@ def test_03_terraform_sanity(environment):
         type=Type.PROVISIONER, instance_id='launchpad')
 
 
-
 def test_04_launchpad_sanity(environment):
     """ test that the launchpad provisioner is happy, and that it produces our expected clients """
 
     launchpad = environment.fixtures.get_plugin(
         type=Type.PROVISIONER, instance_id='launchpad')
 
+
 def test_05_expected_clients(environment):
     """ test that the environment gave us some expected clients """
 
     logger.info("Getting docker client")
     docker_client = environment.fixtures.get_plugin(type=Type.CLIENT,
-                                                       plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT)
+                                                    plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT)
 
     logger.info("Getting exec client")
     exec_client = environment.fixtures.get_plugin(type=Type.CLIENT,
-                                                     plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID)
+                                                  plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID)
 
     logger.info("Getting K8s client")
     kubectl_client = environment.fixtures.get_plugin(type=Type.CLIENT,
-                                                        plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+                                                     plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
 
 
 container_index = 0
 """ Use a global container index for error reporting on container creation """
+
 
 def test_06_docker_run_workload(environment, benchmark):
     """ test that we can run a docker run workload """
 
     # we have a docker run workload fixture called "sanity_docker_run"
     sanity_docker_run = environment.fixtures.get_plugin(type=Type.WORKLOAD,
-                                                           instance_id='sanity_docker_run')
+                                                        instance_id='sanity_docker_run')
     """ workload plugin """
     def container_run():
         global container_index
         container_index += 1
         try:
             docker_run_instance = sanity_docker_run.create_instance(
-                    environment.fixtures)
+                environment.fixtures)
             run_output = docker_run_instance.apply()
             assert 'Hello from Docker' in run_output.decode("utf-8")
         except Exception as e:
-            raise RuntimeError('Docker run [{}] failed: {}'.format(container_index, e)) from e
+            raise RuntimeError(
+                'Docker run [{}] failed: {}'.format(
+                    container_index, e)) from e
 
     benchmark(container_run)
 
@@ -163,6 +167,7 @@ def test_07_environment_down(environment):
             raise e
 
     return environment
+
 
 def test_08_torn_down(environment):
     """ test that we have a torn down environment

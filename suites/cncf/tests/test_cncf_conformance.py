@@ -22,10 +22,12 @@ SONOBUOY_TEST_TIMER_LIMIT = 1440
 SONOBUOY_TEST_TIMER_STEP = 10
 """ check status every X seconds """
 
+
 def test_cncf_conformance(environment_up):
     """ run cncf conformance test suite """
 
-    cncf = environment_up.fixtures.get_plugin(type=Type.WORKLOAD, instance_id='cncf')
+    cncf = environment_up.fixtures.get_plugin(
+        type=Type.WORKLOAD, instance_id='cncf')
     """ cncf workload plugin """
 
     instance = cncf.create_instance(environment_up.fixtures)
@@ -36,17 +38,23 @@ def test_cncf_conformance(environment_up):
         instance.run(wait=True)
         logger.debug("Sonobuoy started, waiting for finish")
 
-
-        # Every X seconds output some status report to show that it is still working
-        for i in range(0, round(SONOBUOY_TEST_TIMER_LIMIT/SONOBUOY_TEST_TIMER_STEP)):
+        # Every X seconds output some status report to show that it is still
+        # working
+        for i in range(0, round(SONOBUOY_TEST_TIMER_LIMIT /
+                                SONOBUOY_TEST_TIMER_STEP)):
             status = instance.status()
 
             if status is not None:
                 for plugin_id in SONOBUOY_TEST_INTERESTING_PLUGINS:
-                    if not status.plugin_status(plugin_id) in [Status.COMPLETE, Status.FAILED]:
+                    if not status.plugin_status(plugin_id) in [
+                            Status.COMPLETE, Status.FAILED]:
                         break
 
-                    logger.debug('{}:: Checking {}:{}'.format(i*SONOBUOY_TEST_TIMER_STEP, plugin_id, status.plugin(plugin_id)))
+                    logger.debug(
+                        '{}:: Checking {}:{}'.format(
+                            i * SONOBUOY_TEST_TIMER_STEP,
+                            plugin_id,
+                            status.plugin(plugin_id)))
                 else:
                     break
 
@@ -65,7 +73,11 @@ def test_cncf_conformance(environment_up):
             if plugin_results.status() in [Status.FAILED]:
                 no_errors = False
                 for item in plugin_results:
-                    logger.error("{}: {} ({})".format(plugin_id, item.name, item.meta_file_path()))
+                    logger.error(
+                        "{}: {} ({})".format(
+                            plugin_id,
+                            item.name,
+                            item.meta_file_path()))
 
         if not no_errors:
             raise RuntimeError('Sonobuoy encountered an error')

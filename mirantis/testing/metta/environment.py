@@ -124,8 +124,14 @@ class Environment:
                 config_label,
                 '.'.join(config_base)))
 
-        if config_label:
-            """ If True, then we will read the config object to add to the environment """
+        if not config_label:
+            # this environment does not have a related configuration to program
+            # itself with
+
+            self.bootstrap(bootstraps)
+
+        else:
+            # There is a config dict to add to the environment
             config_environment = config.load(config_label)
 
             try:
@@ -180,6 +186,7 @@ class Environment:
 
             # Check to see if we should pass any bootstraps to the environment
             # factory.
+
             environment_metta_bootstraps = config_environment.get(
                 [config_base, 'bootstraps.metta'])
             if environment_metta_bootstraps is not None:

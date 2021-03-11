@@ -24,4 +24,3 @@ def environment(environment_discover):
     # we don't use the discover fixture, we just need it to run first
     # we don't pass an environment name, which gives us the default environment
     return get_environment()
-

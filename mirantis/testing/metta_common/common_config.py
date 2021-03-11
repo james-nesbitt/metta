@@ -2,7 +2,6 @@ import os
 import logging
 import getpass
 from datetime import datetime
-import pkg_resources
 
 import appdirs
 

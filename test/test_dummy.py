@@ -141,7 +141,7 @@ CONFIG_DATA = {
 """ TESTS """
 
 
-class ConfigTemplating(unittest.TestCase):
+class DummyTesting(unittest.TestCase):
 
     def _dummy_environment(self) -> Environment:
         """ Create an environment object, add the common config source data """
