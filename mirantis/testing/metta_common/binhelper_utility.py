@@ -37,6 +37,7 @@ import tarfile
 import zipfile
 import re
 import stat
+import platform
 
 from configerus.loaded import LOADED_KEY_ROOT
 from configerus.contrib.jsonschema.validate import PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL
@@ -57,8 +58,8 @@ BINHELPER_UTILITY_CONFIG_BASE_LOCALPATH = 'path.local'
 """ config base for what the local bin path should be """
 BINHELPER_UTILITY_CONFIG_BASE_ADDTOPATH = 'path.add_to_path'
 """ config base for whether or not we need to modify the env PATH and add the path """
-BINHELPER_UTILITY_CONFIG_BASE_BINS = 'bins'
-""" config base for list of bins to load on construction """
+BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS = 'platforms'
+""" config base for list of platform bins to load on construction """
 
 BINHELPER_UTILITY_CONFIG_BASE_BIN_URL = 'url'
 """ config base inside bin for bin url for downloading """
@@ -77,9 +78,11 @@ BINHELPER_CONFIG_JSONSCHEMA = {
         },
         'required': ['path']
     },
-    'bins': {'$ref': '#/definitions/binobj'},
+    'platforms': {
+        '$ref': '#/definitions/platform'
+    },
     'definitions': {
-        'binobj': {
+        'bin': {
             'type': 'object',
             'properties': {
                 'url': {'type': 'string'},
@@ -87,9 +90,12 @@ BINHELPER_CONFIG_JSONSCHEMA = {
                 'copy': {'type': 'object'}
             },
             'required': ['url']
-        }
+        },
+        'platform': {
+            '$ref': '#/definitions/bin'
+        },
     },
-    'required': ['path']
+    'required': ['path', 'platforms']
 }
 """ JSONSCHEMA for the binhelper config """
 BINHELPER_CONFIG_VALIDATE_TARGET = {
@@ -132,29 +138,38 @@ class DownloadableExecutableUtility(METTAPlugin):
             os.environ["PATH"] += os.pathsep + \
                 os.path.realpath(self.local_path)
 
-        bins = loaded.get([base, BINHELPER_UTILITY_CONFIG_BASE_BINS])
-        if bins:
-            for bin_id in list(bins.keys()):
-                url = loaded.get([base,
-                                  BINHELPER_UTILITY_CONFIG_BASE_BINS,
+        platforms = loaded.get([base, BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS], exception_if_missing=True)
+        current_platform = '{}-{}'.format(platform.system(), platform.machine())
+
+        if current_platform not in platforms:
+            logger.warn("BinHelper doesn't have configuration for your platform '{}', so it won't download any bins.".format(current_platform))
+            return
+
+        bins = platforms[current_platform]
+        for bin_id in list(bins.keys()):
+            url = loaded.get([base,
+                              BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
+                              current_platform,
+                              bin_id,
+                              BINHELPER_UTILITY_CONFIG_BASE_BIN_URL],
+                             exception_if_missing=True)
+            version = loaded.get([base,
+                                  BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
+                                  current_platform,
                                   bin_id,
-                                  BINHELPER_UTILITY_CONFIG_BASE_BIN_URL],
+                                  BINHELPER_UTILITY_CONFIG_BASE_BIN_VERSION],
                                  exception_if_missing=True)
-                version = loaded.get([base,
-                                      BINHELPER_UTILITY_CONFIG_BASE_BINS,
-                                      bin_id,
-                                      BINHELPER_UTILITY_CONFIG_BASE_BIN_VERSION],
-                                     exception_if_missing=True)
-                copypaths = loaded.get([base,
-                                        BINHELPER_UTILITY_CONFIG_BASE_BINS,
-                                        bin_id,
-                                        BINHELPER_UTILITY_CONFIG_BASE_BIN_COPYPATHS],
-                                       exception_if_missing=False)
-                self.get_bin(
-                    name=bin_id,
-                    url=url,
-                    version=version,
-                    copypaths=copypaths)
+            copypaths = loaded.get([base,
+                                    BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
+                                    current_platform,
+                                    bin_id,
+                                    BINHELPER_UTILITY_CONFIG_BASE_BIN_COPYPATHS],
+                                   exception_if_missing=False)
+            self.get_bin(
+                name=bin_id,
+                url=url,
+                version=version,
+                copypaths=copypaths)
 
     def get_bin(self, name: str, url: str, version: str,
                 copypaths: Dict[str, str] = None):
