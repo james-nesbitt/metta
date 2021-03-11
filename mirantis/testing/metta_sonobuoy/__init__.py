@@ -21,3 +21,26 @@ def metta_plugin_factory_cli_sonobuoy(
         environment: Environment, instance_id: str = ''):
     """ create an sonobuoy cli plugin """
     return SonobuoyCliPlugin(environment, instance_id)
+
+
+""" SetupTools EntryPoint METTA BootStrapping """
+
+
+def bootstrap(environment: Environment):
+    """ METTA_Sonobuoy bootstrap
+
+    We dont't take any action.  Our purpose is to run the above factory
+    decorators to register our plugins.
+
+    """
+    pass
+
+
+# Export imported contants to make it easier for consumers to import
+__all__ = [
+    bootstrap,
+    metta_plugin_factory_workload_sonobuoy,
+    metta_plugin_factory_cli_sonobuoy,
+    METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+    SONOBUOY_WORKLOAD_CONFIG_LABEL,
+    SONOBUOY_WORKLOAD_CONFIG_BASE]

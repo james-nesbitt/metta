@@ -13,6 +13,16 @@ config:
 # Include/Import some python modules based on path
 # in order to get local code included in namespace
 imports:
-  # import ./plugins/custom.py as module "my_custom_plugin"
-  my_custom_plugin:
+  # import ./plugins/custom.py as module "my_plugin"
+  my_plugin:
     path: "{paths:project}/plugins/custom.py"
+
+
+# If you want to import a whole package, you can use this approach. Yo will want
+# an __init__.py file in the folder, and that package will not be relative path.
+# imports:
+#   # import ./plugins package as "my_plugin"
+#   my_plugins:
+#     # because this is a directory, the parent folder will be added to sys,path
+#     # and the 'plugins' will be imported as a package
+#     path: "plugins"

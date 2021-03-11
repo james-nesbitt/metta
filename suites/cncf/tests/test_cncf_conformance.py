@@ -10,8 +10,8 @@ import logging
 from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
-from plugins import METTA_PLUGIN_ID_SONOBUOY_WORKLOAD
-from plugins.sonobuoy import Status
+from mirantis.testing.metta_sonobuoy import METTA_PLUGIN_ID_SONOBUOY_WORKLOAD
+from mirantis.testing.metta_sonobuoy.sonobuoy import Status
 
 logger = logging.getLogger("cncf conformance")
 

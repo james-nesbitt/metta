@@ -1,5 +1,5 @@
 
-# sanity_docker_run :: metta.plugin.workload:
+# cncf :: metta.plugin.workload:
 cncf:
     type: workload
     plugin_id: metta_sonobuoy_workload
