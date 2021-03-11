@@ -169,7 +169,13 @@ def discover_sources_from_config(
                 source_env = metta_config.get(
                     [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY], exception_if_missing=True)
                 plugin.set_env(env=source_env)
-
+            elif hasattr(plugin, set_data):
+                data = metta_config.get(
+                    [instance_base, 'data'], exception_if_missing=True)
+                plugin.set_data(data=data)
+            else:
+                logger.warn(
+                    "had no way of configuring new source plugin.")
 
 def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
                      base: str = METTA_CONFIG_IMPORTS_KEY):
