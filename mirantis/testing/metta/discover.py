@@ -10,7 +10,7 @@ from configerus.config import Config
 from configerus.loaded import LOADED_KEY_ROOT
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH, CONFIGERUS_PATH_KEY
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT, CONFIGERUS_DICT_DATA_KEY
-from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV, CONFIGERUS_ENV_BASE_KEY
+from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV_SPECIFIC, CONFIGERUS_ENV_SPECIFIC_BASE_KEY, PLUGIN_ID_SOURCE_ENV_JSON, CONFIGERUS_ENV_JSON_ENV_KEY
 
 from .plugin import METTA_PLUGIN_CONFIG_KEY_PLUGINID, METTA_PLUGIN_CONFIG_KEY_INSTANCEID, METTA_PLUGIN_CONFIG_KEY_PRIORITY
 
@@ -161,10 +161,14 @@ def discover_sources_from_config(
                 source_data = metta_config.get(
                     [instance_base, CONFIGERUS_DICT_DATA_KEY], exception_if_missing=True)
                 plugin.set_data(data=source_data)
-            elif plugin_id == PLUGIN_ID_SOURCE_ENV:
+            elif plugin_id == PLUGIN_ID_SOURCE_ENV_SPECIFIC:
                 source_base = metta_config.get(
-                    [instance_base, CONFIGERUS_ENV_BASE_KEY], exception_if_missing=True)
+                    [instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY], exception_if_missing=True)
                 plugin.set_base(base=source_base)
+            elif plugin_id == PLUGIN_ID_SOURCE_ENV_JSON:
+                source_env = metta_config.get(
+                    [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY], exception_if_missing=True)
+                plugin.set_env(env=source_env)
 
 
 def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
