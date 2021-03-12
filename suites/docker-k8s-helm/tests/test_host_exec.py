@@ -23,7 +23,7 @@ def test_launchpad_exec_client_hosts(environment_up):
     hosts = exec_client.hosts()
     assert len(hosts) == 5
 
-    print(json.dumps(hosts, indent=2))
+    logger.info("-> Dumping host list: {}".format(json.dumps(hosts, indent=2)))
 
 
 def test_launchpad_exec_client_exec(environment_up):
@@ -32,7 +32,10 @@ def test_launchpad_exec_client_exec(environment_up):
     exec_client = environment_up.fixtures.get_plugin(type=Type.CLIENT,
                                                      plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID)
 
+    logger.info("Running 'ls -la' on two different hosts")
     exec_client.exec(host_index=0, cmds=['ls', '-la'])
+    exec_client.exec(host_index=2, cmds=['ls', '-la'])
+    logger.info("Runnign docker cli with sudo on the first host")
     exec_client.exec(
         host_index=0,
         cmds=[
@@ -41,4 +44,3 @@ def test_launchpad_exec_client_exec(environment_up):
             'container',
             'ps',
             '-a'])
-    exec_client.exec(host_index=2, cmds=['ls', '-la'])

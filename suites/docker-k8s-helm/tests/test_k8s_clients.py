@@ -21,14 +21,14 @@ def test_launchpad_kubectl_client(environment_up):
     kubectl_client = environment_up.fixtures.get_plugin(type=Type.CLIENT,
                                                         plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
 
-    coreV1 = kubectl_client.get_CoreV1Api_client()
+    coreV1 = kubectl_client.get_api('CoreV1Api')
     ns = coreV1.read_namespace(name=DEFAULT_K8S_NAMESPACE)
-    print("NS: {}".format(ns))
+    print("--> Dumping namespace: {}".format(ns))
 
     assert ns.metadata.name == DEFAULT_K8S_NAMESPACE, "Wrong namespace given"
 
 
-def test_kubernetes_deployment_workload(environment_up, benchmark):
+def test_kubernetes_deployment_workload(environment_up):
     """ test that we can get a k8s deployment workload to run """
 
     sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(type=Type.WORKLOAD,
@@ -38,38 +38,11 @@ def test_kubernetes_deployment_workload(environment_up, benchmark):
     instance = sanity_kubernetes_deployment.create_instance(
         environment_up.fixtures)
 
-    deployment = benchmark(instance.apply())
+    deployment = instance.apply()
     assert deployment is not None
-    print(deployment.metadata.name)
+    logger.info("Deployment name: {}".format(deployment.metadata.name))
 
     status = instance.destroy()
     assert status is not None
     assert status.code is None
-    print(status)
-
-
-def test_kubernetes_helm_workload(environment_up, benchmark):
-    """ test that we can get a helm workload to run """
-
-    metrics_helm_workload = environment_up.fixtures.get_plugin(type=Type.WORKLOAD,
-                                                               instance_id='metrics-helm-workload')
-    """ workload plugin """
-
-    instance = metrics_helm_workload.create_instance(
-        environment_up.fixtures)
-
-    try:
-        benchmark(instance.apply(wait=True))
-        instance.test()
-
-        status = instance.status()
-
-        assert status['name'] == instance.name
-        assert status['info']['status'] == 'deployed'
-
-        logger.info(json.dumps(status['info'], indent=2))
-
-    except Exception as e:
-        logger.error("helm operations failed: {}".format(e))
-
-    instance.destroy()
+    logger.info("Deployment status after destroy: {}".format(status))

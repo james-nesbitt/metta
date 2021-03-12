@@ -84,12 +84,14 @@ class KubernetesApiClientPlugin(ClientBase):
 
         self.config_file = kube_config_file
 
-    def get_CoreV1Api_client(self):
-        """ Get a CoreV1Api client """
-        assert self.api_client, "You must run the arguments() method before using this client"
 
-        logger.debug("Retrieving kubernetes CoreV1Api client from api_client")
-        return kubernetes.client.CoreV1Api(self.api_client)
+    def get_api(self, api: str):
+        """ Get an API as a getter """
+        if hasattr(kubernetes.client, api):
+            return getattr(kubernetes.client, api)(self.api_client)
+
+        raise KeyError("Unknown API requested: {}".format(api))
+
 
     def info(self):
         """ Return dict data about this plugin for introspection """
