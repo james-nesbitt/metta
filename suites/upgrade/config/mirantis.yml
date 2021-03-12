@@ -23,7 +23,7 @@ presets:
     # Which is a small cluster
     cluster: poc
     # This will tell metta to include metta/config/platform/public/ubuntu/18.04
-    platform: public/ubuntu/20.04
+    platform: public/ubuntu/18.04
 
     # @NOTE we don't use a 'release' preset here, as we put that into the
     #   ./before and ./after config paths

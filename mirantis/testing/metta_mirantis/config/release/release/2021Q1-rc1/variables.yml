@@ -1,6 +1,0 @@
-mcr_channel: test
-mcr_version: 20.10.0-rc2
-mke_image_repo: docker.io/mirantiseng
-mke_version: 3.4.0-rc1
-msr_image_repo: docker.io/mirantiseng
-msr_version: 2.9.0-rc1
