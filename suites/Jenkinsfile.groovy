@@ -35,14 +35,17 @@ pipeline {
     }
     parameters {
         string(name: 'GIT_TARGET', defaultValue: 'main', description:'When checking out METTA, what target to pick. Can be a tag, branch or commit id.')
-        choice(name: 'TEST_SUITE', choices: ['dummy', 'sanity', 'upgrade', 'cncf', 'docker-k8s-helm'], description: 'Pick a test suite to run')
+        choice(name: 'TEST_SUITE', choices: ['dummy', 'sanity', 'upgrade', 'cncf', 'docker-k8s-helm'], description: 'Pick a test suite to run.')
+        string(name: 'PYTEST_TESTS', description: 'Optionally limit which tests pytest will run. IF empty, all tests will be run.')
         text(name: 'METTA_CONFIGJSON', description: 'Include JSON config to override config options.  This will be consumed as an ENV variable.')
     }
     environment {
         DOCKER_BUILDKIT = '1'
+        TEST_SUITE = "${params.TEST_SUITE}"
         METTA_CONFIGJSON="${params.METTA_CONFIGJSON}"
-        METTA_VARIABLES_ID="ci-${params.TEST_SUITE}-${env.BUILD_NUMBER}"
+        METTA_VARIABLES_ID="ci-${env.BUILD_NUMBER}"
         METTA_USER_ID="sandbox-ci"
+        GIT_TARGET="${params.GIT_TARGET}"
     }
     stages {
         stage('Test Execute') {
@@ -50,7 +53,7 @@ pipeline {
             steps {
                 container('docker') {
                     script {
-                        currentBuild.displayName = "${params.TEST_SUITE} (${params.GIT_TARGET})"
+                        currentBuild.displayName = "${env.TEST_SUITE} (${env.GIT_TARGET}) ${env.BUILD_DISPLAY_NAME}"
 
                         // Allow this jenkinsfile to be run without job SCM configured
                         if (!fileExists('setup.cfg')) {
@@ -77,14 +80,14 @@ pipeline {
                             usernamePassword(credentialsId: 'docker-hub-generic-up', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')
                         ]) {
 
-                            dir("suites/${params.TEST_SUITE}") {
+                            dir("suites/${env.TEST_SUITE}") {
 
                                 try {
 
                                     sh(
                                         label: "Running sanity test",
                                         script: """
-                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html
+                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html ${params.PYTEST_TESTS}
                                         """
                                     )
 
@@ -98,8 +101,7 @@ pipeline {
                                                     metta config get metta > metta.config.metta.json
                                                     metta config get environment > metta.config.environment.json
                                                     metta config get variables > metta.config.variables.json
-                                                    metta contrib terraform info --deep > metta.contrib.terraform.info.json
-                                                    metta contrib launchpad info --deep > metta.contrib.launchpad.info.json
+                                                    metta fixtures info --deep > metta.fixtures.json
                                                 """
                                             )
                                         } catch(Exception edown) {
@@ -118,27 +120,35 @@ pipeline {
                                         print "Exception occured tearing down"
                                     }
 
-
-                                    archiveArtifacts artifacts: '.metta/*,error/*', allowEmptyArchive: true
+                                    archiveArtifacts artifacts:'.metta/*', allowEmptyArchive: true
+                                    archiveArtifacts artifacts:'error/*', allowEmptyArchive: true
 
                                     currentBuild.result = 'FAILURE'
 
                                 } finally {
 
-                                    archiveArtifacts artifacts: 'reports', allowEmptyArchive: true
-                                    archiveArtifacts artifacts: 'results', allowEmptyArchive: true
+                                    if (fileExists('reports')) {
+                                        dir('reports') {
+                                            archiveArtifacts artifacts:'*', allowEmptyArchive: true
 
-                                    if ( fileExists('reports/junit.xml') ) {
-                                        junit 'reports/junit.xml'
+                                            if (fileExists('junit.xml')) {
+                                                junit 'junit.xml'
+                                            }
+                                            if (fileExists('pytest.html')) {
+                                                publishHTML (target : [
+                                                    allowMissing: false,
+                                                    alwaysLinkToLastBuild: true,
+                                                    keepAll: true,
+                                                    reportFiles: 'pytest.html',
+                                                    reportDir: '.',
+                                                    reportName: 'PyTest Report'
+                                                ])
+                                            }
+                                        }
                                     }
-                                    publishHTML (target : [
-                                        allowMissing: false,
-                                        alwaysLinkToLastBuild: true,
-                                        keepAll: true,
-                                        reportFiles: 'pytest.html',
-                                        reportDir: 'reports',
-                                        reportName: 'PyTest Report'
-                                    ])
+                                    if (fileExists('results')) {
+                                        archiveArtifacts artifacts: 'results/*', allowEmptyArchive: true
+                                    }
 
                                 }
                             }

@@ -115,8 +115,7 @@ class KubernetesDeploymentWorkloadInstance(WorkloadInstanceBase):
     def read(self):
         """ retrieve the deployment job """
         if self.deployment is None:
-            k8s_apps_v1 = kubernetes.client.AppsV1Api(
-                self.client.api_client)
+            k8s_apps_v1 = self.client.get_api('AppsV1Api')
 
             try:
                 self.deployment = k8s_apps_v1.read_namespaced_deployment(

@@ -3,6 +3,8 @@ import logging
 import os
 import subprocess
 import json
+from enum import Enum
+from datetime import datetime
 
 import kubernetes
 
@@ -105,6 +107,7 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
         return KubernetesHelmV3WorkloadInstance(
             kubeconfig, namespace, self.instance_id, repos, chart, values)
 
+
     def info(self):
         """ Return dict data about this plugin for introspection """
         workload_config = self.environment.config.load(self.config_label)
@@ -157,7 +160,7 @@ class KubernetesHelmV3WorkloadInstance:
         self.bin = 'helm'
         self.working_dir = '.'
 
-    def apply(self, wait: bool = True):
+    def apply(self, wait: bool = True, debug: bool = False):
         """ Apply the helm chart """
 
         for repo_name, repo_url in self.repos.items():
@@ -172,10 +175,11 @@ class KubernetesHelmV3WorkloadInstance:
 
         cmd = ['install']
         cmd += [self.name, self.chart]
-        cmd += ['--namespace', self.namespace]
 
         if wait:
             cmd += ['--wait']
+        if debug:
+            cmd += ['--debug']
 
         cmd += values
 
@@ -184,6 +188,26 @@ class KubernetesHelmV3WorkloadInstance:
         except Exception as e:
             raise RuntimeError(
                 'Helm failed to install the relese: {}'.format(e)) from e
+
+
+    def list(self, all: bool = False, failed: bool = False, deployed: bool = False, pending: bool = False):
+        """ List all releases - Not instances specific but still useful """
+        cmd = ['list', '--output={}'.format('json')]
+
+        if all:
+            cmd += ['--all']
+        elif deployed:
+            cmd += ['--deployed']
+        elif failed:
+            cmd += ['--failed']
+        elif pending:
+            cmd += ['--pending']
+
+        list_str = self._run(cmd=cmd, return_output=True)
+        if list_str:
+            return json.loads(list_str)
+
+        return []
 
     def destroy(self):
         """ remove an installed helm release """
@@ -195,16 +219,13 @@ class KubernetesHelmV3WorkloadInstance:
 
     def status(self):
         """ status of an installed helm release """
-        return json.loads(
-            self._run(cmd=['status', self.name, '--output', 'json'], return_output=True))
+        return HelmReleaseStatus(json.loads(
+            self._run(cmd=['status', self.name, '--output', 'json'], return_output=True)))
 
     def _run(self, cmd: List[str], return_output: bool = False):
         """ run a helm v3 command """
 
-        env = os.environ.copy()
-        env['KUBECONFIG'] = self.kubeconfig
-
-        cmd = [self.bin] + cmd
+        cmd = [self.bin, '--kubeconfig={}'.format(self.kubeconfig), '--namespace={}'.format(self.namespace)] + cmd
 
         if return_output:
             logger.debug(
@@ -212,7 +233,6 @@ class KubernetesHelmV3WorkloadInstance:
                 " ".join(cmd))
             exec = subprocess.run(
                 cmd,
-                env=env,
                 cwd=self.working_dir,
                 shell=False,
                 stdout=subprocess.PIPE)
@@ -221,5 +241,35 @@ class KubernetesHelmV3WorkloadInstance:
         else:
             logger.debug("running launchpad command: %s", " ".join(cmd))
             exec = subprocess.run(
-                cmd, env=env, cwd=self.working_dir, check=True, text=True)
+                cmd,
+                cwd=self.working_dir,
+                check=True,
+                text=True)
             exec.check_returncode()
+
+
+class Status(Enum):
+    """ A Helm Status enum """
+    DEPLOYED = 'deployed'
+    """ Helm Release has been deployed """
+
+
+class HelmReleaseStatus:
+    """ interpreted helm release status """
+
+    def __init__(self, status_reponse: dict):
+        """ interpret status from a status response """
+        self.name = status_reponse['name']
+        self.version = status_reponse['version']
+        self.namespace = status_reponse['namespace']
+
+        # self.first_deployed = datetime.strptime(status_reponse['info']['first_deployed'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        # self.last_deployed = datetime.strptime(status_reponse['info']['last_deployed'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        self.deleted = status_reponse['info']['deleted']
+        self.description = status_reponse['info']['description']
+        self.status = Status(status_reponse['info']['status'])
+        self.notes = status_reponse['info']['notes']
+
+        self.config = status_reponse['config']
+
+        self.manifect = status_reponse['manifest']

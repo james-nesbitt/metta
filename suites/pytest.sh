@@ -1,1 +1,3 @@
-pytest -s --junitxml=./reports/pytest_junit.xml --html=./reports/pytest_report.html $@
+#!/usr/bin/env bash
+
+pytest -s --junitxml=./reports/junit.xml --html=./reports/report.html $@
