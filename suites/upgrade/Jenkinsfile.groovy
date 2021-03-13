@@ -1,9 +1,9 @@
 #!groovy
-################################################################################
-# Jenkins: Upgrade test suite execute
-#
-# @NOTE this expects to be run from the repo root.
-################################################################################
+/**
+ * Jenkins: Sanity test suite execute
+ *
+ * @NOTE this expects to be run from the repo root.
+ */
 pipeline {
     agent {
         kubernetes {
