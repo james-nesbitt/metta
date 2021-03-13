@@ -34,7 +34,7 @@ class FixturesGroup():
         return json.dumps(list, indent=2)
 
     def info(self, type: str = '', plugin_id: str = '',
-             instance_id: str = '', deep: bool = False, include_cli_plugins: bool = False):
+             instance_id: str = '', deep: bool = False, include_cli_plugins: bool = False, exception_if_missing: bool = False):
         """ Info for all fixtures """
 
         if type:
@@ -63,5 +63,8 @@ class FixturesGroup():
                     info.update(plugin_info)
 
             list.append(info)
+
+        if exception_if_missing and len(list) == 0:
+            raise ValueError("No matching fixtures")
 
         return json.dumps(list, indent=2)

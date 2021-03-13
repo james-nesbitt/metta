@@ -115,10 +115,10 @@ class KubernetesDeploymentWorkloadInstance(WorkloadInstanceBase):
     def read(self):
         """ retrieve the deployment job """
         if self.deployment is None:
-            k8s_apps_v1 = self.client.get_api('AppsV1Api')
+            apps_v1 = self.client.get_api('AppsV1Api')
 
             try:
-                self.deployment = k8s_apps_v1.read_namespaced_deployment(
+                self.deployment = apps_v1.read_namespaced_deployment(
                     self.name, self.namespace)
             except Exception:
                 self.deployment = None
@@ -132,9 +132,8 @@ class KubernetesDeploymentWorkloadInstance(WorkloadInstanceBase):
 
         """
 
-        k8s_apps_v1 = kubernetes.client.AppsV1Api(
-            self.client.api_client)
-        self.deployment = k8s_apps_v1.create_namespaced_deployment(
+        apps_v1 = self.client.get_api('AppsV1Api')
+        self.deployment = apps_v1.create_namespaced_deployment(
             body=self.body, namespace=self.namespace)
 
         return self.deployment
@@ -146,11 +145,10 @@ class KubernetesDeploymentWorkloadInstance(WorkloadInstanceBase):
             propagation_policy='Foreground',
             grace_period_seconds=5)
 
-        k8s_apps_v1 = kubernetes.client.AppsV1Api(
-            self.client.api_client)
-        self.status = k8s_apps_v1.delete_namespaced_deployment(
+        apps_v1 = self.client.get_api('AppsV1Api')
+        status = apps_v1.delete_namespaced_deployment(
             name=self.name, namespace=self.namespace, body=body)
 
         self.deployment = None
 
-        return self.status
+        return status
