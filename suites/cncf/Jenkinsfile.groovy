@@ -60,11 +60,6 @@ pipeline {
                     script {
                         currentBuild.displayName = "${env.TEST_SUITE} (${env.BRANCH_NAME}) ${env.BUILD_DISPLAY_NAME}"
 
-                        // Allow this jenkinsfile to be run without job SCM configured
-                        if (env.BRANCH_NAME != '') {
-                            git branch: "${env.BRANCH_NAME}", url: 'https://github.com/james-nesbitt/metta.git'
-                        }
-
                         sh(
                             label: "Installing metta (pip)",
                             script: """
@@ -92,14 +87,14 @@ pipeline {
                                     sh(
                                         label: "Running sanity test",
                                         script: """
-                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html ${env.PYTEST_TESTS}
+                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html ${env.PYTEST_TESTS?.''}
                                         """
                                     )
 
                                 } catch (Exception e) {
 
                                     dir('error') {
-                                        if (METTA_CONFIGJSON != '') {
+                                        if (env.METTA_CONFIGJSON != '') {
                                             writeFile file:'metta.config.overrides.json', text:env.METTA_CONFIGJSON
                                         }
                                         try {
