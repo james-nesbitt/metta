@@ -1,9 +1,9 @@
 #!groovy
-################################################################################
-# Jenkins: Clients test suite execute
-#
-# @NOTE this expects to be run from the repo root.
-################################################################################
+/**
+ * Jenkins: Clients test suite execute
+ *
+ * @NOTE this expects to be run from the repo root.
+ */
 pipeline {
     agent {
         kubernetes {

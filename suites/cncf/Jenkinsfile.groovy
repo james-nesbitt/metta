@@ -1,9 +1,9 @@
 #!groovy
-################################################################################
-# Jenkins: CNCF test suite execute
-#
-# @NOTE this expects to be run from the repo root.
-################################################################################
+/**
+ * Jenkins: cncf test suite execute
+ *
+ * @NOTE this expects to be run from the repo root.
+ */#############################
 pipeline {
     agent {
         kubernetes {
