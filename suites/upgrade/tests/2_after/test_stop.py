@@ -50,4 +50,4 @@ def test_kube_workload_still_running(environment_after_up):
     status = instance.destroy()
     assert status is not None
     assert status.code is None
-    logger.info("Sanity deployment destroy status: {}".foramt(status))
+    logger.info("Sanity deployment destroy status: {}".format(status))
