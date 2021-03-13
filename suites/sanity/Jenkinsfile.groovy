@@ -87,7 +87,7 @@ pipeline {
                                     sh(
                                         label: "Running sanity test",
                                         script: """
-                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html ${env.PYTEST_TESTS}
+                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html
                                         """
                                     )
 
