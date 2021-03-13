@@ -60,11 +60,6 @@ pipeline {
                     script {
                         currentBuild.displayName = "${env.TEST_SUITE} (${env.BRANCH_NAME}) ${env.BUILD_DISPLAY_NAME}"
 
-                        // Allow this jenkinsfile to be run without job SCM configured
-                        if (env.BRANCH_NAME != '') {
-                            git branch: "${env.BRANCH_NAME}", url: 'https://github.com/james-nesbitt/metta.git'
-                        }
-
                         sh(
                             label: "Installing metta (pip)",
                             script: """
