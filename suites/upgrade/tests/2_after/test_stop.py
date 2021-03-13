@@ -37,13 +37,18 @@ def test_kube_workload_still_running(environment_after_up):
     # to find it.
     deployment = instance.read()
     assert deployment is not None, "Did not find the expected sanity workload running"
-    print(deployment)
+    logger.info(deployment)
 
     status = deployment.status
     assert status is not None
-    print(status)
+    logger.info("Sanity deployment status: {}".format(status))
+    metadata = deployment.metadata
+    assert name == metadata.name
+    assert namespace == metadata.namespace
 
+    # tear the deployment down
     status = instance.destroy()
     assert status is not None
     assert status.code is None
-    print(status)
+    logger.info("Sanity deployment destroy status: {}".foramt(status))
+v

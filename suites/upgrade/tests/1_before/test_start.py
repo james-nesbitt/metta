@@ -31,6 +31,13 @@ def test_kubernetes_deployment_workload(environment_before_up):
     instance = sanity_kubernetes_deployment.create_instance(
         environment_before_up.fixtures)
 
+    namespace = instance.namespace
+    name = instance.name
+
     deployment = instance.apply()
     assert deployment is not None
     logger.info("BEFORE: sanity workload deployed: {}".format(deployment))
+
+    metadata = deployment.metadata
+    assert name == metadata.name
+    assert namespace == metadata.namespace

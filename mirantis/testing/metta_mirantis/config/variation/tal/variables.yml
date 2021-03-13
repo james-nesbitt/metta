@@ -32,17 +32,18 @@ platform: ubuntu_18.04
 
 # mirantis app versions and sources
 # typically overriden in a release config variables file
+mcr_repo_url: "https://repos.mirantis.com/"
+#mcr_repo_url: "https://s3.amazonaws.com/repos-internal.mirantis.com/"
 mcr_channel: stable
-mcr_version: 19.03.16
-mcr_repo_url: "https://repos-stage.mirantis.com/"
+mcr_version: 20.10.0
 mcr_install_url_linux: "https://get.mirantis.com/"
 mcr_install_url_windows: "https://get.mirantis.com/install.ps1"
 
-mke_image_repo: docker.io/mirantiseng
+mke_image_repo: docker.io/mirantis
 mke_version: 3.3.6
 mke_install_flags: []
 
-msr_image_repo: docker.io/mirantiseng
+msr_image_repo: docker.io/mirantis
 msr_version: 2.8.5
 
 # machine/node counts to use
