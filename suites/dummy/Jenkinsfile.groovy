@@ -1,6 +1,6 @@
 #!groovy
 /**
- * Jenkins: Sanity test suite execute
+ * Jenkins: Dummy test suite execute
  *
  * @NOTE this expects to be run from the repo root.
  */
@@ -36,12 +36,11 @@ pipeline {
     }
 
     options {
-        timeout(time: 2, unit: 'HOURS')
+        timeout(time: 4, unit: 'HOURS')
     }
     parameters {
-        string(name: 'BRANCH_NAME', defaultValue: '', description:'When checking out METTA, what target to pick. Can be a tag, branch or commit id.')
-        string(name: 'PYTEST_TESTS', description: 'Optionally limit which tests pytest will run. IF empty, all tests will be run.')
-        text(name: 'METTA_CONFIGJSON', description: 'Include JSON config to override config options.  This will be consumed as an ENV variable.')
+        string(name: 'PYTEST_TESTS', defaultValue: '', description: 'Optionally limit which tests pytest will run. IF empty, all tests will be run.')
+        text(name: 'METTA_CONFIGJSON', defaultValue: '', description: 'Include JSON config to override config options.  This will be consumed as an ENV variable.')
     }
     stages {
         stage('Test Execute') {
@@ -52,13 +51,22 @@ pipeline {
                 METTA_CONFIGJSON="${params.METTA_CONFIGJSON}"
                 METTA_VARIABLES_ID="ci-dummy-${env.BUILD_NUMBER}"
                 METTA_USER_ID="sandbox-ci"
-                PYTEST_TESTS="${params.PYTEST_TESTS}"
-                BRANCH_NAME="${params.BRANCH_NAME}"
             }
             steps {
                 container('docker') {
                     script {
-                        currentBuild.displayName = "${env.TEST_SUITE} (${env.BRANCH_NAME}) ${env.BUILD_DISPLAY_NAME}"
+
+                        GIT_TAG = sh(
+                            label: "Confirming git branch",
+                            script: """
+                                git describe --tags
+                            """,
+                            returnStdout: true
+                        ).trim()
+
+                        currentBuild.displayName = "${env.TEST_SUITE} (${GIT_TAG}) ${env.BUILD_DISPLAY_NAME}"
+
+                        /** Starting PIP preparation */
 
                         sh(
                             label: "Installing metta (pip)",
@@ -87,7 +95,7 @@ pipeline {
                                     sh(
                                         label: "Running sanity test",
                                         script: """
-                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html
+                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html ${params.PYTEST_TESTS}
                                         """
                                     )
 
