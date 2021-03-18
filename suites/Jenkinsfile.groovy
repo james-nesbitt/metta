@@ -11,7 +11,7 @@ pipeline {
                 emptyDir: {}
               containers:
               - name: docker
-                image: jamesnmirantis/dockerized-builds:0.1.11
+                image: jamesnmirantis/dockerized-builds:0.1.12
                 command:
                 - sleep
                 args:
