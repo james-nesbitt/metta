@@ -1,6 +1,6 @@
 
-# Create an environment called 'sanity'
-sanity:
+# Create an environment called 'clients'
+clients:
   bootstraps:
     metta:
     - metta_common
