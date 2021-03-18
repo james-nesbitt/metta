@@ -269,10 +269,11 @@ class LaunchpadClient:
 
         cmd += args
 
-        if self.disable_telemetry:
-            cmd += ['--disable-telemetry']
-        if self.accept_license:
-            cmd += ['--accept-license']
+        if not args[0] in ['exec']:
+            if self.disable_telemetry:
+                cmd += ['--disable-telemetry']
+            if self.accept_license:
+                cmd += ['--accept-license']
 
         if return_output:
             logger.debug(
