@@ -44,14 +44,21 @@ def test_kubernetes_helm_workload(environment_up, benchmark):
         logger.info("Starting helm instance")
         instance.apply(wait=True)
 
-        nsd = appsV1.list_namespaced_deployment(namespace=DEFAULT_K8S_NAMESPACE)
-        logger.info("Namespace ({}) deployments: {}".format(DEFAULT_K8S_NAMESPACE, {item.metadata.name: item.status for item in nsd.items}))
+        nsd = appsV1.list_namespaced_deployment(
+            namespace=DEFAULT_K8S_NAMESPACE)
+        logger.info(
+            "Namespace ({}) deployments: {}".format(
+                DEFAULT_K8S_NAMESPACE, {
+                    item.metadata.name: item.status for item in nsd.items}))
 
         list = instance.list(all=True)
         logger.info("Helm release list before status: {}".format(list))
 
-        deployment = appsV1.read_namespaced_deployment("{}-metrics-server".format(instance.name), instance.namespace)
-        logger.info("Looks like the helm deployment: {}".format(deployment.metadata.annotations))
+        deployment = appsV1.read_namespaced_deployment(
+            "{}-metrics-server".format(instance.name), instance.namespace)
+        logger.info(
+            "Looks like the helm deployment: {}".format(
+                deployment.metadata.annotations))
 
         logger.info("Running helm instance tests")
         instance.test()

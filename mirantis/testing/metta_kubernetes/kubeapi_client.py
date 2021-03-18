@@ -84,14 +84,12 @@ class KubernetesApiClientPlugin(ClientBase):
 
         self.config_file = kube_config_file
 
-
     def get_api(self, api: str):
         """ Get an API as a getter """
         if hasattr(kubernetes.client, api):
             return getattr(kubernetes.client, api)(self.api_client)
 
         raise KeyError("Unknown API requested: {}".format(api))
-
 
     def info(self):
         """ Return dict data about this plugin for introspection """

@@ -29,7 +29,6 @@ logger = logging.getLogger('metta')
 """ METTA and Configerus bootstrapping """
 
 FIXED_CONFIGERUS_BOOSTRAPS = [
-    "deep",
     "get",
     "env",
     "jsonschema",

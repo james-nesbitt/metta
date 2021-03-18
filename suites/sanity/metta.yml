@@ -9,4 +9,4 @@ config:
     project-config:
       plugin_id: path
       priority: 70
-      path: "{paths:project}/config"
+      path: "{{paths:project}}/config"

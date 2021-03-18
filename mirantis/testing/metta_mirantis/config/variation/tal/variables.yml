@@ -1,27 +1,27 @@
 # Used in terraform resource tagging
-user: "{user:id?anon}"
+user: "{{user:id?anon}}"
 #  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
-task: "ltc"
+task: "tal"
 # One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.
 project: "default"
 
 
 # used for resource naming in various places
-id: "{user}-metta-ltc"
+id: "{{user}}-metta-tal"
 # where to put terraform and launchpad state/var/config files
 files_path: .
 # prefix for terraform/launchpad files to allow variations
-files_prefix: "{id}"
+files_prefix: "{{id}}"
 
 # Path to the terraform plan to be used
-terraform_plan: "{mirantis:terraform.plans.prodeng.aws.v4}"
+terraform_plan: "{{mirantis:terraform.plans.prodeng.aws.v4}}"
 # Prefix for terraform resources for identifcation and variations
-resource_prefix: "{id}"
+resource_prefix: "{{id}}"
 # AWS region for resources
 aws_region: us-east-2
 
 # perhaps not needed any more
-cluster_name: "{id}"
+cluster_name: "{{id}}"
 # used to tag cluster resources for expiry
 expire_duration: 72h
 
@@ -62,8 +62,3 @@ msr_volume_size: 100
 # SSH/RDP admin passwords for nodes
 admin_password: orcaorcaorca
 windows_administrator_password: "tfaws,,ABC..Example"
-
-terraform_is_provisioned: false
-# If true, then launchpad will skip the prepare/apply on the backend
-launchpad_is_installed: true
-# If true, then launchpad will skip the install

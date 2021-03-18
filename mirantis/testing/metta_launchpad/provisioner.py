@@ -1,15 +1,6 @@
 """
 
-Launchpad metta provisioner pluging
-
-
-Launchpad is a parasitic priovisioner as it does not create any infra
-but rather it installs into an existing cluster defined by an output.
-
-If your system is running before you run your test system then use the
-metta.contrib.dummy.provisioner provisioner and include the launchpad
-config (yaml) in that provisioner configuration as an output. Otherwise
-use a provisioner such as the terraform provisioner before this one.
+Launchpad metta provisioner plugin
 
 """
 
@@ -37,40 +28,34 @@ logger = logging.getLogger('mirantis.testing.metta.provisioner:launchpad')
 METTA_LAUNCHPAD_CONFIG_LABEL = 'launchpad'
 """ Launchpad config label for configuration """
 METTA_LAUNCHPAD_CONFIG_ROOT_PATH_KEY = 'root.path'
-""" config key for a base path that should be used for any relative paths """
+""" config key for a base file path that should be used for any relative paths """
+METTA_LAUNCHPAD_CONFIG_KEY = 'config'
+""" which config key will provide the launchpad yml """
 METTA_LAUNCHPAD_CLI_CONFIG_FILE_KEY = 'config_file'
 """ Launchpad config cli key to tell us where to put the launchpad yml file """
 METTA_LAUNCHPAD_CLI_WORKING_DIR_KEY = 'working_dir'
 """ Launchpad config cli configuration working dir key """
-METTA_LAUNCHPAD_CLI_WORKING_CLUSTEROVERRIDE = 'cluster_name'
+METTA_LAUNCHPAD_CLI_CLUSTEROVERRIDE = 'cluster_name'
 """ If provided, this config key will override a cluster name pulled from yaml"""
-METTA_LAUNCHPAD_CONFIG_OUTPUTSOURCE_LAUNCHPADFILE_OUTPUT_KEY = 'source_output.instance_id'
-""" which config key will tell me the id of the backend output that will give me launchpad yml """
+METTA_LAUNCHPAD_CLI_ACCEPTLICENSE = 'cli.accept-license'
+""" If provided, this config key will tell the cli to accept the license"""
+METTA_LAUNCHPAD_CLI_DISABLETELEMETRY = 'cli.disable-telemetry'
+""" If provided, this config key will tell the cli to disable telemetry"""
 METTA_LAUNCHPAD_CLI_CONFIG_DOCKER_VERSION_DEFAULT = '1.40'
 """ Default value for the docker client version number.  It would be best to discover or config this."""
-METTA_LAUNCHPAD_BACKEND_OUTPUT_INSTANCE_ID_DEFAULT = 'mke_cluster'
-""" Launchpad backend default output name for configuring launchpad """
-METTA_LAUNCHPAD_CLI_CONFIG_ISINSTALLED = 'is_installed'
-""" Boolean config value that tells the provisioner to try to load clients before running apply """
 
 METTA_LAUNCHPAD_VALIDATE_JSONSCHEMA = {
     'type': 'object',
     'properties': {
-        'type': {'type': 'string'},
-        'plugin_id': {'type': 'string'},
-
-        'root': {
-            'type': 'object',
+        'config': {
+            'type': ['object', 'null'],
             'properties': {
-                'path': {'type': 'string'}
-            }
-        },
-        'source_output': {
-            'type': 'object',
-            'properties': {
-                'instance_id': {'type': 'string'}
+                'apiVersion': {'type': 'string'}
             },
-            'required': ['instance_id']
+        },
+        'cli': {
+            'accept-license': {'type': 'bool'},
+            'disable-telemetry': {'type': 'bool'},
         },
         'cluster_name': {
             'type': 'string'
@@ -82,7 +67,7 @@ METTA_LAUNCHPAD_VALIDATE_JSONSCHEMA = {
             'type': 'string'
         }
     },
-    'required': ['source_output']
+    'required': ['config_file', 'config']
 }
 """ Validation jsonschema for terraform config contents """
 METTA_LAUNCHPAD_VALIDATE_TARGET = {
@@ -139,14 +124,14 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                 self.working_dir = os.path.join(root_path, self.working_dir)
             self.working_dir = os.path.abspath(self.working_dir)
 
-        """ Retrieve the configuration for the output plugin """
+        """ Retrieve the configuration the client plugin """
         try:
-            self.backend_output_name = launchpad_config.get(
-                [base, METTA_LAUNCHPAD_CONFIG_OUTPUTSOURCE_LAUNCHPADFILE_OUTPUT_KEY], exception_if_missing=True)
-            """ Backend provisioner give us this output as a source of launchpad yaml """
+            self.launchpad_config = launchpad_config.get(
+                [base, METTA_LAUNCHPAD_CONFIG_KEY], exception_if_missing=True)
+            """ config source of launchpad yaml """
         except KeyError as e:
             raise ValueError(
-                "Could not find launchpad configuration for backend provisioner output instance_id to get launchpad yml from.")
+                "Could not find launchpad configuration.")
 
         # decide on a path for the runtime launchpad.yml file
         self.config_file = launchpad_config.get(
@@ -160,14 +145,23 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                 os.path.join(self.working_dir, self.config_file))
 
         cluster_name_override = launchpad_config.get(
-            [base, METTA_LAUNCHPAD_CLI_WORKING_CLUSTEROVERRIDE], exception_if_missing=False)
+            [base, METTA_LAUNCHPAD_CLI_CLUSTEROVERRIDE], exception_if_missing=False)
         """ Can hardcode the cluster name if it can't be take from the yaml file """
+
+        accept_license = launchpad_config.get(
+            [base, METTA_LAUNCHPAD_CLI_ACCEPTLICENSE], exception_if_missing=False) is not None
+        """ should the client accept the license """
+        disable_telemetry = launchpad_config.get(
+            [base, METTA_LAUNCHPAD_CLI_DISABLETELEMETRY], exception_if_missing=False) is not None
+        """ should the client disable telemetry """
 
         logger.debug("Creating Launchpad API client")
         self.client = LaunchpadClient(
             config_file=self.config_file,
             working_dir=self.working_dir,
-            cluster_name_override=cluster_name_override)
+            cluster_name_override=cluster_name_override,
+            accept_license=accept_license,
+            disable_telemetry=disable_telemetry)
 
         # If we can, it makes sense to build the docker and k8s client fixtures now.
         # This will only be possible in cases where we have an existing config file
@@ -195,14 +189,14 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                 'config_base': plugin.config_base,
                 'downloaded_bundle_users': plugin.downloaded_bundle_users,
                 'working_dir': plugin.working_dir,
-                'backend_output_name': plugin.backend_output_name
             },
             'client': {
                 'cluster_name_override': client.cluster_name_override,
                 'config_file': client.config_file,
                 'working_dir': client.working_dir,
                 'bin': client.bin
-            }
+            },
+            'config': self.launchpad_config,
         }
 
         if deep:
@@ -232,8 +226,8 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
 
         info['helper'] = {
             'commands': {
-                'apply': "{workingpathcd}{bin} apply -c {config_file}".format(workingpathcd=("cd {} && ".format(client.working_dir) if not client.working_dir == '.' else ''), bin=client.bin, config_file=client.config_file),
-                'client-config': "{workingpathcd}{bin} client-config -c {config_file} {user}".format(workingpathcd=("cd {} && ".format(client.working_dir) if not client.working_dir == '.' else ''), bin=client.bin, config_file=client.config_file, user='admin')
+                'apply': "{bin} apply -c {config_file}".format(workingpathcd=("cd {} && ".format(client.working_dir) if not client.working_dir == '.' else ''), bin=client.bin, config_file=client.config_file),
+                'client-config': "{bin} client-config -c {config_file} {user}".format(workingpathcd=("cd {} && ".format(client.working_dir) if not client.working_dir == '.' else ''), bin=client.bin, config_file=client.config_file, user='admin')
             }
         }
 
@@ -272,28 +266,17 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
 
         """
 
-        # Get the backend output that holds laucnhpad yaml
+        """ Retrieve the configuration the client plugin """
         try:
-            output = self.environment.fixtures.get_plugin(type=Type.OUTPUT,
-                                                          instance_id=self.backend_output_name)
+            """ load all of the launchpad configuration, force a reload to get up to date contents """
+            launchpad_config = self.environment.config.load(
+                self.config_label, force_reload=True)
+            self.launchpad_config = launchpad_config.get(
+                [self.config_base, METTA_LAUNCHPAD_CONFIG_KEY], exception_if_missing=True)
+            """ config source of launchpad yaml """
         except KeyError as e:
-            raise Exception(
-                "Launchpad could not retrieve YML configuration from the backend [{}] : ".format(self.backend_output_name, e)) from e
-        if not output:
             raise ValueError(
-                "Launchpad did not get necessary config from the backend output '%s'", self.backend_output_name)
-
-        # if our output returns an output plugin (quack) then retrieve the
-        # actual output
-        if hasattr(output, 'get_output') and callable(
-                getattr(output, 'get_output')):
-            try:
-                output = output.get_output()
-            except AttributeError as e:
-                raise ValueError(
-                    'Backend output for launchpad yaml had not been given any data.  Are you sure that the backend ran?')
-        if isinstance(output, dict):
-            output = yaml.dump(output)
+                "Could not find launchpad configuration from config.")
 
         # write the launchpad output to our yaml file target (after creating
         # the path)
@@ -303,7 +286,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                     self.config_file)),
             exist_ok=True)
         with open(os.path.realpath(self.config_file), 'w') as file:
-            file.write(output if output else '')
+            yaml.dump(self.launchpad_config, file)
 
         try:
             logger.info(

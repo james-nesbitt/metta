@@ -177,6 +177,7 @@ def discover_sources_from_config(
                 logger.warn(
                     "had no way of configuring new source plugin.")
 
+
 def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
                      base: str = METTA_CONFIG_IMPORTS_KEY):
     """ Look in config for module imports

@@ -1,14 +1,58 @@
-# Declare which output from the environment will give us our launchpad yml
-# The output needs to exist by the time the launchpad provisioner .apply()
-# runs.
-source_output:
-    instance_id: mke_cluster
 
-cli-options:
+# not actually used for anything.
+name: "{{variables:id}}"
+
+# Set some cli options
+cli:
     accept-license: true
     disable-telemetry: true
 
 # the example tf plans need launchpad to run in the plan root
-working_dir: "{variables:terraform_plan}"
+working_dir: "{{variables:terraform_plan}}"
 # put the launchpad yml file in the project folder
-config_file: "{variables:files_path}/{variables:files_prefix}.launchpad.yaml"
+config_file: "{{variables:files_path}}/{{variables:files_prefix}}.launchpad.yaml"
+
+# Provide launchpad config inline.
+
+# Option 1 : source from a metta output
+# config: "{{output::mke_cluster?special::None}}"
+
+# Options 1 : source from a file
+#config: "{{file::path/to/file.yml}}"
+
+# Option 3: assumble from parts
+config:
+    apiVersion: launchpad.mirantis.com/mke/v1.2
+    kind: mke+msr
+
+    metadata:
+      name: "{{name}}"
+
+    spec:
+      hosts: "{{output::mke_cluster/spec.hosts?special::[]}}"
+
+      mcr:
+        channel: "{{variables:mcr_channel}}"
+        installURLLinux: "{{variables:mcr_install_url_linux}}"
+        installURLWindows: "{{variables:mcr_install_url_windows}}"
+        repoURL: "{{variables:mcr_repo_url}}"
+        version: "{{variables:mcr_version}}"
+
+      mke:
+        imageRepo: "{{variables:mke_image_repo}}"
+        installFlags:
+        - "--admin-username={{variables:admin_user?admin}}"
+        - "--admin-password={{variables:admin_password?orcaorcaorca}}"
+        - "--default-node-orchestrator=kubernetes"
+        - "--san={{output::mke_san?NoSanConfigured}}"
+        upgradeFlags:
+        - "--force-recent-backup"
+        - "--force-minimums"
+        version: "{{variables:mke_version}}"
+
+      msr:
+        imageRepo: "{{variables:msr_image_repo}}"
+        installFlags:
+        - "--ucp-insecure-tls"
+        replicaIDs: "{{variables:msr_replicaids?sequential}}"
+        version: "{{variables:msr_version}}"

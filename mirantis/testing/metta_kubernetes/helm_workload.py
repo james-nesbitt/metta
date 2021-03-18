@@ -107,7 +107,6 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
         return KubernetesHelmV3WorkloadInstance(
             kubeconfig, namespace, self.instance_id, repos, chart, values)
 
-
     def info(self):
         """ Return dict data about this plugin for introspection """
         workload_config = self.environment.config.load(self.config_label)
@@ -189,8 +188,8 @@ class KubernetesHelmV3WorkloadInstance:
             raise RuntimeError(
                 'Helm failed to install the relese: {}'.format(e)) from e
 
-
-    def list(self, all: bool = False, failed: bool = False, deployed: bool = False, pending: bool = False):
+    def list(self, all: bool = False, failed: bool = False,
+             deployed: bool = False, pending: bool = False):
         """ List all releases - Not instances specific but still useful """
         cmd = ['list', '--output={}'.format('json')]
 
@@ -225,7 +224,9 @@ class KubernetesHelmV3WorkloadInstance:
     def _run(self, cmd: List[str], return_output: bool = False):
         """ run a helm v3 command """
 
-        cmd = [self.bin, '--kubeconfig={}'.format(self.kubeconfig), '--namespace={}'.format(self.namespace)] + cmd
+        cmd = [self.bin,
+               '--kubeconfig={}'.format(self.kubeconfig),
+               '--namespace={}'.format(self.namespace)] + cmd
 
         if return_output:
             logger.debug(

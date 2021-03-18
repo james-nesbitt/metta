@@ -138,11 +138,15 @@ class DownloadableExecutableUtility(METTAPlugin):
             os.environ["PATH"] += os.pathsep + \
                 os.path.realpath(self.local_path)
 
-        platforms = loaded.get([base, BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS], exception_if_missing=True)
-        current_platform = '{}-{}'.format(platform.system(), platform.machine())
+        platforms = loaded.get([base,
+                                BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS],
+                               exception_if_missing=True)
+        current_platform = '{}-{}'.format(platform.system(),
+                                          platform.machine())
 
         if current_platform not in platforms:
-            logger.warn("BinHelper doesn't have configuration for your platform '{}', so it won't download any bins.".format(current_platform))
+            logger.warn("BinHelper doesn't have configuration for your platform '{}', so it won't download any bins.".format(
+                current_platform))
             return
 
         bins = platforms[current_platform]
