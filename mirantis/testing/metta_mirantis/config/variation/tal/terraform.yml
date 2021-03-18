@@ -6,32 +6,32 @@
 # everythion below here is consumed by the terraform provider plugin
 # as though this were the contents of ./terraform.yml
 
-resource_prefix: "{variables:resource_prefix}"
+resource_prefix: "{{variables:resource_prefix}}"
 plan:
     type: local
-    path: "{variables:terraform_plan}"
+    path: "{{variables:terraform_plan}}"
 state:
-    path: "{variables:files_path?.}/{variables:files_prefix}.terraform.state"
+    path: "{{variables:files_path}}/{{variables:files_prefix}}.terraform.state"
 
 # Where will the vars be written
-vars_path: "{variables:files_path?.}/{variables:files_prefix}.tfvars.json"
+vars_path: "{{variables:files_path}}/{{variables:files_prefix}}.tfvars.json"
 # Vars list for terraform
 vars:
     # description = "Name used to identify resources and passed to launchpad."
-    cluster_name: "{variables:cluster_name}"
+    cluster_name: "{{variables:cluster_name}}"
 
     # description = "A short name/initials which represents the engineer running the test."
-    username: "{variables:user}"
+    username: "{{variables:user}}"
     # description = "An arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'."
-    task_name: "{variables:task}"
+    task_name: "{{variables:task}}"
     # description = "One of the official cost-tracking project names. Without this, your cluster may get terminated without warning."
-    project: "{variables:project}"
+    project: "{{variables:project}}"
 
     # description = "The max time to allow this cluster to avoid early termination. Can use 'h', 'm', 's' in sane combinations, eg, '15h37m18s'."
-    expire_duration: "{variables:expire_duration}"
+    expire_duration: "{{variables:expire_duration}}"
 
     # description = "The AWS region to deploy to."
-    aws_region: "{variables:aws_region}"
+    aws_region: "{{variables:aws_region}}"
 
     # description = "The CIDR to use when creating the VPC."
     vpc_cidr: "172.31.0.0/16"
@@ -40,76 +40,76 @@ vars:
     admin_username: admin
 
     # description = "The UCP admin password to use."
-    admin_password: "{variables:admin_password}"
+    admin_password: "{{variables:admin_password}}"
 
     # description = "The number of UCP managers to create."
-    manager_count: "{variables:manager_count}"
+    manager_count: "{{variables:manager_count}}"
 
     # description = "The number of UCP Linux workers to create."
-    worker_count: "{variables:worker_count}"
+    worker_count: "{{variables:worker_count}}"
 
     # description = "The number of DTR replicas to create."
-    msr_count: "{variables:msr_count}"
+    msr_count: "{{variables:msr_count}}"
 
     # description = "The number of UCP Windows workers to create."
-    windows_worker_count: "{variables:windows_worker_count}"
+    windows_worker_count: "{{variables:windows_worker_count}}"
 
     #description = "The AWS instance type to use for manager nodes."
-    manager_type: "{variables:manager_type}"
+    manager_type: "{{variables:manager_type}}"
 
     # description = "The AWS instance type to use for Linux/Windows worker nodes."
-    worker_type: "{variables:worker_type}"
+    worker_type: "{{variables:worker_type}}"
 
     # description = "The AWS instance type to use for DTR replica nodes."
-    msr_type: "{variables:msr_type}"
+    msr_type: "{{variables:msr_type}}"
 
     # description = "The volume size (in GB) to use for manager nodes."
-    manager_volume_size: "{variables:manager_volume_size}"
+    manager_volume_size: "{{variables:manager_volume_size}}"
 
     # description = "The volume size (in GB) to use for worker nodes."
-    worker_volume_size: "{variables:worker_volume_size}"
+    worker_volume_size: "{{variables:worker_volume_size}}"
 
     # description = "The volume size (in GB) to use for DTR replica nodes."
-    msr_volume_size: "{variables:msr_volume_size}"
+    msr_volume_size: "{{variables:msr_volume_size}}"
 
     # description = "The Windows Administrator password to use."
-    windows_administrator_password: "{variables:windows_administrator_password}"
+    windows_administrator_password: "{{variables:windows_administrator_password}}"
 
     # description = "The Linux platform to use for manager/worker/DTR replica nodes"
-    platform: "{variables:platform}"
+    platform: "{{variables:platform}}"
 
     # description = "The engine version to deploy across all nodes in the cluster."
-    mcr_version: "{variables:mcr_version}"
+    mcr_version: "{{variables:mcr_version}}"
 
     # description = "The channel to pull the engine installer from."
-    mcr_channel: "{variables:mcr_channel}"
+    mcr_channel: "{{variables:mcr_channel}}"
 
     # description = "The repository to source the mcr installer."
-    mcr_repo_url: "{variables:mcr_repo_url}"
+    mcr_repo_url: "{{variables:mcr_repo_url}}"
 
     # description = "Location of Linux installer script."
-    mcr_install_url_linux: "{variables:mcr_install_url_linux}"
+    mcr_install_url_linux: "{{variables:mcr_install_url_linux}}"
 
     # description = "Location of Windows installer script."
-    mcr_install_url_windows: "{variables:mcr_install_url_windows}"
+    mcr_install_url_windows: "{{variables:mcr_install_url_windows}}"
 
     # description = "The UCP version to deploy."
-    mke_version: "{variables:mke_version}"
+    mke_version: "{{variables:mke_version}}"
 
     # description = "The repository to pull the UCP images from."
-    mke_image_repo: "{variables:mke_image_repo}"
+    mke_image_repo: "{{variables:mke_image_repo}}"
 
     # description = "The UCP installer flags to use."
-    mke_install_flags: "{variables:mke_install_flags}"
+    mke_install_flags: "{{variables:mke_install_flags}}"
 
     # description = "The option to enable/disable Kubernetes as the default orchestrator."
     kube_orchestration: true
 
     # description = "The DTR version to deploy."
-    msr_version: "{variables:msr_version}"
+    msr_version: "{{variables:msr_version}}"
 
     # description = "The repository to pull the DTR images from."
-    msr_image_repo: "{variables:msr_image_repo}"
+    msr_image_repo: "{{variables:msr_image_repo}}"
 
     # description = "The DTR installer flags to use."
     # MSR likes to handle its own TLS and so will use self-signed certs unless giben certs
@@ -133,7 +133,7 @@ vars:
     #   )
 
     # description = "The selector for the applicable AMI subcollection (ie, 'public' vs 'mirantis')."
-    platform_repo: "{variables:platform_repo}"
+    platform_repo: "{{variables:platform_repo}}"
 
     # description = "A list of strings (shell commands) to be run before stages."
     # hooks_apply_before:
@@ -144,4 +144,4 @@ vars:
     #     - ""
 
     # description = "If non-empty, use this path/filename as the ssh key file instead of generating automatically."
-    ssh_key_file_path: "{variables:files_path?.}/{variables:files_prefix}.host.pem"
+    ssh_key_file_path: "{{variables:files_path}}/{{variables:files_prefix}}.host.pem"

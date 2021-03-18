@@ -26,13 +26,17 @@ METTA_USER_LAUNCHPAD_BUNDLE_SUBPATH = 'bundle'
 METTA_USER_LAUNCHPAD_BUNDLE_META_FILE = 'meta.json'
 """ str filename for the meta file in the client bundle path """
 
+LAUNCHPAD_CLIENT_BUNDLE_RETRY_COUNT_DEFAULT = 2
+""" default value for how many times we should retry the client bundle download """
+
 
 class LaunchpadClient:
     """ shell client for interacting with the launchpad bin """
 
     def __init__(self, config_file: str = METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
                  working_dir: str = METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT,
-                 cluster_name_override: str = ''):
+                 cluster_name_override: str = '', accept_license: bool = False,
+                 disable_telemetry: bool = False):
         """
         Parameters:
 
@@ -57,6 +61,12 @@ class LaunchpadClient:
 
         self.bin = METTA_LAUNCHPADCLIENT_BIN_PATH
         """ shell execution target for launchpad """
+
+        self.client_bundle_retry_count = LAUNCHPAD_CLIENT_BUNDLE_RETRY_COUNT_DEFAULT
+        """ how many times to rety a client bundle download """
+
+        self.disable_telemetry = disable_telemetry
+        self.accept_license = accept_license
 
     def version(self):
         """ Output launchpad client version """
@@ -130,7 +140,7 @@ class LaunchpadClient:
             #    with unclear TLS issues.  Because the failures are intermittent, we should
             #    just try again
 
-            for i in range(1, 4):
+            for i in range(1, self.client_bundle_retry_count):
                 try:
                     self._run(["client-config", user])
                     break
@@ -255,7 +265,14 @@ class LaunchpadClient:
         if not args[0] in ['help', 'version']:
             args = [args[0]] + ['-c', self.config_file] + args[1:]
 
-        cmd = [self.bin] + args
+        cmd = [self.bin]
+
+        cmd += args
+
+        if self.disable_telemetry:
+            cmd += ['--disable-telemetry']
+        if self.accept_license:
+            cmd += ['--accept-license']
 
         if return_output:
             logger.debug(

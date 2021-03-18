@@ -5,16 +5,19 @@ Common METTA plugins
 """
 from typing import Dict, Any
 
+from configerus import Config
 from configerus.loaded import LOADED_KEY_ROOT
+from configerus.plugin import FormatFactory
+
 from mirantis.testing.metta.plugin import Factory, Type
 from mirantis.testing.metta.environment import Environment
-
 
 from .common_config import add_common_config
 from .dict_output import DictOutputPlugin
 from .text_output import TextOutputPlugin
 from .combo_provisioner import ComboProvisionerPlugin, COMBO_PROVISIONER_CONFIG_LABEL
 from .binhelper_utility import DownloadableExecutableUtility, METTA_PLUGIN_ID_UTILITY_BINHELPER, BINHELPER_UTILITY_CONFIG_LABEL
+from .config_format_output import ConfigFormatOutputPlugin
 
 METTA_PLUGIN_ID_OUTPUT_DICT = 'dict'
 """ output plugin_id for the dict plugin """
@@ -58,15 +61,24 @@ def metta_plugin_factory_utility_binhelper(
         environment, instance_id, label=label, base=base)
 
 
-""" SetupTools EntryPoint BootStrapping """
+""" Congiferus formatter for metta output plugins """
+
+PLUGIN_ID_FORMAT_OUTPUT = 'output'
+""" Format plugin_id for the configerus output format plugin """
+
+
+@FormatFactory(plugin_id=PLUGIN_ID_FORMAT_OUTPUT)
+def plugin_factory_format_output(config: Config, instance_id: str = ''):
+    """ create an format plugin which replaces from output contents """
+    return ConfigFormatOutputPlugin(config, instance_id)
+
+
+""" METTA bootstraps that we will use on config objects """
 
 
 def bootstrap(environment: Environment):
     """ METTA Bootstrapper - don't actually do anything """
     pass
-
-
-""" METTA bootstraps that we will use on config objects """
 
 
 def bootstrap_common(environment: Environment):
@@ -82,3 +94,11 @@ def bootstrap_common(environment: Environment):
 
     """
     add_common_config(environment)
+
+    # Add a configerus output formatter which can interpret environemnt
+    # outputs.
+    output_formatter = environment.config.add_formatter(
+        plugin_id=PLUGIN_ID_FORMAT_OUTPUT,
+        instance_id=PLUGIN_ID_FORMAT_OUTPUT,
+        priority=40)
+    output_formatter.set_environemnt(environment)

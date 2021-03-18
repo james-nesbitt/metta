@@ -29,7 +29,7 @@ launchpad:
     # using a passthrough file, we keep a copy of the last file used for diffs
     # and restores, and also because it keeps the code the same for various
     # backends which mau not start with a file
-    config_file: "{variables:files_path}/launchpad/{variables:files_prefix}.yaml"
+    config_file: "{{variables::files_path}}/launchpad/{{variables:files_prefix}}.yaml"
 
 # mke_cluster : metta.plugin.output:dict
 #
@@ -45,7 +45,7 @@ mke_cluster:
         # that we put here, but rather it stores the contents in a new location.
         # This is a result of the way that the launchpad provisioner works, but
         # it has an advantage in that we can always know the last structure used.
-        data: "[file:{variables:launchpad_source_path}]"
+        data: "{{file::{variables:launchpad_source_path} }}"
         # The above syntax is a configerus instruction to dump the source path
         # into the config structure passed to the output plugin.  The file
         # contents are passed to the dict output plugion constructor, and the

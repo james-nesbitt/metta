@@ -133,8 +133,10 @@ class BinHelperTest(unittest.TestCase):
 
         self.assertTrue(self.temp_bin_dir in os.environ['PATH'])
 
-        self.assertEqual(len(fixtures_config.get('bin-helper.platforms').keys()), 1)
-        self.assertEqual(len(fixtures_config.get('bin-helper.platforms.Linux-x86_64').keys()), 5)
+        self.assertEqual(len(fixtures_config.get(
+            'bin-helper.platforms').keys()), 1)
+        self.assertEqual(len(fixtures_config.get(
+            'bin-helper.platforms.Linux-x86_64').keys()), 5)
 
         print('Path: {}'.format(self.temp_bin_dir))
 

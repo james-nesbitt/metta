@@ -26,7 +26,7 @@ before:
         # Include teh config/before path as a config source for this environment
         plugin_id: path
         priority: 80
-        path: "{paths:project-config}/before"
+        path: "{{paths:project-config}}/before"
 
       # include Environemnt variables as a source of config if they use the format
       # METTA_LABEL[_STEP]*
@@ -72,7 +72,7 @@ after:
       project-config-after:
         plugin_id: path
         priority: 80
-        path: "{paths:project-config}/after"
+        path: "{{paths:project-config}}/after"
 
       # include Environemnt variables as a source of config if they use the format
       # METTA_LABEL[_STEP]*

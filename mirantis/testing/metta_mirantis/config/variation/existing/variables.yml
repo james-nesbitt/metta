@@ -1,5 +1,5 @@
 # Used in terraform resource tagging
-user: "{user:id?anon}"
+user: "{{user:id?anon}}"
 #  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
 task: "ltc"
 # One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.
@@ -7,11 +7,11 @@ project: "default"
 
 
 # used for resource naming in various places
-id: "{user}-metta-ltc"
+id: "existing"
 # where to put terraform and launchpad state/var/config files
 files_path: .
 # prefix for terraform/launchpad files to allow variations
-files_prefix: "{id}"
+files_prefix: "{{id}}"
 
 # The Linux platform to use for manager/worker/DTR replica nodes
 # Typically overridden in a platform config variables file
