@@ -43,6 +43,22 @@ class EnvironmentGroup():
         environment = self._environment(environment)
         return environment.name
 
+    def info(self, environment: str = ''):
+        """ return info about an environment """
+        environment = self._environment(environment)
+
+        info = {
+            'name': environment.name
+        }
+
+        if len(environment.states) > 0:
+            info['states'] = {
+                'available': environment.states,
+                'active': environment.state
+            }
+
+        return json.dumps(info, indent=2, default=lambda X: "{}".format(X))
+
     def bootstraps(self, environment: str = ''):
         """ List bootstraps that have been applied to the environment """
         environment = self._environment(environment)

@@ -6,6 +6,7 @@ name: "{{variables:id}}"
 cli:
     accept-license: true
     disable-telemetry: true
+    disable-upgrade-check: true
 
 # the example tf plans need launchpad to run in the plan root
 working_dir: "{{variables:terraform_plan}}"
@@ -51,6 +52,7 @@ config:
         - "--admin-password={{variables:admin_password?orcaorcaorca}}"
         - "--default-node-orchestrator=kubernetes"
         - "--san={{output::mke_lb?NoSanConfigured}}"
+        - "--istio"
         upgradeFlags:
         - "--force-recent-backup"
         - "--force-minimums"

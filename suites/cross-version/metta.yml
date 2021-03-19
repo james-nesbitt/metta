@@ -11,11 +11,17 @@ config:
       priority: 70
       path: "{{paths:project}}/config"
 
+# Tell metta to create environments from the ./config/environments.yml file
+environments:
+  from_builder:
+    import: "envbuilder"
+    method: "build"
+
 # If you want to import a whole package, you can use this approach. Yo will want
 # an __init__.py file in the folder, and that package will not be relative path.
 imports:
   # import ./plugins/jimcustom package as "jimcustom"
-  jimcustom:
+  envbuilder:
     # because this is a directory, the parent folder will be added to sys,path
     # and the 'plugins' will be imported as a package
-    path: "plugins/jimcustom"
+    path: "envbuilder"

@@ -23,3 +23,8 @@ config:
       plugin_id: env-json
       priority: 84
       env: METTA_CONFIGJSON
+
+# Tell metta to create environments from the ./config/environments.yml file
+environments:
+  from_config:
+    label: environments

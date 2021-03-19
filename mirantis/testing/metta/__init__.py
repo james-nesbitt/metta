@@ -15,7 +15,8 @@ import os
 import sys
 from typing import List
 import logging
-import importlib.util
+import importlib
+import time
 
 from configerus import new_config as configerus_new_config
 from configerus.config import Config
@@ -100,9 +101,35 @@ def discover(path: str = CWD, additional_configerus_bootstraps: List[str] = [
     # stuff to do)
     discover_project_config(config=config, path=path)
     # Create any environments defined in config
-    new_environments_from_config(
-        config=config,
-        additional_metta_bootstraps=additional_metta_bootstraps)
+
+    metta_config = config.load('metta')
+
+    if metta_config.has(['environments', 'from_config']):
+        environment_config = metta_config.get(['environments', 'from_config'])
+        label = environment_config['label'] if 'label' in environment_config else 'metta'
+        base = environment_config['base'] if 'base' in environment_config else LOADED_KEY_ROOT
+        new_environments_from_config(
+            config=config,
+            additional_metta_bootstraps=additional_metta_bootstraps,
+            label=label,
+            base=base)
+
+    elif metta_config.has(['environments', 'from_builder']):
+        environment_config = metta_config.get(['environments', 'from_builder'])
+        module = environment_config['import']
+        method = environment_config['method']
+        new_environments_from_builder(
+            config=config,
+            additional_metta_bootstraps=additional_metta_bootstraps,
+            module=module,
+            method=method)
+
+    elif metta_config.has('environments'):
+        new_environments_from_config(
+            config=config,
+            additional_metta_bootstraps=additional_metta_bootstraps,
+            label='metta',
+            base='environments')
 
 
 def discover_project_config(config: Config, path: str = CWD):
@@ -263,6 +290,56 @@ def new_environment_from_config(config: Config, name: str = DEFAULT_ENVIRONMENT_
         config_label=load_more_from_label,
         config_base=load_more_from_base)
     return add_environment(name, environment)
+
+
+def new_environments_from_builder(
+        config: Config, additional_metta_bootstraps: List[str], module: str, method: str):
+    """ Create environments using an external environment builder option
+
+    This method will import and call a method to build environments dynamically.
+
+    This is usefull in cases where building environments from flat config is not
+    possible due to complexity, or if it would be overly redundant.
+
+    This method receives a python package/module name which it imports.  Then the
+    method of that imported package is executed and given the Config parameter.
+    The method is expected to operate independently, using metta functions to
+    register any environments it creates.
+
+    A common approach for this is to use a builder to build dynamic sets of
+    configuration from simpler sources, and then use the other new_environment
+    methods to process that config.
+
+    Parameters:
+    -----------
+
+    config (Config) : base config object which can be used as a base for any new
+        environment objects, but can also be used as the source of configuration
+        for helping the builder to decide what environments to make.
+
+    additional_metta_bootstraps (List[str]) : metta bootstraps to include on any
+        built environment.  This doesn't really make sense, but it is a part
+        of the building paradigm so it made sense to included it here.
+
+    module (string) : Python module containing the builder.  This will be
+        imported.
+
+    method (string) : Python method which will create the environments.
+
+    """
+    try:
+        module = importlib.import_module(module)
+    except Exception as e:
+        raise ValueError(
+            "Env builder could not load suggested python package: {}".format(e)) from e
+
+    try:
+        method = getattr(module, method)
+    except Exception as e:
+        raise ValueError(
+            "Env builder could not execute package method: {}".format(e)) from e
+
+    method(config, additional_metta_bootstraps)
 
 
 def environment_names() -> List[str]:

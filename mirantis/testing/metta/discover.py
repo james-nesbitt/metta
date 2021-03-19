@@ -1,7 +1,7 @@
 import os.path
 import sys
 import logging
-import importlib.util
+import importlib
 from typing import List
 
 from configerus import new_config as configerus_new_config
@@ -208,9 +208,16 @@ def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
             if os.path.isdir(module_path):
                 module_path_dir = os.path.dirname(module_path)
                 module_path_basename = os.path.basename(module_path)
+                if not module_path_basename == import_name:
+                    logger.warn(
+                        "Metta discovery importer cannot import a package (folder) using a name other than the folder name: {} != {}".format(
+                            module_path_basename, import_name))
                 if module_path_dir not in sys.path:
                     sys.path.append(module_path_dir)
                 importlib.import_module(module_path_basename)
+                logger.debug(
+                    "Loaded package: {} : {}".format(
+                        module_path_basename, module_path))
 
             elif os.path.isfile(module_path):
                 spec = importlib.util.spec_from_file_location(

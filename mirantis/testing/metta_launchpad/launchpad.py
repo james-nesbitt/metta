@@ -36,7 +36,7 @@ class LaunchpadClient:
     def __init__(self, config_file: str = METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
                  working_dir: str = METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT,
                  cluster_name_override: str = '', accept_license: bool = False,
-                 disable_telemetry: bool = False):
+                 disable_telemetry: bool = False, disable_upgrade_check: bool = True):
         """
         Parameters:
 
@@ -55,9 +55,12 @@ class LaunchpadClient:
         """ Python subprocess working dir to execute launchpad in.
             This may be relevant in cases where ssh keys have a relative path """
 
-        self.cluster_name_override = cluster_name_override
-        """ if not empty this will be used as a cluster name instead of taking
-            it from the yaml file """
+        if cluster_name_override:
+            self.cluster_name_override = str(cluster_name_override)
+            """ if not empty this will be used as a cluster name instead of taking
+                it from the yaml file """
+        else:
+            self.cluster_name_override = None
 
         self.bin = METTA_LAUNCHPADCLIENT_BIN_PATH
         """ shell execution target for launchpad """
@@ -67,6 +70,7 @@ class LaunchpadClient:
 
         self.disable_telemetry = disable_telemetry
         self.accept_license = accept_license
+        self.disable_upgrade_check = disable_upgrade_check
 
     def version(self):
         """ Output launchpad client version """
@@ -162,7 +166,7 @@ class LaunchpadClient:
                 os.chmod(client_bundle_kubeconfig_file, 0o600)
         except FileNotFoundError as e:
             raise ValueError(
-                "failed to open the launchpad client bundle meta file.") from e
+                "failed to open the launchpad client bundle meta file : {}".format(client_bundle_meta_file)) from e
 
         # Not sure why this isn't in there:
         data['Endpoints']['kubernetes']['kubeconfig'] = client_bundle_kubeconfig_file
@@ -224,8 +228,8 @@ class LaunchpadClient:
 
         """
 
-        if self.cluster_name_override:
-            return self.cluster_name_override
+        if self.cluster_name_override is not None:
+            return str(self.cluster_name_override)
 
         try:
             with open(self.config_file) as config_file_object:
@@ -246,7 +250,7 @@ class LaunchpadClient:
                 "Launchpad yaml file had unexpected contents: {}".format(self.config_file))
 
         try:
-            return self.config_data['metadata']['name']
+            return str(self.config_data['metadata']['name'])
         except KeyError:
             raise ValueError(
                 'Launchpad yaml file did not container a cluster name')
@@ -274,6 +278,8 @@ class LaunchpadClient:
                 cmd += ['--disable-telemetry']
             if self.accept_license:
                 cmd += ['--accept-license']
+        if self.disable_upgrade_check:
+            cmd += ['--disable-upgrade-check']
 
         if return_output:
             logger.debug(

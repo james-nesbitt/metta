@@ -12,7 +12,7 @@
 # Used in terraform resource tagging (user:id gets set in conftest.py)
 user: "{{user:id?anon}}"
 #  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
-task: "sanity"
+task: "cross"
 # One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.
 project: "PRODENG"
 
@@ -40,13 +40,3 @@ admin_password: orcaorcaorca
 windows_administrator_password: "tfaws,,ABC..Example"
 
 mcr_repo_url: "https://s3.amazonaws.com/repos-internal.mirantis.com/"
-
-# Pre-program the before and after environment
-
-# Provide values for the before environment declaration to consume
-before:
-    variation: A
-
-# Provide values for the after environment declaration to consume
-after:
-    variation: B
