@@ -431,7 +431,6 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             arguments={'accesspoint': None, 'username': api_username, 'password': api_password, 'hosts': msr_hosts})
         self.fixtures.add_fixture(fixture)
 
-
     def _mke_client_bundle(self, user: str, reload: bool = False):
         """ Retrieve the MKE Client bundle metadata using the client """
         assert self.client, "Don't have a launchpad client configured yet"

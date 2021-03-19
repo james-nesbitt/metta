@@ -8,6 +8,7 @@ import logging
 import json
 from typing import List, Dict
 import requests
+from enum import Enum
 
 from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta.environment import Environment
@@ -15,7 +16,6 @@ from mirantis.testing.metta.client import ClientBase
 from mirantis.testing.metta.cli import CliBase
 
 logger = logging.getLogger('metta.contrib.metta_mirantis.client.msrapi')
-
 
 
 METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID = 'metta_mirantis_client_msr'
@@ -96,11 +96,20 @@ class MSRAPICliGroup():
         return json.dumps(plugin.api_alerts(), indent=2)
 
 
+class MSRReplicaHealth(Enum):
+    """ MSR replica health in the cluster status API response """
+    OK = 'OK'
+
+    def match(self, compare: str) -> bool:
+        """ allow for string comparisons """
+        return self.value == compare
+
 
 class MSRAPIClientPlugin(ClientBase):
     """ Client for API Connections to MSR """
 
-    def __init__(self, environment: Environment, instance_id: str, accesspoint: str, username: str, password: str, hosts: List[Dict], api_version: str = 'v0'):
+    def __init__(self, environment: Environment, instance_id: str, accesspoint: str,
+                 username: str, password: str, hosts: List[Dict], api_version: str = 'v0'):
         """
 
         Parameters:
@@ -125,18 +134,18 @@ class MSRAPIClientPlugin(ClientBase):
         self.verify = False
         """ should we verify ssl certs """
         if not self.verify:
-            requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+            requests.packages.urllib3.disable_warnings(
+                requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
         self.auth_token = None
         """ hold the bearer auth token if created by ._auth_headers() """
-
 
     def info(self, deep: bool = False):
         """ return information about the plugin """
         info = {
             'api': {
                 'accesspoint': self.accesspoint,
-                'username' : self.username,
+                'username': self.username,
             },
             'hosts': self.hosts
         }
@@ -172,18 +181,19 @@ class MSRAPIClientPlugin(ClientBase):
             response.raise_for_status()
             return json.loads(response.content)
 
-
     def _api_auth(self):
         """ get the requests auth handler """
         return requests.auth.HTTPBasicAuth(self.username, self.password)
 
     def _accesspoint_url(self, endpoint: str = ''):
         """ convert an endpoint into a full URL for the LB/AccessPoint """
-        return "https://{accesspoint}/api/{version}/{endpoint}".format(accesspoint=self.accesspoint, version=self.version, endpoint=endpoint)
+        return "https://{accesspoint}/api/{version}/{endpoint}".format(
+            accesspoint=self.accesspoint, version=self.version, endpoint=endpoint)
 
     def _node_url(self, node: int, endpoint: str = ''):
         """ convert an endpoint into a full URL for a specific node """
-        return "https://{accesspoint}/api/{version}/{endpoint}".format(accesspoint=self._node_address(node), version=self.version, endpoint=endpoint)
+        return "https://{accesspoint}/api/{version}/{endpoint}".format(
+            accesspoint=self._node_address(node), version=self.version, endpoint=endpoint)
 
     def _node_address(self, node: int = 0):
         """ get the ip address from the node for the node index """

@@ -24,7 +24,8 @@ from .msr_client import MSRAPIClientPlugin, MSRAPICliPlugin, METTA_MIRANTIS_CLIE
 def metta_mirantis_plugin_factory_client_mke(
         environment: Environment, instance_id: str = "", accesspoint: str = '', username: str = '', password: str = '', hosts: List[Dict] = []):
     """ Create a Mirantis MKE API Client """
-    return MKEAPIClientPlugin(environment, instance_id, accesspoint=accesspoint, username=username, password=password, hosts=hosts)
+    return MKEAPIClientPlugin(environment, instance_id, accesspoint=accesspoint,
+                              username=username, password=password, hosts=hosts)
 
 
 @Factory(type=Type.CLI, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
@@ -38,7 +39,8 @@ def metta_terraform_factory_cli_mke(
 def metta_mirantis_plugin_factory_client_msr(
         environment: Environment, instance_id: str = '', accesspoint: str = '', username: str = '', password: str = '', hosts: List[Dict] = []):
     """ Create a Mirantis MSR API Client """
-    return MSRAPIClientPlugin(environment, instance_id, accesspoint=accesspoint, username=username, password=password, hosts=hosts)
+    return MSRAPIClientPlugin(environment, instance_id, accesspoint=accesspoint,
+                              username=username, password=password, hosts=hosts)
 
 
 @Factory(type=Type.CLI, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
@@ -46,6 +48,7 @@ def metta_terraform_factory_cli_msr(
         environment: Environment, instance_id: str = ''):
     """ create an MSR cli plugin """
     return MSRAPICliPlugin(environment, instance_id)
+
 
 """ METTA bootstraps that we will use on config objects """
 
@@ -84,4 +87,8 @@ def bootstrap_presets(environment: Environment):
     add_preset_config(environment)
 
 
-__all__ = [ bootstrap_common, bootstrap_presets, METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID ]
+__all__ = [
+    bootstrap_common,
+    bootstrap_presets,
+    METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+    METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID]
