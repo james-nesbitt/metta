@@ -19,6 +19,7 @@ from mirantis.testing.metta.fixtures import Fixtures, UCCTFixturesPlugin
 from mirantis.testing.metta.provisioner import ProvisionerBase
 from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
+from mirantis.testing.metta_mirantis import METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
 
 from .launchpad import LaunchpadClient, METTA_USER_LAUNCHPAD_CLUSTER_PATH
 from .exec_client import METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID
@@ -31,15 +32,23 @@ METTA_LAUNCHPAD_CONFIG_ROOT_PATH_KEY = 'root.path'
 """ config key for a base file path that should be used for any relative paths """
 METTA_LAUNCHPAD_CONFIG_KEY = 'config'
 """ which config key will provide the launchpad yml """
+METTA_LAUNCHPAD_CONFIG_API_ACCESSPOINT_KEY = 'api.accesspoint'
+""" config key for the API endpoint, usually the manager load-balancer """
+METTA_LAUNCHPAD_CONFIG_API_USERNAME_KEY = 'api.username'
+""" config key for the API username """
+METTA_LAUNCHPAD_CONFIG_API_PASSWORD_KEY = 'api.password'
+""" config key for the API password """
+METTA_LAUNCHPAD_CONFIG_HOSTS_KEY = 'config.spec.hosts'
+""" config key for the list of hosts as per the launchpad spec """
 METTA_LAUNCHPAD_CLI_CONFIG_FILE_KEY = 'config_file'
 """ Launchpad config cli key to tell us where to put the launchpad yml file """
 METTA_LAUNCHPAD_CLI_WORKING_DIR_KEY = 'working_dir'
 """ Launchpad config cli configuration working dir key """
-METTA_LAUNCHPAD_CLI_CLUSTEROVERRIDE = 'cluster_name'
+METTA_LAUNCHPAD_CLI_CLUSTEROVERRIDE_KEY = 'cluster_name'
 """ If provided, this config key will override a cluster name pulled from yaml"""
-METTA_LAUNCHPAD_CLI_ACCEPTLICENSE = 'cli.accept-license'
+METTA_LAUNCHPAD_CLI_ACCEPTLICENSE_KEY = 'cli.accept-license'
 """ If provided, this config key will tell the cli to accept the license"""
-METTA_LAUNCHPAD_CLI_DISABLETELEMETRY = 'cli.disable-telemetry'
+METTA_LAUNCHPAD_CLI_DISABLETELEMETRY_KEY = 'cli.disable-telemetry'
 """ If provided, this config key will tell the cli to disable telemetry"""
 METTA_LAUNCHPAD_CLI_CONFIG_DOCKER_VERSION_DEFAULT = '1.40'
 """ Default value for the docker client version number.  It would be best to discover or config this."""
@@ -51,6 +60,12 @@ METTA_LAUNCHPAD_VALIDATE_JSONSCHEMA = {
             'type': ['object', 'null'],
             'properties': {
                 'apiVersion': {'type': 'string'}
+            },
+        },
+        'api': {
+            'type': 'object',
+            'properties': {
+                'endpoint': {'type': ['string', 'null']}
             },
         },
         'cli': {
@@ -67,7 +82,7 @@ METTA_LAUNCHPAD_VALIDATE_JSONSCHEMA = {
             'type': 'string'
         }
     },
-    'required': ['config_file', 'config']
+    'required': ['config_file', 'config', 'api']
 }
 """ Validation jsonschema for terraform config contents """
 METTA_LAUNCHPAD_VALIDATE_TARGET = {
@@ -145,14 +160,14 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                 os.path.join(self.working_dir, self.config_file))
 
         cluster_name_override = launchpad_config.get(
-            [base, METTA_LAUNCHPAD_CLI_CLUSTEROVERRIDE], exception_if_missing=False)
+            [base, METTA_LAUNCHPAD_CLI_CLUSTEROVERRIDE_KEY], exception_if_missing=False)
         """ Can hardcode the cluster name if it can't be take from the yaml file """
 
         accept_license = launchpad_config.get(
-            [base, METTA_LAUNCHPAD_CLI_ACCEPTLICENSE], exception_if_missing=False) is not None
+            [base, METTA_LAUNCHPAD_CLI_ACCEPTLICENSE_KEY], exception_if_missing=False) is not None
         """ should the client accept the license """
         disable_telemetry = launchpad_config.get(
-            [base, METTA_LAUNCHPAD_CLI_DISABLETELEMETRY], exception_if_missing=False) is not None
+            [base, METTA_LAUNCHPAD_CLI_DISABLETELEMETRY_KEY], exception_if_missing=False) is not None
         """ should the client disable telemetry """
 
         logger.debug("Creating Launchpad API client")
@@ -221,7 +236,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                     plugin_info = fixture.plugin.info()
                     if isinstance(plugin_info, dict):
                         fixture_info.update(plugin_info)
-                fixtures[fixture.instance_id] = plugin_info
+                fixtures[fixture.instance_id] = fixture_info
             info['fixtures'] = fixtures
 
         info['helper'] = {
@@ -316,6 +331,10 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                        reload: bool = False) -> Fixtures:
         """ Build fixtures for all of the clients """
 
+        launchpad_config = self.environment.config.load(
+            self.config_label, force_reload=True)
+        """ get fresh values for the launchpad config (in case it has changed) """
+
         bundle_info = self._mke_client_bundle(user, reload)
         """ holds retrieved bundle information from MKE for all client configs. """
 
@@ -371,6 +390,47 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             priority=70,
             arguments={'client': self.client})
         self.fixtures.add_fixture(fixture)
+
+        # The following clients both need the LB, username and password
+
+        api_accesspoint = self.launchpad_config = launchpad_config.get(
+            [self.config_base, METTA_LAUNCHPAD_CONFIG_API_ACCESSPOINT_KEY])
+        api_username = self.launchpad_config = launchpad_config.get(
+            [self.config_base, METTA_LAUNCHPAD_CONFIG_API_USERNAME_KEY])
+        api_password = self.launchpad_config = launchpad_config.get(
+            [self.config_base, METTA_LAUNCHPAD_CONFIG_API_PASSWORD_KEY])
+
+        hosts = self.launchpad_config = launchpad_config.get(
+            [self.config_base, METTA_LAUNCHPAD_CONFIG_HOSTS_KEY])
+        if hosts is None:
+            hosts = []
+
+        # MKE Client
+        #
+        instance_id = "launchpad-{}-{}-{}-client".format(
+            self.instance_id, METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID, user)
+        mke_hosts = [host for host in hosts if host['role'] not in ['msr']]
+        fixture = self.environment.add_fixture(
+            type=Type.CLIENT,
+            plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+            instance_id=instance_id,
+            priority=70,
+            arguments={'accesspoint': api_accesspoint, 'username': api_username, 'password': api_password, 'hosts': mke_hosts})
+        self.fixtures.add_fixture(fixture)
+
+        # MSR Client
+        #
+        instance_id = "launchpad-{}-{}-{}-client".format(
+            self.instance_id, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID, user)
+        msr_hosts = [host for host in hosts if host['role'] in ['msr']]
+        fixture = self.environment.add_fixture(
+            type=Type.CLIENT,
+            plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+            instance_id=instance_id,
+            priority=70,
+            arguments={'accesspoint': None, 'username': api_username, 'password': api_password, 'hosts': msr_hosts})
+        self.fixtures.add_fixture(fixture)
+
 
     def _mke_client_bundle(self, user: str, reload: bool = False):
         """ Retrieve the MKE Client bundle metadata using the client """

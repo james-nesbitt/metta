@@ -1,5 +1,5 @@
 project:
-  name: sanity-pytest
+  name: clients-pytest
 
 # Also include the following sources of configuration
 config:

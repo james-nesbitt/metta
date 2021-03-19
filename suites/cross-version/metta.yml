@@ -1,0 +1,21 @@
+project:
+  name: cross-pytest
+
+# Also include the following sources of configuration
+config:
+  sources:
+    # include ./config as a config source.  This is where we will put all of our
+    # actual project config, although we could just inline it all here.
+    project-config:
+      plugin_id: path
+      priority: 70
+      path: "{{paths:project}}/config"
+
+# If you want to import a whole package, you can use this approach. Yo will want
+# an __init__.py file in the folder, and that package will not be relative path.
+imports:
+  # import ./plugins/jimcustom package as "jimcustom"
+  jimcustom:
+    # because this is a directory, the parent folder will be added to sys,path
+    # and the 'plugins' will be imported as a package
+    path: "plugins/jimcustom"
