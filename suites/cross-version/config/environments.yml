@@ -1,0 +1,36 @@
+
+# Create an environment called 'before'
+#
+# This is the initial upgrade state environment.  This creates a full testing
+# environment which matches our starting start.  The next state is a different
+# environment that will share a lot of settings, and will use the same
+# launchpad/terraform/ansible assets - and therefore will modify this testing
+# cluster.
+#
+default:
+  bootstraps:
+    metta:
+    - metta_common
+    - metta_ansible
+    - metta_docker
+    - metta_kubernetes
+    - metta_terraform
+    - metta_launchpad
+    - metta_common_config
+    - metta_mirantis_common
+    - metta_mirantis_presets
+
+  config:
+    sources:
+      # USE THIS WHEN WE ARE READY
+      # project-config-default:
+      #   # Include the env specific path as a config source for this environment
+      #   plugin_id: path
+      #   priority: 80
+      #   path: "{{paths:project-config}}/variation/{{variables:before.variation}}}}"
+
+
+  fixtures:
+    from_config:
+      # Load the fixtures from fixtures(.yml) source.
+      label: fixtures

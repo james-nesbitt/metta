@@ -102,12 +102,12 @@ locals {
   kube_orchestration = var.kube_orchestration ? "--default-node-orchestrator=kubernetes" : ""
   ami_obj            = var.platforms[var.platform_repo][var.platform]
   ami_obj_win        = var.platforms[var.platform_repo]["windows_2019"]
-  mke_san            = module.managers.lb_dns_name
+  mke_lb             = module.managers.lb_dns_name
   mke_install_flags = concat([
     "--admin-username=${var.admin_username}",
     "--admin-password=${var.admin_password}",
     local.kube_orchestration,
-    "--san=${local.mke_san}",
+    "--san=${local.mke_lb}",
     ],
     var.mke_install_flags
   )
@@ -275,6 +275,6 @@ output "cluster_name" {
   value = local.cluster_name
 }
 
-output "mke_san" {
-  value = local.mke_san
+output "mke_lb" {
+  value = local.mke_lb
 }

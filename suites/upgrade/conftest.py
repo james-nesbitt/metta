@@ -109,7 +109,7 @@ def environment_down(environment):
     """ tear down an environment if it is currently up """
     global current_up_environment
 
-    # If this environment is already up, then skip
+    # If this environment is not up, then skip
     if not environment.name == current_up_environment:
         return
 

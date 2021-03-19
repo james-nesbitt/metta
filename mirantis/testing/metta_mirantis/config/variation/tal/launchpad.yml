@@ -12,6 +12,12 @@ working_dir: "{{variables:terraform_plan}}"
 # put the launchpad yml file in the project folder
 config_file: "{{variables:files_path}}/{{variables:files_prefix}}.launchpad.yaml"
 
+api:
+  # MKE Access point (What about MSR?)
+  accesspoint: "{{output::mke_lb?special::None}}"
+  username: "{{variables:admin_user?admin}}"
+  password: "{{variables:admin_password?orcaorcaorca}}"
+
 # Provide launchpad config inline.
 
 # Option 1 : source from a metta output
@@ -44,7 +50,7 @@ config:
         - "--admin-username={{variables:admin_user?admin}}"
         - "--admin-password={{variables:admin_password?orcaorcaorca}}"
         - "--default-node-orchestrator=kubernetes"
-        - "--san={{output::mke_san?NoSanConfigured}}"
+        - "--san={{output::mke_lb?NoSanConfigured}}"
         upgradeFlags:
         - "--force-recent-backup"
         - "--force-minimums"

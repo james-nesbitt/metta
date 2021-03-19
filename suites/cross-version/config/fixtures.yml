@@ -1,0 +1,65 @@
+
+# sanity_docker_run :: metta.plugin.workload:
+sanity_docker_run:
+    # @see https://github.com/james-nesbitt/metta/blob/main/mirantis/testing/metta_docker/run_workload.py
+    type: metta.plugin.workload
+    plugin_id: metta_docker_run
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
+
+    #----------------------------------
+    # @See https://docker-py.readthedocs.io/en/stable/containers.html#docker.models.containers.ContainerCollection.run
+    run:
+        image: 'hello-world'
+
+# sanity_kubernetes_deployment :: metta.plugin.workload:
+sanity_kubernetes_deployment:
+    # @see https://github.com/james-nesbitt/metta/blob/main/mirantis/testing/metta_kubernetes/deployment_workload.py
+    type: metta.plugin.workload
+    plugin_id: metta_kubernetes_deployment
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
+
+    #----------------------------------
+    # @see https://github.com/kubernetes-client/python/blob/master/kubernetes/client/api/apps_v1_api.py#L315
+    # @see https://github.com/kubernetes-client/python/blob/master/kubernetes/client/models/v1_deployment.py#L21
+    namespace: "default"
+    body:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: nginx-deployment
+        labels:
+          app: nginx
+      spec:
+        replicas: 3
+        selector:
+          matchLabels:
+            app: nginx
+        template:
+          metadata:
+            labels:
+              app: nginx
+          spec:
+            containers:
+            - name: nginx
+              image: nginx:1.15.4
+              ports:
+              - containerPort: 80
+
+metrics-helm-workload:
+    # @see https://github.com/james-nesbitt/metta/blob/main/mirantis/testing/metta_kubernetes/helm_workload.py
+    type: metta.plugin.workload
+    plugin_id: metta_kubernetes_helm
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
+
+    #----------------------------------
+    # @see https://github.com/james-nesbitt/metta/blob/main/mirantis/testing/metta_kubernetes/helm_workload.py#L67
+    repos:
+      bitnami: https://charts.bitnami.com/bitnami
+
+    namespace: default
+    chart: bitnami/metrics-server
+    values:
+      apiService.create: true
