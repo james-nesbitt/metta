@@ -8,6 +8,7 @@ import logging
 import requests
 import json
 from typing import Dict, List
+from enum import Enum
 
 from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta.environment import Environment
@@ -20,6 +21,7 @@ logger = logging.getLogger('metta.contrib.metta_mirantis.client.mkeapi')
 
 METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID = 'metta_mirantis_client_mke'
 """ Mirantis MKE API Client plugin id """
+
 
 class MKEAPICliPlugin(CliBase):
 
@@ -112,12 +114,23 @@ class MKEAPICliGroup():
         return json.dumps(plugin._auth_headers(), indent=2)
 
 
+class MKENodeState(Enum):
+    """ MKE Node state in the node status API response """
+    UNKNOWN = 'unknown'
+    DOWN = 'down'
+    READY = 'ready'
+    DISCONNECTED = 'disconnected'
+
+    def match(self, compare: str) -> bool:
+        """ allow for string comparisons """
+        return self.value == compare
 
 
 class MKEAPIClientPlugin(ClientBase):
     """ Client for API Connections to MKE """
 
-    def __init__(self, environment: Environment, instance_id: str, accesspoint: str, username: str, password: str, hosts: List[Dict]):
+    def __init__(self, environment: Environment, instance_id: str,
+                 accesspoint: str, username: str, password: str, hosts: List[Dict]):
         """
 
         Parameters:
@@ -141,7 +154,8 @@ class MKEAPIClientPlugin(ClientBase):
         self.verify = False
         """ should we verify ssl certs """
         if not self.verify:
-            requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning)
+            requests.packages.urllib3.disable_warnings(
+                requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
         self.auth_token = None
         """ hold the bearer auth token if created by ._auth_headers() """
@@ -151,7 +165,7 @@ class MKEAPIClientPlugin(ClientBase):
         info = {
             'api': {
                 'accesspoint': self.accesspoint,
-                'username' : self.username,
+                'username': self.username,
             },
             'hosts': self.hosts
         }
@@ -201,7 +215,8 @@ class MKEAPIClientPlugin(ClientBase):
 
     def api_services(self, service_id: str = '') -> Dict:
         """ retrieve the API services """
-        endpoint = 'services/{id}'.format(id=service_id) if service_id else 'services'
+        endpoint = 'services/{id}'.format(
+            id=service_id) if service_id else 'services'
         with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(), verify=self.verify) as response:
             response.raise_for_status()
             return json.loads(response.content)
@@ -217,23 +232,26 @@ class MKEAPIClientPlugin(ClientBase):
         """ get an auth token """
         if self.auth_token is None:
             data = {
-              "password": self.password,
-              "username": self.username
+                "password": self.password,
+                "username": self.username
             }
             with requests.post(self._accesspoint_url('auth/login'), data=json.dumps(data), verify=self.verify) as response:
                 response.raise_for_status()
                 content = json.loads(response.content)
                 self.auth_token = content['auth_token']
 
-        return {'Authorization': 'Bearer {auth_token}'.format(auth_token=self.auth_token)}
+        return {'Authorization': 'Bearer {auth_token}'.format(
+            auth_token=self.auth_token)}
 
     def _accesspoint_url(self, endpoint: str = ''):
         """ convert an endpoint into a full URL for the LB/AccessPoint """
-        return "https://{accesspoint}/{endpoint}".format(accesspoint=self.accesspoint, endpoint=endpoint)
+        return "https://{accesspoint}/{endpoint}".format(
+            accesspoint=self.accesspoint, endpoint=endpoint)
 
     def _node_url(self, node: int, endpoint: str = ''):
         """ convert an endpoint into a full URL for a specific node """
-        return "https://{accesspoint}/{endpoint}".format(accesspoint=self._node_address(node), endpoint=endpoint)
+        return "https://{accesspoint}/{endpoint}".format(
+            accesspoint=self._node_address(node), endpoint=endpoint)
 
     def _node_address(self, node: int = 0):
         """ get the ip address from the node for the node index """
