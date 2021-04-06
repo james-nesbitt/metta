@@ -128,22 +128,13 @@ class LaunchpadGroup():
 
         json.dumps(list, indent=2)
 
-    def config_file(self, provisioner: str = ''):
-        """ get info about a provisioner plugin """
+    def client_config(self, provisioner: str = ''):
+        """ get the rendered config from the client """
         fixture = self._select_provisioner(instance_id=provisioner)
         plugin = fixture.plugin
-        backend_fixture = plugin.backend_fixture
         client = plugin.client
 
-        try:
-            with open(client.config_file) as f:
-                config_data = yaml.load(f, Loader=yaml.FullLoader)
-                """ parsed the launchpad file """
-        except Exception as e:
-            raise ValueError(
-                "Launchpad yaml file had unexpected contents: {}".format(e)) from e
-
-        return json.dumps(config_data, indent=2)
+        return json.dumps(client.describe_config(), indent=2)
 
     def version(self, provisioner: str = ''):
         """ Output a launchpad cli report """
@@ -184,6 +175,11 @@ class LaunchpadGroup():
             raise ValueError("No config file was found: {}".format(e)) from e
 
         return json.dumps(config_contents, indent=2)
+
+    def write_config(self, provisioner: str = ''):
+        """ write config to file """
+        provisioner = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner._write_launchpad_file()
 
     def client_bundle(self, provisioner: str = '',
                       user: str = 'admin', reload: bool = False):

@@ -8,6 +8,9 @@ METTA plugins in a manageable set.
 METTA uses the Fixtures object to manage a set of plugins, which allows us to
 mix a bunch of plugin objects of different types together and manage them.
 
+@NOTE states were just recently added and are currently inelegant and inefficient
+  but should get a refactor soon.
+
 """
 import logging
 import random
@@ -21,7 +24,11 @@ from configerus.validator import ValidationError
 from configerus.contrib.jsonschema import PLUGIN_ID_VALIDATE_JSONSCHEMA
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH, CONFIGERUS_PATH_KEY
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT, CONFIGERUS_DICT_DATA_KEY
-from configerus.contrib.env import PLUGIN_ID_SOURCE_ENV_SPECIFIC, CONFIGERUS_ENV_SPECIFIC_BASE_KEY, PLUGIN_ID_SOURCE_ENV_JSON, CONFIGERUS_ENV_JSON_ENV_KEY
+from configerus.contrib.env import (
+    PLUGIN_ID_SOURCE_ENV_SPECIFIC,
+    CONFIGERUS_ENV_SPECIFIC_BASE_KEY,
+    PLUGIN_ID_SOURCE_ENV_JSON,
+    CONFIGERUS_ENV_JSON_ENV_KEY)
 
 from .plugin import (
     Factory,
@@ -58,6 +65,12 @@ METTA_PLUGIN_CONFIG_LABEL_ENVIRONMENTS = "environments"
 """ config label discover a list of environments in a loaded config """
 METTA_PLUGIN_CONFIG_KEY_ENVIRONMENTS = "environments"
 """ this key could be used to discover a list of environments in a loaded config """
+METTA_PLUGIN_CONFIG_KEY_BOOTSTRAPS_METTA = 'bootstraps.metta'
+""" config key for metta bootstraps inside any config block """
+METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_STATES = "states.available"
+""" this config key inside an environment config can describe states """
+METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_DEFAULT_STATE = "states.default"
+""" this config key inside an environment config that can indicates overrides using the first state as a default """
 METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG = "from_config"
 """ config key that indicates that the plugin will be build from aconfig label/key pair """
 
@@ -69,7 +82,7 @@ class Environment:
     """ A testing environment, usually composed of a config and plugins """
 
     def __init__(self, name: str, config: Config, bootstraps: List[str] = [
-    ], config_label: str = '', config_base: str = LOADED_KEY_ROOT, copy_config=True):
+    ], config_label: str = '', config_base: str = LOADED_KEY_ROOT):
         """
 
         Parameters:
@@ -82,11 +95,6 @@ class Environment:
             combined with a default set, and may also be combined with a set
             from config.
 
-        copy_config (bool) : If True, then the config object will be deep copied.
-            This is appropriate to do in most scenarios as you may want to pass
-            the config object to many different contexts, without each context
-            making changes that affect the others
-
         # Config Context : the following two parameters will tell the Environment
             object to examine config for additional actions to take.  For example
             additional config source may be added, and fixtures may be created.
@@ -97,15 +105,15 @@ class Environment:
 
         """
 
-        # make a copy of the config object as it will likely be shared across contexts
-        # that we don't want to have impact this environment obect
-        if copy_config:
-            config = config.copy()
-
         self.name = name
         """ what does the environment call itself """
-        self.config = config
+
+        # make a copy of the config object as it will likely be shared across contexts
+        # that we don't want to have impact this environment obect
+        self.config = config.copy()
         """ Config object that defines the environment """
+        self.config_backup = config.copy()
+        """ Make a dupe of the starting config which we will use whenever we change state """
 
         self.config_label = config_label
         self.config_base = config_base
@@ -116,101 +124,233 @@ class Environment:
         """ fixtures/plugins that can interact with the environment """
         self.default_plugin_priority = DEFAULT_PLUGIN_PRIORITY
         """ Default integer priority for new fixtures """
+
+        self.bootstraps = bootstraps
+        """ keep the original list of bootstraps to be applied on every state change """
         self.bootstrapped = []
         """ list of bootstraps that have already been applied to prevent repetition """
+
+        self.states = []
+        """ list of allowed states for the environment """
+        self.state = None
+        """ currently active state for the environment """
 
         logger.info(
             "New environment created: {} ({}:{})".format(
                 name,
-                config_label,
-                '.'.join(config_base)))
+                self.config_label,
+                '.'.join(self.config_base)))
 
-        if not config_label:
+        if not self.config_label:
             # this environment does not have a related configuration to program
-            # itself with
+            # itself with, but it could have had bootstraps.
 
             self.bootstrap(bootstraps)
+
+            # this was the original mechanisms for defining environments, and
+            # does have usecases left today for simple environment definition,
+            # but any serious environment usage would be much better served by
+            # using the configuration options; it lets you define more config
+            # sources, fixtures, bootstraps etc.
 
         else:
             # There is a config dict to add to the environment
-            config_environment = config.load(config_label)
+            config_environment = self.config.load(self.config_label)
 
             try:
-                test = config_environment.get(
-                    config_base, exception_if_missing=True)
+                config_environment.get(
+                    self.config_base, exception_if_missing=True)
             except ValueError:
                 raise ValueError(
-                    "Environment config didn't contain passed label/key: {}:{}".format(label, base))
+                    "Environment config didn't contain described label/key: {}:{}".format(label, base))
 
-            # Check to see if we should add any config to the environment
-            config_sources = config_environment.get(
-                [config_base, 'config.sources'], exception_if_missing=False)
-            if config_sources is not None:
-                for instance_id in config_sources.keys():
-                    instance_base = [
-                        config_base, 'config.sources', instance_id]
+            if config_environment.has(
+                    [self.config_base, METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_STATES]):
+                self.states = list(
+                    config_environment.get(
+                        [
+                            self.config_base,
+                            METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_STATES],
+                        exception_if_missing=True).keys())
 
-                    # Keep in mind that the following plugin metadata is about
-                    # configerus plugins, not metta plugins.
+            # if there is no config for default state, then None is passed to the state loader
+            # which will ignore all state configurations.
+            state = config_environment.get(
+                [config_base, METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_DEFAULT_STATE], exception_if_missing=False)
+            """ what state should be activated on construction.  Can be None, which indicates no state """
 
-                    plugin_id = config_environment.get(
-                        [instance_base, 'plugin_id'], exception_if_missing=True)
-                    priority = config_environment.get(
-                        [instance_base, 'priority'], exception_if_missing=False)
-                    if priority is None:
-                        priority = DEFAULT_SOURCE_PRIORITY
+            # raise ValueError(state)
 
-                    logger.debug(
-                        "Adding metta sourced config plugin to '{}' environment: {}:{}".format(name, plugin_id, instance_id))
-                    plugin = config.add_source(
-                        plugin_id=plugin_id, instance_id=instance_id, priority=priority)
+            self.set_state(state)
 
-                    if plugin_id == PLUGIN_ID_SOURCE_PATH:
-                        path = config_environment.get(
-                            [instance_base, CONFIGERUS_PATH_KEY], exception_if_missing=True)
-                        plugin.set_path(path=path)
-                    elif plugin_id == PLUGIN_ID_SOURCE_DICT:
-                        data = config_environment.get(
-                            [instance_base, CONFIGERUS_DICT_DATA_KEY], exception_if_missing=True)
-                        plugin.set_data(data=data)
-                    elif plugin_id == PLUGIN_ID_SOURCE_ENV_SPECIFIC:
-                        source_base = config_environment.get(
-                            [instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY], exception_if_missing=True)
-                        plugin.set_base(base=source_base)
-                    elif plugin_id == PLUGIN_ID_SOURCE_ENV_JSON:
-                        source_env = config_environment.get(
-                            [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY], exception_if_missing=True)
-                        plugin.set_env(env=source_env)
-                    elif hasattr(plugin, set_data):
-                        data = config_environment.get(
-                            [instance_base, 'data'], exception_if_missing=True)
-                        plugin.set_data(data=data)
-                    else:
-                        logger.warn(
-                            "had no way of configuring new source plugin.")
+    def set_state(self, state: str = None):
+        """ set the enivronment state to one of the options for the state
 
-            # Check to see if we should pass any bootstraps to the environment
-            # factory.
+        Reload the environment with a new state.  THis reloads the entire
+        environment, configuring the environment for one of the preconfigured
+        states.
 
-            environment_metta_bootstraps = config_environment.get(
-                [config_base, 'bootstraps.metta'])
-            if environment_metta_bootstraps is not None:
-                bootstraps += environment_metta_bootstraps
+        @NOTE When state is set, all fixtures are forgotten from the environment,
+        but if you have a fixture in scope and use it, it is still aware of its
+        environment and can still cause change in the scope.
 
-            self.bootstrap(bootstraps)
+        Parameters:
+        -----------
 
-            # Check to see if we should load any fixtures
-            if config_environment.has([config_base, 'fixtures']):
+        state (str) : string state label, which indicates that configuration
+            from that state set should be included.
 
-                metta_fixtures_from_config = config_environment.get(
-                    [config_base, 'fixtures', 'from_config'])
-                if metta_fixtures_from_config is None:
-                    pass
-                elif isinstance(metta_fixtures_from_config, dict):
-                    label = metta_fixtures_from_config['label'] if 'label' in metta_fixtures_from_config else 'metta'
-                    base = metta_fixtures_from_config['base'] if 'base' in metta_fixtures_from_config else ''
-                    self.add_fixtures_from_config(
-                        label=label, base=base, exception_if_missing=True)
+        @NOTE not all environments have multiple states, but all environments
+        will use this method to initialize.  To accomodate this a None state is
+        allowed.
+
+        """
+
+        # If we are already in that requested state then back out
+        if state is not None and self.state == state:
+            return
+
+        if state is not None and state not in self.states:
+            raise KeyError(
+                "Requested environment state has not been configured: {}".format(state))
+
+        self.state = state
+        self.config = self.config_backup.copy()
+
+        self.fixtures = Fixtures()
+        """ fixtures/plugins that can interact with the environment """
+        self.bootstrapped = []
+        """ list of bootstraps that have already been applied to prevent repetition """
+
+        # load config for the environment
+        config_environment = self.config.load(self.config_label)
+
+        config_base = self.config_base
+        """ common config base for all environment states """
+        state_config_base = [
+            config_base,
+            METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_STATES,
+            state] if state is not None else None
+        """ config base for the selected state """
+
+        # Check for config sources from the environment configuration that is
+        # shared across all states
+        self._add_config_sources_from_config(
+            label=self.config_label, base=[
+                config_base, 'config.sources'])
+        # check for state configuration sources (can be config that does not
+        # exist)
+        if state is not None:
+            self._add_config_sources_from_config(
+                label=self.config_label, base=[
+                    state_config_base, 'config.sources'])
+
+        # Check to see if we should pass any bootstraps to the environment
+        # factory.
+        bootstraps = self.bootstraps.copy()
+        common_metta_bootstraps = config_environment.get(
+            [config_base, METTA_PLUGIN_CONFIG_KEY_BOOTSTRAPS_METTA])
+        if common_metta_bootstraps is not None:
+            bootstraps += common_metta_bootstraps
+        if state is not None:
+            state_metta_bootstraps = config_environment.get(
+                [state_config_base, METTA_PLUGIN_CONFIG_KEY_BOOTSTRAPS_METTA])
+            if state_metta_bootstraps is not None:
+                bootstraps += state_metta_bootstraps
+
+        self.bootstrap(bootstraps)
+
+        # Look for fixture definitions in the environment config.
+        #
+        # One of two options is available here, either:
+        # 1. your config has a fixtures dict of fixxture definitions, or
+        # 2. you fixtures config has a from_config dict which tells us to look
+        # elsewhere
+
+        if config_environment.has(
+                [config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL, 'from_config']):
+            common_fixtures_from_other_config = config_environment.get(
+                [config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL, 'from_config'])
+            label = common_fixtures_from_other_config[
+                'label'] if 'label' in common_fixtures_from_other_config else 'metta'
+            base = common_fixtures_from_other_config[
+                'base'] if 'base' in common_fixtures_from_other_config else LOADED_KEY_ROOT
+            self.add_fixtures_from_config(
+                label=label, base=base, exception_if_missing=True)
+        elif config_environment.has([config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL]):
+            self.add_fixtures_from_config(
+                label=label,
+                base=[
+                    config_base,
+                    METTA_FIXTURES_CONFIG_FIXTURES_LABEL],
+                exception_if_missing=True)
+
+        if state is not None:
+            if config_environment.has(
+                    [state_config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL, 'from_config']):
+                state_fixtures_from_other_config = config_environment.get(
+                    [state_config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL, 'from_config'])
+                label = state_fixtures_from_other_config[
+                    'label'] if 'label' in state_fixtures_from_other_config else 'metta'
+                base = state_fixtures_from_other_config[
+                    'base'] if 'base' in state_fixtures_from_other_config else LOADED_KEY_ROOT
+                self.add_fixtures_from_config(
+                    label=label, base=base, exception_if_missing=True)
+            elif config_environment.has([state_config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL]):
+                self.add_fixtures_from_config(
+                    label=label,
+                    base=[
+                        config_base,
+                        METTA_FIXTURES_CONFIG_FIXTURES_LABEL],
+                    exception_if_missing=True)
+
+    def _add_config_sources_from_config(self, label, base):
+        """ add more config sources based on in config settings """
+        config_environment = self.config.load(label)
+        config_sources = config_environment.get(
+            base, exception_if_missing=False)
+        if config_sources is not None:
+            for instance_id in config_sources.keys():
+                instance_base = [base, instance_id]
+
+                # Keep in mind that the following plugin metadata is about
+                # configerus plugins, not metta plugins.
+
+                plugin_id = config_environment.get(
+                    [instance_base, 'plugin_id'], exception_if_missing=True)
+                priority = config_environment.get(
+                    [instance_base, 'priority'], exception_if_missing=False)
+                if priority is None:
+                    priority = DEFAULT_SOURCE_PRIORITY
+
+                logger.debug(
+                    "Adding metta sourced config plugin to '{}' environment: {}:{}".format(self.name, plugin_id, instance_id))
+                plugin = self.config.add_source(
+                    plugin_id=plugin_id, instance_id=instance_id, priority=priority)
+
+                if plugin_id == PLUGIN_ID_SOURCE_PATH:
+                    path = config_environment.get(
+                        [instance_base, CONFIGERUS_PATH_KEY], exception_if_missing=True)
+                    plugin.set_path(path=path)
+                elif plugin_id == PLUGIN_ID_SOURCE_DICT:
+                    data = config_environment.get(
+                        [instance_base, CONFIGERUS_DICT_DATA_KEY], exception_if_missing=True)
+                    plugin.set_data(data=data)
+                elif plugin_id == PLUGIN_ID_SOURCE_ENV_SPECIFIC:
+                    source_base = config_environment.get(
+                        [instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY], exception_if_missing=True)
+                    plugin.set_base(base=source_base)
+                elif plugin_id == PLUGIN_ID_SOURCE_ENV_JSON:
+                    source_env = config_environment.get(
+                        [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY], exception_if_missing=True)
+                    plugin.set_env(env=source_env)
+                elif hasattr(plugin, set_data):
+                    data = config_environment.get(
+                        [instance_base, 'data'], exception_if_missing=True)
+                    plugin.set_data(data=data)
+                else:
+                    logger.warn(
+                        "had no way of configuring new source plugin.")
 
     def bootstrap(self, entrypoints: List[str] = []):
         """ BootStrap some METTA distributions

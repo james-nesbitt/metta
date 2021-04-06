@@ -1,6 +1,5 @@
 import logging
 import os
-import importlib.util
 import sys
 
 from mirantis.testing.metta import environment_names, get_environment, discover, new_environment
@@ -27,7 +26,7 @@ class Base:
 
     """
 
-    def __init__(self, environment: str = ''):
+    def __init__(self, environment: str = '', state: str = ''):
         """
 
         Parameters:
@@ -35,6 +34,9 @@ class Base:
 
         environment (str) : Environment name in case you want to switch to an
             alternate environment.
+
+        state (str) : Environment state to consider active.  Will throw an error
+            if the state doesn't exist for the selected environment.
 
         """
 
@@ -52,6 +54,9 @@ class Base:
 
         try:
             self._environment = get_environment(environment)
+
+            if state:
+                self._environment.set_state(state)
         except KeyError:
             raise ValueError(
                 "Could not load environment '{}', not found; Existing environments: {}".format(

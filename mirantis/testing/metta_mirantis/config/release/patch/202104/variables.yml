@@ -1,0 +1,6 @@
+mcr_channel: stable
+mcr_version: 20.10.04-rc1
+mke_image_repo: docker.io/mirantis
+mke_version: 3.3.8-tp1
+msr_image_repo: docker.io/mirantis
+msr_version: 2.8.6-rc

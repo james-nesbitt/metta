@@ -6,6 +6,7 @@ terraform:
         prodeng:
             aws:
                 v4: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v4"
+                v5: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v5"
         # Launchpad example terraform charts.
         example:
             aws:

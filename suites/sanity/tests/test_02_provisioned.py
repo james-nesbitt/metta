@@ -136,16 +136,104 @@ def test_06_docker_run_workload(environment, benchmark):
     benchmark(container_run)
 
 
-def test_07_environment_down(environment):
-    """ get the environment but start the provisioners before returning
+def test_07_mke_api_info(self, environment):
+    """ did we get a good mke client """
 
-    This is preferable to the raw provisioner in cases where you want a running
-    cluster so that the cluster startup cost does not get reflected in the
-    first test case which uses the fixture.  Also it can tear itself down
+    # get the mke client.
+    # We could get this from the launchpad provisioner if we were worried about
+    # which mke client plugin instance we receive,  however there is only one
+    # in this case.
+    mke_client = environment.fixtures.get_plugin(
+        type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
 
-    You can still use the provsioners to update the resources if the provisioner
-    plugins can handle it.
-    """
+    info = mke_client.api_info()
+    logger.info("MKE Cluster ID: {}".format(info['ID']))
+    logger.info("--> Warnings : {}".format(info['Warnings']))
+
+
+def test_08_mke_nodes_health(self, environment):
+    """ did we get a good mke client """
+
+    mke_client = environment.fixtures.get_plugin(
+        type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+
+    nodes = mke_client.api_nodes()
+
+    for node in nodes:
+        assert MKENodeState.READY.match(
+            node['Status']['State']), "MKE NODE {} was not in a READY state: {}".format(
+            node['ID'], node['Status'])
+
+
+def test_09_mke_swarminfo_health(self, environment):
+    """ did we get a good mke client """
+
+    mke_client = environment.fixtures.get_plugin(
+        type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+
+    info = mke_client.api_info()
+
+    if 'Swarm' in info:
+        swarm_info = info['Swarm']
+
+        assert swarm_info['Nodes'] > 0, "MKE reports no nodes in the cluster"
+
+
+def test_10_msr_client(self, environment):
+    """ did we get a good msr client """
+
+    # get the mke client.
+    # We could get this from the launchpad provisioner if we were worried about
+    # which mke client plugin instance we receive,  however there is only one
+    # in this case.
+    msr_client = environment.fixtures.get_plugin(
+        type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+
+
+def test_11_msr_root_health(self, environment):
+    """ test the the node specific ping and health checks don't fail """
+    msr_client = environment.fixtures.get_plugin(
+        type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+
+    for i in range(0, msr_client.host_count()):
+        assert msr_client.api_ping(node=i)
+        assert msr_client.api_health(node=i)["Healthy"]
+
+        print("{}: NGINX: {}".format(i, msr_client.api_nginx_status(node=i)))
+
+
+def test_12_msr_replica_health(self, environment):
+    """ test that we can access node information """
+
+    msr_client = environment.fixtures.get_plugin(
+        type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+
+    status = msr_client.api_status()
+    for replica_id, replica_health in status['replica_health'].items():
+        assert MSRReplicaHealth.OK.match(
+            replica_health), "Replica [{}] did is not READY : {}".format(replica_id, replica_health)
+
+
+def test_13_msr_alerts(self, environment):
+    """ check that we can get alerts """
+
+    msr_client = environment.fixtures.get_plugin(
+        type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+
+    alerts = msr_client.api_alerts()
+
+    if len(alerts) > 0:
+
+        for alert in alerts:
+            logger.warning(
+                "{}: {} [{}]".format(
+                    alert['id'],
+                    alert['message'],
+                    alert['url'] if 'url' in alert else 'no-url'))
+
+
+def test_14_environment_down(environment):
+    """ tear down the environment """
 
     provisioner = environment.fixtures.get_plugin(type=Type.PROVISIONER)
     """ Combo provisioner wrapper for terraform/ansible/launchpad """
@@ -169,7 +257,7 @@ def test_07_environment_down(environment):
     return environment
 
 
-def test_08_torn_down(environment):
+def test_15_torn_down(environment):
     """ test that we have a torn down environment
 
     @NOTE I am not sure how to confirm that we are down.  Perhaps we can ask for Terraform state?

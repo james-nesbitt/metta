@@ -10,3 +10,8 @@ config:
       plugin_id: path
       priority: 70
       path: "{{paths:project}}/config"
+
+# Tell metta to create environments from the ./config/environments.yml file
+environments:
+  from_config:
+    label: environments
