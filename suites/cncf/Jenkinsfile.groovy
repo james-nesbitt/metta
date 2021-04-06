@@ -84,7 +84,7 @@ pipeline {
                         }
 
                         withCredentials([
-                            [ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-infra-test', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
+                            [ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds-docker-core', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
                             usernamePassword(credentialsId: 'docker-hub-generic-up', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')
                         ]) {
 
@@ -142,9 +142,6 @@ pipeline {
                                         dir('reports') {
                                             archiveArtifacts artifacts:'*', allowEmptyArchive: true
 
-                                            if (fileExists('junit.xml')) {
-                                                junit 'junit.xml'
-                                            }
                                             if (fileExists('pytest.html')) {
                                                 publishHTML (target : [
                                                     allowMissing: false,
@@ -159,6 +156,10 @@ pipeline {
                                     }
                                     if (fileExists('results')) {
                                         archiveArtifacts artifacts: 'results/*', allowEmptyArchive: true
+
+                                        if (fileExists('plugins/e2e/results/global/junit_01.xml')) {
+                                            junit 'plugins/e2e/results/global/junit_01.xml'
+                                        }
                                     }
 
                                 }
