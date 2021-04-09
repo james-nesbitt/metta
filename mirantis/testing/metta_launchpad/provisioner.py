@@ -295,6 +295,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         except Exception as e:
             raise Exception("Launchpad failed to install") from e
 
+        # Rebuild the fixture list now that we have installed
         self._make_fixtures(reload=True)
 
     def destroy(self):
@@ -340,7 +341,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         """ Build fixtures for all of the clients """
 
         launchpad_config = self.environment.config.load(
-            self.config_label, force_reload=True)
+            self.config_label, force_reload=reload)
         """ get fresh values for the launchpad config (in case it has changed) """
 
         bundle_info = self._mke_client_bundle(user, reload)

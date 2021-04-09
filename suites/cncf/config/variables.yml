@@ -27,8 +27,6 @@ files_prefix: "{{id}}"
 # this is different than {id} to allow character limits to be avoided
 resource_prefix: "{{id}}"
 
-terraform_plan: "{{mirantis:terraform.plans.prodeng.aws.v4}}"
-
 # AWS region for resources
 aws_region: us-east-2
 
@@ -41,5 +39,5 @@ expire_duration: 72h
 admin_password: orcaorcaorca
 windows_administrator_password: "tfaws,,ABC..Example"
 
-mke_install_flags:
-  - "--nodeport-range=30000-32768"
+# Override MKE node-port range to make it compatible with CNCF
+mke_install_nodeport_range: "30000-32768"

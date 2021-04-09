@@ -11,6 +11,8 @@ from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 from mirantis.testing.metta_launchpad import METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID
+from mirantis.testing.metta_mirantis.msr_client import MSRReplicaHealth, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
+from mirantis.testing.metta_mirantis.mke_client import MKENodeState, METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID
 
 logger = logging.getLogger('sanity:Provisioning')
 
@@ -136,7 +138,7 @@ def test_06_docker_run_workload(environment, benchmark):
     benchmark(container_run)
 
 
-def test_07_mke_api_info(self, environment):
+def test_07_mke_api_info(environment):
     """ did we get a good mke client """
 
     # get the mke client.
@@ -151,7 +153,7 @@ def test_07_mke_api_info(self, environment):
     logger.info("--> Warnings : {}".format(info['Warnings']))
 
 
-def test_08_mke_nodes_health(self, environment):
+def test_08_mke_nodes_health(environment):
     """ did we get a good mke client """
 
     mke_client = environment.fixtures.get_plugin(
@@ -165,7 +167,7 @@ def test_08_mke_nodes_health(self, environment):
             node['ID'], node['Status'])
 
 
-def test_09_mke_swarminfo_health(self, environment):
+def test_09_mke_swarminfo_health(environment):
     """ did we get a good mke client """
 
     mke_client = environment.fixtures.get_plugin(
@@ -179,7 +181,7 @@ def test_09_mke_swarminfo_health(self, environment):
         assert swarm_info['Nodes'] > 0, "MKE reports no nodes in the cluster"
 
 
-def test_10_msr_client(self, environment):
+def test_10_msr_client(environment):
     """ did we get a good msr client """
 
     # get the mke client.
@@ -190,7 +192,7 @@ def test_10_msr_client(self, environment):
         type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
 
 
-def test_11_msr_root_health(self, environment):
+def test_11_msr_root_health(environment):
     """ test the the node specific ping and health checks don't fail """
     msr_client = environment.fixtures.get_plugin(
         type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
@@ -202,7 +204,7 @@ def test_11_msr_root_health(self, environment):
         print("{}: NGINX: {}".format(i, msr_client.api_nginx_status(node=i)))
 
 
-def test_12_msr_replica_health(self, environment):
+def test_12_msr_replica_health(environment):
     """ test that we can access node information """
 
     msr_client = environment.fixtures.get_plugin(
@@ -214,7 +216,7 @@ def test_12_msr_replica_health(self, environment):
             replica_health), "Replica [{}] did is not READY : {}".format(replica_id, replica_health)
 
 
-def test_13_msr_alerts(self, environment):
+def test_13_msr_alerts(environment):
     """ check that we can get alerts """
 
     msr_client = environment.fixtures.get_plugin(

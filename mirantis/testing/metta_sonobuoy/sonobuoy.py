@@ -169,7 +169,7 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
         kubeclient = self.environment.fixtures.get_plugin(
             type=Type.CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
 
-        return {
+        info = {
             'workload': {
                 'cncf': sonobuoy_config,
                 'kube_client': kubeclient.info(),
@@ -181,6 +181,8 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
                 }
             }
         }
+
+        return info
 
 
 SONOBUOY_BIN = 'sonobuoy'
@@ -228,7 +230,7 @@ class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
         if wait:
             cmd += ['--wait={}'.format(1440)]
 
-        logger.debug("Starting Sonobuoy run : {}".format(cmd))
+        logger.info("Starting Sonobuoy run : {}".format(cmd))
         try:
             self._create_k8s_crb()
             self._run(cmd)
@@ -444,7 +446,7 @@ class SonobuoyResultsPluginItem:
         self.name = item_dict['name']
         self.status = Status(item_dict['status'])
         self.meta = item_dict['meta']
-        self.details = item_dict['details']
+        self.details = item_dict['details'] if 'details' in item_dict else {}
 
     def meta_file_path(self):
         """ get the path to the error item file """

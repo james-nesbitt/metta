@@ -1,0 +1,10 @@
+manager_count: 1
+manager_type: m5.xlarge
+manager_volume_size: 100
+worker_count: 3
+worker_type: m5.large
+worker_volume_size: 100
+windows_worker_count: 0
+msr_count: 0
+msr_type: m5.xlarge
+msr_volume_size: 100
