@@ -57,8 +57,8 @@ CONFIG_DATA = {
                         }
                     },
                     'sonobuoy': {
-                        'url': 'https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.20.0/sonobuoy_0.20.0_linux_amd64.tar.gz',
-                        'version': 'v0.20.0',
+                        'url': 'https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.50.0/sonobuoy_0.50.0_linux_amd64.tar.gz',
+                        'version': 'v0.50.0',
                         'copy': {
                             'sonobuoy': 'sonobuoy'
                         }

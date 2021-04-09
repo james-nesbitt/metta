@@ -8,6 +8,12 @@ logger = logging.getLogger('upgrade-suite')
 
 """ Define our fixtures """
 
+# Preparatory Fixtures
+
+# These fixtures are used to run the Metta setup and config retrieval processes.
+# They are low impact, but they don't provide any resources that are already
+# provisioned.
+
 
 @pytest.fixture(scope='session')
 def environment_discover():
@@ -18,51 +24,48 @@ def environment_discover():
     discover()
 
 
-# Track which environment is currently UP
-current_up_environment = ''
-
-
-@pytest.fixture()
-def environment_before_up(environment_discover):
+@pytest.fixture(scope='session')
+def environment(environment_discover):
     """ get the metta environment """
     # we don't use the discover fixture, we just need it to run first
     # we don't pass an environment name, which gives us the default environment
-    env = get_environment('before')
-    environment_up(env)
-    return env
+    return get_environment('upgrade')
+
+# Consumer fixtures
+
+# Here are the two fixtures that you can use to get access to the environment
+# object in its default state, and in its "after" state.  Both of the following
+# fixtures return that same environment object, but the before fixture has run
+# the full provisioning of the environment in its default state, and the after
+# fixture has run the upgrade on the after state.
+#
+# @NOTE IT is up to the consumer to confirm that you run all tests that need
+#   the "before" state before you run any of the "after" state.  If you run
+#   a before test after an after test, you will receive an environment object
+#   that is in the wrong state.
 
 
-@pytest.fixture()
-def environment_after_up(environment_discover):
+@pytest.fixture(scope='session')
+def environment_before_up(environment):
     """ get the metta environment """
-    # we don't use the discover fixture, we just need it to run first
-    # we don't pass an environment name, which gives us the default environment
-    env = get_environment('after')
-    environment_up(env)
-    return env
+    # apply the environment in it's default state
+    environment_up(environment)
+    return environment
 
 
-""" Cleanup """
+@pytest.fixture(scope='session')
+def environment_after_up(environment):
+    """ get the metta environment upgraded in its after state """
+    environment.set_state('after')
+    environment_upgrade(environment)
+    yield environment
+    environment_down(environment)
 
 
-def pytest_unconfigure(config):
-    """ Tear down any existing clusters """
-
-    if current_up_environment:
-        env = get_environment(current_up_environment)
-        environment_down(env)
-
-
-""" Environment utility methods """
-
+# Environment utility methods
 
 def environment_up(environment):
     """ bring up the passed environment """
-    global current_up_environment
-
-    # If this environment is already up, then skip
-    if environment.name == current_up_environment:
-        return
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
@@ -81,7 +84,6 @@ def environment_up(environment):
     if conf.get("alreadyrunning", exception_if_missing=False):
         logger.info(
             "test infrastructure is aready in place, and does not need to be provisioned.")
-        current_up_environment = environment.name
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
@@ -97,21 +99,51 @@ def environment_up(environment):
             terraform.apply()
             ansible.apply()
             launchpad.apply()
-
-            """ Set the env as current """
-            current_up_environment = environment.name
         except Exception as e:
             logger.error("Provisioner failed to start: %s", e)
             raise e
 
 
-def environment_down(environment):
-    """ tear down an environment if it is currently up """
-    global current_up_environment
+def environment_upgrade(environment):
+    """ upgrade up the passed environment
 
-    # If this environment is not up, then skip
-    if not environment.name == current_up_environment:
-        return
+    In this process we only apply launchpad to save time and also in case the
+    terraform chart is not actually declarative safe for an upgrade where it is
+    not actually changed.  This occurs under some circumstances in the spot
+    requests.
+
+    """
+    # We will use this config to make decisions about what we need to create
+    # and destroy for this environment up.
+    conf = environment.config.load("config")
+    """ somewhat equivalent to reading ./config/config.yml """
+
+    launchpad = environment.fixtures.get_plugin(
+        type=Type.PROVISIONER, instance_id='launchpad')
+    """ launchpad provisioner object """
+
+    if conf.get("alreadyrunning", exception_if_missing=False):
+        logger.info(
+            "test infrastructure is aready in place, and does not need to be provisioned.")
+    else:
+        try:
+            logger.info(
+                "Preparing the testing cluster for upgrade using the launchpad provisioner only")
+            launchpad.prepare()
+        except Exception as e:
+            logger.error("Provisioner failed to init: %s", e)
+            raise e
+        try:
+            logger.info(
+                "Upgrading up the testing cluster using the launchpad provisioner")
+            launchpad.apply()
+        except Exception as e:
+            logger.error("Launchpad provisioner failed to apply: %s", e)
+            raise e
+
+
+def environment_down(environment):
+    """ tear down an environment """
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
@@ -129,7 +161,6 @@ def environment_down(environment):
 
     if conf.get("keepwhenfinish", exception_if_missing=False):
         logger.info("Leaving test infrastructure in place on shutdown")
-        current_up_environment = ''
     else:
         try:
             logger.info(
@@ -137,9 +168,6 @@ def environment_down(environment):
             launchpad.destroy()
             ansible.destroy()
             terraform.destroy()
-
-            """ Unset the env as current """
-            current_up_environment = ''
         except Exception as e:
             logger.error("Provisioner failed to stop: %s", e)
             raise e

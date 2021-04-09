@@ -1,5 +1,5 @@
 mcr_channel: stable
-mcr_version: 19.03.14
+mcr_version: 19.03.16
 mke_image_repo: docker.io/mirantis
 mke_version: 3.3.6
 msr_image_repo: docker.io/mirantis

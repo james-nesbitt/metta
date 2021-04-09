@@ -72,49 +72,8 @@ vars:
     # description = "The volume size (in GB) to use for DTR replica nodes."
     msr_volume_size: "{{variables:msr_volume_size}}"
 
-    # description = "The Windows Administrator password to use."
-    windows_administrator_password: "{{variables:windows_administrator_password}}"
-
     # description = "The Linux platform to use for manager/worker/DTR replica nodes"
     platform: "{{variables:platform}}"
-
-    # description = "The engine version to deploy across all nodes in the cluster."
-    mcr_version: "{{variables:mcr_version}}"
-
-    # description = "The channel to pull the engine installer from."
-    mcr_channel: "{{variables:mcr_channel}}"
-
-    # description = "The repository to source the mcr installer."
-    mcr_repo_url: "{{variables:mcr_repo_url}}"
-
-    # description = "Location of Linux installer script."
-    mcr_install_url_linux: "{{variables:mcr_install_url_linux}}"
-
-    # description = "Location of Windows installer script."
-    mcr_install_url_windows: "{{variables:mcr_install_url_windows}}"
-
-    # description = "The UCP version to deploy."
-    mke_version: "{{variables:mke_version}}"
-
-    # description = "The repository to pull the UCP images from."
-    mke_image_repo: "{{variables:mke_image_repo}}"
-
-    # description = "The UCP installer flags to use."
-    mke_install_flags: "{{variables:mke_install_flags}}"
-
-    # description = "The option to enable/disable Kubernetes as the default orchestrator."
-    kube_orchestration: true
-
-    # description = "The DTR version to deploy."
-    msr_version: "{{variables:msr_version}}"
-
-    # description = "The repository to pull the DTR images from."
-    msr_image_repo: "{{variables:msr_image_repo}}"
-
-    # description = "The DTR installer flags to use."
-    # MSR likes to handle its own TLS and so will use self-signed certs unless giben certs
-    msr_install_flags:
-        - "--ucp-insecure-tls"
 
     # description = "Set to 'sequential' to generate sequential replica id's for cluster members, for example 000000000001, 000000000002, etc. ('random' otherwise)"
     # msr_replica_config: sequential
@@ -134,14 +93,6 @@ vars:
 
     # description = "The selector for the applicable AMI subcollection (ie, 'public' vs 'mirantis')."
     platform_repo: "{{variables:platform_repo}}"
-
-    # description = "A list of strings (shell commands) to be run before stages."
-    # hooks_apply_before:
-    #     - ""
-
-    # description = "A list of strings (shell commands) to be run after stages."
-    # hooks_apply_after:
-    #     - ""
 
     # description = "If non-empty, use this path/filename as the ssh key file instead of generating automatically."
     ssh_key_file_path: "{{variables:files_path}}/{{variables:files_prefix}}.host.pem"

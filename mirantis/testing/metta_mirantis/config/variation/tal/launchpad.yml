@@ -21,13 +21,18 @@ api:
 
 # Provide launchpad config inline.
 
-# Option 1 : source from a metta output
+# Option 1 : source from a metta output such as from terraform
 # config: "{{output::mke_cluster?special::None}}"
 
-# Options 1 : source from a file
-#config: "{{file::path/to/file.yml}}"
+# Options 2 : source from a file
+# config: "{{file::path/to/file.yml}}"
 
 # Option 3: assumble from parts
+#
+# This is nice because it is readable, but it presents some problems when it
+# comes to the List values such as the installFlags.  We need to effectively
+# replicate what are orca defaults on some installFlags in order to get values
+# that can be overridden.
 config:
     apiVersion: launchpad.mirantis.com/mke/v1.2
     kind: mke+msr
@@ -48,11 +53,11 @@ config:
       mke:
         imageRepo: "{{variables:mke_image_repo}}"
         installFlags:
-        - "--admin-username={{variables:admin_user?admin}}"
-        - "--admin-password={{variables:admin_password?orcaorcaorca}}"
-        - "--default-node-orchestrator=kubernetes"
+        - "--admin-username={{admin_user?admin}}"
+        - "--admin-password={{admin_password?orcaorcaorca}}"
         - "--san={{output::mke_lb?NoSanConfigured}}"
-        - "--istio"
+        - "--default-node-orchestrator={{variables:mke_install_defaultorchestrator}}"
+        - "--nodeport-range={{variables:mke_install_nodeport_range}}"
         upgradeFlags:
         - "--force-recent-backup"
         - "--force-minimums"
