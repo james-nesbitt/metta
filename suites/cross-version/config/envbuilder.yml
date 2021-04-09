@@ -21,7 +21,7 @@ variations:
           mcr_version: 20.10.0
       after:
         variables:
-          mcr_version: 20.10.4
+          mcr_version: 20.10.4-rc1
 
   # Upgrade MCR from 19.03.16 -> 20.10.0
   190316-20100:
@@ -36,18 +36,18 @@ variations:
           variables:
             mcr_version: 20.10.0
 
-  # Upgrade MCR from 19.3.14 -> 20.10.0
-  190314-20100:
+  # Upgrade MCR from 19.3.14 -> 19.03.16
+  190314-190316:
     common:
       variables:
-        id: 190314_20100
+        id: 190314_190316
     states:
       before:
           variables:
             mcr_version: 19.03.14
       after:
           variables:
-            mcr_version: 20.10.0
+            mcr_version: 19.03.16
 
   # Upgrade MCR from 19.03.16 -> 20.10.4
   190316-20104:
@@ -60,7 +60,7 @@ variations:
             mcr_version: 19.03.16
       after:
           variables:
-            mcr_version: 20.10.4
+            mcr_version: 20.10.4-rc1
 
   # Upgrade MCR from 19.3.14 -> 20.10.4
   190314-20100:
@@ -73,7 +73,7 @@ variations:
             mcr_version: 19.03.14
       after:
           variables:
-            mcr_version: 20.10.4
+            mcr_version: 20.10.4-rc1
 
 
 # All of the environments will include this base
