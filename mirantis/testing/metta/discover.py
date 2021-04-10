@@ -138,12 +138,10 @@ def discover_sources_from_config(
             instance_base = [base, instance_id]
 
             plugin_id = metta_config.get(
-                [instance_base, METTA_PLUGIN_CONFIG_KEY_PLUGINID], exception_if_missing=True)
+                [instance_base, METTA_PLUGIN_CONFIG_KEY_PLUGINID])
             priority = metta_config.get(
-                [instance_base, METTA_PLUGIN_CONFIG_KEY_PRIORITY])
+                [instance_base, METTA_PLUGIN_CONFIG_KEY_PRIORITY], default=DEFAULT_SOURCE_CONFIG_PRIORITY)
 
-            if priority is None:
-                priority = DEFAULT_SOURCE_CONFIG_PRIORITY
 
             logger.info(
                 "Adding metta sourced config plugin: {}:{}".format(
@@ -154,24 +152,19 @@ def discover_sources_from_config(
                 priority=priority)
 
             if plugin_id == PLUGIN_ID_SOURCE_PATH:
-                source_path = metta_config.get(
-                    [instance_base, CONFIGERUS_PATH_KEY], exception_if_missing=True)
+                source_path = metta_config.get([instance_base, CONFIGERUS_PATH_KEY])
                 plugin.set_path(path=source_path)
             elif plugin_id == PLUGIN_ID_SOURCE_DICT:
-                source_data = metta_config.get(
-                    [instance_base, CONFIGERUS_DICT_DATA_KEY], exception_if_missing=True)
+                source_data = metta_config.get([instance_base, CONFIGERUS_DICT_DATA_KEY])
                 plugin.set_data(data=source_data)
             elif plugin_id == PLUGIN_ID_SOURCE_ENV_SPECIFIC:
-                source_base = metta_config.get(
-                    [instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY], exception_if_missing=True)
+                source_base = metta_config.get([instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY])
                 plugin.set_base(base=source_base)
             elif plugin_id == PLUGIN_ID_SOURCE_ENV_JSON:
-                source_env = metta_config.get(
-                    [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY], exception_if_missing=True)
+                source_env = metta_config.get([instance_base, CONFIGERUS_ENV_JSON_ENV_KEY])
                 plugin.set_env(env=source_env)
             elif hasattr(plugin, set_data):
-                data = metta_config.get(
-                    [instance_base, 'data'], exception_if_missing=True)
+                data = metta_config.get([instance_base, 'data'])
                 plugin.set_data(data=data)
             else:
                 logger.warn(
@@ -199,31 +192,30 @@ def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
     """
     metta_config = config.load(label)
 
-    imports_config = metta_config.get(base)
-    if imports_config is not None:
-        for import_name in imports_config:
-            module_path = metta_config.get(
-                [base, import_name, CONFIGERUS_PATH_KEY], exception_if_missing=True)
+    imports_config = metta_config.get(base, default={})
+    for import_name in imports_config:
+        module_path = metta_config.get(
+            [base, import_name, CONFIGERUS_PATH_KEY])
 
-            if os.path.isdir(module_path):
-                module_path_dir = os.path.dirname(module_path)
-                module_path_basename = os.path.basename(module_path)
-                if not module_path_basename == import_name:
-                    logger.warn(
-                        "Metta discovery importer cannot import a package (folder) using a name other than the folder name: {} != {}".format(
-                            module_path_basename, import_name))
-                if module_path_dir not in sys.path:
-                    sys.path.append(module_path_dir)
-                importlib.import_module(module_path_basename)
-                logger.debug(
-                    "Loaded package: {} : {}".format(
-                        module_path_basename, module_path))
+        if os.path.isdir(module_path):
+            module_path_dir = os.path.dirname(module_path)
+            module_path_basename = os.path.basename(module_path)
+            if not module_path_basename == import_name:
+                logger.warn(
+                    "Metta discovery importer cannot import a package (folder) using a name other than the folder name: {} != {}".format(
+                        module_path_basename, import_name))
+            if module_path_dir not in sys.path:
+                sys.path.append(module_path_dir)
+            importlib.import_module(module_path_basename)
+            logger.debug(
+                "Loaded package: {} : {}".format(
+                    module_path_basename, module_path))
 
-            elif os.path.isfile(module_path):
-                spec = importlib.util.spec_from_file_location(
-                    import_name, module_path)
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                logger.debug(
-                    "Loaded module: {} : {}".format(
-                        import_name, module_path))
+        elif os.path.isfile(module_path):
+            spec = importlib.util.spec_from_file_location(
+                import_name, module_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            logger.debug(
+                "Loaded module: {} : {}".format(
+                    import_name, module_path))

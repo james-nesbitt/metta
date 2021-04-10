@@ -37,6 +37,17 @@ While it would be helpful to be familiar with [the steps provided in the MCC rep
 * AWS credentials
   * if a command such as `aws sts get-caller-identity` is successful (doesn't throw an authentication error) then you should be good to go
 
+* AWS IAM EC2 spot fleet role
+
+  *This only needs to be set **once** for all engineers, ie, infra bootstrap in a new IAM account*
+
+  * navigate to the `aws-ec2-spot-fleet-role` [here](https://console.aws.amazon.com/iam/home?region=us-west-2#/roles/aws-ec2-spot-fleet-role)
+  * ensure these policies are attached:
+    * `AmazonEC2SpotFleetRole`
+    * `AmazonEC2SpotFleetTaggingRole`
+  * screenshot of successful config:
+    * ![AWS EC2 spot fleet role](img/aws-ec2-spot-fleet-role.png)
+
 ### Deploy
 
 `terraform` will use variables configured in one or more files, using the loading order [described on this page](https://www.terraform.io/docs/language/values/variables.html#variable-definition-precedence).

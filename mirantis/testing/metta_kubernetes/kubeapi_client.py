@@ -31,7 +31,7 @@ class KubernetesApiClientPlugin(ClientBase):
     3. Configure using .args() adding a kubeconfig file (with activated context)
        if that wasn't done for you when you received the client
     4. Ask the client for a kubernetes API version client
-       (such as get_CoreV1Api_client => CoreV1Api)
+       (such as get_api('CoreV1Api') => CoreV1Api)
     5. Use the kubernetes API client as normal
 
     ```
@@ -44,7 +44,7 @@ class KubernetesApiClientPlugin(ClientBase):
 
     client.args('path/to/k8file')
 
-    coreV1 = client.get_CoreV1Api_client()
+    coreV1 = client.get_api('CoreV1Api')
     ns = coreV1.read_namespace(name="kube-system")
     print("NS: {}".format(ns))
     ```
@@ -55,9 +55,13 @@ class KubernetesApiClientPlugin(ClientBase):
     It is cumbersome to use this if you already have access to the kubeconfig, but
     it fits into the plugin system, and therefore auto-loading and auto-configuring
     is possible with this implementation.
-    Effectively, it is not easier to use this plugin over the native K8 client unless
+    Effectively, it is not easier to use this plu-gin over the native K8 client unless
     you consider that a provisioner can provide you this plugin already configured
     with its own information.
+
+    This plugin is particularly usefull as it can be used for the helm and deployment
+    workload plugins directly, which know how to use it to apply workloads to a
+    kubernetes cluster.
 
     """
 

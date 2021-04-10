@@ -81,7 +81,7 @@ def environment_up(environment):
     terraform = environment.fixtures.get_plugin(
         type=Type.PROVISIONER, instance_id='terraform')
 
-    if conf.get("alreadyrunning", exception_if_missing=False):
+    if conf.get("alreadyrunning", default=False):
         logger.info(
             "test infrastructure is aready in place, and does not need to be provisioned.")
     else:
@@ -122,7 +122,7 @@ def environment_upgrade(environment):
         type=Type.PROVISIONER, instance_id='launchpad')
     """ launchpad provisioner object """
 
-    if conf.get("alreadyrunning", exception_if_missing=False):
+    if conf.get("alreadyrunning", default=False):
         logger.info(
             "test infrastructure is aready in place, and does not need to be provisioned.")
     else:
@@ -159,7 +159,7 @@ def environment_down(environment):
     terraform = environment.fixtures.get_plugin(
         type=Type.PROVISIONER, instance_id='terraform')
 
-    if conf.get("keepwhenfinish", exception_if_missing=False):
+    if conf.get("keepwhenfinish", default=False):
         logger.info("Leaving test infrastructure in place on shutdown")
     else:
         try:

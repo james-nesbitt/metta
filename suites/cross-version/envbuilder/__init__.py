@@ -43,27 +43,24 @@ def build(config: Config, additional_metta_bootstraps: List[str]):
     envconf = config.load('envbuilder')
     """ all envbuilder config """
 
-    env_common = envconf.get('base', exception_if_missing=True)
+    env_common = envconf.get('base')
 
     environments = {}
 
     logger.debug(
-        "VARIATIONS --> {}".format(envconf.get('variations', exception_if_missing=True)))
+        "VARIATIONS --> {}".format(envconf.get('variations')))
 
     for variation in envconf.get(
-            'variations', exception_if_missing=True).keys():
+            'variations').keys():
         variation = str(variation)  # avoid use of numbers
         var_base = ['variations', variation]
         """ config base that gives us the root of the variation in config """
 
-        config_common = envconf.get([var_base, 'common'])
-        if config_common is None:
-            config_common = {}
+        config_common = envconf.get([var_base, 'common'], default={})
 
         states = {}
         default_state = None
-        for state in envconf.get([var_base, 'states'],
-                                 exception_if_missing=True).keys():
+        for state in envconf.get([var_base, 'states']).keys():
             if default_state is None:
                 default_state = state
 

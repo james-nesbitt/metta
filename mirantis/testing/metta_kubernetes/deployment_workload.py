@@ -68,12 +68,12 @@ class KubernetesDeploymentWorkloadPlugin(WorkloadBase):
 
         workload_config = self.environment.config.load(self.config_label)
 
-        name = name = workload_config.get(
-            [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY, 'metadata.name'])
+        name = workload_config.get(
+            [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY, 'metadata.name'], default='not-declared')
         namespace = workload_config.get(
-            [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_NAMESPACE], exception_if_missing=True)
+            [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_NAMESPACE])
         body = workload_config.get(
-            [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY], exception_if_missing=True)
+            [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY])
 
         return KubernetesDeploymentWorkloadInstance(
             client, namespace, name, body)

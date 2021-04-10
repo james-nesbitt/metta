@@ -9,7 +9,7 @@ import pytest
 
 from . import EnvManager, TestBase
 
-ENVIRONMENT = '190316-20100'
+ENVIRONMENT = '190315-20104'
 """ This test suite will run tests in a single environment, which will use this name """
 
 logger = logging.getLogger(ENVIRONMENT)
@@ -41,7 +41,6 @@ def environment_after(env_manager):
     yield environment
     # on teardown, destroy the env resources (pytest behaviour)
     env_manager.destroy(environment)
-
 
 # -- TEST FUNCTIONS -------------------------------------------------------
 

@@ -43,7 +43,7 @@ class MyMessageClientPlugin(ClientBase):
         """
 
         self.messages = environment.config.load(label).get(
-            [base, 'messages'], exception_if_missing=True)
+            [base, 'messages'])
         """ keep a list of string messages which we will serve one at a time """
 
     def __len__(self):

@@ -86,7 +86,7 @@ class ConfigGroup():
             return "Could not find the config label '{}'".format(label)
 
         try:
-            value = loaded.get(key, exception_if_missing=True)
+            value = loaded.get(key)
         except KeyError as e:
             return "Could not find the config key '{}'".format(key)
 

@@ -9,7 +9,7 @@ import pytest
 
 from . import EnvManager, TestBase
 
-ENVIRONMENT = '190314-20100'
+ENVIRONMENT = '190315-20100'
 """ This test suite will run tests in a single environment, which will use this name """
 
 logger = logging.getLogger(ENVIRONMENT)
@@ -44,7 +44,6 @@ def environment_after(env_manager):
 
 
 # -- TEST FUNCTIONS -------------------------------------------------------
-
 
 class TestUpgrade(TestBase):
     __test__ = True
