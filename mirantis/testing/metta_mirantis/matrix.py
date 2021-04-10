@@ -149,7 +149,7 @@ class ProvisionerUpFuncCallThread(Thread):
 
         self.func(self.config, self.provisioner)
 
-        if conf.get("options.destroy-on-finish", exception_if_missing=False):
+        if conf.get("options.destroy-on-finish", default=False):
             try:
                 self.logger.info(
                     "Stopping the test cluster using the provisioner as directed by config")

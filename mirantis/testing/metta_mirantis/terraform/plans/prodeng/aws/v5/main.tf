@@ -79,7 +79,7 @@ module "windows_workers" {
 }
 
 locals {
-  cluster_name       = var.cluster_name == "" ? "${var.username}-${var.task_name}-${random_string.random.result}" : var.cluster_name
+  cluster_name       = var.cluster_name == "" ? random_string.random.result : var.cluster_name
   expire             = timeadd(timestamp(), var.expire_duration)
   kube_orchestration = var.kube_orchestration ? "--default-node-orchestrator=kubernetes" : ""
   ami_obj            = var.platforms[var.platform_repo][var.platform]
@@ -96,13 +96,18 @@ locals {
   distro = split("_", var.platform)[0]
 
   globals = {
-    tags = {
-      "Name"                                        = local.cluster_name
-      "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-      "project"                                     = var.project
-      "platform"                                    = var.platform
-      "expire"                                      = local.expire
-    }
+    tags = merge(
+      {
+        "Name"                                        = local.cluster_name
+        "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+        "project"                                     = var.project
+        "platform"                                    = var.platform
+        "expire"                                      = local.expire
+        "username"                                    = var.username
+        "task_name"                                   = var.task_name
+      },
+      var.extra_tags
+    )
     distro                = local.distro
     platform_details      = local.platform_details_map[local.distro]
     subnet_count          = length(module.vpc.public_subnet_ids)

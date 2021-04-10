@@ -30,6 +30,26 @@ cncf:
         priority: 85
         env: METTA_CONFIGJSON
 
+  states:
+    default: mke_3.4.0
+
+    available:
+      mke_3.3.8:
+          sources:
+            project-config-mke-338:
+              # Include the config/mke_3.3.8 path as a config source for this environment
+              plugin_id: path
+              priority: 80
+              path: "{{paths:project-config}}/mke_3.3.8"
+
+      mke_3.4.0:
+          sources:
+            project-config-mke-340:
+              # Include the config/mke_3.4.0 path as a config source for this environment
+              plugin_id: path
+              priority: 80
+              path: "{{paths:project-config}}/mke_3.4.0"
+
   fixtures:
     from_config:
       # Load the fixtures from fixtures(.yml) source.

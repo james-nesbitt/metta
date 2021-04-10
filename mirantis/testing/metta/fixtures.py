@@ -359,7 +359,7 @@ def sort_instance_list(list: List[Fixture]) -> List[Fixture]:
 
 
 class UCCTFixturesPlugin:
-    """ Mixin class for output plugins that receives arguments """
+    """ Mixin class for plugins that hold fixtures """
 
     def __init__(self, fixtures: Fixtures = None):
         """ A Plugin that holds fixtures

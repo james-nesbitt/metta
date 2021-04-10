@@ -32,6 +32,18 @@ resource "aws_launch_template" "linux" {
   }
   user_data = base64encode(data.template_file.linux.rendered)
   tags      = var.tags
+  tag_specifications {
+    resource_type = "instance"
+    tags          = var.tags
+  }
+  tag_specifications {
+    resource_type = "volume"
+    tags          = var.tags
+  }
+  tag_specifications {
+    resource_type = "spot-instances-request"
+    tags          = var.tags
+  }
 }
 
 ###

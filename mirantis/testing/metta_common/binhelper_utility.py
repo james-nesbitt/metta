@@ -120,8 +120,7 @@ class DownloadableExecutableUtility(METTAPlugin):
         try:
             loaded.get(
                 base,
-                validator=BINHELPER_CONFIG_VALIDATE_TARGET,
-                exception_if_missing=True)
+                validator=BINHELPER_CONFIG_VALIDATE_TARGET)
         except KeyError as e:
             raise ValueError("Bin-Helper configuration is missing") from e
         except ValidationError as e:
@@ -129,18 +128,16 @@ class DownloadableExecutableUtility(METTAPlugin):
                 "Bin-Helper received invalid configuration: {}".format(e)) from e
 
         self.local_path = loaded.get(
-            [base, BINHELPER_UTILITY_CONFIG_BASE_LOCALPATH], exception_if_missing=True)
+            [base, BINHELPER_UTILITY_CONFIG_BASE_LOCALPATH])
 
         add_to_path = loaded.get([base,
-                                  BINHELPER_UTILITY_CONFIG_BASE_ADDTOPATH],
-                                 exception_if_missing=True)
+                                  BINHELPER_UTILITY_CONFIG_BASE_ADDTOPATH])
         if add_to_path:
             os.environ["PATH"] += os.pathsep + \
                 os.path.realpath(self.local_path)
 
         platforms = loaded.get([base,
-                                BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS],
-                               exception_if_missing=True)
+                                BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS])
         current_platform = '{}-{}'.format(platform.system(),
                                           platform.machine())
 
@@ -155,20 +152,17 @@ class DownloadableExecutableUtility(METTAPlugin):
                               BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
                               current_platform,
                               bin_id,
-                              BINHELPER_UTILITY_CONFIG_BASE_BIN_URL],
-                             exception_if_missing=True)
+                              BINHELPER_UTILITY_CONFIG_BASE_BIN_URL])
             version = loaded.get([base,
                                   BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
                                   current_platform,
                                   bin_id,
-                                  BINHELPER_UTILITY_CONFIG_BASE_BIN_VERSION],
-                                 exception_if_missing=True)
+                                  BINHELPER_UTILITY_CONFIG_BASE_BIN_VERSION])
             copypaths = loaded.get([base,
                                     BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
                                     current_platform,
                                     bin_id,
-                                    BINHELPER_UTILITY_CONFIG_BASE_BIN_COPYPATHS],
-                                   exception_if_missing=False)
+                                    BINHELPER_UTILITY_CONFIG_BASE_BIN_COPYPATHS])
             self.get_bin(
                 name=bin_id,
                 url=url,

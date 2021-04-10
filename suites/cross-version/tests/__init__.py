@@ -82,25 +82,27 @@ class TestBase:
         self.mke_nodes_health(environment)
         self.mke_swarminfo_health(environment)
 
-    def mke_client_id(self, environment):
-        """ did we get a good mke client """
+    def _mke_client_from_env(self, environment):
+        """ return the mke client from the environment """
 
         # get the mke client.
         # We could get this from the launchpad provisioner if we were worried about
         # which mke client plugin instance we receive,  however there is only one
         # in this case.
-        mke_client = environment.fixtures.get_plugin(
+        return environment.fixtures.get_plugin(
             type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+
+    def mke_client_id(self, environment):
+        """ did we get a good mke client that can connect to the MKE API """
+        mke_client = self._mke_client_from_env(environment)
 
         info = mke_client.api_info()
         logger.info("MKE Cluster ID: {}".format(info['ID']))
         logger.info("--> Warnings : {}".format(info['Warnings']))
 
     def mke_nodes_health(self, environment):
-        """ did we get a good mke client """
-
-        mke_client = environment.fixtures.get_plugin(
-            type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+        """ are the mke nodes healthy, do they have a healthy node state """
+        mke_client = self._mke_client_from_env(environment)
 
         nodes = mke_client.api_nodes()
 
@@ -110,10 +112,8 @@ class TestBase:
                 node['ID'], node['Status'])
 
     def mke_swarminfo_health(self, environment):
-        """ did we get a good mke client """
-
-        mke_client = environment.fixtures.get_plugin(
-            type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+        """ Does the MKE API indicate a nood number of nodes in the swarm (if swarm is used) """
+        mke_client = self._mke_client_from_env(environment)
 
         info = mke_client.api_info()
 
@@ -131,20 +131,23 @@ class TestBase:
         self.msr_replica_health(environment)
         self.msr_alerts(environment)
 
-    def msr_client(self, environment):
-        """ did we get a good msr client """
+    def _msr_client_from_env(self, environment):
+        """ return the msr client from the environment """
 
         # get the mke client.
         # We could get this from the launchpad provisioner if we were worried about
         # which mke client plugin instance we receive,  however there is only one
         # in this case.
-        msr_client = environment.fixtures.get_plugin(
+        return environment.fixtures.get_plugin(
             type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+
+    def msr_client(self, environment):
+        """ did we get a good msr client """
+        msr_client = self._msr_client_from_env(environment)
 
     def msr_root_health(self, environment):
         """ test the the node specific ping and health checks don't fail """
-        msr_client = environment.fixtures.get_plugin(
-            type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+        msr_client = self._msr_client_from_env(environment)
 
         for i in range(0, msr_client.host_count()):
             assert msr_client.api_ping(node=i)
@@ -157,9 +160,7 @@ class TestBase:
 
     def msr_replica_health(self, environment):
         """ test that we can access node information """
-
-        msr_client = environment.fixtures.get_plugin(
-            type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+        msr_client = self._msr_client_from_env(environment)
 
         status = msr_client.api_status()
         for replica_id, replica_health in status['replica_health'].items():
@@ -168,15 +169,16 @@ class TestBase:
 
     def msr_alerts(self, environment):
         """ check that we can get alerts """
+        msr_client = self._msr_client_from_env(environment)
 
-        msr_client = environment.fixtures.get_plugin(
-            type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
-
+        # this might produce an exception which would fail the test
         alerts = msr_client.api_alerts()
 
         if len(alerts) > 0:
 
             for alert in alerts:
+                # we don't actually fail the test on alerts, but we do log
+                # then in case they warrant a manual test failure.
                 logger.warning(
                     "{}: {} [{}]".format(
                         alert['id'],

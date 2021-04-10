@@ -36,7 +36,7 @@ def test_01_environment_prepare(environment):
     conf = environment.config.load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
-    if conf.get("alreadyrunning", exception_if_missing=False):
+    if conf.get("alreadyrunning", default=False):
         logger.info(
             "test infrastructure is aready in place, and does not need to be provisioned.")
     else:
@@ -67,7 +67,7 @@ def test_02_environment_up(environment):
     conf = environment.config.load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
-    if conf.get("alreadyrunning", exception_if_missing=False):
+    if conf.get("alreadyrunning", default=False):
         logger.info(
             "test infrastructure is aready in place, and does not need to be provisioned.")
     else:
@@ -245,7 +245,7 @@ def test_14_environment_down(environment):
     conf = environment.config.load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
-    if conf.get("keeponfinish", exception_if_missing=False):
+    if conf.get("keeponfinish", default=False):
         logger.info("Leaving test infrastructure in place on shutdown")
     else:
         try:

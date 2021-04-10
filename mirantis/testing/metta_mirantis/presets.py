@@ -100,7 +100,7 @@ def add_preset_config(environment: Environment,
         (preset_key, preset_root_path, preset_priority_delta) = preset
         preset_priority = priority + preset_priority_delta
         preset_value = metta_config.get(
-            [METTA_CONFIG_CONFIG_PRESET_BASE, preset_key], exception_if_missing=False)
+            [METTA_CONFIG_CONFIG_PRESET_BASE, preset_key], default='')
 
         if preset_value:
             preset_instance_id = "{}-{}-{}".format(

@@ -56,7 +56,6 @@ SONOBUOY_VALIDATE_JSONSCHEMA = {
             'properties': {
                 'version': {'type': 'string'}
             },
-            'required': ['version']
         },
         'kubernetes_version': {
             'type': 'string'
@@ -84,7 +83,7 @@ SONOBUOY_VALIDATE_JSONSCHEMA = {
 """ Validation jsonschema for terraform config contents """
 SONOBUOY_VALIDATE_TARGET = {
     PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: SONOBUOY_VALIDATE_JSONSCHEMA}
-""" configerus validation target to match the above config """
+""" configerus validation target to match the jsonschema config """
 
 
 class SonobuoyWorkloadPlugin(WorkloadBase):
@@ -124,12 +123,11 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
         loaded = self.environment.config.load(self.config_label)
         """ get a configerus LoadedConfig for the sonobuoy label """
 
-        # Validate the config overall
+        # Validate the config overall using jsonschema
         try:
             sonobuoy_config = loaded.get(
                 self.config_base,
-                validator=SONOBUOY_VALIDATE_TARGET,
-                exception_if_missing=True)
+                validator=SONOBUOY_VALIDATE_TARGET)
         except ValidationError as e:
             raise ValueError(
                 "Invalid sonobuoy config received: {}".format(e)) from e
@@ -138,21 +136,10 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
             type=Type.CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
 
         mode = loaded.get([self.config_base,
-                           SONOBUOY_CONFIG_KEY_MODE],
-                          exception_if_missing=True)
-        kubernetes_version = loaded.get(
-            [self.config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION], exception_if_missing=True)
-        plugins = loaded.get([self.config_base,
-                              SONOBUOY_CONFIG_KEY_PLUGINS],
-                             exception_if_missing=False)
-        plugin_envs = loaded.get([self.config_base,
-                                  SONOBUOY_CONFIG_KEY_PLUGINENVS],
-                                 exception_if_missing=False)
-
-        if not plugins:
-            plugins = []
-        if not plugin_envs:
-            plugin_envs = []
+                           SONOBUOY_CONFIG_KEY_MODE])
+        kubernetes_version = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION], default='')
+        plugins = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[])
+        plugin_envs = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[])
 
         return SonobuoyConformanceWorkloadInstance(
             kubeclient=kubeclient, mode=mode, kubernetes_version=kubernetes_version, plugins=plugins, plugin_envs=plugin_envs)
@@ -163,8 +150,7 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
         loaded = self.environment.config.load(self.config_label)
         """ get a configerus LoadedConfig for the sonobuoy label """
 
-        sonobuoy_config = loaded.get(
-            self.config_base, exception_if_missing=True)
+        sonobuoy_config = loaded.get(self.config_base)
 
         kubeclient = self.environment.fixtures.get_plugin(
             type=Type.CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
@@ -194,7 +180,7 @@ SONOBUOY_PACKAGE = 'https://github.com/vmware-tanzu/sonobuoy/releases/download/v
 class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
     """ A conformance workload instance for a docker run """
 
-    def __init__(self, kubeclient: object, mode: str, kubernetes_version: str,
+    def __init__(self, kubeclient: object, mode: str, kubernetes_version: str = '',
                  plugins: List[str] = [], plugin_envs: List[str] = []):
         self.kubeclient = kubeclient
         self.mode = mode

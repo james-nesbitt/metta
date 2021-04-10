@@ -15,6 +15,7 @@ variations:
     common:
       variables:
         id: 20100_20104
+        mcr_channel: test
     states:
       before:
         variables:
@@ -23,57 +24,60 @@ variations:
         variables:
           mcr_version: 20.10.4-rc1
 
-  # Upgrade MCR from 19.03.16 -> 20.10.0
-  190316-20100:
+  # Upgrade MCR from 19.03.15-rc1 -> 20.10.0
+  190315-20100:
     common:
       variables:
-        id: 190316_20100
+        id: 190315_20100
+        mcr_channel: test
     states:
       before:
           variables:
-            mcr_version: 19.03.16
+            mcr_version: 19.03.15-rc1
       after:
           variables:
             mcr_version: 20.10.0
 
-  # Upgrade MCR from 19.3.14 -> 19.03.16
-  190314-190316:
+  # Upgrade MCR from 19.3.14 -> 19.03.15-rc1
+  190314-190315:
     common:
       variables:
-        id: 190314_190316
+        id: 190314_190315
+        mcr_channel: test
     states:
       before:
           variables:
             mcr_version: 19.03.14
       after:
           variables:
-            mcr_version: 19.03.16
+            mcr_version: 19.03.15-rc1
 
-  # Upgrade MCR from 19.03.16 -> 20.10.4
-  190316-20104:
+  # Upgrade MCR from 19.03.15-rc1 -> 20.10.4-rc1
+  190315-20104:
     common:
       variables:
-        id: 190316_20104
+        id: 190315_20104
+        mcr_channel: test
     states:
       before:
           variables:
-            mcr_version: 19.03.16
+            mcr_version: 19.03.15-rc1
       after:
           variables:
             mcr_version: 20.10.4-rc1
 
-  # Upgrade MCR from 19.3.14 -> 20.10.4
+  # Upgrade MCR from 19.3.14 -> 20.10.4-rc1
   190314-20100:
     common:
       variables:
-        id: 190314_20104
+        id: 190314_20100
     states:
       before:
           variables:
             mcr_version: 19.03.14
       after:
           variables:
-            mcr_version: 20.10.4-rc1
+            mcr_version: 20.10.0
 
 
 # All of the environments will include this base

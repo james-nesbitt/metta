@@ -61,7 +61,7 @@ def test_cncf_conformance(environment_up):
             else:
                 logger.debug('starting ...')
 
-            logger.error("sonobuoy tick")
+            logger.info("sonobuoy tick")
             time.sleep(SONOBUOY_TEST_TIMER_STEP)
 
         results = instance.retrieve()

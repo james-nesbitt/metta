@@ -45,7 +45,7 @@ def environment_up(environment):
     conf = environment.config.load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
-    if conf.get("alreadyrunning", exception_if_missing=False):
+    if conf.get("alreadyrunning", default=False):
         logger.info(
             "test infrastructure is aready in place, and does not need to be provisioned.")
     else:
@@ -60,12 +60,20 @@ def environment_up(environment):
                 "Starting up the testing cluster using the provisioner")
             provisioner.apply()
         except Exception as e:
-            logger.error("Provisioner failed to start: %s", e)
+            logger.error("Provisioner failed to install: %s", e)
+            # We have to tear down any resources created.
+            environment_down(environment)
             raise e
 
     yield environment
 
-    if conf.get("keeponfinish", exception_if_missing=False):
+    # teardown
+    environment_down(environment)
+
+
+def environment_down(environment):
+    """ tear down a provisioned environment """
+    if conf.get("keeponfinish", default=False):
         logger.info("Leaving test infrastructure in place on shutdown")
     else:
         try:

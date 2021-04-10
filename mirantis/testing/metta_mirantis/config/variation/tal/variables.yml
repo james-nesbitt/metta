@@ -32,8 +32,8 @@ platform: ubuntu_18.04
 
 # mirantis app versions and sources
 # typically overriden in a release config variables file
-mcr_repo_url: "https://repos.mirantis.com/"
-#mcr_repo_url: "https://s3.amazonaws.com/repos-internal.mirantis.com/"
+# mcr_repo_url: "https://repos.mirantis.com/"
+mcr_repo_url: "https://s3.amazonaws.com/repos-internal.mirantis.com/"
 mcr_channel: stable
 mcr_version: 20.10.0
 mcr_install_url_linux: "https://get.mirantis.com/"

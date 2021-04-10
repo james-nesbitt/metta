@@ -52,7 +52,7 @@ def environment_up(environment):
     conf = environment.config.load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
-    if conf.get("alreadyrunning", exception_if_missing=False):
+    if conf.get("alreadyrunning", default=False):
         logger.info(
             "test infrastructure is aready in place, and does not need to be provisioned.")
     else:
@@ -75,7 +75,7 @@ def environment_up(environment):
 
     yield environment
 
-    if conf.get("keeponfinish", exception_if_missing=False):
+    if conf.get("keeponfinish", default=False):
         logger.info("Leaving test infrastructure in place on shutdown")
     else:
         try:

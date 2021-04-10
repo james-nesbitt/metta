@@ -51,6 +51,10 @@ data "aws_ami" "windows_2019" {
   owners = [var.ami_obj_win.owner]
 }
 
+data "http" "myip" {
+  url = "http://ipinfo.io/ip"
+}
+
 resource "aws_security_group" "common" {
   name        = "${var.cluster_name}-common"
   description = "mke cluster common rules"
@@ -75,6 +79,20 @@ resource "aws_security_group" "common" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_security_group_rule" "open_myip" {
+  # conditionally add this rule to SG 'common'
+  security_group_id = aws_security_group.common.id
+  count             = var.open_sg_for_myip ? 1 : 0
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["${chomp(data.http.myip.body)}/32"]
+  lifecycle {
+    create_before_destroy = true
   }
 }
 

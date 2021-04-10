@@ -126,15 +126,13 @@ class TerraformProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         self.terraform_config_base = base
         """ configerus get key that should contain all tf config """
 
-        self.terraform_config = self.environment.config.load(
-            self.terraform_config_label)
+        self.terraform_config = self.environment.config.load(self.terraform_config_label)
         """ get a configerus LoadedConfig for the terraform label """
 
         # Run confgerus validation on the config using our above defined
         # jsonschema
         try:
-            self.terraform_config.get(
-                base, validator=TERRAFORM_VALIDATE_TARGET)
+            self.terraform_config.get(base, validator=TERRAFORM_VALIDATE_TARGET)
         except ValidationError as e:
             raise ValueError(
                 "Terraform config failed validation: {}".format(e)) from e
@@ -145,47 +143,33 @@ class TerraformProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         """ All fixtures added to this provisioner plugin. """
         UCCTFixturesPlugin.__init__(self, fixtures)
 
-        self.root_path = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_ROOT_PATH_KEY],
-                                                   exception_if_missing=False)
+        self.root_path = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_ROOT_PATH_KEY], default='')
         """ all relative paths will have this joined as their base """
 
-        self.working_dir = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_PLAN_PATH_KEY],
-                                                     exception_if_missing=False)
-        """ all subprocess commands for terraform will be run in this path """
-        if not self.working_dir:
+        try:
+            self.working_dir = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_PLAN_PATH_KEY])
+            """ all subprocess commands for terraform will be run in this path """
+        except Exception as e:
             raise ValueError(
-                "Plugin config did not give us a working/plan path: {}".format(self.terraform_config.data))
+                "Plugin config did not give us a working/plan path: {}".format(self.terraform_config.data)) from e
         if not os.path.isabs(self.working_dir):
             if self.root_path:
                 self.working_dir = os.path.join(
                     self.root_path, self.working_dir)
             self.working_dir = os.path.abspath(self.working_dir)
 
-        state_path = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_STATE_PATH_KEY],
-                                               exception_if_missing=False)
+        state_path = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_STATE_PATH_KEY], default=os.path.join(self.working_dir, TERRAFORM_PROVISIONER_DEFAULT_STATE_SUBPATH))
         """ terraform state path """
-        if not state_path:
-            state_path = os.path.join(
-                self.working_dir,
-                TERRAFORM_PROVISIONER_DEFAULT_STATE_SUBPATH)
         if not os.path.isabs(state_path):
             if self.root_path:
                 state_path = os.path.join(self.root_path, state_path)
             state_path = os.path.abspath(state_path)
 
-        self.vars = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_VARS_KEY],
-                                              exception_if_missing=False)
+        self.vars = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_VARS_KEY], default={})
         """ List of vars to pass to terraform.  Will be written to a file """
-        if not self.vars:
-            self.vars = {}
 
-        vars_path = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_VARS_PATH_KEY],
-                                              exception_if_missing=False)
+        vars_path = self.terraform_config.get([self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_VARS_PATH_KEY], default=os.path.join(self.working_dir, TERRAFORM_PROVISIONER_DEFAULT_VARS_FILE))
         """ vars file containing vars which will be written before running terraform """
-        if not vars_path:
-            vars_path = os.path.join(
-                self.working_dir,
-                TERRAFORM_PROVISIONER_DEFAULT_VARS_FILE)
         if not os.path.isabs(vars_path):
             if self.root_path:
                 vars_path = os.path.join(self.root_path, vars_path)

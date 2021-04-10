@@ -15,11 +15,8 @@
 # sees a big changes.
 #
 presets:
-    # This will tell metta to include metta/config/variation/ltc
+    # This will tell metta to include metta/config/variation/tal
     variation: tal
-    # this will tell metta to include metta/config/release/patch/202101
-    release: release/2021Q1
-    # This will tell metta to include metta/config/cluster/poc
-    cluster: poc
-    # This will tell metta to include metta/config/platform/public/ubuntu/20.04
-    platform: public/ubuntu/20.04
+    # This will tell metta to include metta/config/cluster/pocnomsr
+    # which installs a small cluster with no MSR replicas
+    cluster: pocnomsr

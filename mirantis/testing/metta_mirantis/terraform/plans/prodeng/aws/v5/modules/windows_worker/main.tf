@@ -69,10 +69,22 @@ resource "aws_launch_template" "windows" {
   }
   user_data = base64encode(data.template_file.windows.rendered)
   tags      = local.tags
+  tag_specifications {
+    resource_type = "instance"
+    tags          = local.tags
+  }
+  tag_specifications {
+    resource_type = "volume"
+    tags          = local.tags
+  }
+  tag_specifications {
+    resource_type = "spot-instances-request"
+    tags          = local.tags
+  }
 }
 
 resource "aws_spot_fleet_request" "windows" {
-  iam_fleet_role      = "arn:aws:iam::546848686991:role/aws-ec2-spot-fleet-role"
+  iam_fleet_role      = var.globals.iam_fleet_role
   allocation_strategy = "lowestPrice"
   target_capacity     = var.node_count
   # valid_until     = "2019-11-04T20:44:20Z"

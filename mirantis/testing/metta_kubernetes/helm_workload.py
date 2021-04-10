@@ -87,22 +87,16 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
         kubeconfig = client.config_file
 
         namespace = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_NAMESPACE], exception_if_missing=False)
-        if not namespace:
-            namespace = KUBERNETES_HELM_WORKLOAD_DEFAULT_NAMESPACE
+            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_NAMESPACE], default=KUBERNETES_HELM_WORKLOAD_DEFAULT_NAMESPACE)
 
         chart = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART], exception_if_missing=True)
+            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART])
 
         values = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUES], exception_if_missing=False)
-        if values is None:
-            values = {}
+            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUES], default={})
 
         repos = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS], exception_if_missing=False)
-        if repos is None:
-            repos = {}
+            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS], default={})
 
         return KubernetesHelmV3WorkloadInstance(
             kubeconfig, namespace, self.instance_id, repos, chart, values)

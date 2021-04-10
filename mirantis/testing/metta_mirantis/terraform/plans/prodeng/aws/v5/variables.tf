@@ -1,7 +1,7 @@
 variable "username" {
   type        = string
   default     = "UNDEFINED"
-  description = "A short name/initials which represents the engineer running the test."
+  description = "A string which represents the engineer running the test."
 }
 
 variable "task_name" {
@@ -20,6 +20,12 @@ variable "cluster_name" {
   type        = string
   default     = ""
   description = "Global cluster name. Use this to override a dynamically created name."
+}
+
+variable "extra_tags" {
+  type        = map(string)
+  default     = {}
+  description = "A map of arbitrary, customizable string key/value pairs to be included alongside a preset map of tags to be used across myriad AWS resources."
 }
 
 variable "expire_duration" {
