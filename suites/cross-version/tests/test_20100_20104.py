@@ -50,6 +50,7 @@ def environment_after(env_manager):
 
 # -- TEST FUNCTIONS -------------------------------------------------------
 
+
 class TestUpgrade(TestBase):
     __test__ = True
 

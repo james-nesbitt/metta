@@ -101,7 +101,7 @@ class SonobuoyGroup():
             instance._create_k8s_crb()
 
     def run(self, instance_id: str = '', wait: bool = False):
-        """ remove all sonobuoy infrastructure """
+        """ run sonobuoy workload """
         instance = self._select_instance(instance_id=instance_id)
         instance.run(wait=wait)
 
@@ -134,7 +134,7 @@ class SonobuoyGroup():
         instance.logs(follow=follow)
 
     def retrieve(self, instance_id: str = ''):
-        """ sonobuoy logs """
+        """ retrieve the results from the sonobuoy workload instance """
         instance = self._select_instance(instance_id=instance_id)
         try:
             instance.retrieve()

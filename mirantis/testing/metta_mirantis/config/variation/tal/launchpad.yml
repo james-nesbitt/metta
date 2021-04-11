@@ -56,7 +56,6 @@ config:
         - "--admin-username={{admin_user?admin}}"
         - "--admin-password={{admin_password?orcaorcaorca}}"
         - "--san={{output::mke_lb?NoSanConfigured}}"
-        - "--default-node-orchestrator={{variables:mke_install_defaultorchestrator}}"
         - "--nodeport-range={{variables:mke_install_nodeport_range}}"
         upgradeFlags:
         - "--force-recent-backup"

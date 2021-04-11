@@ -137,9 +137,12 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
 
         mode = loaded.get([self.config_base,
                            SONOBUOY_CONFIG_KEY_MODE])
-        kubernetes_version = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION], default='')
-        plugins = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[])
-        plugin_envs = loaded.get([self.config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[])
+        kubernetes_version = loaded.get(
+            [self.config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION], default='')
+        plugins = loaded.get(
+            [self.config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[])
+        plugin_envs = loaded.get(
+            [self.config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[])
 
         return SonobuoyConformanceWorkloadInstance(
             kubeclient=kubeclient, mode=mode, kubernetes_version=kubernetes_version, plugins=plugins, plugin_envs=plugin_envs)
@@ -171,26 +174,33 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
         return info
 
 
-SONOBUOY_BIN = 'sonobuoy'
-""" Bin Name for running sonobuoy """
-SONOBUOY_PACKAGE = 'https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.20.0/sonobuoy_0.20.0_linux_amd64.tar.gz'
-""" we should write somethign to download this automatically """
+SONOBUOY_DEFAULT_BIN = 'sonobuoy'
+""" Default Bin Name for running sonobuoy """
+SONOBUOY_DEFAULT_RESULTS_PATH = './results'
+""" Default path for where to download sonobuoy results """
 
 
 class SonobuoyConformanceWorkloadInstance(WorkloadInstanceBase):
     """ A conformance workload instance for a docker run """
 
     def __init__(self, kubeclient: object, mode: str, kubernetes_version: str = '',
-                 plugins: List[str] = [], plugin_envs: List[str] = []):
+                 plugins: List[str] = [], plugin_envs: List[str] = [], bin: str = SONOBUOY_DEFAULT_BIN, results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH):
         self.kubeclient = kubeclient
+        """ metta kube client, from which we will pull the KUBECONFIG target """
         self.mode = mode
+        """ sonobuoy mode, passed to the cli """
         self.kubernetes_version = kubernetes_version
+        """ Kubernetes version to test compare against """
         self.plugins = plugins
+        """ which sonobuoy plugins to run """
         self.plugin_envs = plugin_envs
+        """ Plugin specific ENVs to pass to sonobuoy """
 
-        self.bin = SONOBUOY_BIN
+        self.bin = bin
+        """ path to the sonobuoy binary """
 
-        self.results_path = './results'
+        self.results_path = results_path
+        """ path to where to download sonobuoy results """
 
     def run(self, wait: bool = True):
         """ run sonobuoy """

@@ -128,7 +128,8 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             raise ValueError(
                 "Launchpad config failed validation: {}".format(e)) from e
 
-        self.working_dir = launchpad_config.get([base, METTA_LAUNCHPAD_CLI_WORKING_DIR_KEY])
+        self.working_dir = launchpad_config.get(
+            [base, METTA_LAUNCHPAD_CLI_WORKING_DIR_KEY])
         """ if launchpad needs to be run in a certain path, set it with this config """
         if not self.working_dir:
             self.working_dir = METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT

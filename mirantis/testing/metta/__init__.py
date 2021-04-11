@@ -245,7 +245,7 @@ def new_environments_from_config(
                 environment_base = [base, name]
                 logger.debug(
                     "creating new environment from config: {}:{}".format(
-                        label, '.'.join(environment_base)))
+                        label, environment_base))
                 environment = Environment(
                     name=name,
                     config=config,
