@@ -142,7 +142,6 @@ def discover_sources_from_config(
             priority = metta_config.get(
                 [instance_base, METTA_PLUGIN_CONFIG_KEY_PRIORITY], default=DEFAULT_SOURCE_CONFIG_PRIORITY)
 
-
             logger.info(
                 "Adding metta sourced config plugin: {}:{}".format(
                     plugin_id, instance_id))
@@ -152,16 +151,20 @@ def discover_sources_from_config(
                 priority=priority)
 
             if plugin_id == PLUGIN_ID_SOURCE_PATH:
-                source_path = metta_config.get([instance_base, CONFIGERUS_PATH_KEY])
+                source_path = metta_config.get(
+                    [instance_base, CONFIGERUS_PATH_KEY])
                 plugin.set_path(path=source_path)
             elif plugin_id == PLUGIN_ID_SOURCE_DICT:
-                source_data = metta_config.get([instance_base, CONFIGERUS_DICT_DATA_KEY])
+                source_data = metta_config.get(
+                    [instance_base, CONFIGERUS_DICT_DATA_KEY])
                 plugin.set_data(data=source_data)
             elif plugin_id == PLUGIN_ID_SOURCE_ENV_SPECIFIC:
-                source_base = metta_config.get([instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY])
+                source_base = metta_config.get(
+                    [instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY])
                 plugin.set_base(base=source_base)
             elif plugin_id == PLUGIN_ID_SOURCE_ENV_JSON:
-                source_env = metta_config.get([instance_base, CONFIGERUS_ENV_JSON_ENV_KEY])
+                source_env = metta_config.get(
+                    [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY])
                 plugin.set_env(env=source_env)
             elif hasattr(plugin, set_data):
                 data = metta_config.get([instance_base, 'data'])

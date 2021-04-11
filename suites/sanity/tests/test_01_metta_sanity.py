@@ -8,6 +8,10 @@ cluster.
 
 None of these tests expect your cluster to be provisioned.
 
+What we are testing here is that the configuration used resulted in the expected
+System of provisioner fixtures/plugins, and that those fixtures meet their
+sanity markers.
+
 """
 import logging
 

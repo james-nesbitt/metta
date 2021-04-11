@@ -1,0 +1,18 @@
+# NOTE that this is here for information purposes only.  We are unable to use
+#    the common sonobuoy approach for testing MKE 3.2.x as it advertised
+#    K8S server version 1.14.8, and sonobuoy v0.50 tests K8S 1.17.X and higher
+#    only.
+
+# OS Platform to test on
+platform_repo: public
+platform: ubuntu_18.04
+# Versions to test against.
+mcr_channel: test
+mcr_version: 19.03.15-rc1
+mke_image_repo: docker.io/mirantiseng
+mke_version: 3.2.13-rc1
+
+# What version of Kubernetes should sonobuoy check conformance on.
+# You should be able to leave this empty for auto-detection but it is not
+# always reliable.
+sonobuoy_kubernetes_version: v1.14.8

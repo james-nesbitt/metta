@@ -3,6 +3,25 @@
 Test that we are able to provision the system and interact
 with cluster elements.
 
+Here our test harness uses the provisioner plugins to create a running system
+and then interacts in the system in a few ways.
+
+Here we:
+
+1. Use the provisioners to start the running system
+2. use a few of the provisioner clients to test MKE and MSR health
+3. use a workload plugin/fixture to run a workload on the cluster and ensure
+   that it is running correctly
+4. tear the system down
+5. test that it was torn down properly.
+
+@NOTE this approach includes the building of the system as a test function,
+    which is usefull in the sanity scenario, but not a normal way to test
+    a cluster.  Normally you want a fixture which creates the running cluster
+    outside of your test functions so that you can benchmark without including
+    the cluster setup as a part of a test-case.
+    Check the other suites for such an approach.
+
 """
 import logging
 import pytest
