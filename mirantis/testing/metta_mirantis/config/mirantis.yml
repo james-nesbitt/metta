@@ -5,9 +5,12 @@ terraform:
         # Terraform plans crated by the prodeng team.
         prodeng:
             aws:
+                # Early iteration of PRODENG TF chart, before spot instances
                 v4: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v4"
-                v5: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v5"
+                # Third iteration of the PRODENG TF chart using spot references
+                v8: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v8"
         # Launchpad example terraform charts.
         example:
             aws:
+                # Pretty far out of date example AWS TF chart from the launchpad repo
                 v1_2: "{{paths:metta-mirantis}}/terraform/plans/example/aws/1.2"

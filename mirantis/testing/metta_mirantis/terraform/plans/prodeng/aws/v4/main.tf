@@ -276,5 +276,13 @@ output "cluster_name" {
 }
 
 output "mke_lb" {
+  value = "https://${local.mke_lb}"
+}
+
+output "mke_san" {
   value = local.mke_lb
+}
+
+output "hosts" {
+  value = local.hosts
 }

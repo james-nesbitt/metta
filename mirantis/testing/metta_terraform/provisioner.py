@@ -454,6 +454,21 @@ class TerraformClient:
             raise Exception(
                 "Terraform client failed to run : {}".format(e)) from e
 
+
+    def plan(self):
+        """ Check a terraform plan """
+        try:
+            self._run(['plan'], with_state=True,
+                      with_vars=True, return_output=False)
+        except subprocess.CalledProcessError as e:
+            logger.error(
+                "Terraform client failed to run plan in %s: %s",
+                self.working_dir,
+                e.stderr)
+            raise Exception(
+                "Terraform client failed to plan : {}".format(e)) from e
+
+
     def destroy(self):
         """ Apply a terraform plan """
         try:

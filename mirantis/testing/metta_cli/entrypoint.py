@@ -2,7 +2,7 @@
 
 METTA CLI setuptools entrypoint
 
-Keep the entrypint minimal, and rely on .cli for real work.
+Keep the entrypint minimal, and rely on .base for real work.
 
 """
 

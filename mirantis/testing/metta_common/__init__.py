@@ -18,6 +18,7 @@ from .text_output import TextOutputPlugin
 from .combo_provisioner import ComboProvisionerPlugin, COMBO_PROVISIONER_CONFIG_LABEL
 from .binhelper_utility import DownloadableExecutableUtility, METTA_PLUGIN_ID_UTILITY_BINHELPER, BINHELPER_UTILITY_CONFIG_LABEL
 from .config_format_output import ConfigFormatOutputPlugin
+from .user_cli import UserCliPlugin
 
 METTA_PLUGIN_ID_OUTPUT_DICT = 'dict'
 """ output plugin_id for the dict plugin """
@@ -72,6 +73,18 @@ def plugin_factory_format_output(config: Config, instance_id: str = ''):
     """ create an format plugin which replaces from output contents """
     return ConfigFormatOutputPlugin(config, instance_id)
 
+""" metta user cli plugin """
+
+METTA_PLUGIN_ID_CLI_USER = 'user'
+""" cli plugin_id for the user plugin """
+
+
+@Factory(type=Type.CLI, plugin_id=METTA_PLUGIN_ID_CLI_USER)
+def metta_plugin_factory_user_config(
+        environment: Environment, instance_id: str = ''):
+    """ create a user cli plugin """
+    return UserCliPlugin(environment, instance_id)
+
 
 """ METTA bootstraps that we will use on config objects """
 
@@ -80,7 +93,7 @@ def bootstrap(environment: Environment):
     """ METTA Bootstrapper - don't actually do anything """
     pass
 
-
+# @TODO this should be renamed on the next major version bump.
 def bootstrap_common(environment: Environment):
     """ metta configerus bootstrap
 

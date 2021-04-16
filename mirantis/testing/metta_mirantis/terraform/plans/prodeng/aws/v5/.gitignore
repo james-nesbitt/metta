@@ -1,4 +1,0 @@
-.terraform
-ssh_keys
-*.state
-*.state.backup

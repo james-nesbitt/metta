@@ -30,6 +30,9 @@ vars:
     # description = "The max time to allow this cluster to avoid early termination. Can use 'h', 'm', 's' in sane combinations, eg, '15h37m18s'."
     expire_duration: "{{variables:expire_duration}}"
 
+    # extra_tags : A map of arbitrary, customizable string key/value pairs to be included alongside a preset map of tags to be used across myriad AWS resources
+    extra_tags: "{{variables:extra_tags}}"
+
     # description = "The AWS region to deploy to."
     aws_region: "{{variables:aws_region}}"
 
@@ -38,9 +41,21 @@ vars:
 
     # description = "The UCP admin username to use."
     admin_username: admin
-
     # description = "The UCP admin password to use."
     admin_password: "{{variables:admin_password}}"
+
+    # Send product versions and sources.
+    # @NOTE we don't actually consume anything from terraform that uses these
+    #   and terraform just pipes these into outputs to support launchpad, so
+    #   we only send these so that terraform outputs aren't confusing
+    mcr_channel: "{{variables:mcr_channel}}"
+    mcr_version: "{{variables:mcr_version}}"
+    mcr_install_url_linux: "{{variables:mcr_install_url_linux}}"
+    mcr_install_url_windows: "{{variables:mcr_install_url_windows}}"
+    mke_image_repo: "{{variables:mke_image_repo}}"
+    mke_version: "{{variables:mke_version}}"
+    msr_image_repo: "{{variables:msr_image_repo}}"
+    msr_version: "{{variables:msr_version}}"
 
     # description = "The number of UCP managers to create."
     manager_count: "{{variables:manager_count}}"
