@@ -1,5 +1,5 @@
 
-# not actually used for anything.
+# Cluster name.
 name: "{{variables:id}}"
 
 # Set some cli options
@@ -15,14 +15,17 @@ config_file: "{{variables:files_path}}/{{variables:files_prefix}}.launchpad.yaml
 
 api:
   # MKE Access point (What about MSR?)
-  accesspoint: "{{output::mke_lb?special::None}}"
+  accesspoint: "{{output::mke_san?special::None}}"
   username: "{{variables:admin_user?admin}}"
   password: "{{variables:admin_password?orcaorcaorca}}"
 
 # Provide launchpad config inline.
 
 # Option 1 : source from a metta output such as from terraform
-# config: "{{output::mke_cluster?special::None}}"
+#    Here we default to None to allow the output to not exist and avoid an
+#    exception during config load.  Perhaps some other plugin creates the
+#    output in a particular state.
+# config: "{{output::launchpad?special::None}}"
 
 # Options 2 : source from a file
 # config: "{{file::path/to/file.yml}}"
@@ -34,14 +37,17 @@ api:
 # replicate what are orca defaults on some installFlags in order to get values
 # that can be overridden.
 config:
-    apiVersion: launchpad.mirantis.com/mke/v1.2
+    apiVersion: launchpad.mirantis.com/mke/v1.3
     kind: mke+msr
 
     metadata:
       name: "{{name}}"
 
     spec:
-      hosts: "{{output::mke_cluster/spec.hosts?special::[]}}"
+      cluster:
+        prune: false
+
+      hosts: "{{output::launchpad/spec.hosts?special::[]}}"
 
       mcr:
         channel: "{{variables:mcr_channel}}"
@@ -52,11 +58,13 @@ config:
 
       mke:
         imageRepo: "{{variables:mke_image_repo}}"
+        adminUsername: "{{admin_user?admin}}"
+        adminPassword: "{{admin_password?orcaorcaorca}}"
         installFlags:
-        - "--admin-username={{admin_user?admin}}"
-        - "--admin-password={{admin_password?orcaorcaorca}}"
-        - "--san={{output::mke_lb?NoSanConfigured}}"
+        - "--san={{output::mke_san?NoSanConfigured}}"
+        - "--default-node-orchestrator={{variables:mke_install_defaultorchestrator}}"
         - "--nodeport-range={{variables:mke_install_nodeport_range}}"
+
         upgradeFlags:
         - "--force-recent-backup"
         - "--force-minimums"

@@ -24,7 +24,7 @@ class EnvironmentGroup():
     def __init__(self, environment: Environment):
         self.environment = environment
 
-    def names(self, raw: bool = False):
+    def list(self, raw: bool = False):
         """ List all of the environment names  """
         names = environment_names()
         if raw:

@@ -60,9 +60,6 @@ METTA_LAUNCHPAD_VALIDATE_JSONSCHEMA = {
     'properties': {
         'config': {
             'type': ['object', 'null'],
-            'properties': {
-                'apiVersion': {'type': 'string'}
-            },
         },
         'api': {
             'type': 'object',
@@ -92,6 +89,34 @@ METTA_LAUNCHPAD_VALIDATE_TARGET = {
 }
 """ configerus validation target to matche the above config, which relates to the bootstrap in __init__.py """
 
+METTA_LAUNCHPAD_CONFIG_VALIDATE_JSONSCHEMA = {
+    'type': 'object',
+    'properties': {
+        'apiVersion': {'type': 'string'},
+        'kind': {'type': 'string'},
+        'hosts': {
+            'type': 'array',
+            'items': {
+                'type': 'object'
+            }
+        },
+        'spec': {
+            'type': 'object',
+            'properties': {
+                'mcr': { 'type': 'object' },
+                'mke': { 'type': 'object' },
+                'msr': { 'type': 'object' }
+            },
+            'required': ['mcr', 'mke']
+        }
+    },
+    'required': ['apiVersion', 'kind', 'spec']
+}
+""" Validation jsonschema for launchpad configuration """
+METTA_LAUNCHPAD_CONFIG_VALIDATE_TARGET = {
+    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: METTA_LAUNCHPAD_CONFIG_VALIDATE_JSONSCHEMA
+}
+""" configerus jsonschema validation target for validation launchpad config file structure """
 
 class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
     """ Launchpad provisioner class
@@ -215,12 +240,14 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                 'working_dir': client.working_dir,
                 'bin': client.bin
             },
-            'config': self.launchpad_config,
+            'config': {
+                'contents': self.launchpad_config,
+            }
         }
 
         if deep:
             try:
-                info['config'] = client.describe_config()
+                info['config']['interpreted'] = client.describe_config()
                 info['bundles'] = {user: client.bundle(
                     user) for user in client.bundle_users()}
             except Exception:
@@ -291,7 +318,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             self._write_launchpad_file()
             self.client.apply()
         except Exception as e:
-            raise Exception("Launchpad failed to install") from e
+            raise Exception("Launchpad failed to install: {}".format(e)) from e
 
         # Rebuild the fixture list now that we have installed
         self._make_fixtures(reload=True)
@@ -318,11 +345,14 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             launchpad_config = self.environment.config.load(
                 self.config_label, force_reload=True)
             self.launchpad_config = launchpad_config.get(
-                [self.config_base, METTA_LAUNCHPAD_CONFIG_KEY])
+                [self.config_base, METTA_LAUNCHPAD_CONFIG_KEY], validator=METTA_LAUNCHPAD_CONFIG_VALIDATE_TARGET)
             """ config source of launchpad yaml """
         except KeyError as e:
             raise ValueError(
                 "Could not find launchpad configuration from config.")
+        except ValidationError as e:
+            raise ValueError(
+                "Launchpad config failed validation: {}".format(e)) from e
 
         # write the launchpad output to our yaml file target (after creating
         # the path)
@@ -408,9 +438,8 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             [self.config_base, METTA_LAUNCHPAD_CONFIG_API_PASSWORD_KEY])
 
         hosts = self.launchpad_config = launchpad_config.get(
-            [self.config_base, METTA_LAUNCHPAD_CONFIG_HOSTS_KEY])
-        if hosts is None:
-            hosts = []
+            [self.config_base, METTA_LAUNCHPAD_CONFIG_HOSTS_KEY], default=[])
+        """ isolate the list of hosts so that we can separate them into roles """
 
         # MKE Client
         #

@@ -36,9 +36,11 @@ class LaunchpadClient:
     def __init__(self, config_file: str = METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
                  working_dir: str = METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT,
                  cluster_name_override: str = '', accept_license: bool = False,
-                 disable_telemetry: bool = False, disable_upgrade_check: bool = True):
+                 disable_telemetry: bool = False, disable_upgrade_check: bool = True,
+                 debug: bool = False):
         """
         Parameters:
+        -----------
 
         config_file (str) : path to launchpad config file, typically
             launchpad.yml
@@ -47,6 +49,23 @@ class LaunchpadClient:
             this typically plays a role in interpreting file paths from the
             config for things like ssh keys.  The client will use that path for
             python subprocess execution
+
+        cluster_name_override (str) : string name for the cluster which should
+            be used instead of trying to read a value from config.  This can
+            can help in some scenarios where config cannot be read outside of the
+            client, and so cluster name is hard to discover.
+
+        accept_license (bool) : passed to the launchpad client to tell it to
+            accept the license on first use.
+
+        disable_telemetry (bool) : passed to the launchpad client to tell it to
+            disable telemetry on actions taken.
+
+        disable_upgrade_check (bool) : passed to the launchpad client to tell it
+            to disable checking to see if a new client version is available.
+
+        debug (bool) : passed to the launchpad client to tell it to enable
+            verbose debugging output.
 
         """
         self.config_file = config_file
@@ -71,6 +90,9 @@ class LaunchpadClient:
         self.disable_telemetry = disable_telemetry
         self.accept_license = accept_license
         self.disable_upgrade_check = disable_upgrade_check
+
+        self.debug = debug
+        """ should launchpad be run with verbose output enabled ? """
 
     def version(self):
         """ Output launchpad client version """
@@ -273,6 +295,8 @@ class LaunchpadClient:
 
         cmd += [args[0]]
 
+        if self.debug:
+            cmd += ['--debug']
         if self.disable_telemetry:
             cmd += ['--disable-telemetry']
         if self.accept_license:

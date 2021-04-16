@@ -21,4 +21,12 @@ id: "cross"
 # where the tal variation should keep runtime paths like terraform state
 files_path: "{{paths:project}}/.metta"
 
+# Tag any resources with the suite name
+extra_tags:
+  metta-suite: "{{id}}"
+  metta-mirantis.preset.variation: "{{mirantis:presets.variation}}"
+  metta-mirantis.preset.cluster: "{{mirantis:presets.cluster}}"
+  metta-mirantis.preset.platform: "{{mirantis:presets.platform}}"
+
+# This suite currently only works if using the internal MCR repo
 mcr_repo_url: "https://s3.amazonaws.com/repos-internal.mirantis.com/"

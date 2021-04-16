@@ -71,6 +71,7 @@ variations:
     common:
       variables:
         id: 190314_20100
+        mcr_channel: stable
     states:
       before:
           variables:

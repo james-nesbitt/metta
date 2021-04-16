@@ -14,7 +14,7 @@ files_path: .
 files_prefix: "{{id}}"
 
 # Path to the terraform plan to be used
-terraform_plan: "{{mirantis:terraform.plans.prodeng.aws.v4}}"
+terraform_plan: "{{mirantis:terraform.plans.prodeng.aws.v8}}"
 # Prefix for terraform resources for identifcation and variations
 resource_prefix: "{{id}}"
 # AWS region for resources
@@ -25,10 +25,15 @@ cluster_name: "{{id}}"
 # used to tag cluster resources for expiry
 expire_duration: 72h
 
+# Extra tags which should get assigned to any created resources
+extra_tags:
+  owner: "{{user:id?not-specified}}"
+  tooling: metta
+
 # The Linux platform to use for manager/worker/DTR replica nodes
 # Typically overridden in a platform config variables file
 platform_repo: public
-platform: ubuntu_18.04
+platform: ubuntu_20.04
 
 # mirantis app versions and sources
 # typically overriden in a release config variables file
@@ -44,6 +49,7 @@ mke_version: 3.4.0
 # These are actually poor design, as we are putting app defaults in config
 # in order to support easy overrides, in order to maintain an easy to read
 # config only lunchpad.yaml config source.
+# @TODO refactor how things like install flags work in launchpad
 mke_install_nodeport_range: "32768-35535"
 mke_install_defaultorchestrator: kubernetes
 

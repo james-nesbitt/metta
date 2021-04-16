@@ -1,4 +1,4 @@
-# Mirantis common MEtta implementations
+# Mirantis common METTa implementations
 
 A metta contrib module that provides two main features:
 

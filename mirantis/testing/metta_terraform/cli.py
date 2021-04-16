@@ -104,6 +104,11 @@ class TerraformGroup():
         provisioner = self._select_provisioner(instance_id=provisioner).plugin
         provisioner.apply()
 
+    def check(self, provisioner: str = ''):
+        """ Run provisioner check """
+        provisioner = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner.check()
+
     def destroy(self, provisioner: str = ''):
         """ Run provisioner destroy """
         provisioner = self._select_provisioner(instance_id=provisioner).plugin
