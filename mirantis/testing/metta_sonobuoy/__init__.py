@@ -11,7 +11,7 @@ from .cli import SonobuoyCliPlugin, METTA_PLUGIN_ID_SONOBUOY_cli
          plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD)
 def metta_plugin_factory_workload_sonobuoy(
         environment: Environment, instance_id: str = '', label: str = SONOBUOY_WORKLOAD_CONFIG_LABEL, base: Any = SONOBUOY_WORKLOAD_CONFIG_BASE):
-    """ create an metta kubernetes spec workload plugin """
+    """ create an metta sonobuoy workload plugin """
     return SonobuoyWorkloadPlugin(
         environment, instance_id, label=label, base=base)
 

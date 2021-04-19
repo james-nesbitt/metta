@@ -1,5 +1,5 @@
 project:
-  name: cross-pytest
+  name: chaos-pytest
 
 # Also include the following sources of configuration
 config:
@@ -13,15 +13,14 @@ config:
 
 # Tell metta to create environments from the ./config/environments.yml file
 environments:
-  from_builder:
-    import: "envbuilder"
-    method: "build"
+  from_config:
+    label: environments
 
 # If you want to import a whole package, you can use this approach. Yo will want
 # an __init__.py file in the folder, and that package will not be relative path.
 imports:
-  # import ./plugins/envbuilder package as "envbuilder"
-  envbuilder:
+  # import ./plugins/metta_litnuschaos package as "metta_litnuschaos"
+  metta_litmuschaos:
     # because this is a directory, the parent folder will be added to sys,path
     # and the 'plugins' will be imported as a package
-    path: "envbuilder"
+    path: "metta_litmuschaos"

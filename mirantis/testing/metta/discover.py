@@ -192,9 +192,11 @@ def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
     base (str) : config key that should contain the list of sources
 
     """
+
     metta_config = config.load(label)
 
     imports_config = metta_config.get(base, default={})
+
     for import_name in imports_config:
         module_path = metta_config.get(
             [base, import_name, CONFIGERUS_PATH_KEY])
@@ -221,3 +223,6 @@ def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
             logger.debug(
                 "Loaded module: {} : {}".format(
                     import_name, module_path))
+
+        else:
+            raise ValueError("Could not import requested metta import {} : {}".format(import_name, module_path))
