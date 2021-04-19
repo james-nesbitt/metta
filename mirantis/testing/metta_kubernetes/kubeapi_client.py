@@ -1,6 +1,7 @@
 
 import kubernetes
 import logging
+from typing import Dict
 
 from mirantis.testing.metta.client import ClientBase
 
@@ -85,15 +86,10 @@ class KubernetesApiClientPlugin(ClientBase):
         logger.debug("Creating Kuberentes client from config file")
         self.api_client = kubernetes.config.new_client_from_config(
             config_file=kube_config_file)
+        """ Kubernetes api client """
 
         self.config_file = kube_config_file
-
-    def get_api(self, api: str):
-        """ Get an API as a getter """
-        if hasattr(kubernetes.client, api):
-            return getattr(kubernetes.client, api)(self.api_client)
-
-        raise KeyError("Unknown API requested: {}".format(api))
+        """ Kube config file, in case you need to steal it. """
 
     def info(self):
         """ Return dict data about this plugin for introspection """
@@ -102,3 +98,21 @@ class KubernetesApiClientPlugin(ClientBase):
                 'config_file': self.config_file
             }
         }
+
+
+    def get_api(self, api: str):
+        """ Get an kubernetes API """
+        if hasattr(kubernetes.client, api):
+            return getattr(kubernetes.client, api)(self.api_client)
+
+        raise KeyError("Unknown API requested: {}".format(api))
+
+
+    def utils_create_from_yaml(self, yaml_file: str,**kwargs):
+        """ Run a kube apply from a yaml file """
+        return kubernetes.utils.create_from_yaml(k8s_client=self.api_client, yaml_file=yaml_file, **kwargs)
+
+
+    def utils_create_from_dict(self, data: Dict, **kwargs):
+        """ Run a kube apply from dict of K8S yaml """
+        return kubernetes.utils.create_from_dict(k8s_client=self.api_client, data=data, **kwargs)

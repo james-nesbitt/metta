@@ -116,7 +116,7 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
         -----------
 
         fixtures (Fixtures) : a set of fixtures that this workload will use to
-            retrieve a docker client plugin.
+            retrieve a kubernetes api client plugin.
 
         """
 

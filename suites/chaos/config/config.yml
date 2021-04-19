@@ -1,0 +1,9 @@
+# This config file is used only by this test suite.
+# @see conftest.py as an example where a value is used to decide
+#      if the cluster should be destroyed on exit
+
+# Don't run the provisioner_down, keep the cluster running and installed
+keeponfinish: true
+# don't run environment_up in conftest, to avoid wasting time installing onto
+# a cluster which has already been provisioned.
+alreadyrunning: true

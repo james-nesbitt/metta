@@ -37,10 +37,8 @@ launchpad:
 # Here we use a combo provisioner with  a high priority to act as a primary
 # provisioner to manage all of the others
 #
-# @NOTE this will consumer all other provisioners that exist when it is created
-#   so make sure that it comes last in creation
-# @NOTE you probably want this plugin to be a higher priority than the others
-#   so that a get_plugins)provisioner) retreives this one first.
+# @NOTE you want this plugin to be a higher priority than the others
+#   so that a get_plugins(provisioner) retreives this one first.
 combo:
     type: metta.plugin.provisioner
     plugin_id: combo

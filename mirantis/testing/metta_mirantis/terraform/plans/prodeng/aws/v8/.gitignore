@@ -1,0 +1,6 @@
+.metta
+.terraform
+results
+reports
+*.yaml
+*.ini
