@@ -1,0 +1,43 @@
+# This config is used primarily for overrides in other config.
+# It is handy because then we can focus on this file
+
+# WHAT CAN I PUT HERE?
+#
+# If you are using the tal variation, then look at metta/config/variations/tal
+# at the variables file there, and how variables:X are injected into the other config
+# files there.
+# Note also that values in metta may tell metta to load more variables data from
+# other folders in metta/config. You can still override those values here
+
+# Used in terraform resource tagging (user:id gets set in conftest.py)
+user: "{{user:id?anon}}"
+#  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
+task: "testkit"
+# One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.
+project: "TAR-TLNG-ATMTN"
+
+# A generic project/user id that we reuse across the configuration
+id: "{{user:id}}-{{task}}"
+
+# where the tal variation should keep runtime paths like terraform state
+files_path: "{{paths:project}}/.metta"
+
+# Tag any resources with the suite name and metta presets
+extra_tags:
+  metta.suite: "{{task}}"
+  metta.mirantis.preset.variation: "{{mirantis:presets.variation}}"
+  metta.mirantis.preset.cluster: "{{mirantis:presets.cluster}}"
+  metta.mirantis.preset.release: "{{mirantis:presets.release}}"
+
+# This test relies on mirantis presets for configuring the cluster.
+# Check the mirantis.yml file for the presets used.
+# mcr_repo_url: "https://repos.mirantis.com/"
+# mcr_channel: stable
+# mcr_version: 20.10.4
+# mke_image_repo: msr.ci.mirantis.com/prodeng
+# mke_version: 3.4.0-tp10-15-gcd4353142
+# msr_image_repo: msr.ci.mirantis.com/prodeng
+# msr_version: 2.9.0-3f91e2ef
+
+# AWS region for resources
+aws_region: us-east-1
