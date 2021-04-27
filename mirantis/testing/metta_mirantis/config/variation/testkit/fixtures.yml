@@ -1,0 +1,12 @@
+
+# testkit :: metta.plugin.provisioner:
+testkit:
+    type: metta.plugin.provisioner
+    plugin_id: metta_testkit
+
+    # Testkit will configure itself from the ./testkit.yml file
+    # This is actually its default but this demonstrates that we have
+    # the option.
+    from_config:
+        label: testkit
+        # base: some.path.in.the.file

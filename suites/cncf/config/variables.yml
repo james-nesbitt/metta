@@ -14,7 +14,7 @@ user: "{{user:id?anon}}"
 #  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
 task: "cncf"
 # One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.
-project: "PRODENG"
+project: "TAR-TLNG-ATMTN"
 
 # A generic project/user id that we reuse across the configuration
 id: "cnfc"

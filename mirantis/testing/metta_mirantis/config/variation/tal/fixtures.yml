@@ -1,5 +1,5 @@
 
-# launchpad :: metta.plugin.provisioner:
+# terraform :: metta.plugin.provisioner:
 terraform:
     type: metta.plugin.provisioner
     plugin_id: metta_terraform
@@ -19,9 +19,10 @@ ansible:
     # The ansible plugin is setup to pull config from a label/base pair, but
     # as it currently doesn't do anything, it is just pointed to pull directly
     # this files.  No need for an ansible file.
-    from_config:
-        label: fixtures
-        base: ansible
+    from_config: true
+
+    # we still have not config for ansible yet
+
 
 # launchpad :: metta.plugin.provisioner:
 launchpad:
