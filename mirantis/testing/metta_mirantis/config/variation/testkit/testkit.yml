@@ -1,0 +1,86 @@
+
+# Testkit system name
+system_name: "{{variables:id}}"
+
+# put the testkit yml file in the project folder
+config_file: "{{variables:files_path}}/{{variables:files_prefix}}.testkit.yml"
+
+
+options:
+  # Options to pass to the client on create runs
+  create:
+    kube: true
+    ucp: true
+    dtr: true
+    # dry-run: true
+    args: "--admin-username={{admin_user?admin}} --admin-password={{admin_password?orcaorcaorca}}"
+
+# Config to put into testkit
+config:
+
+  root_dir: "{{variables:files_path}}"
+
+  system_name: "{{system_name}}"
+  username: "{{variables:user}}"
+  name_prefix: "{{variables:resource_prefix}}"
+  project_tag: "{{variables:project}}"
+
+  expiry: "{{variables:expire_duration}}"
+
+  aws_region: "{{variables:aws_region}}"
+  aws_keyname: "{{variables:resource_prefix}}-testkit"
+  # aws_spot_price: ""
+  # aws_purchase_type: "spot"
+  aws_instance_type: "{{variables:manager_type}}"
+  aws_instance_type_linux: "{{variables:manager_type}}"
+  aws_instance_type_windows: "{{variables:worker_type}}"
+  # aws_instanceiprofile: ""
+  aws_security_group: "{{variables:aws_security_group?testkit}}"
+  aws_volume_size: "{{variables:manager_volume_size}}"
+  aws_volume_size: "{{variables:manager_volume_size}}"
+
+  # We can define specs in yaml, but we don't have a way of building it with
+  # raw config at this time.
+  managers: 1
+  specs:
+  - platform: "ubuntu_20.04"
+    ssh_user: "docker"
+    count: 6
+    is_windows: False
+    arch: "x86_64"
+    # InstanceType: "{{variables:manager_type}}"" # defaults to above
+
+  # Define script or image-pull provisioners
+  # @SEE https://github.com/Mirantis/testkit/blob/60eee74c18c5ec888498491df8b4ab5c64b23235/provisioner/factory.go#L25
+  # @SEE https://github.com/Mirantis/testkit/blob/60eee74c18c5ec888498491df8b4ab5c64b23235/provisioner/script.go
+  # provisioners:
+  # - type: ""
+  #   file: ""
+  #   args:
+  #   - ""
+  #   images:
+  #   - golang:latest
+  #   cmd: "ls -la"
+  #   context: ""
+
+  engine_config:
+    channel: "{{variables:mcr_channel}}"
+    product: "{{variables:mcr_product?ee}}"
+    version: "{{variables:mcr_version}}"
+    repo_url: "{{variables:mcr_repo_url}}"
+
+  ucp:
+    org: "{{variables:mke_image_repo}}"
+    tag: "{{variables:mke_version}}"
+    args: ""
+
+  dtr:
+    org: "{{variables:msr_image_repo}}"
+    tag: "{{variables:msr_version}}"
+    args: ""
+
+  #
+  # enable_fips: true
+
+  # Enable testkit debug mode
+  debug: "{{variables:debug}}"

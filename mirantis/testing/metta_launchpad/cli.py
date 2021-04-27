@@ -114,6 +114,15 @@ class LaunchpadGroup():
 
         client.exec_interactive(host_index=host, cmds=cmds)
 
+    def connect(self, provisioner: str = '',
+                         host: int = 0, interactive: bool = False):
+        """ Exec a command """
+        fixture = self._select_provisioner(instance_id=provisioner)
+        plugin = fixture.plugin
+        client = plugin.client
+
+        client.exec_interactive(host_index=host, cmds=[])
+
     def fixtures(self, provisioner: str = ''):
         """ List all fixtures for this provisioner """
         provisioner = self._select_provisioner(instance_id=provisioner).plugin

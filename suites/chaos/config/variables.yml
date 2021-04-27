@@ -9,22 +9,22 @@
 # Note also that values in metta may tell metta to load more variables data from
 # other folders in metta/config. You can still override those values here
 
-# A generic project/user id that we reuse across the configuration
-id: "chaos"
-
 # Used in terraform resource tagging (user:id gets set in conftest.py)
 user: "{{user:id?anon}}"
 #  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
-task: "{{id}}"
+task: "chaos"
 # One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.
-project: "PRODENG"
+project: "TAR-TLNG-ATMTN"
+
+# A generic project/user id that we reuse across the configuration
+id: "{{user}}-{{task}}"
 
 # where the tal variation should keep runtime paths like terraform state
 files_path: "{{paths:project}}/.metta"
 
 # Tag any resources with the suite name and metta presets
 extra_tags:
-  metta.suite: "{{id}}"
+  metta.suite: "{{task}}"
   metta.mirantis.preset.variation: "{{mirantis:presets.variation}}"
   metta.mirantis.preset.cluster: "{{mirantis:presets.cluster}}"
 
