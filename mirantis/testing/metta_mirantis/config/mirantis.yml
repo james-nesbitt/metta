@@ -9,6 +9,8 @@ terraform:
                 v4: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v4"
                 # Third iteration of the PRODENG TF chart using spot references
                 v8: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v8"
+                # Fourth iteration with MSR load balancer
+                v9: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v9"
         # Launchpad example terraform charts.
         example:
             aws:
