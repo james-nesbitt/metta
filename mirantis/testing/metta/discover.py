@@ -225,4 +225,6 @@ def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
                     import_name, module_path))
 
         else:
-            raise ValueError("Could not import requested metta import {} : {}".format(import_name, module_path))
+            raise ValueError(
+                "Could not import requested metta import {} : {}".format(
+                    import_name, module_path))

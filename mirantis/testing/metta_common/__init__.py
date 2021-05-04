@@ -73,6 +73,7 @@ def plugin_factory_format_output(config: Config, instance_id: str = ''):
     """ create an format plugin which replaces from output contents """
     return ConfigFormatOutputPlugin(config, instance_id)
 
+
 """ metta user cli plugin """
 
 METTA_PLUGIN_ID_CLI_USER = 'user'
@@ -94,6 +95,8 @@ def bootstrap(environment: Environment):
     pass
 
 # @TODO this should be renamed on the next major version bump.
+
+
 def bootstrap_common(environment: Environment):
     """ metta configerus bootstrap
 

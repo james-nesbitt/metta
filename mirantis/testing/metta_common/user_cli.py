@@ -55,7 +55,8 @@ class UserGroup():
         """ Make a User config source that will be global for this system """
         user_config_dir = self._user_path()
         if self._user_path_exists():
-            raise RuntimeError("User has already been initialized on this system: {}".format(user_config_dir))
+            raise RuntimeError(
+                "User has already been initialized on this system: {}".format(user_config_dir))
 
         os.mkdir(user_config_dir)
 
@@ -63,7 +64,8 @@ class UserGroup():
     def set_id(self, id: str):
         """ set the user id for the user on the system """
         if not self._user_path_exists():
-            raise RuntimeError("No user configuration has been initialized on this system.  Run `init` first")
+            raise RuntimeError(
+                "No user configuration has been initialized on this system.  Run `init` first")
 
         user_config_dir = self._user_path()
 

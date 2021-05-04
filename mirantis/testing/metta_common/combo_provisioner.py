@@ -49,26 +49,31 @@ class ComboProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
 
         for backend in self.backends:
             backend_instance_id = backend['instance_id']
-            fixture = self.environment.fixtures.get_fixture(
-                type=Type.PROVISIONER, instance_id=backend_instance_id)
+            try:
+                fixture = self.environment.fixtures.get_fixture(
+                    type=Type.PROVISIONER, instance_id=backend_instance_id)
+            except KeyError as e:
+                raise ValueError(
+                    "Combo provisioner was given a backend provisioner key that it could not correlated with a configured fixture: {}".format(backend_instance_id))
 
             if hasattr(backend, "priority"):
                 fixture.priority = backend['priority']
 
             self.fixtures.add_fixture(fixture)
 
-    def _get_ordered_backend_fixtures(self, high_to_low: bool = False):
+    def _get_ordered_backend_fixtures(self, low_to_high: bool = False):
         """ helper to get the sorted backend fixtures from lowest priority to highest, reversed if requested """
         backend_fixtures = self.fixtures.get_fixtures(
             type=Type.PROVISIONER).to_list()
-        if not high_to_low:
-            backend_fixtures.reverse
+        if low_to_high:
+            backend_fixtures.reverse()
         return backend_fixtures
 
     def info(self):
         """ return structured data about self. """
 
         backends_info = []
+        # List backends in high->low priority as this shows the order of apply
         for fixture in self._get_ordered_backend_fixtures():
             backend_info = {
                 'fixture': {
@@ -82,9 +87,6 @@ class ComboProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             if hasattr(plugin, 'info'):
                 backend_info.update(plugin.info())
 
-            if not 'fixture' in backend_info:
-                backend_info
-
             backends_info.append(backend_info)
 
         return {
@@ -95,25 +97,35 @@ class ComboProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         """ Prepare the provisioner to apply resources """
         for backend_fixture in self._get_ordered_backend_fixtures():
             logger.info(
-                "--> running backend prepare: [Low->High] {}".format(backend_fixture.instance_id))
+                "--> running backend prepare: [High->Low] {}".format(backend_fixture.instance_id))
             backend_fixture.plugin.prepare()
 
     def apply(self):
         """ bring a cluster to the configured state """
         for backend_fixture in self._get_ordered_backend_fixtures():
             logger.info(
-                "--> running backend apply: [Low->High] {}".format(backend_fixture.instance_id))
+                "--> running backend apply: [High->Low] {}".format(backend_fixture.instance_id))
             backend_fixture.plugin.apply()
 
     def destroy(self):
         """ remove all resources created for the cluster """
         for backend_fixture in self._get_ordered_backend_fixtures(
-                high_to_low=True):
+                low_to_high=True):
             logger.info(
-                "--> running backend destroy: [High->Low] {}".format(backend_fixture.instance_id))
+                "--> running backend destroy: [Low->High] {}".format(backend_fixture.instance_id))
             backend_fixture.plugin.destroy()
 
-    """ Fixture management """
+    """ Fixture management
+
+    We duplicate the UCCTFixturesPlugin methods, despite using it as a parent,
+    so that we can identify as that object, but because we need to allow all
+    backends to participate in fixture definition in order of priorit.
+
+    We of course have to override the any method which depends on our ordered
+    backend retrievals of get_fixtures() so that it doesn't run the parent
+    get_fixtures.
+
+    """
 
     def get_fixtures(self, type: Type = None, instance_id: str = '',
                      plugin_id: str = '') -> Fixtures:
@@ -131,8 +143,7 @@ class ComboProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
                     plugin_id: str = '', exception_if_missing: bool = True) -> Fixture:
         """ retrieve the first matching fixture fomr backend in high-to-low order """
 
-        for backend_fixture in self._get_ordered_backend_fixtures(
-                high_to_low=True):
+        for backend_fixture in self._get_ordered_backend_fixtures():
             plugin = backend_fixture.plugin
             if hasattr(plugin, 'get_fixture'):
                 fixture = plugin.get_fixture(

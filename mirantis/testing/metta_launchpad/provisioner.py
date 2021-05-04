@@ -103,9 +103,9 @@ METTA_LAUNCHPAD_CONFIG_VALIDATE_JSONSCHEMA = {
         'spec': {
             'type': 'object',
             'properties': {
-                'mcr': { 'type': 'object' },
-                'mke': { 'type': 'object' },
-                'msr': { 'type': 'object' }
+                'mcr': {'type': 'object'},
+                'mke': {'type': 'object'},
+                'msr': {'type': 'object'}
             },
             'required': ['mcr', 'mke']
         }
@@ -117,6 +117,7 @@ METTA_LAUNCHPAD_CONFIG_VALIDATE_TARGET = {
     PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: METTA_LAUNCHPAD_CONFIG_VALIDATE_JSONSCHEMA
 }
 """ configerus jsonschema validation target for validation launchpad config file structure """
+
 
 class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
     """ Launchpad provisioner class

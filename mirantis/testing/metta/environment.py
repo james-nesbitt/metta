@@ -309,15 +309,15 @@ class Environment:
                     [state_config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL, METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG]):
                 label = config_environment.get(
                     [state_config_base,
-                    METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
-                    METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG,
-                    'label'],
+                     METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
+                     METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG,
+                     'label'],
                     default=METTA_FIXTURES_CONFIG_FIXTURES_LABEL)
                 base = config_environment.get(
                     [state_config_base,
-                    METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
-                    METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG,
-                    'base'],
+                     METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
+                     METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG,
+                     'base'],
                     default=LOADED_KEY_ROOT)
                 self.add_fixtures_from_config(label=label, base=base)
 

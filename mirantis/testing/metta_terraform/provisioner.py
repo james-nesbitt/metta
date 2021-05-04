@@ -454,7 +454,6 @@ class TerraformClient:
             raise Exception(
                 "Terraform client failed to run : {}".format(e)) from e
 
-
     def plan(self):
         """ Check a terraform plan """
         try:
@@ -467,7 +466,6 @@ class TerraformClient:
                 e.stderr)
             raise Exception(
                 "Terraform client failed to plan : {}".format(e)) from e
-
 
     def destroy(self):
         """ Apply a terraform plan """
