@@ -42,6 +42,7 @@ def metta_terraform_factory_cli_launchpad(
     """ create an launchpad cli plugin """
     return LaunchpadCliPlugin(environment, instance_id)
 
+
 """ METTA BOOTSTRAPPERS """
 
 

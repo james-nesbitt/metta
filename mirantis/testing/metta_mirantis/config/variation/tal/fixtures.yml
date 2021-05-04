@@ -39,7 +39,7 @@ launchpad:
 # provisioner to manage all of the others
 #
 # @NOTE you want this plugin to be a higher priority than the others
-#   so that a get_plugins(provisioner) retreives this one first.
+#   so that a get_plugins(provisioner) retrieves this one first.
 combo:
     type: metta.plugin.provisioner
     plugin_id: combo
@@ -49,6 +49,7 @@ combo:
     from_config: true
 
     backends:
+    # Ordered list of instance filters
     - instance_id: terraform
     - instance_id: ansible
     - instance_id: launchpad
