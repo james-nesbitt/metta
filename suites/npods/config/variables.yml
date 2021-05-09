@@ -42,5 +42,11 @@ worker_type: m5.2xlarge
 worker_volume_size: 100
 windows_worker_count: 0
 
+# Override some component versions
+mcr_channel: stable
+mcr_version: 20.10.04
+mke_image_repo: docker.io/mirantis
+mke_version: 3.4.0
+
 # No need for MSR on this one
 msr_count: 0

@@ -6,4 +6,4 @@
 keeponfinish: true
 # don't run environment_up in conftest, to avoid wasting time installing onto
 # a cluster which has already been provisioned.
-alreadyrunning: false
+alreadyrunning: true

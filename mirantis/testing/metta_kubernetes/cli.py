@@ -163,20 +163,21 @@ class KubernetesHelmWorkloadGroup():
 
         return json.dumps(collect_info, indent=2)
 
-    def apply(self, workload: str = ''):
+    def apply(self, workload: str = '', wait: bool = True, debug: bool = False):
         """ Run helm workload apply """
         workload = self._select_fixture(instance_id=workload).plugin
         instance = workload.create_instance(self._environment.fixtures)
 
-        objects = instance.apply()
+        objects = instance.apply(wait=wait, debug=debug)
 
         return json.dumps(objects, indent=2, default=lambda x: "{}".format(x))
 
-    def destroy(self, workload: str = ''):
+
+    def destroy(self, workload: str = '', debug: bool = False):
         """ Run helm workload destroy """
         workload = self._select_fixture(instance_id=workload).plugin
         instance = workload.create_instance(self._environment.fixtures)
 
-        destroy = instance.destroy()
+        destroy = instance.destroy(debug=debug)
 
         return json.dumps(destroy, indent=2)

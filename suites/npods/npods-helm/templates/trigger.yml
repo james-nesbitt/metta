@@ -13,7 +13,7 @@ spec:
         command: ["bin/sh"]
         args:
         - "-c"
-        - "for i in $(seq {{ default 1 .Values.trigger.start }} {{ default 1 .Values.trigger.threads }}); do curl -ssL http://npods-relay?thread=$1; echo \"Triggered $i\"; done"
+        - "for i in $(seq {{ default 1 .Values.trigger.start }} {{ default 1 .Values.trigger.threads }}); do curl -sL http://npods-relay?thread=$1; echo \"Triggered $i\"; done"
       restartPolicy: Never
   completions: 1
 {{- end }}
