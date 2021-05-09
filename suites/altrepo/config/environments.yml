@@ -1,9 +1,11 @@
 
-# Create an environment called 'npods'
-npods:
+# Create an environment called 'clients'
+clients:
   bootstraps:
     metta:
     - metta_common
+    - metta_ansible
+    - metta_docker
     - metta_kubernetes
     - metta_terraform
     - metta_launchpad

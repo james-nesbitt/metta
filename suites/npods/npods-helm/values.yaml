@@ -1,0 +1,13 @@
+# Relay threads to create
+trigger:
+  threads: 10
+
+# An array of objects which describe individual deployments
+# which will create pods of relay nodes
+workloads: []
+# - name: default
+#   image: mirantiseng/testeng-referenceapp:npods_0.16
+#   replicas: 0
+#   sleep: 0s 
+#   cpu: 100
+#   ram: 8192

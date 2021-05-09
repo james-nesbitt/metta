@@ -17,7 +17,7 @@ class FixturesCliPlugin(CliBase):
     def fire(self):
         """ return a dict of commands """
         return {
-            'fixtures': FixturesGroup(self.environment)
+            'fixture': FixturesGroup(self.environment)
         }
 
 

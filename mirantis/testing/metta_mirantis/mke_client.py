@@ -7,6 +7,7 @@ Mirantis MKE API Client
 import logging
 import requests
 import json
+import toml
 from typing import Dict, List
 from enum import Enum
 
@@ -100,7 +101,7 @@ class MKEAPICliGroup():
         return json.dumps(ping, indent=2)
 
     def id(self, instance_id: str = ''):
-        """ cget auth id """
+        """ get auth id """
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return json.dumps(plugin.api_id(), indent=2)
@@ -123,8 +124,24 @@ class MKEAPICliGroup():
         plugin = fixture.plugin
         return json.dumps(plugin.api_tasks(task_id), indent=2)
 
+    def tomlconfig(self, instance_id: str = ''):
+        """ get the toml config """
+        fixture = self._select_fixture(instance_id=instance_id)
+        plugin = fixture.plugin
+        return json.dumps(plugin.api_ucp_configtoml_get(), indent=2)
+
+    def tomlconfig_set(self, table: str, key: str,
+                       value: str, instance_id: str = ''):
+        """ set a single toml config value """
+        fixture = self._select_fixture(instance_id=instance_id)
+        plugin = fixture.plugin
+
+        data = plugin.api_ucp_configtoml_get()
+        data[table][key] = value
+        return json.dumps(plugin.api_ucp_configtoml_put(data), indent=2)
+
     def auth(self, instance_id: str = ''):
-        """ check if we can ping """
+        """ retrieve auth headersg """
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return json.dumps(plugin._auth_headers(), indent=2)
@@ -214,6 +231,10 @@ class MKEAPIClientPlugin(ClientBase):
 
         return info
 
+    def auth_header(self) -> Dict:
+        """ retrieve the auth headers so you can do your own thing. """
+        return json.loads(self._auth_headers())
+
     def api_ping(self, node: int = None) -> bool:
         """ Check the API ping response """
         if node is not None:
@@ -265,6 +286,21 @@ class MKEAPIClientPlugin(ClientBase):
             response.raise_for_status()
             return json.loads(response.content)
 
+    def api_ucp_configtoml_get(self):
+        """ retrieve config toml as a struct """
+        endpoint = 'api/ucp/config-toml'
+        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(), verify=self.verify) as response:
+            response.raise_for_status()
+            return toml.loads(response.text)
+
+    def api_ucp_configtoml_put(self, data):
+        """ send struct config as a toml string """
+        endpoint = 'api/ucp/config-toml'
+        data_toml = toml.dumps(data)
+        with requests.put(self._accesspoint_url(endpoint), headers=self._auth_headers(), verify=self.verify, data=data_toml) as response:
+            response.raise_for_status()
+            return {'response': json.loads(response.content), 'data': data}
+
     def _auth_headers(self):
         """ get an auth token """
         if self.auth_token is None:
@@ -302,7 +338,7 @@ class MKEAPIClientPlugin(ClientBase):
             target = self._node_address(node)
 
         return "https://{accesspoint}/{endpoint}".format(
-            accesspoint=self.accesspoint, endpoint=endpoint)
+            accesspoint=target.rstrip('/'), endpoint=endpoint.lstrip('/'))
 
     def _node_address(self, node: int = 0):
         """ get the ip address from the node for the node index """

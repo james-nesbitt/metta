@@ -82,7 +82,6 @@ class LitmusChaosGroup():
 
         return json.dumps(info, indent=2)
 
-
     def prepare(self):
         """ Prepare the workload instance for running """
         instance = self._select_instance(instance_id=instance_id)

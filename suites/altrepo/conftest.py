@@ -4,7 +4,7 @@ import logging
 from mirantis.testing.metta import discover, get_environment
 from mirantis.testing.metta.plugin import Type
 
-logger = logging.getLogger('clients-suite')
+logger = logging.getLogger('sanity-suite')
 
 """ Define our fixtures """
 

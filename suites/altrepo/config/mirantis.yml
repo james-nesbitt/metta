@@ -15,9 +15,9 @@
 # sees a big changes.
 #
 presets:
-    # This will tell metta to include metta_mirantis/config/variation/tal
+    # This will tell metta to include metta/config/variation/ltc
     variation: tal
-    # This will tell metta to include metta_mirantis/config/platform/public/ubuntu/20.04
+    # This will tell metta to include metta/config/cluster/poc
+    cluster: poc
+    # This will tell metta to include metta/config/platform/public/ubuntu/20.04
     platform: public/ubuntu/20.04
-    # this will tell metta to include metta/config/release/patch/202101
-    release: release/2021Q1

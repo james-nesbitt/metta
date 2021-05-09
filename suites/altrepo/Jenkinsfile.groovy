@@ -1,4 +1,9 @@
 #!groovy
+/**
+ * Jenkins: AltRepo test suite execute
+ *
+ * @NOTE this expects to be run from the repo root.
+ */
 pipeline {
     agent {
         kubernetes {
@@ -31,46 +36,49 @@ pipeline {
     }
 
     options {
-        timeout(time: 2, unit: 'HOURS')
+        timeout(time: 4, unit: 'HOURS')
     }
     parameters {
-        string(name: 'GIT_TARGET', defaultValue: 'main', description:'When checking out METTA, what target to pick. Can be a tag, branch or commit id.')
-        choice(name: 'TEST_SUITE', choices: ['dummy', 'sanity', 'upgrade', 'cncf', 'docker-k8s-helm'], description: 'Pick a test suite to run.')
-        string(name: 'PYTEST_TESTS', description: 'Optionally limit which tests pytest will run. IF empty, all tests will be run.')
-        text(name: 'METTA_CONFIGJSON', description: 'Include JSON config to override config options.  This will be consumed as an ENV variable.')
-    }
-    environment {
-        DOCKER_BUILDKIT = '1'
-        TEST_SUITE = "${params.TEST_SUITE}"
-        METTA_CONFIGJSON="${params.METTA_CONFIGJSON}"
-        METTA_VARIABLES_ID="ci-${env.BUILD_NUMBER}"
-        METTA_USER_ID="sandbox-ci"
-        GIT_TARGET="${params.GIT_TARGET}"
+        string(name: 'PYTEST_TESTS', defaultValue: '', description: 'Optionally limit which tests pytest will run. IF empty, all tests will be run.')
+        text(name: 'METTA_CONFIGJSON', defaultValue: '', description: 'Include JSON config to override config options.  This will be consumed as an ENV variable.')
     }
     stages {
         stage('Test Execute') {
             when { not { changeRequest() } }
+            environment {
+                DOCKER_BUILDKIT = '1'
+                TEST_SUITE = "altrepo"
+                METTA_CONFIGJSON="${params.METTA_CONFIGJSON}"
+                METTA_VARIABLES_ID="ci-clients-${env.BUILD_NUMBER}"
+                METTA_USER_ID="sandbox-ci"
+            }
             steps {
                 container('docker') {
                     script {
-                        currentBuild.displayName = "${env.TEST_SUITE} (${env.GIT_TARGET}) ${env.BUILD_DISPLAY_NAME}"
 
-                        // Allow this jenkinsfile to be run without job SCM configured
-                        if (!fileExists('setup.cfg')) {
-                            git branch: "${params.GIT_TARGET}", url: 'https://github.com/james-nesbitt/metta.git'
-                        }
+                        GIT_TAG = sh(
+                            label: "Confirming git branch",
+                            script: """
+                                git describe --tags
+                            """,
+                            returnStdout: true
+                        ).trim()
+
+                        currentBuild.displayName = "${env.TEST_SUITE} (${GIT_TAG}) ${env.BUILD_DISPLAY_NAME}"
+
+                        /** Starting PIP preparation */
 
                         sh(
                             label: "Installing metta (pip)",
                             script: """
-                              pip install --upgrade .
+                                pip install --upgrade .
                             """
                         )
                         dir('suites') {
                             sh(
                                 label: "Installing metta-suites",
                                 script: """
-                                  pip install --upgrade .
+                                    pip install --upgrade .
                                 """
                             )
                         }
@@ -94,6 +102,9 @@ pipeline {
                                 } catch (Exception e) {
 
                                     dir('error') {
+                                        if (METTA_CONFIGJSON != '') {
+                                            writeFile file:'metta.config.overrides.json', text:env.METTA_CONFIGJSON
+                                        }
                                         try {
                                             sh(
                                                 label: "Exporting metta debug information",

@@ -91,13 +91,15 @@ LITMUSCHAOS_OPERATOR_URL_PATTERN = "https://litmuschaos.github.io/litmus/litmus-
 LITMUSCHAOS_OPERATOR_EXPERIMENT_PATTERN = "https://hub.litmuschaos.io/api/chaos/{version}?file={experiment}"
 """ URL pattern to the LC experiment yaml - needs version and experiment yaml chart path """
 
+
 class LitmusChaos:
     """ Manage Litmus Chaos in a Kubernetes cluster
 
 
     """
 
-    def __init__(self, kube_client: str, namespace: str, version: str = LITMUSCHAOS_OPERATOR_DEFAULT_VERSION, experiments: List[str] = LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS):
+    def __init__(self, kube_client: str, namespace: str, version: str = LITMUSCHAOS_OPERATOR_DEFAULT_VERSION,
+                 experiments: List[str] = LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS):
         """
 LITMUSCHAOS_OPERATOR_URL, allow_redirects=True) as r:
                 resources_yaml = yaml.loads(r.text)
@@ -160,7 +162,8 @@ LITMUSCHAOS_OPERATOR_URL, allow_redirects=True) as r:
             resources_yaml = yaml.safe_load_all(r.text)
 
             for resource in resources_yaml:
-                self.kube_client.utils_create_from_dict(data=resource, namespace=self.namespace)
+                self.kube_client.utils_create_from_dict(
+                    data=resource, namespace=self.namespace)
 
         time.sleep(10)
 
@@ -169,15 +172,17 @@ LITMUSCHAOS_OPERATOR_URL, allow_redirects=True) as r:
             with requests.get(LITMUSCHAOS_OPERATOR_EXPERIMENT_PATTERN.format(version=self.version, experiment=experiment), allow_redirects=True) as r:
                 resources_yaml = yaml.safe_load_all(r.text)
                 for resource in resources_yaml:
-                    self.kube_client.utils_create_from_dict(data=resource, namespace=self.namespace)
+                    self.kube_client.utils_create_from_dict(
+                        data=resource, namespace=self.namespace)
 
         # 3. RBAC
-        self.kube_client.utils_create_from_yaml(yaml.safe_load(LITMUSCHAOS_YAML_RBAC_PERMISSIVE), namespace=self.namespace)
+        self.kube_client.utils_create_from_yaml(
+            yaml.safe_load(LITMUSCHAOS_YAML_RBAC_PERMISSIVE),
+            namespace=self.namespace)
 
     def apply(self):
         """ Run the Litmus Chaos experiments """
         pass
-
 
     def destroy(self):
         """ remove all litmus chaos components from the cluster
@@ -208,9 +213,21 @@ LITMUSCHAOS_OPERATOR_URL, allow_redirects=True) as r:
         rbac.delete_cluster_role_binding('litmus')
 
         # Remove the Litmus namespace
-        core.delete_namespace('litmus', grace_period_seconds=30, propagation_policy='Foreground')
+        core.delete_namespace(
+            'litmus',
+            grace_period_seconds=30,
+            propagation_policy='Foreground')
 
         # Remove the litmus CRDs
-        extensions.delete_custom_resource_definition('chaosengines.litmuschaos.io', grace_period_seconds=30, propagation_policy='Foreground')
-        extensions.delete_custom_resource_definition('chaosexperiments.litmuschaos.io', grace_period_seconds=30, propagation_policy='Foreground')
-        extensions.delete_custom_resource_definition('chaosresults.litmuschaos.io', grace_period_seconds=30, propagation_policy='Foreground')
+        extensions.delete_custom_resource_definition(
+            'chaosengines.litmuschaos.io',
+            grace_period_seconds=30,
+            propagation_policy='Foreground')
+        extensions.delete_custom_resource_definition(
+            'chaosexperiments.litmuschaos.io',
+            grace_period_seconds=30,
+            propagation_policy='Foreground')
+        extensions.delete_custom_resource_definition(
+            'chaosresults.litmuschaos.io',
+            grace_period_seconds=30,
+            propagation_policy='Foreground')

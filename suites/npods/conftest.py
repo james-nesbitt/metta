@@ -42,9 +42,6 @@ def environment_up(environment):
     launchpad = environment.fixtures.get_plugin(
         type=Type.PROVISIONER, instance_id='launchpad')
 
-    ansible = environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='ansible')
-
     terraform = environment.fixtures.get_plugin(
         type=Type.PROVISIONER, instance_id='terraform')
 
@@ -60,7 +57,6 @@ def environment_up(environment):
         try:
             logger.info("Preparing the testing cluster using the provisioner")
             terraform.prepare()
-            ansible.prepare()
         except Exception as e:
             logger.error("Provisioner failed to init: %s", e)
             raise e
@@ -68,7 +64,6 @@ def environment_up(environment):
             logger.info(
                 "Starting up the testing cluster using the provisioner")
             terraform.apply()
-            ansible.apply()
             launchpad.apply()
         except Exception as e:
             logger.error("Provisioner failed to start: %s", e)

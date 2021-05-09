@@ -26,8 +26,10 @@ def myapp_running(environment_up):
     logger.info(
         "Starting a kubernetes workload in this environment, so that we can run litmus chaos against it.")
 
-    sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(type=Type.WORKLOAD, instance_id='myapp_deployment')
-    instance = sanity_kubernetes_deployment.create_instance(environment_up.fixtures)
+    sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(
+        type=Type.WORKLOAD, instance_id='myapp_deployment')
+    instance = sanity_kubernetes_deployment.create_instance(
+        environment_up.fixtures)
     deployment = instance.apply()
 
     assert deployment is not None
@@ -58,7 +60,8 @@ def litmuschaos_installed(environment_up):
     logger.info(
         "Preparing Litmus Chaos workload.")
 
-    litmuchchaos_run = environment_up.fixtures.get_plugin(type=Type.WORKLOAD, instance_id='chaos_litmuschaos')
+    litmuchchaos_run = environment_up.fixtures.get_plugin(
+        type=Type.WORKLOAD, instance_id='chaos_litmuschaos')
     instance = litmuchchaos_run.create_instance(environment_up.fixtures)
     applied = instance.prepare()
 

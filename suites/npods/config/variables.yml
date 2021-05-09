@@ -26,9 +26,21 @@ files_path: "{{paths:project}}/.metta"
 extra_tags:
   metta.suite: "{{task}}"
   metta.mirantis.preset.variation: "{{mirantis:presets.variation}}"
-  metta.mirantis.preset.cluster: "{{mirantis:presets.cluster}}"
+  metta.mirantis.preset.cluster: "custom"
   metta.mirantis.preset.release: "{{mirantis:presets.release}}"
   metta.mirantis.preset.release: "{{mirantis:presets.platform}}"
+
+# Open up network access from my machine
+open_sg_for_myip: True
+
+# Let's manually define our cluster for this test
+manager_count: 3
+manager_type: m5.xlarge
+manager_volume_size: 100
+worker_count: 10
+worker_type: m5.2xlarge
+worker_volume_size: 100
+windows_worker_count: 0
 
 # No need for MSR on this one
 msr_count: 0
