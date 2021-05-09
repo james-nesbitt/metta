@@ -1,8 +1,8 @@
-from typing import Any, List
+from typing import Any, List, Dict
 import logging
 import os
 import subprocess
-import json
+import yaml
 from enum import Enum
 from datetime import datetime
 
@@ -30,8 +30,14 @@ KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS = 'repos'
 """ config key for helm repos dict which need to be added """
 KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART = 'chart'
 """ config key for helm chart, either local path or http(s) """
-KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUES = 'values'
+KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESSET = 'set'
 """ config key for helm chart values """
+KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_VALUES = 'values'
+""" config key for helm chart values that should be put into a values file """
+KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_PATH = 'file'
+""" config key for helm chart path to values file that we should create """
+KUBERNETES_HELM_WORKLOAD_CONFIG_DEFAULT_VALUESFILE_PATH = 'values.yml'
+""" config default value for helm chart path to values file that we should create """
 KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_NAMESPACE = 'namespace'
 """ config key for namespace to install to """
 
@@ -42,8 +48,8 @@ KUBERNETES_HELM_WORKLOAD_DEFAULT_NAMESPACE = 'default'
 class KubernetesHelmWorkloadPlugin(WorkloadBase):
     """ Kubernetes workload class """
 
-    def __init__(self, environment, instance_id,
-                 label: str = KUBERNETES_HELM_WORKLOAD_CONFIG_LABEL, base: Any = KUBERNETES_HELM_WORKLOAD_CONFIG_BASE):
+    def __init__(self, environment, instance_id, label: str = KUBERNETES_HELM_WORKLOAD_CONFIG_LABEL,
+                 base: Any = KUBERNETES_HELM_WORKLOAD_CONFIG_BASE):
         """ Run the super constructor but also set class properties
 
         This implements the args part of the client interface.
@@ -92,16 +98,20 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
         chart = workload_config.get(
             [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART])
 
+        set = workload_config.get(
+            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESSET], default={})
         values = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUES], default={})
+            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_VALUES], default={})
+        file = workload_config.get(
+            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_PATH], default=KUBERNETES_HELM_WORKLOAD_CONFIG_DEFAULT_VALUESFILE_PATH)
 
         repos = workload_config.get(
             [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS], default={})
 
         return KubernetesHelmV3WorkloadInstance(
-            kubeconfig, namespace, self.instance_id, repos, chart, values)
+            kubeconfig=kubeconfig, namespace=namespace, name=self.instance_id, repos=repos, chart=chart, set=set, values=values, file=file)
 
-    def info(self):
+    def info(self, deep: bool = False):
         """ Return dict data about this plugin for introspection """
         workload_config = self.environment.config.load(self.config_label)
 
@@ -127,7 +137,8 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
 
 class KubernetesHelmV3WorkloadInstance:
 
-    def __init__(self, kubeconfig, namespace, name, repos, chart, values):
+    def __init__(self, kubeconfig, namespace, name, repos, chart, set: Dict[str, str] = {
+    }, values: Dict[str, Any] = {}, file: str = KUBERNETES_HELM_WORKLOAD_CONFIG_DEFAULT_VALUESFILE_PATH):
         """
 
         Parameters:
@@ -139,7 +150,11 @@ class KubernetesHelmV3WorkloadInstance:
 
         chart (str) : local or http(s) path to a chart
 
-        values (dict[str, Any]) : helm chart values
+        set (dict[str, str]) : simple helm chart values that can be set
+
+        values (dict[str, Any]) : complex helm chart value data that needs to
+            be put into a file
+        file (str) : path to where we should put values yaml file
 
         """
 
@@ -148,7 +163,11 @@ class KubernetesHelmV3WorkloadInstance:
         self.namespace = namespace
         self.repos = repos
         self.chart = chart
+
+        self.set = set
+
         self.values = values
+        self.file = file
 
         self.bin = 'helm'
         self.working_dir = '.'
@@ -159,22 +178,27 @@ class KubernetesHelmV3WorkloadInstance:
         for repo_name, repo_url in self.repos.items():
             self._run(cmd=['repo', 'add', repo_name, repo_url])
 
-        if len(self.values):
-            # turn the values dict into '--set a=A,b=B,c=C'
-            values = ['--set', ','.join(['{}={}'.format(name, value)
-                                         for (name, value) in self.values.items()])]
-        else:
-            values = []
-
-        cmd = ['install']
+        cmd = ['upgrade']
         cmd += [self.name, self.chart]
+
+        cmd += ['--install', '--create-namespace']
 
         if wait:
             cmd += ['--wait']
         if debug:
             cmd += ['--debug']
 
-        cmd += values
+        if len(self.set):
+            # turn the set dict into '--set a=A,b=B,c=C'
+            cmd += ['--set', ','.join(['{}={}'.format(name, value)
+                                       for (name, value) in self.values.items()])]
+
+        if len(self.values):
+            # turn the values into a file, and add it to the command
+            with open(self.file, 'w') as f:
+                yaml.dump(self.values, f)
+
+            cmd += ['--values', self.file]
 
         try:
             self._run(cmd=cmd)
@@ -185,7 +209,7 @@ class KubernetesHelmV3WorkloadInstance:
     def list(self, all: bool = False, failed: bool = False,
              deployed: bool = False, pending: bool = False):
         """ List all releases - Not instances specific but still useful """
-        cmd = ['list', '--output={}'.format('json')]
+        cmd = ['list', '--output={}'.format('yaml')]
 
         if all:
             cmd += ['--all']
@@ -198,7 +222,7 @@ class KubernetesHelmV3WorkloadInstance:
 
         list_str = self._run(cmd=cmd, return_output=True)
         if list_str:
-            return json.loads(list_str)
+            return yaml.safe_load(list_str)
 
         return []
 
@@ -212,8 +236,8 @@ class KubernetesHelmV3WorkloadInstance:
 
     def status(self):
         """ status of an installed helm release """
-        return HelmReleaseStatus(json.loads(
-            self._run(cmd=['status', self.name, '--output', 'json'], return_output=True)))
+        return HelmReleaseStatus(yaml.safe_load(
+            self._run(cmd=['status', self.name, '--output', 'yaml'], return_output=True)))
 
     def _run(self, cmd: List[str], return_output: bool = False):
         """ run a helm v3 command """

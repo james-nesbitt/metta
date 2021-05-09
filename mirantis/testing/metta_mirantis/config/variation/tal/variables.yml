@@ -72,3 +72,5 @@ msr_volume_size: 100
 # SSH/RDP admin passwords for nodes
 admin_password: orcaorcaorca
 windows_administrator_password: "tfaws,,ABC..Example"
+# Open a security group for my IP
+open_sg_for_myip: False

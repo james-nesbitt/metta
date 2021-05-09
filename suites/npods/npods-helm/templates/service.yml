@@ -1,0 +1,14 @@
+# Internal service (clusterIP) which any pod can use to continue the relay
+apiVersion: v1
+kind: Service
+metadata:
+  name: npods-relay
+  namespace: npods
+spec:
+  selector:
+    app: npods-workload
+  ports:
+    - name: relay
+      protocol: TCP
+      port: 80
+      targetPort: 80

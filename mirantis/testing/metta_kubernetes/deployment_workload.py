@@ -126,11 +126,7 @@ class KubernetesDeploymentWorkloadInstance(WorkloadInstanceBase):
         return self.deployment
 
     def apply(self):
-        """ Run the workload
-
-        @NOTE Needs a kubernetes client fixture to run.  Use .set_fixtures() first
-
-        """
+        """ Run the workload """
 
         apps_v1 = self.client.get_api('AppsV1Api')
         self.deployment = apps_v1.create_namespaced_deployment(

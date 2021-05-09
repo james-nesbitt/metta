@@ -1,0 +1,34 @@
+{{- range .Values.workloads }}
+---
+# Deployment for {{ default "default" .name }} workload
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: npods-workload-{{ default "default" .name }}
+spec:
+  selector:
+    matchLabels:
+      app: npods
+  replicas: {{ .replicas }}
+  template:
+    metadata:
+      labels:
+        app: npods
+    spec:
+      nodeSelector:
+        com.docker.ucp.collection: shared
+      containers:
+      - name: npods
+        image: {{ .image }}
+        ports:
+        - containerPort: 80
+        env:
+        - name: NPODS_NEXT_URI
+          value: "http://npods-relay"
+        - name: TEST_SLEEP
+          value: {{ default "0s" .sleep | quote }}
+        - name: TEST_CPU
+          value: {{ default "0" .cpu | quote }}
+        - name: TEST_RAM
+          value: {{ default "0" .ram | quote }}
+{{- end }}

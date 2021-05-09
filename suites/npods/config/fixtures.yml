@@ -1,0 +1,118 @@
+
+# npods-support - supporting network and namespace for npods-workload
+npods-workload: 
+    type: metta.plugin.workload
+    plugin_id: metta_kubernetes_helm
+
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
+
+    namespace: npods
+    chart: "{{paths:project}}/npods-helm"
+
+    file: "{{variables:files_path}}/{{variables:resource_prefix}}.helm.npods.yaml"
+    values:
+      trigger:
+        # start with 0 threads, we will modify this and re-run
+        threads: 400
+      workloads:
+      # Heavier workload, starting at 100 pods
+      - name: heavy
+        image: mirantiseng/testeng-referenceapp:npods_0.16
+        replicas: 100
+        sleep: 0s 
+        cpu: 100
+        ram: 8192
+      # leander workload, starting at 100 pods
+      - name: lean
+        image: mirantiseng/testeng-referenceapp:npods_0.16
+        replicas: 100
+        sleep: 1s 
+        cpu: 0
+        ram: 0
+
+
+# loki workload : monitoring tooling workload
+loki-workload:
+    type: metta.plugin.workload
+    plugin_id: metta_kubernetes_helm
+
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
+
+    repos:
+      grafana: https://grafana.github.io/helm-charts
+
+    namespace: loki
+    chart: grafana/loki-stack
+
+    file: "{{variables:files_path}}/{{variables:resource_prefix}}.helm.loki.yaml"
+    values:
+      loki:
+        enabled: true
+
+      promtail:
+        enabled: true
+
+      fluent-bit:
+        enabled: true
+
+      grafana:
+        enabled: true
+        sidecar:
+          datasources:
+            enabled: true
+        image:
+          tag: 6.7.0
+
+      prometheus:
+        enabled: true
+
+      filebeat:
+        enabled: true
+        filebeatConfig:
+          filebeat.yml: |
+            # logging.level: debug
+            filebeat.inputs:
+            - type: container
+              paths:
+                - /var/log/containers/*.log
+              processors:
+              - add_kubernetes_metadata:
+                  host: ${NODE_NAME}
+                  matchers:
+                  - logs_path:
+                      logs_path: "/var/log/containers/"
+            output.logstash:
+              hosts: ["logstash-loki:5044"]
+      logstash:
+        enabled: true
+        image: grafana/logstash-output-loki
+        imageTag: 1.0.1
+        filters:
+          main: |-
+            filter {
+              if [kubernetes] {
+                mutate {
+                  add_field => {
+                    "container_name" => "%{[kubernetes][container][name]}"
+                    "namespace" => "%{[kubernetes][namespace]}"
+                    "pod" => "%{[kubernetes][pod][name]}"
+                  }
+                  replace => { "host" => "%{[kubernetes][node][name]}"}
+                }
+              }
+              mutate {
+                remove_field => ["tags"]
+              }
+            }
+        outputs:
+          main: |-
+            output {
+              loki {
+                url => "http://loki:3100/loki/api/v1/push"
+                #username => "test"
+                #password => "test"
+              }
+              # stdout { codec => rubydebug }
+            }

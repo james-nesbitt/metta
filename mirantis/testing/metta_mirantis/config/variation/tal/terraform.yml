@@ -111,3 +111,5 @@ vars:
 
     # description = "If non-empty, use this path/filename as the ssh key file instead of generating automatically."
     ssh_key_file_path: "{{variables:files_path}}/{{variables:files_prefix}}.host.pem"
+
+    open_sg_for_myip: "{{variables:open_sg_for_myip}}"

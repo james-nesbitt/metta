@@ -25,8 +25,23 @@ Then it lets you pick tests to run.
 
 ### Sanity
 
+A small environment creation and tear-down test suite for MCR/MKE/MSR
 
 ### Upgrade
 
+An upgrade test for MCR/MKE/MSR which allow a single stage upgrade from
+any version combination to any other version combination
 
-### Docker / Kubernetes / Helm
+### Docker / Kubernetes / Helm (client)
+
+A metta client test, which will test docker/k8s/helm and exec (ssh) 
+functionality on a cluster.
+
+### CNCF
+
+Run the CNCF conformance test against a cluster
+
+### NPods
+
+Test that a certain number of pods can function on an MKE k8s cluster.
+

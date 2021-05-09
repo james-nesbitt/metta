@@ -1,6 +1,6 @@
 #!groovy
 /**
- * Jenkins: Dummy test suite execute
+ * Jenkins: N-Pods test suite execute
  *
  * @NOTE this expects to be run from the repo root.
  */
@@ -49,7 +49,7 @@ pipeline {
                 DOCKER_BUILDKIT = '1'
                 TEST_SUITE = "dummy"
                 METTA_CONFIGJSON="${params.METTA_CONFIGJSON}"
-                METTA_VARIABLES_ID="ci-dummy-${env.BUILD_NUMBER}"
+                METTA_VARIABLES_ID="ci-npods-${env.BUILD_NUMBER}"
                 METTA_USER_ID="sandbox-ci"
             }
             steps {

@@ -289,7 +289,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         logger.info(
             'Running Launchpad Prepare().  Launchpad has no prepare stage.')
 
-    def apply(self):
+    def apply(self, debug: bool = False):
         """ bring a cluster up
 
         We assume that the cluster is running and the we can pull the required
@@ -302,6 +302,12 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         from a specific fixture source.  If you want the output to come from
         only a specific backend fixture then make sure that a "backend" config
         exists, otherwise just use an "output" config.
+
+        Parameters:
+        -----------
+
+        debug (bool) : override config value for Debug if True, make the launc
+            pad call more verbose
 
         Raises:
         -------
@@ -317,7 +323,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             logger.info(
                 "Using launchpad to install products onto backend cluster")
             self._write_launchpad_file()
-            self.client.apply()
+            self.client.apply(debug=debug)
         except Exception as e:
             raise Exception("Launchpad failed to install: {}".format(e)) from e
 

@@ -98,9 +98,9 @@ class LaunchpadClient:
         """ Output launchpad client version """
         self._run(['version'])
 
-    def apply(self):
+    def apply(self, debug: bool = False):
         """ Install using the launchpad client """
-        self._run(['apply'])
+        self._run(['apply'], debug=debug)
 
     def exec(self, host_index: int, cmds: List[str]):
         """ execute a command on a host index """
@@ -160,8 +160,6 @@ class LaunchpadClient:
         client_bundle_path = self._mke_client_bundle_path(user)
         client_bundle_meta_file = os.path.join(
             client_bundle_path, METTA_USER_LAUNCHPAD_BUNDLE_META_FILE)
-        client_bundle_kubeconfig_file = os.path.join(
-            client_bundle_path, 'kube.yml')
 
         if reload or not os.path.isfile(client_bundle_meta_file):
 
@@ -187,7 +185,10 @@ class LaunchpadClient:
         try:
             with open(client_bundle_meta_file) as json_file:
                 data = json.load(json_file)
+
                 # helm complains if this file has loose permissions
+                client_bundle_kubeconfig_file = os.path.join(
+                    client_bundle_path, 'kube.yml')
                 os.chmod(client_bundle_kubeconfig_file, 0o600)
         except FileNotFoundError as e:
             raise ValueError(
@@ -280,13 +281,19 @@ class LaunchpadClient:
             raise ValueError(
                 'Launchpad yaml file did not container a cluster name')
 
-    def _run(self, args: List[str] = ['help'], return_output=False):
+    def _run(self, args: List[str] = ['help'],
+             return_output=False, debug: bool = False):
         """ Run a launchpad command
 
         Parameters:
 
         args (List[str]) : arguments to pass to the launchpad bin using
             subprocess
+
+        return_output (bool) : this call should capture the exec output and
+            return it instead of sending it to stdout
+
+        debug (bool) : override class debug value if True
 
         """
 
@@ -298,7 +305,7 @@ class LaunchpadClient:
 
         cmd += [args[0]]
 
-        if self.debug:
+        if debug or self.debug:
             cmd += ['--debug']
         if self.disable_telemetry:
             cmd += ['--disable-telemetry']

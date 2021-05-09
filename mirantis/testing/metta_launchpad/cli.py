@@ -209,10 +209,10 @@ class LaunchpadGroup():
         provisioner = self._select_provisioner(instance_id=provisioner).plugin
         provisioner.prepare()
 
-    def apply(self, provisioner: str = ''):
+    def apply(self, provisioner: str = '', debug: (bool) = False):
         """ Run provisioner apply """
         provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner.apply()
+        provisioner.apply(debug=debug)
 
     def destroy(self, provisioner: str = ''):
         """ Run provisioner destroy """

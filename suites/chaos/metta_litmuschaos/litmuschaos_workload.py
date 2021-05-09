@@ -55,7 +55,7 @@ LITMUSCHAOS_VALIDATE_JSONSCHEMA = {
 
         'experiments': {
             'type': 'array',
-            'items': { 'type': 'string' }
+            'items': {'type': 'string'}
         },
 
     },
@@ -105,7 +105,6 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
 
         return info
 
-
     def create_instance(self, fixtures: Fixtures):
         """ Create a workload instance from a set of fixtures
 
@@ -148,7 +147,8 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
 class LitmusChaosWorkloadPluginInstance():
     """ Individual instance of the LitmusChaos workload for execution """
 
-    def __init__(self, kube_client: str, namespace: str, version: str, experiments: List[str]):
+    def __init__(self, kube_client: str, namespace: str,
+                 version: str, experiments: List[str]):
         """
 
         Parameters:
@@ -165,7 +165,11 @@ class LitmusChaosWorkloadPluginInstance():
 
         """
 
-        self.litmuschaos = LitmusChaos(kube_client=kube_client, namespace=namespace, version=version, experiments=experiments)
+        self.litmuschaos = LitmusChaos(
+            kube_client=kube_client,
+            namespace=namespace,
+            version=version,
+            experiments=experiments)
 
     def info(self, deep: bool = False):
         """ return an object/dict of inforamtion about the instance for debugging """
@@ -182,8 +186,6 @@ class LitmusChaosWorkloadPluginInstance():
 
     def apply(self):
         """ Run the Litmus Chaos experiments """
-
-
 
     def destroy(self):
         """ remove all litmus chaos components from the cluster """

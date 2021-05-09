@@ -1,0 +1,6 @@
+.metta
+.benchmarks
+errors
+reports
+__pycache__
+.pytest_cache
