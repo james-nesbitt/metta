@@ -8,17 +8,17 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: npods
+      app: npods-workload
   replicas: {{ .replicas }}
   template:
     metadata:
       labels:
-        app: npods
+        app: npods-workload
     spec:
       nodeSelector:
         com.docker.ucp.collection: shared
       containers:
-      - name: npods
+      - name: npods-workload-{{ default "default" .name }}
         image: {{ .image }}
         ports:
         - containerPort: 80

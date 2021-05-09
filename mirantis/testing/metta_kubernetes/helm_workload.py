@@ -226,9 +226,16 @@ class KubernetesHelmV3WorkloadInstance:
 
         return []
 
-    def destroy(self):
+    def destroy(self, debug: bool = False):
         """ remove an installed helm release """
-        self._run(cmd=['uninstall', self.name])
+
+        cmd = ['uninstall']
+        cmd += [self.name,]
+
+        if debug:
+            cmd += ['--debug']
+
+        self._run(cmd=cmd)
 
     def test(self):
         """ test an installed helm release """

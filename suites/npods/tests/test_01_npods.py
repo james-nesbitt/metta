@@ -82,117 +82,184 @@ def test_01_initial_workload(environment_up_unlocked, loki, npods):
 
     loki.apply(wait=True)
     npods.apply(wait=True)
-    _stability_test(environment_up_unlocked)
+    _stability_test(environment_up_unlocked, logger.getChild('npods-initial-sanity'))
 
 
-def test_02_1100_workload(environment_up_unlocked, npods):
-    """ raise to 1100 pods and check stability """
+# def test_02_1100_workload(environment_up_unlocked, npods):
+#     """ raise to 1100 pods and check stability """
 
-    # Increas the workload replica count and try again
-    npods.values["workloads"][0]["replicas"] = 550
-    npods.values["workloads"][1]["replicas"] = 550
-    npods.apply(wait=True)
+#     # Increase the workload replica count and try again
+#     npods.values["workloads"][0]["replicas"] = 550
+#     npods.values["workloads"][1]["replicas"] = 550
+#     npods.apply(wait=True)
 
-    _stability_test(environment_up_unlocked)
-
-
-def test_03_1400_workload(environment_up_unlocked, npods):
-    """ raise to 1400 pods and check stability """
-
-    # Increas the workload replica count and try again
-    npods.values["workloads"][0]["replicas"] = 700
-    npods.values["workloads"][1]["replicas"] = 700
-    npods.apply(wait=True)
-
-    _stability_test(environment_up_unlocked)
+#     _stability_test(environment_up_unlocked, logger.getChild('npods-1100'))
 
 
-def test_04_1600_workload(environment_up_unlocked, npods):
-    """ raise to 1600 pods and check stability """
+# def test_03_1400_workload(environment_up_unlocked, npods):
+#     """ raise to 1400 pods and check stability """
 
-    # Increas the workload replica count and try again
-    npods.values["workloads"][0]["replicas"] = 800
-    npods.values["workloads"][1]["replicas"] = 800
-    npods.apply(wait=True)
+#     # Increase the workload replica count and try again
+#     npods.values["workloads"][0]["replicas"] = 700
+#     npods.values["workloads"][1]["replicas"] = 700
+#     npods.apply(wait=True)
 
-    _stability_test(environment_up_unlocked)
-
-
-def test_05_1800_workload(environment_up_unlocked, npods):
-    """ raise to 1800 pods and check stability """
-
-    # Increas the workload replica count and try again
-    npods.values["workloads"][0]["replicas"] = 900
-    npods.values["workloads"][1]["replicas"] = 900
-    npods.apply(wait=True)
-
-    _stability_test(environment_up_unlocked)
+#     _stability_test(environment_up_unlocked, logger.getChild('npods-1400'))
 
 
-def test_06_2000_workload(environment_up_unlocked, npods):
-    """ raise to 2000 pods and check stability """
+# def test_04_1600_workload(environment_up_unlocked, npods):
+#     """ raise to 1600 pods and check stability """
 
-    # Increas the workload replica count and try again
-    npods.values["workloads"][0]["replicas"] = 1000
-    npods.values["workloads"][1]["replicas"] = 1000
-    npods.apply(wait=True)
+#     # Increase the workload replica count and try again
+#     npods.values["workloads"][0]["replicas"] = 800
+#     npods.values["workloads"][1]["replicas"] = 800
+#     npods.apply(wait=True)
 
-    _stability_test(environment_up_unlocked)
-
-
-def test_07_2200_workload(environment_up_unlocked, npods):
-    """ raise to 2200 pods and check stability """
-
-    # Increas the workload replica count and try again
-    npods.values["workloads"][0]["replicas"] = 1100
-    npods.values["workloads"][1]["replicas"] = 1100
-    npods.apply(wait=True)
-
-    _stability_test(environment_up_unlocked)
+#     _stability_test(environment_up_unlocked, logger.getChild('npods-1600'))
 
 
-def test_08_2400_workload(environment_up_unlocked, npods):
-    """ raise to 2400 pods and check stability """
+# def test_05_1800_workload(environment_up_unlocked, npods):
+#     """ raise to 1800 pods and check stability """
 
-    # Increas the workload replica count and try again
-    npods.values["workloads"][0]["replicas"] = 1200
-    npods.values["workloads"][1]["replicas"] = 1200
-    npods.apply(wait=True)
+#     # Increase the workload replica count and try again
+#     npods.values["workloads"][0]["replicas"] = 900
+#     npods.values["workloads"][1]["replicas"] = 900
+#     npods.apply(wait=True)
 
-    _stability_test(environment_up_unlocked)
+#     _stability_test(environment_up_unlocked, logger.getChild('npods-1800'))
 
 
-def test_09_2600_workload(environment_up_unlocked, npods):
-    """ raise to 2400 pods and check stability """
+# def test_06_2000_workload(environment_up_unlocked, npods):
+#     """ raise to 2000 pods and check stability """
 
-    # Increas the workload replica count and try again
-    npods.values["workloads"][0]["replicas"] = 1300
-    npods.values["workloads"][1]["replicas"] = 1300
-    npods.apply(wait=True)
+#     # Increase the workload replica count and try again
+#     npods.values["workloads"][0]["replicas"] = 1000
+#     npods.values["workloads"][1]["replicas"] = 1000
+#     npods.apply(wait=True)
 
-    _stability_test(environment_up_unlocked)
+#     _stability_test(environment_up_unlocked, logger.getChild('npods-2000'))
+
+
+# def test_07_2200_workload(environment_up_unlocked, npods):
+#     """ raise to 2200 pods and check stability """
+
+#     # Increase the workload replica count and try again
+#     npods.values["workloads"][0]["replicas"] = 1100
+#     npods.values["workloads"][1]["replicas"] = 1100
+#     npods.apply(wait=True)
+
+#     _stability_test(environment_up_unlocked, logger.getChild('npods-2200'))
+
+
+# def test_08_2400_workload(environment_up_unlocked, npods):
+#     """ raise to 2400 pods and check stability """
+
+#     # Increase the workload replica count and try again
+#     npods.values["workloads"][0]["replicas"] = 1200
+#     npods.values["workloads"][1]["replicas"] = 1200
+#     npods.apply(wait=True)
+
+#     _stability_test(environment_up_unlocked, logger.getChild('npods-2400'))
+
+
+# def test_09_2600_workload(environment_up_unlocked, npods):
+#     """ raise to 2600 pods and check stability """
+
+#     # Increase the workload replica count and try again
+#     npods.values["workloads"][0]["replicas"] = 1300
+#     npods.values["workloads"][1]["replicas"] = 1300
+#     npods.apply(wait=True)
+
+#     _stability_test(environment_up_unlocked, logger.getChild('npods-2600'))
 
 
 def test_10_2800_workload(environment_up_unlocked, npods):
-    """ raise to 2400 pods and check stability """
+    """ raise to 2800 pods and check stability """
 
-    # Increas the workload replica count and try again
+    # Increase the workload replica count and try again
     npods.values["workloads"][0]["replicas"] = 1400
     npods.values["workloads"][1]["replicas"] = 1400
     npods.apply(wait=True)
 
-    _stability_test(environment_up_unlocked)
+    _stability_test(environment_up_unlocked, logger.getChild('npods-2800'))
 
 
-def test_99_teardown(environment_up_unlocked, npods):
+def test_10_3000_workload(environment_up_unlocked, npods):
+    """ raise to 3000 pods and check stability """
+
+    # Increase the workload replica count and try again
+    npods.values["workloads"][0]["replicas"] = 1500
+    npods.values["workloads"][1]["replicas"] = 1500
+    npods.apply(wait=True)
+
+    _stability_test(environment_up_unlocked, logger.getChild('npods-3000'))
+
+
+def test_10_3200_workload(environment_up_unlocked, npods):
+    """ raise to 3200 pods and check stability """
+
+    # Increase the workload replica count and try again
+    npods.values["workloads"][0]["replicas"] = 1600
+    npods.values["workloads"][1]["replicas"] = 1600
+    npods.apply(wait=True)
+
+    _stability_test(environment_up_unlocked, logger.getChild('npods-3200'))
+
+
+def test_10_3400_workload(environment_up_unlocked, npods):
+    """ raise to 3400 pods and check stability """
+
+    # Increase the workload replica count and try again
+    npods.values["workloads"][0]["replicas"] = 1700
+    npods.values["workloads"][1]["replicas"] = 1700
+    npods.apply(wait=True)
+
+    _stability_test(environment_up_unlocked, logger.getChild('npods-3400'))
+
+
+def test_10_3600_workload(environment_up_unlocked, npods):
+    """ raise to 3600 pods and check stability """
+
+    # Increase the workload replica count and try again
+    npods.values["workloads"][0]["replicas"] = 1800
+    npods.values["workloads"][1]["replicas"] = 1800
+    npods.apply(wait=True)
+
+    _stability_test(environment_up_unlocked, logger.getChild('npods-3600'))
+
+
+def test_10_3800_workload(environment_up_unlocked, npods):
+    """ raise to 3800 pods and check stability """
+
+    # Increase the workload replica count and try again
+    npods.values["workloads"][0]["replicas"] = 1900
+    npods.values["workloads"][1]["replicas"] = 1900
+    npods.apply(wait=True)
+
+    _stability_test(environment_up_unlocked, logger.getChild('npods-3800'))
+
+
+def test_10_4000_workload(environment_up_unlocked, npods):
+    """ raise to 4000 pods and check stability """
+
+    # Increase the workload replica count and try again
+    npods.values["workloads"][0]["replicas"] = 2000
+    npods.values["workloads"][1]["replicas"] = 2000
+    npods.apply(wait=True)
+
+    _stability_test(environment_up_unlocked, logger.getChild('npods-4000'))
+
+
+def test_99_teardown(environment_up_unlocked, npods, loki):
     """ tear down the namespace we ran in """
 
-    npods.destroy()
+    # npods.destroy()
+    # loki.destroy()
 
 # ------ UTILITY -------------------------------------------
 
 
-def _stability_test(environment):
+def _stability_test(environment, logger=logger):
     """ Run a stability test on the cluster """
 
     mke = environment.fixtures.get_plugin(
@@ -207,11 +274,23 @@ def _stability_test(environment):
 
         mke_nodes = mke.api_nodes()
         """ list of nodes for the mke client """
+        unhealthy_count = 0
         for node in mke_nodes:
-            assert MKENodeState.READY.match(
-                node['Status']['State']), "MKE NODE {} was not in a READY state: {}".format(
-                node['ID'], node['Status'])
+            try:
+                assert MKENodeState.READY.match(
+                    node['Status']['State']), "MKE NODE {} was not in a READY state: {}".format(
+                    node['ID'], node['Status'])
+            except Exception as e:
+                unhealthy_count += 1
+                logger.warn("{}".format(e))
 
-        logger.info("{} [{}]: all is well".format(index, time.time()))
+        if unhealthy_count == 0:
+            logger.info("{} [{}]: all is well".format(index, time.time()))
+        elif unhealthy_count < 3:
+            logger.warn("{} [{}]: Some nodes are unhappy".format(index, time.time()))            
+        else:
+            logger.error("{} [{}]: Cluster is unhealthy".format(index, time.time()))                        
+            raise Exception("Cluster is unhealthy, so this test will stop")
+
         time.sleep(60 * STABILITY_TEST_PERIOD)
         index += 1
