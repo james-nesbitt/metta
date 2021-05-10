@@ -13,19 +13,19 @@ npods-workload:
     file: "{{variables:files_path}}/{{variables:resource_prefix}}.helm.npods.yaml"
     values:
       trigger:
-        # start with 0 threads, we will modify this and re-run
-        threads: 400
+        # start with 100 threads, we will manually run triggers so that we can scale the volume
+        threads: 100
       workloads:
       # Heavier workload, starting at 100 pods
       - name: heavy
-        image: mirantiseng/testeng-referenceapp:npods_0.16
+        image: msr.ci.mirantis.com/jnesbitt/n-pods-app:0.16
         replicas: 100
         sleep: 0s 
         cpu: 100
         ram: 8192
       # leander workload, starting at 100 pods
       - name: lean
-        image: mirantiseng/testeng-referenceapp:npods_0.16
+        image: msr.ci.mirantis.com/jnesbitt/n-pods-app:0.16
         replicas: 100
         sleep: 1s 
         cpu: 0
@@ -51,6 +51,31 @@ loki-workload:
 
       grafana:
         enabled: true
+
+        adminUser: admin
+        adminPassword: admin
+
+        dashboardProviders:
+          dashboardproviders.yaml:
+            apiVersion: 1
+            providers:
+              - name: default
+                orgId: 1
+                folder: ""
+                type: file
+                disableDeletion: false
+                editable: false
+                options:
+                  path: /var/lib/grafana/dashboards/default
+
+        dashboards:
+          default:
+            node-exporter-server-metrics:
+              folder: general
+              gnetId: 405
+              version: 8
+              datasource: Prometheus
+
       prometheus:
         enabled: true
         alertmanager:

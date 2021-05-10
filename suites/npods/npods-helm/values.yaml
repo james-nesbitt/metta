@@ -6,7 +6,7 @@ trigger:
 # which will create pods of relay nodes
 workloads: []
 # - name: default
-#   image: mirantiseng/testeng-referenceapp:npods_0.16
+#   image: msr.ci.mirantis.com/jamesnmirantis/n-pods-app:0.16
 #   replicas: 0
 #   sleep: 0s 
 #   cpu: 100

@@ -27,8 +27,8 @@ extra_tags:
   metta.suite: "{{task}}"
   metta.mirantis.preset.variation: "{{mirantis:presets.variation}}"
   metta.mirantis.preset.cluster: "custom"
-  metta.mirantis.preset.release: "{{mirantis:presets.release}}"
-  metta.mirantis.preset.release: "{{mirantis:presets.platform}}"
+  metta.mirantis.preset.release: "custom"
+  metta.mirantis.preset.platform: "{{mirantis:presets.platform}}"
 
 # Open up network access from my machine
 open_sg_for_myip: True
@@ -37,14 +37,15 @@ open_sg_for_myip: True
 manager_count: 3
 manager_type: m5.xlarge
 manager_volume_size: 100
-worker_count: 10
+worker_count: 5
 worker_type: m5.2xlarge
 worker_volume_size: 100
 windows_worker_count: 0
 
 # Override some component versions
+mcr_repo_url: "https://repos.mirantis.com/"
 mcr_channel: stable
-mcr_version: 20.10.04
+mcr_version: 20.10.4
 mke_image_repo: docker.io/mirantis
 mke_version: 3.4.0
 
