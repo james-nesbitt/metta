@@ -12,24 +12,25 @@ npods-workload:
 
     file: "{{variables:files_path}}/{{variables:resource_prefix}}.helm.npods.yaml"
     values:
-      trigger:
-        # start with 100 threads, we will manually run triggers so that we can scale the volume
-        threads: 100
+      triggers:
+        - name: initial
+          # start with 10 threads, we will manually run triggers so that we can scale the volume
+          threads: 100
       workloads:
-      # Heavier workload, starting at 100 pods
+      # Heavier workload, simulate some computation
       - name: heavy
-        image: msr.ci.mirantis.com/jnesbitt/n-pods-app:0.16
+        image: msr.ci.mirantis.com/jnesbitt/n-pods-app:0.17
         replicas: 100
-        sleep: 0s 
-        cpu: 100
+        sleep: 10ms 
+        cpu: 300
         ram: 8192
-      # leander workload, starting at 100 pods
+      # light workload - simulate something with a delay like a db retrieval
       - name: lean
-        image: msr.ci.mirantis.com/jnesbitt/n-pods-app:0.16
+        image: msr.ci.mirantis.com/jnesbitt/n-pods-app:0.17
         replicas: 100
-        sleep: 1s 
-        cpu: 0
-        ram: 0
+        sleep: 500ms 
+        cpu: 10
+        ram: 512
 
 
 # loki workload : monitoring tooling workload
@@ -51,6 +52,8 @@ loki-workload:
 
       grafana:
         enabled: true
+        image:
+          tag: 7.4.5
 
         adminUser: admin
         adminPassword: admin

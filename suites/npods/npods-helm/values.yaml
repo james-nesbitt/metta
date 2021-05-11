@@ -1,6 +1,7 @@
 # Relay threads to create
-trigger:
-  threads: 10
+triggers: []
+# - name: start
+#   threads: 10
 
 # An array of objects which describe individual deployments
 # which will create pods of relay nodes

@@ -13,10 +13,12 @@ from mirantis.testing.metta_mirantis.mke_client import MKENodeState, METTA_MIRAN
 logger = logging.getLogger('npods-test')
 """ test-suite logger """
 
-STABILITY_TEST_DURATION_MINUTES = 1
+STABILITY_TEST_DURATION_MINUTES = 2
 """ how many minutes we should run the test before we accept its stability """
 STABILITY_TEST_PERIOD = 1
 """ how frequently we should test stability """
+
+
 
 # ------ FIXTURES ------------------------------------------
 
@@ -72,6 +74,7 @@ def loki(environment_up):
     loki = loki_plugin.create_instance(environment_up.fixtures)
     """ loki helm workload defined in fixtures.yml, using fixtures from our environment """
 
+    #start the loki monitoring cluster
     loki.apply(wait=True)
 
     return loki
@@ -85,6 +88,7 @@ def test_01_initial_workload(environment_up_unlocked, loki, npods):
     # start the initial cluster resources.
     npods.apply(wait=True)
 
+    # run the first run of stability tests.
     _stability_test(environment_up_unlocked,
                     logger.getChild('npods-initial-sanity'))
 
@@ -130,6 +134,7 @@ def test_05_1800_workload(environment_up_unlocked, npods):
     """ raise to 1800 pods and check stability """
 
     # Increase the workload replica count and test again
+    npods.values["triggers"].append({"name":"1800", "thread":100})
     npods.values["workloads"][0]["replicas"] = 900
     npods.values["workloads"][1]["replicas"] = 900
     npods.apply(wait=True)
@@ -141,6 +146,7 @@ def test_06_2000_workload(environment_up_unlocked, npods):
     """ raise to 2000 pods and check stability """
 
     # Increase the workload replica count and test again
+    npods.values["triggers"].append({"name":"2000", "thread":100})
     npods.values["workloads"][0]["replicas"] = 1000
     npods.values["workloads"][1]["replicas"] = 1000
     npods.apply(wait=True)
@@ -148,7 +154,6 @@ def test_06_2000_workload(environment_up_unlocked, npods):
     _stability_test(environment_up_unlocked, logger.getChild('npods-2000'))
 
 
-@pytest.mark.skip(reason="Always passes with current system")
 def test_07_2200_workload(environment_up_unlocked, npods):
     """ raise to 2200 pods and check stability """
 
