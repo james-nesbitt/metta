@@ -22,8 +22,6 @@ from mirantis.testing.metta_common import METTA_PLUGIN_ID_PROVISIONER_COMBO
 from mirantis.testing.metta_common.combo_provisioner import ComboProvisionerPlugin
 from mirantis.testing.metta_launchpad import METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID
 from mirantis.testing.metta_launchpad.provisioner import LaunchpadProvisionerPlugin
-from mirantis.testing.metta_ansible import METTA_ANSIBLE_PROVISIONER_PLUGIN_ID
-from mirantis.testing.metta_ansible.provisioner import AnsibleProvisionerPlugin
 from mirantis.testing.metta_terraform import METTA_TERRAFORM_PROVISIONER_PLUGIN_ID
 from mirantis.testing.metta_terraform import TerraformProvisionerPlugin
 # import for asserting workload plugin id and class
@@ -66,14 +64,6 @@ def test_provisioners(environment):
     assert launchpad_fixture.plugin_id == METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID
     assert launchpad.instance_id == 'launchpad'
     assert isinstance(launchpad, LaunchpadProvisionerPlugin)
-
-    ansible_fixture = environment.fixtures.get_fixture(
-        type=Type.PROVISIONER, instance_id='ansible')
-    ansible = ansible_fixture.plugin
-
-    assert ansible_fixture.plugin_id == METTA_ANSIBLE_PROVISIONER_PLUGIN_ID
-    assert ansible.instance_id == 'ansible'
-    assert isinstance(ansible, AnsibleProvisionerPlugin)
 
     terraform_fixture = environment.fixtures.get_fixture(
         type=Type.PROVISIONER, instance_id='terraform')

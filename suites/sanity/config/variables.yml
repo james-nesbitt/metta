@@ -31,14 +31,3 @@ extra_tags:
 
 # This test relies on mirantis presets for configuring the cluster.
 # Check the mirantis.yml file for the presets used.
-
-You could override like this:
-mcr_repo_url: "https://repos.mirantis.com/"
-mcr_channel: stable
-mcr_version: 20.10.4
-mke_image_repo: msr.ci.mirantis.com/prodeng
-mke_version: 3.4.0-tp10-15-gcd4353142
-msr_image_repo: msr.ci.mirantis.com/prodeng
-msr_version: 2.9.0-3f91e2ef
-
-msr_count: 0
