@@ -48,7 +48,7 @@ def test_01_environment_prepare(environment):
     """
 
     provisioner = environment.fixtures.get_plugin(type=Type.PROVISIONER)
-    """ Combo provisioner wrapper for terraform/ansible/launchpad """
+    """ Combo provisioner wrapper for terraform/launchpad """
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
@@ -79,7 +79,7 @@ def test_02_environment_up(environment):
     """
 
     provisioner = environment.fixtures.get_plugin(type=Type.PROVISIONER)
-    """ Combo provisioner wrapper for terraform/ansible/launchpad """
+    """ Combo provisioner wrapper for terraform/launchpad """
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
@@ -262,7 +262,7 @@ def test_14_environment_down(environment):
     """ tear down the environment """
 
     provisioner = environment.fixtures.get_plugin(type=Type.PROVISIONER)
-    """ Combo provisioner wrapper for terraform/ansible/launchpad """
+    """ Combo provisioner wrapper for terraform/launchpad """
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
