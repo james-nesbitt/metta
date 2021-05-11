@@ -101,10 +101,10 @@ def test_02_environment_up(environment):
 
 
 def test_03_terraform_sanity(environment):
-    """ test that the terraform provisioner is happy, and that it has our expected outputs """
+    """ test that the terraform provisioner exists """
 
-    launchpad = environment.fixtures.get_plugin(
-        type=Type.PROVISIONER, instance_id='launchpad')
+    terraform = environment.fixtures.get_plugin(
+        type=Type.PROVISIONER, instance_id='terraform')
 
 
 def test_04_launchpad_sanity(environment):
@@ -115,7 +115,11 @@ def test_04_launchpad_sanity(environment):
 
 
 def test_05_expected_clients(environment):
-    """ test that the environment gave us some expected clients """
+    """ test that the environment gave us some expected clients 
+    
+    These should have been built by the launchpad provisioner when it ran.
+    
+    """
 
     logger.info("Getting docker client")
     docker_client = environment.fixtures.get_plugin(type=Type.CLIENT,
@@ -154,6 +158,7 @@ def test_06_docker_run_workload(environment, benchmark):
                 'Docker run [{}] failed: {}'.format(
                     container_index, e)) from e
 
+    # benchmark will run the container_run function a number of times and benchmark it.
     benchmark(container_run)
 
 
