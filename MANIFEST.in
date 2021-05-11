@@ -1,7 +1,6 @@
 # Include all of the config paths
 recursive-include mirantis/testing/*/config *.json *.yml *.yaml
 # metta has lots of terraform, but we don't want .terraform in the package
-recursive-include mirantis/testing/metta_mirantis/terraform *.tf *.tf.* *.json *.yml
-recursive-include mirantis/testing/metta_mirantis/terraform *.sh *.cfg
+recursive-include mirantis/testing/metta_mirantis/terraform *.tf *.tf.* *.json *.yml *.tpl *.sh *.cfg
 # remove any stuff we don't want (I find that this doesn't work well)
 prune .git .terraform __pycache__ *.py[ocd]
