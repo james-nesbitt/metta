@@ -5,6 +5,7 @@ metadata:
   name: npods-relay
   namespace: npods
 spec:
+  type: ClusterIP
   selector:
     app: npods-workload
   ports:

@@ -4,7 +4,6 @@ import logging
 from mirantis.testing.metta import discover, get_environment
 from mirantis.testing.metta.plugin import Type
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('npods-suite')
 
 """ Define our fixtures """

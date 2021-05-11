@@ -1,9 +1,9 @@
-{{- if .Values.trigger.threads }}
+{{- range .Values.triggers }}
 # Start relay threads using curl jobs
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: npod-trigger
+  name: npod-trigger-{{ .name }}
 spec:
   template:
     spec:
@@ -13,7 +13,7 @@ spec:
         command: ["bin/sh"]
         args:
         - "-c"
-        - "for i in $(seq {{ default 1 .Values.trigger.start }} {{ default 1 .Values.trigger.threads }}); do curl -sL http://npods-relay?thread=$1; echo \"Triggered $i\"; done"
+        - "for i in $(seq {{ .start }} {{ add .start .threads }}); do curl -sL http://npods-relay?thread=$i; echo; done"
       restartPolicy: Never
   completions: 1
 {{- end }}
