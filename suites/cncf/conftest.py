@@ -74,6 +74,12 @@ def environment_up(environment):
 
 def environment_down(environment):
     """ tear down a provisioned environment """
+
+    # We will use this config to make decisions about what we need to create
+    # and destroy for this environment up.
+    conf = environment.config.load("config")
+    """ somewhat equivalent to reading ./config/config.yml """
+
     if conf.get("keeponfinish", default=False):
         logger.info("Leaving test infrastructure in place on shutdown")
     else:

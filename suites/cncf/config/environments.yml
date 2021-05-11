@@ -17,7 +17,7 @@
 #
 
 # Create environment 3_4_0 for version '3.4.0'
-3_4_0:
+"3_4_0":
   bootstraps:
     metta:
     - metta_common
@@ -58,7 +58,7 @@
       label: fixtures
 
 # Create environment 3_3_8 for version '3.3.8'
-3_3_8:
+"3_3_8":
   bootstraps:
     metta:
     - metta_common
@@ -106,7 +106,7 @@
 #    The ./config/mke_3.2.13 config folder is still available but we would have
 #    to find a way to support it with version specific tooling.
 #
-3_2_13:
+"3_2_13":
   bootstraps:
     metta:
     - metta_common
