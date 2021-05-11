@@ -84,10 +84,15 @@ class SonobuoyGroup():
         instance = self._select_instance(instance_id=instance_id)
         status = instance.status()
 
-        status_info = {
-            'status': status.status.value,
-            'plugins': {plugin_id: status.plugin(plugin_id) for plugin_id in status.plugin_list()}
-        }
+        if status is None:
+            status_info = {
+                'status': "None",
+            }
+        else:
+            status_info = {
+                'status': status.status.value,
+                'plugins': {plugin_id: status.plugin(plugin_id) for plugin_id in status.plugin_list()}
+            }
 
         return json.dumps(status_info, indent=2)
 
@@ -111,13 +116,18 @@ class SonobuoyGroup():
         print('{')
         for i in range(0, limit):
             status = instance.status()
-            status_info = {
-                'status': status.status.value,
-                'plugins': {plugin_id: status.plugin(plugin_id)['status'] for plugin_id in status.plugin_list()}
-            }
+            if status is None:
+                status_info = {
+                    'status': "None",
+                }
+            else:
+                status_info = {
+                    'status': status.status.value,
+                    'plugins': {plugin_id: status.plugin(plugin_id) for plugin_id in status.plugin_list()}
+                }
 
             print("{}: {},".format(i, status_info))
-            if status.status not in [Status.RUNNING]:
+            if status is None or status.status not in [Status.RUNNING]:
                 break
 
             time.sleep(step)
