@@ -19,7 +19,6 @@ upgrade:
   bootstraps:
     metta:
     - metta_common
-    - metta_ansible
     - metta_docker
     - metta_kubernetes
     - metta_terraform
