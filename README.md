@@ -5,7 +5,10 @@ harnesses to test against.
 
 ## Dependencies
 
-### Configurus
+Metta relies heavily on python 3.8 features and setuptools for the 
+modular plugin system.
+
+### Configerus
 
 Configerus is heavily leveraged for dynamic and abstracted configuration.
 

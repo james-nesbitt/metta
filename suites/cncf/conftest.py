@@ -39,6 +39,7 @@ def environment_up(environment):
     """
 
     provisioner = environment.fixtures.get_plugin(type=Type.PROVISIONER)
+    """ combo provisioner """
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
