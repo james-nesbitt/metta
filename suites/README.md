@@ -4,22 +4,28 @@ Common testing suites that Mirantis uses for system testing.
 
 ## Usage
 
+Each test suite is its own python package, and is implemented using its own
+tooling.  That said, most of the suites work the same way.
+
+1. Each suite is a package, which needs to be installed using pip in order to
+   apply prerequisites.
+2. Each suite is written using pytest, and can be run using pytest directly.
+3. Each suite has a .pytest.sh shell script for conformant pytest plugin 
+   behaviour.
+
 ### Python / PyTest
 
-Note the following pip options:
-
-1. you can install metta from pypi for install from the repo root
-2. you can install pytest manually or use the miranits-metta-suites package
-3. you can use the `in-docker` shell script to run in a container that has
-   the dependent tools installed such as helm, terraform and launchpad.
+```
+$/> pip install .
+$/> ./pytest.sh
+```
 
 ### Jenkins
 
-There is a provided Jenkinsfile.  The Jenkinsfile is designed to be run from
-the metta project root.  First it installs the mirantis-metta pip package from
-the repo root, then it installs the suite dependencies, from this folder.
+Each suite has a Jenkinsfile.
 
-Then it lets you pick tests to run.
+The Jenkinsfile is designed to be run from the metta project root.  This is
+because Jenkins always starts from the git repo.
 
 ## Suites
 
@@ -45,3 +51,6 @@ Run the CNCF conformance test against a cluster
 
 Test that a certain number of pods can function on an MKE k8s cluster.
 
+### Cross-Version
+
+Cross version testing mixing different versions of the products.
