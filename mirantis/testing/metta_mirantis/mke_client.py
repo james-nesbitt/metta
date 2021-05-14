@@ -122,7 +122,10 @@ class MKEAPICliGroup():
         """ list swarm tasks """
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
-        return json.dumps(plugin.api_tasks(task_id), indent=2)
+        if task_id:
+            return json.dumps(plugin.api_task(task_id), indent=2)
+        else:
+            return json.dumps(plugin.api_tasks(), indent=2)
 
     def tomlconfig(self, instance_id: str = ''):
         """ get the toml config """
@@ -139,6 +142,18 @@ class MKEAPICliGroup():
         data = plugin.api_ucp_configtoml_get()
         data[table][key] = value
         return json.dumps(plugin.api_ucp_configtoml_put(data), indent=2)
+
+    def metricsdiscovery(self, instance_id: str = ''):
+        """ get the api metrics-discover """
+        fixture = self._select_fixture(instance_id=instance_id)
+        plugin = fixture.plugin
+        return json.dumps(plugin.api_metrics_discovery(), indent=2)
+
+    def metrics(self, instance_id: str = ''):
+        """ get the toml config """
+        fixture = self._select_fixture(instance_id=instance_id)
+        plugin = fixture.plugin
+        return json.dumps(plugin.api_metrics_discovery(), indent=2)
 
     def auth(self, instance_id: str = ''):
         """ retrieve auth headersg """
@@ -279,9 +294,23 @@ class MKEAPIClientPlugin(ClientBase):
             response.raise_for_status()
             return json.loads(response.content)
 
-    def api_tasks(self, task_id: str = '') -> Dict:
+    def api_metrics_discovery(self):
+        """ retrieve the API metrics """
+        endpoint = 'metricsdiscovery'
+        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(), verify=self.verify) as response:
+            response.raise_for_status()
+            return json.loads(response.content)
+
+    def api_tasks(self):
         """ retrieve the API tasks """
-        endpoint = 'tasks/{id}'.format(id=task_id) if task_id else 'tasks'
+        endpoint = 'tasks'
+        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(), verify=self.verify) as response:
+            response.raise_for_status()
+            return json.loads(response.content)
+
+    def api_task(self, task_id: str):
+        """ retrieve the API tasks """
+        endpoint = 'tasks/{id}'.format(id=task_id)
         with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(), verify=self.verify) as response:
             response.raise_for_status()
             return json.loads(response.content)

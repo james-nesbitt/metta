@@ -1,6 +1,6 @@
 
 # npods-support - supporting network and namespace for npods-workload
-npods-workload: 
+npods-workload:
     type: metta.plugin.workload
     plugin_id: metta_kubernetes_helm
 
@@ -8,29 +8,19 @@ npods-workload:
     from_config: true
 
     namespace: npods
-    chart: "{{paths:project}}/npods-helm"
+    chart: "{{paths:project}}/npods-app/helm"
 
     file: "{{variables:files_path}}/{{variables:resource_prefix}}.helm.npods.yaml"
     values:
-      triggers:
-        - name: initial
-          # start with 10 threads, we will manually run triggers so that we can scale the volume
-          threads: 100
+      # start with a small number of workloads for sanity testing.
       workloads:
-      # Heavier workload, simulate some computation
-      - name: heavy
-        image: msr.ci.mirantis.com/jnesbitt/n-pods-app:0.17
-        replicas: 100
-        sleep: 10ms 
-        cpu: 300
-        ram: 8192
-      # light workload - simulate something with a delay like a db retrieval
-      - name: lean
-        image: msr.ci.mirantis.com/jnesbitt/n-pods-app:0.17
-        replicas: 100
-        sleep: 500ms 
-        cpu: 10
-        ram: 512
+      - name: initial
+        image: msr.ci.mirantis.com/jnesbitt/n-pods-app:0.18
+        replicas: 1
+        sleep: 100ms
+        cpu: "10"
+        ram: "128"
+        threads: 1
 
 
 # loki workload : monitoring tooling workload
@@ -67,7 +57,7 @@ loki-workload:
                 folder: ""
                 type: file
                 disableDeletion: false
-                editable: false
+                editable: true
                 options:
                   path: /var/lib/grafana/dashboards/default
 
@@ -75,9 +65,13 @@ loki-workload:
           default:
             node-exporter-server-metrics:
               folder: general
-              gnetId: 405
-              version: 8
+              gnetId: 11952
+              version: 1
               datasource: Prometheus
+              refresh: 10s
+              time:
+                from: "now-30m"
+                to: "now"
 
       prometheus:
         enabled: true
