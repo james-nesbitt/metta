@@ -1,6 +1,8 @@
 
 import kubernetes
 import logging
+import re
+import time
 from typing import Dict
 
 from mirantis.testing.metta.client import ClientBase
@@ -115,3 +117,64 @@ class KubernetesApiClientPlugin(ClientBase):
         """ Run a kube apply from dict of K8S yaml """
         return kubernetes.utils.create_from_dict(
             k8s_client=self.api_client, data=data, **kwargs)
+
+    def ready_wait(self, timeout: int = 30, period: int = 1):
+        """ Wait until kubernetes is ready before returning """
+        while timeout > 0:
+            try:
+                ready = self.readyz()
+            except:
+                time.sleep(period)
+                timeout = timeout - period
+                continue
+
+            return
+
+        raise RuntimeError('Timed out waiting for kubernetes to become ready')
+
+
+    def readyz(self, verbose: bool = False):
+        """ check the general readyz endpoint """
+        LIVEZ_INTERPRET_REGEX = re.compile(r'^\[(?P<symbol>[+-])\](?P<name>\S+)\s{1}(?P<ok>\w+)$')
+        endpoint = '/readyz'
+        params = {}
+
+        if verbose:
+            params['verbose'] = True
+
+        # this will produce an exception if K8s is not ready
+        response = self.api_client.call_api(method='GET', resource_path=endpoint, query_params=params, _preload_content=False)[0]
+
+        readyz = {}
+        for line in response.read().decode("utf-8") .split('\n'):
+            match = LIVEZ_INTERPRET_REGEX.fullmatch(line)
+            if match:
+                readyz[match.group('name')] = {
+                    'symbol': match.group('symbol'),
+                    'ok': match.group('ok')
+                }
+
+        return readyz
+
+    def livez(self, verbose: bool = False):
+        """ check the general livez endpoint """
+        LIVEZ_INTERPRET_REGEX = re.compile(r'^\[(?P<symbol>[+-])\](?P<name>\S+)\s{1}(?P<ok>\w+)$')
+        endpoint = '/livez'
+        params = {}
+
+        if verbose:
+            params['verbose'] = True
+
+        # this will produce an exception if K8s is not ready
+        response = self.api_client.call_api(method='GET', resource_path=endpoint, query_params=params, _preload_content=False)[0]
+
+        livez = {}
+        for line in response.read().decode("utf-8") .split('\n'):
+            match = LIVEZ_INTERPRET_REGEX.fullmatch(line)
+            if match:
+                livez[match.group('name')] = {
+                    'symbol': match.group('symbol'),
+                    'ok': match.group('ok')
+                }
+
+        return livez

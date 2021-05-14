@@ -70,10 +70,25 @@ class KubernetesGroup():
 
         return json.dumps(collect_info, indent=2)
 
-    def destroy(self, client: str = ''):
-        """ Run provisioner destroy """
-        provisioner = self._select_client(instance_id=provisioner).plugin
-        provisioner.destroy()
+    def readyz(self, provisioner: str = '', verbose: bool = False):
+        """ get kubernetes readiness info from the plugin """
+        plugin = self._select_client(instance_id=provisioner).plugin
+
+        try:
+            return json.dumps(plugin.readyz(verbose=verbose), indent=2, default=lambda x: "{}".format(x))
+
+        except Exception as e:
+            raise RuntimeError('Kubernetes is not ready') from e
+
+    def livez(self, provisioner: str = '', verbose: bool = False):
+        """ get kubernetes livez info from the plugin """
+        plugin = self._select_client(instance_id=provisioner).plugin
+
+        try:
+            return json.dumps(plugin.livez(verbose=verbose), indent=2, default=lambda x: "{}".format(x))
+
+        except Exception as e:
+            raise RuntimeError('Kubernetes is not ready') from e
 
 
 class KubernetesYamlWorkloadGroup():

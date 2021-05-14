@@ -129,7 +129,7 @@ class LaunchpadClient:
         args.extend(cmds)
         self._run(args)
 
-    def reset(self):
+    def reset(self, quick: bool = False):
         """ Uninstall using the launchpad client """
         if os.path.isfile(self.config_file):
             self._run(['reset', '--force'])
