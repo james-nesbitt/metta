@@ -1,0 +1,20 @@
+# Control cluster monitoring
+monitoring:
+  # enable the loki helm chart
+  enable: true
+
+workload:
+  # default/template values for the npods helm workload yaml
+  default:
+    name: 'npods-workload-default'
+    replicas: 100
+    image: 'msr.ci.mirantis.com/jnesbitt/n-pods-app:0.18'
+    sleep: '10ms'
+    cpu: '300'
+    ram: '8192'
+    threads: 100
+
+# parametrize that stability test
+stability_test:
+  duration: 600
+  period: 60

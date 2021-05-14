@@ -101,6 +101,10 @@ class KubernetesApiClientPlugin(ClientBase):
             }
         }
 
+    def watch(self):
+        """ Get a kubernetes watch instance """
+        return kubernetes.watch.Watch()
+
     def get_api(self, api: str):
         """ Get an kubernetes API """
         if hasattr(kubernetes.client, api):
