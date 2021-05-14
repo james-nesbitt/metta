@@ -330,15 +330,9 @@ class LaunchpadProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         # Rebuild the fixture list now that we have installed
         self._make_fixtures(reload=True)
 
-    def destroy(self):
-        """ We don't bother uninstalling at this time
-
-        we do:
-        1. delete the generated config file
-        2. ask the client to remove any downloaded client bundles
-
-        """
-        self.client.reset()
+    def destroy(self, quick: bool = False):
+        """ Ask the client to remove installed resources """
+        self.client.reset(quick=quick)
 
     """ CLUSTER INTERACTION """
 

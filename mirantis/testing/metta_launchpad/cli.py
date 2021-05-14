@@ -214,7 +214,7 @@ class LaunchpadGroup():
         provisioner = self._select_provisioner(instance_id=provisioner).plugin
         provisioner.apply(debug=debug)
 
-    def destroy(self, provisioner: str = ''):
+    def destroy(self, provisioner: str = '', quick: bool = False):
         """ Run provisioner destroy """
         provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner.destroy()
+        provisioner.destroy(quick=quick)
