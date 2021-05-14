@@ -76,7 +76,7 @@ def environment_up(environment):
         try:
             logger.info(
                 "Stopping the test cluster using the provisioner as directed by config")
-            launchpad.destroy()
+            launchpad.destroy(quick=True)
             terraform.destroy()
         except Exception as e:
             logger.error("Provisioner failed to stop: %s", e)
