@@ -35,7 +35,7 @@ open_sg_for_myip: True
 
 # Let's manually define our cluster for this test
 manager_count: 3
-manager_type: m5.xlarge
+manager_type: m5.2xlarge
 manager_volume_size: 100
 worker_count: 5
 worker_type: m5.2xlarge
@@ -45,9 +45,9 @@ windows_worker_count: 0
 # Override some component versions
 mcr_repo_url: "https://repos.mirantis.com/"
 mcr_channel: stable
-mcr_version: 20.10.4
+mcr_version: 20.10.5
 mke_image_repo: docker.io/mirantis
-mke_version: 3.4.0
+mke_version: 3.4.1
 
 # No need for MSR on this one
 msr_count: 0

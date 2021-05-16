@@ -69,23 +69,25 @@ func Relay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// some relay metadata detection
-	if pass, err := fromIntQuery(query, "pass"); err == nil {
-		pass = pass + 1
-		m["pass"] = strconv.Itoa(pass)
-		query.Set("pass", strconv.Itoa(pass))
+	var pass int
+	if qpass, err := fromIntQuery(query, "pass"); err == nil {
+		pass = qpass
 	} else {
 		pass = 0
-		m["pass"] = strconv.Itoa(pass)
-		query.Set("pass", strconv.Itoa(pass))
 	}
-	if thread, err := fromQuery(query, "thread"); err == nil {
-		m["thread"] = thread
+	pass = pass + 1
+	m["pass"] = strconv.Itoa(pass)
+	query.Set("pass", strconv.Itoa(pass))
+
+	var thread string
+	if qthread, err := fromQuery(query, "thread"); err == nil {
+		thread = qthread
 		query.Set("thread", thread)
 	} else {
 		thread = "none"
-		m["thread"] = thread
-		query.Set("thread", thread)
 	}
+	m["thread"] = thread
+	query.Set("thread", thread)
 
 	// Workload detection and execution
 

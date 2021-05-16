@@ -1,5 +1,6 @@
 import logging
 import pytest
+import time
 import json
 
 from mirantis.testing.metta.plugin import Type
@@ -12,7 +13,7 @@ logger = logging.getLogger('npods-test-conftest')
 # ------ FIXTURES ------------------------------------------
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="package")
 def npods_config(environment):
     """ get the npods yaml config object """
     loaded = environment.config.load('npods')
@@ -24,7 +25,7 @@ def npods_config(environment):
     return loaded
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="package")
 def mke(environment):
     """ get the mke client """
     try:
@@ -36,7 +37,7 @@ def mke(environment):
             "No MKE client could be found. Is MKE installed?") from e
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="package")
 def kubeapi(environment):
     """ get the kubeapi client """
     try:
@@ -48,7 +49,7 @@ def kubeapi(environment):
             "No Kubernetes client could be found. Is Kubernetes orchestration enabled??") from e
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="package")
 def environment_up_unlocked(environment_up, mke, kubeapi):
     """ environment with pods/node unlocked using the mke client
 
@@ -69,16 +70,18 @@ def environment_up_unlocked(environment_up, mke, kubeapi):
             "Failed when trying to raise the MKE limits for pods/node") from e
 
     try:
-        # helms wil fail if the kube
+        # helms wil fail if the kubeapi isn't ready
         logger.info("Waiting for kubernetes to be ready")
-        kubeapi.ready_wait(30)
+        kubeapi.ready_wait(45)
 
     except Exception as e:
         raise Exception(
             "Failed waiting for kubernetes to be ready") from e
 
-    # @TODO this is only needed as helm sometimes fails without it
-    time.sleep(10)
+    # @TODO remove4 this hardcoded sleep
+    # this is only needed as helm sometimes fails without it
+    logger.info("Extending wait period to fix an unknown helm issue.  Waiting 30 seconds.")
+    time.sleep(30)
 
     # we didn't touch this but this is the return target
     return environment_up
@@ -104,12 +107,12 @@ def npods(environment_up_unlocked, npods_config):
     return npods
 
 
-@pytest.fixture(scope="module")
-def loki(environment_up, npods_config):
+@pytest.fixture(scope="package")
+def loki(environment_up_unlocked, npods_config):
     """ create an instance of the monitoring helm workload plugin using fixtures from our env """
-    loki_plugin = environment_up.fixtures.get_plugin(
+    loki_plugin = environment_up_unlocked.fixtures.get_plugin(
         type=Type.WORKLOAD, instance_id='loki-workload')
-    loki = loki_plugin.create_instance(environment_up.fixtures)
+    loki = loki_plugin.create_instance(environment_up_unlocked.fixtures)
     """ loki helm workload defined in fixtures.yml, using fixtures from our environment """
 
     try:
