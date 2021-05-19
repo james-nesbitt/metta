@@ -40,6 +40,18 @@ loki-workload:
     file: "{{variables:files_path}}/{{variables:resource_prefix}}.helm.loki.yaml"
     values:
 
+      loki:
+        nodeSelector:
+          com.docker.ucp.collection: system
+
+      promtail:
+        nodeSelector:
+          com.docker.ucp.collection: system
+
+      fluent-bit:
+        nodeSelector:
+          com.docker.ucp.collection: system
+
       grafana:
         enabled: true
         image:
@@ -47,6 +59,12 @@ loki-workload:
 
         adminUser: admin
         adminPassword: admin
+
+        nodeSelector:
+          com.docker.ucp.collection: system
+
+        imageRenderer:
+          enabled: true
 
         dashboardProviders:
           dashboardproviders.yaml:
@@ -64,6 +82,7 @@ loki-workload:
         dashboards:
           default:
             node-exporter-server-metrics:
+              title: NodeExporter
               folder: general
               gnetId: 11952
               version: 1
@@ -75,6 +94,10 @@ loki-workload:
 
       prometheus:
         enabled: true
+
+        nodeSelector:
+          com.docker.ucp.collection: system
+
         alertmanager:
           persistentVolume:
             enabled: false
