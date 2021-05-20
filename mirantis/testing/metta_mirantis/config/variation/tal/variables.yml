@@ -14,7 +14,7 @@ files_path: .
 files_prefix: "{{id}}"
 
 # Path to the terraform plan to be used
-terraform_plan: "{{mirantis:terraform.plans.prodeng.aws.v9}}"
+terraform_plan: "{{mirantis:terraform.plans.prodeng.aws.v10}}"
 # Prefix for terraform resources for identifcation and variations
 resource_prefix: "{{id}}"
 # AWS region for resources
