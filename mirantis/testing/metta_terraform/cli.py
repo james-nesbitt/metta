@@ -8,15 +8,23 @@ from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.cli import CliBase
 from mirantis.testing.metta_cli.provisioner import ProvisionerGroup
 
+from .provisioner import METTA_TERRAFORM_PROVISIONER_PLUGIN_ID
+
 logger = logging.getLogger('metta.cli.terraform')
 
+METTA_TERRAFORM_CLI_PLUGIN_ID = 'metta_terraform'
+""" cli plugin_id for the info plugin """
 
 class TerraformCliPlugin(CliBase):
 
     def fire(self):
-        """ return a dict of commands """
+        """ return a dict of commands
+
+        Don't return any commands if there is no provisioner plugin available
+
+        """
         if self.environment.fixtures.get_fixture(
-                type=Type.PROVISIONER, plugin_id='metta_terraform', exception_if_missing=False) is not None:
+                type=Type.PROVISIONER, plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID, exception_if_missing=False) is not None:
             return {
                 'contrib': {
                     'terraform': TerraformGroup(self.environment)
@@ -35,11 +43,11 @@ class TerraformGroup():
         """ Pick a matching provisioner """
         if instance_id:
             return self.environment.fixtures.get_fixture(
-                type=Type.PROVISIONER, plugin_id='metta_terraform', instance_id=instance_id)
+                type=Type.PROVISIONER, plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID, instance_id=instance_id)
         else:
             # Get the highest priority provisioner
             return self.environment.fixtures.get_fixture(
-                type=Type.PROVISIONER, plugin_id='metta_terraform')
+                type=Type.PROVISIONER, plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID)
 
     def info(self, provisioner: str = '', deep: bool = False):
         """ get info about a provisioner plugin """
