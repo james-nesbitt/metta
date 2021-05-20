@@ -7,7 +7,6 @@ import yaml
 from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.cli import CliBase
-from mirantis.testing.metta_cli.provisioner import ProvisionerGroup
 
 logger = logging.getLogger('metta.cli.kubernetes')
 
@@ -47,13 +46,13 @@ class KubernetesGroup():
             return self._environment.fixtures.get_fixture(
                 type=Type.CLIENT, plugin_id='metta_kubernetes', instance_id=instance_id)
         else:
-            # Get the highest priority provisioner
+            # Get the highest priority workload
             return self._environment.fixtures.get_fixture(
                 type=Type.CLIENT, plugin_id='metta_kubernetes')
 
-    def info(self, provisioner: str = '', deep: bool = False):
+    def info(self, workload: str = '', deep: bool = False):
         """ get info about a client plugin """
-        fixture = self._select_client(instance_id=provisioner)
+        fixture = self._select_client(instance_id=workload)
 
         collect_info = {
             'fixture': {
@@ -70,25 +69,43 @@ class KubernetesGroup():
 
         return json.dumps(collect_info, indent=2)
 
-    def readyz(self, provisioner: str = '', verbose: bool = False):
+    def readyz(self, workload: str = '', verbose: bool = False):
         """ get kubernetes readiness info from the plugin """
-        plugin = self._select_client(instance_id=provisioner).plugin
+        plugin = self._select_client(instance_id=workload).plugin
 
         try:
-            return json.dumps(plugin.readyz(verbose=verbose), indent=2, default=lambda x: "{}".format(x))
+            return json.dumps(plugin.readyz(verbose=verbose),
+                              indent=2, default=lambda x: "{}".format(x))
 
         except Exception as e:
             raise RuntimeError('Kubernetes is not ready') from e
 
-    def livez(self, provisioner: str = '', verbose: bool = False):
+    def livez(self, workload: str = '', verbose: bool = False):
         """ get kubernetes livez info from the plugin """
-        plugin = self._select_client(instance_id=provisioner).plugin
+        plugin = self._select_client(instance_id=workload).plugin
 
         try:
-            return json.dumps(plugin.livez(verbose=verbose), indent=2, default=lambda x: "{}".format(x))
+            return json.dumps(plugin.livez(verbose=verbose),
+                              indent=2, default=lambda x: "{}".format(x))
 
         except Exception as e:
             raise RuntimeError('Kubernetes is not ready') from e
+
+    def connect_service_proxy(self, namespace: str,
+                              service: str, workload: str = ''):
+        """ create a service proxy """
+        plugin = self._select_client(instance_id=workload).plugin
+
+        try:
+            CoreV1Api = plugin.get_api('CoreV1Api')
+            sc = CoreV1Api.connect_post_namespaced_service_proxy(
+                namespace=namespace, name=service)
+
+            return json.dumps(sc, indent=2, default=lambda x: "{}".format(x))
+
+        except Exception as e:
+            raise RuntimeError(
+                'Exception trying to open the service proxy') from e
 
 
 class KubernetesYamlWorkloadGroup():
@@ -102,7 +119,7 @@ class KubernetesYamlWorkloadGroup():
             return self._environment.fixtures.get_fixture(
                 type=Type.WORKLOAD, plugin_id='metta_kubernetes_yaml', instance_id=instance_id)
         else:
-            # Get the highest priority provisioner
+            # Get the highest priority workload
             return self._environment.fixtures.get_fixture(
                 type=Type.WORKLOAD, plugin_id='metta_kubernetes_yaml')
 
@@ -126,7 +143,7 @@ class KubernetesYamlWorkloadGroup():
         return json.dumps(collect_info, indent=2)
 
     def apply(self, workload: str = ''):
-        """ Run provisioner destroy """
+        """ Run workload apply """
         workload = self._select_fixture(instance_id=workload).plugin
         instance = workload.create_instance(self._environment.fixtures)
 
@@ -135,7 +152,7 @@ class KubernetesYamlWorkloadGroup():
         return json.dumps(objects, indent=2, default=lambda x: "{}".format(x))
 
     def destroy(self, workload: str = ''):
-        """ Run provisioner destroy """
+        """ Run workload destroy """
         workload = self._select_fixture(instance_id=workload).plugin
         instance = workload.create_instance(self._environment.fixtures)
 
@@ -155,7 +172,7 @@ class KubernetesHelmWorkloadGroup():
             return self._environment.fixtures.get_fixture(
                 type=Type.WORKLOAD, plugin_id='metta_kubernetes_helm', instance_id=instance_id)
         else:
-            # Get the highest priority provisioner
+            # Get the highest priority workload
             return self._environment.fixtures.get_fixture(
                 type=Type.WORKLOAD, plugin_id='metta_kubernetes_helm')
 
@@ -178,7 +195,8 @@ class KubernetesHelmWorkloadGroup():
 
         return json.dumps(collect_info, indent=2)
 
-    def apply(self, workload: str = '', wait: bool = True, debug: bool = False):
+    def apply(self, workload: str = '', wait: bool = True,
+              debug: bool = False):
         """ Run helm workload apply """
         workload = self._select_fixture(instance_id=workload).plugin
         instance = workload.create_instance(self._environment.fixtures)
@@ -186,7 +204,6 @@ class KubernetesHelmWorkloadGroup():
         objects = instance.apply(wait=wait, debug=debug)
 
         return json.dumps(objects, indent=2, default=lambda x: "{}".format(x))
-
 
     def destroy(self, workload: str = '', debug: bool = False):
         """ Run helm workload destroy """

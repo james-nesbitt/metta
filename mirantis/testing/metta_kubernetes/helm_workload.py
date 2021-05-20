@@ -137,8 +137,8 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
 
 class KubernetesHelmV3WorkloadInstance:
 
-    def __init__(self, kubeconfig, namespace, name, repos, chart, set: Dict[str, str] = {
-    }, values: Dict[str, Any] = {}, file: str = KUBERNETES_HELM_WORKLOAD_CONFIG_DEFAULT_VALUESFILE_PATH):
+    def __init__(self, kubeconfig, namespace, name, repos, chart, set: Dict[str, str] = {},
+                 values: Dict[str, Any] = {}, file: str = KUBERNETES_HELM_WORKLOAD_CONFIG_DEFAULT_VALUESFILE_PATH):
         """
 
         Parameters:
@@ -150,7 +150,8 @@ class KubernetesHelmV3WorkloadInstance:
 
         chart (str) : local or http(s) path to a chart
 
-        set (dict[str, str]) : simple helm chart values that can be set
+        set (dict[str, str]) : simple helm chart values that can be set using
+           the --set options on the command line
 
         values (dict[str, Any]) : complex helm chart value data that needs to
             be put into a file
@@ -173,7 +174,21 @@ class KubernetesHelmV3WorkloadInstance:
         self.working_dir = '.'
 
     def apply(self, wait: bool = True, debug: bool = False):
-        """ Apply the helm chart """
+        """ Apply the helm chart
+
+        To make the helm apply method reusable, we always run an upgrade with
+        the --install flag, which w orks for both the first install, and any
+        upgrades run after install
+
+        Parameters:
+        -----------
+
+        wait (bool) : ask the helm client to wait until resources are created
+            before returning.
+
+        debug (bool) : ask the helm client for verbose output
+
+        """
 
         for repo_name, repo_url in self.repos.items():
             self._run(cmd=['repo', 'add', repo_name, repo_url])
@@ -227,10 +242,16 @@ class KubernetesHelmV3WorkloadInstance:
         return []
 
     def destroy(self, debug: bool = False):
-        """ remove an installed helm release """
+        """ remove an installed helm release
 
-        cmd = ['uninstall']
-        cmd += [self.name,]
+        Parameters:
+        -----------
+
+        debug (bool) : ask the helm client for verbose output
+
+        """
+
+        cmd = ['uninstall', self.name]
 
         if debug:
             cmd += ['--debug']
@@ -238,11 +259,15 @@ class KubernetesHelmV3WorkloadInstance:
         self._run(cmd=cmd)
 
     def test(self):
-        """ test an installed helm release """
+        """ test an installed helm release
+
+        This runs the helm client test command.
+
+        """
         self._run(cmd=['test', self.name])
 
     def status(self):
-        """ status of an installed helm release """
+        """ status of the installed helm release """
         return HelmReleaseStatus(yaml.safe_load(
             self._run(cmd=['status', self.name, '--output', 'yaml'], return_output=True)))
 
@@ -276,12 +301,17 @@ class KubernetesHelmV3WorkloadInstance:
 
 class Status(Enum):
     """ A Helm Status enum """
+
     DEPLOYED = 'deployed'
     """ Helm Release has been deployed """
 
 
 class HelmReleaseStatus:
-    """ interpreted helm release status """
+    """ interpreted helm release status
+
+    Used to formalize the response object from a status request
+
+    """
 
     def __init__(self, status_reponse: dict):
         """ interpret status from a status response """
