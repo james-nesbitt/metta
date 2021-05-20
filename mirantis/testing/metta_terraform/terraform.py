@@ -187,8 +187,7 @@ class TerraformClient:
                 "Could not create terraform vars file: {} : {}".format(
                     vars_path, e)) from e
 
-    def _run(self, args: List[str], append_args: List[str] = [
-    ], with_state=True, with_vars=True, return_output=False):
+    def _run(self, args: List[str], append_args: List[str] = [], with_state=True, with_vars=True, return_output=False):
         """ Run terraform """
 
         cmd = [self.terraform_bin]

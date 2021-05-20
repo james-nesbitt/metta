@@ -22,6 +22,9 @@ from .terraform import TerraformClient
 
 logger = logging.getLogger('metta_terraform:provisioner')
 
+METTA_TERRAFORM_PROVISIONER_PLUGIN_ID = 'metta_terraform'
+""" Terraform provisioner plugin id """
+
 TERRAFORM_PROVISIONER_CONFIG_LABEL = 'terraform'
 """ config label loading the terraform config """
 TERRAFORM_PROVISIONER_CONFIG_ROOT_PATH_KEY = 'root.path'
