@@ -11,6 +11,8 @@ terraform:
                 v8: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v8"
                 # Fourth iteration with MSR load balancer
                 v9: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v9"
+                # Fifth iteration with some cleanup and fixes
+                v10: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v10"
         # Launchpad example terraform charts.
         example:
             aws:
