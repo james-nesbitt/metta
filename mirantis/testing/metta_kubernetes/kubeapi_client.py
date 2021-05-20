@@ -124,61 +124,70 @@ class KubernetesApiClientPlugin(ClientBase):
 
     def ready_wait(self, timeout: int = 30, period: int = 1):
         """ Wait until kubernetes is ready before returning """
+        err = None
         while timeout > 0:
             try:
                 ready = self.readyz()
-            except:
+                return
+            except Exception as e:
+                err = e
                 time.sleep(period)
                 timeout = timeout - period
                 continue
 
-            return
-
-        raise RuntimeError('Timed out waiting for kubernetes to become ready')
-
+        raise RuntimeError('Timed out waiting for kubernetes to become ready') from err
 
     def readyz(self, verbose: bool = False):
-        """ check the general readyz endpoint """
-        LIVEZ_INTERPRET_REGEX = re.compile(r'^\[(?P<symbol>[+-])\](?P<name>\S+)\s{1}(?P<ok>\w+)$')
-        endpoint = '/readyz'
-        params = {}
+        """ check the general readyz endpoint
 
-        if verbose:
-            params['verbose'] = True
+        Returns:
+        --------
 
-        # this will produce an exception if K8s is not ready
-        response = self.api_client.call_api(method='GET', resource_path=endpoint, query_params=params, _preload_content=False)[0]
+        Dict of service:status_dict with values symbol (+) and string ok value
 
-        readyz = {}
-        for line in response.read().decode("utf-8") .split('\n'):
-            match = LIVEZ_INTERPRET_REGEX.fullmatch(line)
-            if match:
-                readyz[match.group('name')] = {
-                    'symbol': match.group('symbol'),
-                    'ok': match.group('ok')
-                }
+        Raises:
+        -------
 
-        return readyz
+        Will raise an exception is kubernetes isn't avaialble
+
+        """
+        return self._interpret_z_response('/readyz')
 
     def livez(self, verbose: bool = False):
-        """ check the general livez endpoint """
-        LIVEZ_INTERPRET_REGEX = re.compile(r'^\[(?P<symbol>[+-])\](?P<name>\S+)\s{1}(?P<ok>\w+)$')
-        endpoint = '/livez'
-        params = {}
+        """ check the general livez endpoint
 
-        if verbose:
-            params['verbose'] = True
+        Returns:
+        --------
+
+        Dict of service:status_dict with values symbol (+) and string ok value
+
+        Raises:
+        -------
+
+        Will raise an exception is kubernetes isn't avaialble
+
+        """
+        return self._interpret_z_response('/livez')
+
+    def _interpret_z_response(self, endpoint: str, method: str = 'GET', params: Dict[str, str] = {}) -> Dict[str, Dict[str, str]]:
+        """ interpret that readyz/livez response format into a dict """
+        INTERPRET_REGEX = re.compile(
+            r'^\[(?P<symbol>[+-])\](?P<name>\S+)\s{1}(?P<ok>\w+)$')
 
         # this will produce an exception if K8s is not ready
-        response = self.api_client.call_api(method='GET', resource_path=endpoint, query_params=params, _preload_content=False)[0]
+        response = self.api_client.call_api(
+            method=method,
+            resource_path=endpoint,
+            query_params=params,
+            _preload_content=False)[0]
 
-        livez = {}
+        interpreted = {}
         for line in response.read().decode("utf-8") .split('\n'):
-            match = LIVEZ_INTERPRET_REGEX.fullmatch(line)
+            match = INTERPRET_REGEX.fullmatch(line)
             if match:
-                livez[match.group('name')] = {
+                interpreted[match.group('name')] = {
                     'symbol': match.group('symbol'),
                     'ok': match.group('ok')
                 }
 
-        return livez
+        return interpreted
