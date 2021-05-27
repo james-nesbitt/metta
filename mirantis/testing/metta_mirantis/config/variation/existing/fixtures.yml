@@ -3,7 +3,7 @@
 #
 # Laucnpad provisioner fixture, which will install MCR/MKE/MSR
 launchpad:
-    type: metta.plugin.provisioner
+    plugin_type: provisioner
     plugin_id: metta_launchpad
 
     # Pass these values to the provisioner constructor.  The launchpad
@@ -36,7 +36,7 @@ launchpad:
 # Fixed output that feeds the launchpad provisioner.
 # Here we actually just pipe a yaml file to the provisioner.
 mke_cluster:
-    type: metta.plugin.output
+    plugin_type: output
     plugin_id: dict
     arguments:
         # Here we define the structure of the output that feeds the launchpad

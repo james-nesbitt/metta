@@ -45,7 +45,7 @@ assumes the root of fixtures as a default.
 
 The general minimum information needed to define a fixture looks like:
 ```
-type: metta.plugin.output
+plugin_type: output
 plugin_id: my_plugin
 ```
 

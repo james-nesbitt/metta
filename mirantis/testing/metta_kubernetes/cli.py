@@ -1,22 +1,32 @@
+"""
+
+Metta kubernetes CLI plugin.
+
+Provides functionality to manually interact with the various kubernetes plugins.
+
+"""
 import logging
 from typing import Dict, Any
 
-import json
-import yaml
-
-from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.cli import CliBase
+from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 logger = logging.getLogger('metta.cli.kubernetes')
 
 
+# this interface is common for all Metta plugins, but CLI plugins underuse it
+# pylint: disable=too-few-public-methods
 class KubernetesCliPlugin(CliBase):
+    """Fire command/group generator for various kubernetes plugin commands."""
 
-    def fire(self):
-        """ return a dict of commands for aucnhpad provisioenrs if one hase been registered."""
-        if self.environment.fixtures.get_fixture(
-                type=Type.CLIENT, plugin_id='metta_kubernetes', exception_if_missing=False) is not None:
+    def fire(self) -> Dict[str, Any]:
+        """Return command groups for Kubernetes plugins."""
+        if self.environment.fixtures.get(plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+                                         plugin_id='metta_kubernetes',
+                                         exception_if_missing=False) is not None:
 
             return {
                 'contrib': {
@@ -24,39 +34,43 @@ class KubernetesCliPlugin(CliBase):
                 }
             }
 
-        else:
-            return {}
+        return {}
 
 
 class KubernetesGroup():
+    """Base Fire command group for terraform client cli commands."""
 
     def __init__(self, environment: Environment):
+        """Add additional command groups for plugins and inject environment."""
         self._environment = environment
 
-        if self._environment.fixtures.get_fixture(
-                type=Type.WORKLOAD, plugin_id='metta_kubernetes_yaml', exception_if_missing=False) is not None:
+        if self._environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, plugin_id='metta_kubernetes_yaml',
+                exception_if_missing=False) is not None:
             self.yaml = KubernetesYamlWorkloadGroup(self._environment)
-        if self._environment.fixtures.get_fixture(
-                type=Type.WORKLOAD, plugin_id='metta_kubernetes_helm', exception_if_missing=False) is not None:
+        if self._environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, plugin_id='metta_kubernetes_helm',
+                exception_if_missing=False) is not None:
             self.helm = KubernetesHelmWorkloadGroup(self._environment)
 
-    def _select_client(self, instance_id: str = ''):
-        """ Pick a matching client """
+    def _select_client(self, instance_id: str = '') -> Fixtures:
+        """Pick a matching client."""
         if instance_id:
-            return self._environment.fixtures.get_fixture(
-                type=Type.CLIENT, plugin_id='metta_kubernetes', instance_id=instance_id)
-        else:
-            # Get the highest priority workload
-            return self._environment.fixtures.get_fixture(
-                type=Type.CLIENT, plugin_id='metta_kubernetes')
+            return self._environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id='metta_kubernetes',
+                instance_id=instance_id)
+
+        # Get the highest priority workload
+        return self._environment.fixtures.get(
+            plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id='metta_kubernetes')
 
     def info(self, workload: str = '', deep: bool = False):
-        """ get info about a client plugin """
+        """Get info about a client plugin."""
         fixture = self._select_client(instance_id=workload)
 
         collect_info = {
             'fixture': {
-                'type': fixture.type.value,
+                'plugin_type': fixture.plugin_type,
                 'plugin_id': fixture.plugin_id,
                 'instance_id': fixture.instance_id,
                 'priority': fixture.priority,
@@ -67,69 +81,70 @@ class KubernetesGroup():
             if hasattr(fixture.plugin, 'info'):
                 collect_info.update(fixture.plugin.info(True))
 
-        return json.dumps(collect_info, indent=2)
+        return cli_output(collect_info)
 
-    def readyz(self, workload: str = '', verbose: bool = False):
-        """ get kubernetes readiness info from the plugin """
+    def readyz(self, workload: str = ''):
+        """Get kubernetes readiness info from the plugin."""
         plugin = self._select_client(instance_id=workload).plugin
 
         try:
-            return json.dumps(plugin.readyz(verbose=verbose),
-                              indent=2, default=lambda x: "{}".format(x))
+            return cli_output(plugin.readyz())
 
-        except Exception as e:
-            raise RuntimeError('Kubernetes is not ready') from e
+        except Exception as err:
+            raise RuntimeError('Kubernetes is not ready') from err
 
-    def livez(self, workload: str = '', verbose: bool = False):
-        """ get kubernetes livez info from the plugin """
+    def livez(self, workload: str = ''):
+        """Get kubernetes livez info from the plugin."""
         plugin = self._select_client(instance_id=workload).plugin
 
         try:
-            return json.dumps(plugin.livez(verbose=verbose),
-                              indent=2, default=lambda x: "{}".format(x))
+            return cli_output(plugin.livez())
 
-        except Exception as e:
-            raise RuntimeError('Kubernetes is not ready') from e
+        except Exception as err:
+            raise RuntimeError("Kubernetes is not ready") from err
 
     def connect_service_proxy(self, namespace: str,
                               service: str, workload: str = ''):
-        """ create a service proxy """
+        """Create a service proxy."""
         plugin = self._select_client(instance_id=workload).plugin
 
         try:
+            # Thank you kubernetes for the naming pattern
+            # pylint: disable=invalid-name
             CoreV1Api = plugin.get_api('CoreV1Api')
-            sc = CoreV1Api.connect_post_namespaced_service_proxy(
-                namespace=namespace, name=service)
+            sc = CoreV1Api.connect_post_namespaced_service_proxy(namespace=namespace, name=service)
 
-            return json.dumps(sc, indent=2, default=lambda x: "{}".format(x))
+            return cli_output(sc)
 
-        except Exception as e:
-            raise RuntimeError(
-                'Exception trying to open the service proxy') from e
+        except Exception as err:
+            raise RuntimeError("Exception trying to open the service proxy") from err
 
 
 class KubernetesYamlWorkloadGroup():
+    """Base Fire command group for terraform yaml workload plugin cli commands."""
 
     def __init__(self, environment: Environment):
+        """Inject environment into command group object."""
         self._environment = environment
 
-    def _select_fixture(self, instance_id: str = ''):
-        """ Pick a matching workload fixture """
+    def _select_fixture(self, instance_id: str = '') -> Fixtures:
+        """Pick a matching workload fixture."""
         if instance_id:
-            return self._environment.fixtures.get_fixture(
-                type=Type.WORKLOAD, plugin_id='metta_kubernetes_yaml', instance_id=instance_id)
-        else:
-            # Get the highest priority workload
-            return self._environment.fixtures.get_fixture(
-                type=Type.WORKLOAD, plugin_id='metta_kubernetes_yaml')
+            return self._environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, plugin_id='metta_kubernetes_yaml',
+                instance_id=instance_id)
+
+        # Get the highest priority workload
+        return self._environment.fixtures.get(
+            plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, plugin_id='metta_kubernetes_yaml')
 
     def info(self, workload: str = '', deep: bool = False):
-        """ get info about a yaml workload plugin """
+        """Get info about a yaml workload plugin."""
         fixture = self._select_fixture(instance_id=workload)
 
         collect_info = {
             'fixture': {
-                'type': fixture.type.value,
+                'plugin_type': fixture.plugin_type,
                 'plugin_id': fixture.plugin_id,
                 'instance_id': fixture.instance_id,
                 'priority': fixture.priority,
@@ -140,49 +155,52 @@ class KubernetesYamlWorkloadGroup():
             if hasattr(fixture.plugin, 'info'):
                 collect_info.update(fixture.plugin.info(True))
 
-        return json.dumps(collect_info, indent=2)
+        return cli_output(collect_info)
 
     def apply(self, workload: str = ''):
-        """ Run workload apply """
-        workload = self._select_fixture(instance_id=workload).plugin
-        instance = workload.create_instance(self._environment.fixtures)
+        """Run workload apply."""
+        workload_plugin = self._select_fixture(instance_id=workload).plugin
+        instance = workload_plugin.create_instance(self._environment.fixtures)
 
         objects = instance.apply()
 
-        return json.dumps(objects, indent=2, default=lambda x: "{}".format(x))
+        return cli_output(objects)
 
     def destroy(self, workload: str = ''):
-        """ Run workload destroy """
-        workload = self._select_fixture(instance_id=workload).plugin
-        instance = workload.create_instance(self._environment.fixtures)
+        """Run workload destroy."""
+        workload_plugin = self._select_fixture(instance_id=workload).plugin
+        instance = workload_plugin.create_instance(self._environment.fixtures)
 
         destroy = instance.destroy()
 
-        return json.dumps(destroy, indent=2)
+        return cli_output(destroy)
 
 
 class KubernetesHelmWorkloadGroup():
+    """Base Fire command group for terraform helm workload cli commands."""
 
     def __init__(self, environment: Environment):
+        """Inject environment into command group."""
         self._environment = environment
 
     def _select_fixture(self, instance_id: str = ''):
-        """ Pick a matching workload fixture """
+        """Pick a matching workload fixture."""
         if instance_id:
-            return self._environment.fixtures.get_fixture(
-                type=Type.WORKLOAD, plugin_id='metta_kubernetes_helm', instance_id=instance_id)
-        else:
-            # Get the highest priority workload
-            return self._environment.fixtures.get_fixture(
-                type=Type.WORKLOAD, plugin_id='metta_kubernetes_helm')
+            return self._environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, plugin_id='metta_kubernetes_helm',
+                instance_id=instance_id)
 
-    def info(self, workload: str = '', deep: bool = False):
-        """ get info about a helm workload plugin """
+        # Get the highest priority workload
+        return self._environment.fixtures.get(
+            plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, plugin_id='metta_kubernetes_helm')
+
+    def info(self, workload: str = '', deep: bool = False) -> str:
+        """Get info about a helm workload plugin."""
         fixture = self._select_fixture(instance_id=workload)
 
         collect_info = {
             'fixture': {
-                'type': fixture.type.value,
+                'plugin_type': fixture.plugin_type,
                 'plugin_id': fixture.plugin_id,
                 'instance_id': fixture.instance_id,
                 'priority': fixture.priority,
@@ -193,23 +211,23 @@ class KubernetesHelmWorkloadGroup():
             if hasattr(fixture.plugin, 'info'):
                 collect_info.update(fixture.plugin.info(True))
 
-        return json.dumps(collect_info, indent=2)
+        return cli_output(collect_info)
 
     def apply(self, workload: str = '', wait: bool = True,
-              debug: bool = False):
-        """ Run helm workload apply """
-        workload = self._select_fixture(instance_id=workload).plugin
-        instance = workload.create_instance(self._environment.fixtures)
+              debug: bool = False) -> str:
+        """Run helm workload apply."""
+        workload_plugin = self._select_fixture(instance_id=workload).plugin
+        instance = workload_plugin.create_instance(self._environment.fixtures)
 
         objects = instance.apply(wait=wait, debug=debug)
 
-        return json.dumps(objects, indent=2, default=lambda x: "{}".format(x))
+        return cli_output(objects)
 
-    def destroy(self, workload: str = '', debug: bool = False):
-        """ Run helm workload destroy """
-        workload = self._select_fixture(instance_id=workload).plugin
-        instance = workload.create_instance(self._environment.fixtures)
+    def destroy(self, workload: str = '', debug: bool = False) -> str:
+        """Run helm workload destroy."""
+        workload_plugin = self._select_fixture(instance_id=workload).plugin
+        instance = workload_plugin.create_instance(self._environment.fixtures)
 
         destroy = instance.destroy(debug=debug)
 
-        return json.dumps(destroy, indent=2)
+        return cli_output(destroy)

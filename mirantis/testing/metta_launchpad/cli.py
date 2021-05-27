@@ -1,54 +1,74 @@
-import logging
-from typing import Dict, Any
+"""
 
-import json
+Metta CLI plugin for launchpad
+
+Provided CLI commands that allow interacting with launchpad as a provisioner,
+examining launchpad config and more.
+
+"""
+
+import logging
+
 import yaml
 
-from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.cli import CliBase
-from mirantis.testing.metta_cli.provisioner import ProvisionerGroup
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
+from mirantis.testing.metta_cli.base import CliBase, cli_output
+
+from .provisioner import LaunchpadProvisionerPlugin, METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID
 
 logger = logging.getLogger('metta.cli.launchpad')
 
+METTA_LAUNCHPAD_CLI_PLUGIN_ID = "metta_launchpad"
+""" metta plugin_id for the launchpad cli plugin """
 
+
+# this interface is common for all Metta plugins, but CLI plugins underuse it
+# pylint: disable=too-few-public-methods
 class LaunchpadCliPlugin(CliBase):
+    """Fire command/group generator for launchpad plugin commands."""
 
     def fire(self):
-        """ return a dict of commands for aucnhpad provisioenrs if one hase been registered."""
-        if self.environment.fixtures.get_fixture(
-                type=Type.PROVISIONER, plugin_id='metta_launchpad', exception_if_missing=False) is not None:
+        """Return CLI command group."""
+        if self.environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+                plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
+                exception_if_missing=False) is not None:
+
             return {
                 'contrib': {
                     'launchpad': LaunchpadGroup(self.environment)
                 }
             }
-        else:
-            return {}
+
+        return {}
 
 
 class LaunchpadGroup():
+    """Base Fire command group for launchpad cli commands."""
 
     def __init__(self, environment: Environment):
+        """Create launchpad command list object."""
         self.environment = environment
 
-    def _select_provisioner(self, instance_id: str = ''):
-        """ Pick a matching provisioner """
+    def _select_provisioner(self, instance_id: str = '') -> LaunchpadProvisionerPlugin:
+        """Pick a matching provisioner."""
         if instance_id:
-            return self.environment.fixtures.get_fixture(
-                type=Type.PROVISIONER, plugin_id='metta_launchpad', instance_id=instance_id)
-        else:
-            # Get the highest priority provisioner
-            return self.environment.fixtures.get_fixture(
-                type=Type.PROVISIONER, plugin_id='metta_launchpad')
+            return self.environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, plugin_id='metta_launchpad',
+                instance_id=instance_id)
+
+        # Get the highest priority provisioner
+        return self.environment.fixtures.get(
+            plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, plugin_id='metta_launchpad')
 
     def info(self, provisioner: str = '', deep: bool = False):
-        """ get info about a provisioner plugin """
+        """Get info about a provisioner plugin."""
         fixture = self._select_provisioner(instance_id=provisioner)
 
         provisioner_info = {
             'fixture': {
-                'type': fixture.type.value,
+                'plugin_type': fixture.plugin_type,
                 'plugin_id': fixture.plugin_id,
                 'instance_id': fixture.instance_id,
                 'priority': fixture.priority,
@@ -59,10 +79,10 @@ class LaunchpadGroup():
             if hasattr(fixture.plugin, 'info'):
                 provisioner_info.update(fixture.plugin.info(True))
 
-        return json.dumps(provisioner_info, indent=2)
+        return cli_output(provisioner_info)
 
     def hosts(self, provisioner: str = '', deep: bool = False):
-        """ list the hosts in the cluster """
+        """List the hosts in the cluster/"""
         fixture = self._select_provisioner(instance_id=provisioner)
         plugin = fixture.plugin
         client = plugin.client
@@ -70,9 +90,9 @@ class LaunchpadGroup():
         config = client.describe_config()
 
         if deep:
-            list = [host for host in config['spec']['hosts']]
+            host_list = config['spec']['hosts']
         else:
-            list = []
+            host_list = []
             for host in config['spec']['hosts']:
                 list_host = {
                     'role': host['role']
@@ -88,13 +108,12 @@ class LaunchpadGroup():
                         'address': host['winrm']['address']
                     })
 
-                list.append(list_host)
+                host_list.append(list_host)
 
-        return json.dumps(list, indent=2)
+        return cli_output(host_list)
 
-    def exec(self, cmd: str, provisioner: str = '',
-             host: int = 0, interactive: bool = False):
-        """ Exec a command """
+    def exec(self, cmd: str, provisioner: str = '', host: int = 0):
+        """ Exec a command."""
         fixture = self._select_provisioner(instance_id=provisioner)
         plugin = fixture.plugin
         client = plugin.client
@@ -103,9 +122,8 @@ class LaunchpadGroup():
 
         client.exec(host_index=host, cmds=cmds)
 
-    def exec_interactive(self, cmd: str, provisioner: str = '',
-                         host: int = 0, interactive: bool = False):
-        """ Exec a command """
+    def exec_interactive(self, cmd: str, provisioner: str = '', host: int = 0):
+        """ Exec a command."""
         fixture = self._select_provisioner(instance_id=provisioner)
         plugin = fixture.plugin
         client = plugin.client
@@ -114,107 +132,96 @@ class LaunchpadGroup():
 
         client.exec_interactive(host_index=host, cmds=cmds)
 
-    def connect(self, provisioner: str = '',
-                host: int = 0, interactive: bool = False):
-        """ Exec a command """
+    def connect(self, provisioner: str = '', host: int = 0):
+        """Exec a command."""
         fixture = self._select_provisioner(instance_id=provisioner)
         plugin = fixture.plugin
         client = plugin.client
 
         client.exec_interactive(host_index=host, cmds=[])
 
-    def fixtures(self, provisioner: str = ''):
-        """ List all fixtures for this provisioner """
-        provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        if not hasattr(provisioner, 'get_fixtures'):
-            raise ValueError('This provisioner does not keep fixtures.')
-        list = [{
-            'type': fixture.type.value,
-            'plugin_id': fixture.plugin_id,
-            'instance_id': fixture.instance_id,
-            'priority': fixture.priority,
-        } for fixture in provisioner.get_fixtures().to_list()]
-
-        json.dumps(list, indent=2)
-
     def client_config(self, provisioner: str = ''):
-        """ get the rendered config from the client """
+        """Get the rendered config from the client."""
         fixture = self._select_provisioner(instance_id=provisioner)
         plugin = fixture.plugin
         client = plugin.client
 
-        return json.dumps(client.describe_config(), indent=2)
+        return cli_output(client.describe_config())
 
     def version(self, provisioner: str = ''):
-        """ Output a launchpad cli report """
-        provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner.client.version()
+        """Output a launchpad cli report."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin.client.version()
 
     def describe(self, report: str, provisioner: str = ''):
-        """ Output a launchpad cli report """
-        provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner.client.describe(report)
+        """Output a launchpad cli report."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin.client.describe(report)
 
-    def fixtures(self, provisioner: str = '', type: Type = None, plugin_id: str = '',
+    # pylint: disable=redefined-builtin
+    def fixtures(self, provisioner: str = '', type: str = '', plugin_id: str = '',
                  instance_id: str = ''):
-        """ List all outputs """
-        provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        if not hasattr(provisioner, 'get_fixtures'):
+        """List all outputs."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        if not hasattr(provisioner_plugin, 'get_fixtures'):
             raise ValueError('This provisioner does not keep fixtures.')
 
-        type = Type.from_string(type) if type else None
-
-        list = [{
-            'type': fixture.type.value,
+        fixture_list = [{
+            'type': fixture.plugin_type,
             'plugin_id': fixture.plugin_id,
             'instance_id': fixture.instance_id,
             'priority': fixture.priority,
-        } for fixture in provisioner.get_fixtures(type=type, plugin_id=plugin_id, instance_id=instance_id).to_list()]
+        } for fixture in provisioner_plugin.get_fixtures(type=type, plugin_id=plugin_id,
+                                                         instance_id=instance_id).to_list()]
 
-        return json.dumps(list, indent=2)
+        return cli_output(fixture_list)
 
     def config_file(self, provisioner: str = ''):
-        """ Dump the config file """
-        provisioner = self._select_provisioner(instance_id=provisioner).plugin
+        """Dump the config file."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
 
         try:
-            with open(provisioner.config_file) as f:
-                config_contents = yaml.load(f)
-        except FileNotFoundError as e:
-            raise ValueError("No config file was found: {}".format(e)) from e
+            with open(provisioner_plugin.config_file) as config_file:
+                config_contents = yaml.load(config_file)
+        except FileNotFoundError as err:
+            raise ValueError("No config file was found") from err
 
-        return json.dumps(config_contents, indent=2)
+        return cli_output(config_contents)
 
     def write_config(self, provisioner: str = ''):
-        """ write config to file """
-        provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner._write_launchpad_file()
+        """Write config to file."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        # access private method for introspection
+        # pylint: disable=protected-access
+        provisioner_plugin._write_launchpad_file()
 
     def client_bundle(self, provisioner: str = '',
                       user: str = 'admin', reload: bool = False):
-        """ Tell Launchpad to download the client bundle """
-        fixture = self._select_provisioner(instance_id=provisioner)
-        plugin = fixture.plugin
+        """Tell Launchpad to download the client bundle."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner)
+        plugin = provisioner_plugin.plugin
 
-        logger.info("Downloading client bungle for user: {}".format(user))
+        logger.info("Downloading client bungle for user: %s", user)
         try:
+            # access private method for manual interaction
+            # pylint: disable=protected-access
             bundle = plugin._mke_client_bundle(user=user, reload=reload)
-        except Exception as e:
-            raise Exception("Launchpad command failed : {}".format(e)) from e
+        except Exception as err:
+            raise Exception("Launchpad command failed.") from err
 
-        return json.dumps(bundle, indent=2)
+        return cli_output(bundle)
 
     def prepare(self, provisioner: str = ''):
-        """ Run provisioner prepare """
-        provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner.prepare()
+        """Run provisioner prepare."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin.prepare()
 
     def apply(self, provisioner: str = '', debug: (bool) = False):
-        """ Run provisioner apply """
-        provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner.apply(debug=debug)
+        """Run provisioner apply."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin.apply(debug=debug)
 
     def destroy(self, provisioner: str = '', quick: bool = False):
-        """ Run provisioner destroy """
-        provisioner = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner.destroy(quick=quick)
+        """Run provisioner destroy."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin.destroy(quick=quick)

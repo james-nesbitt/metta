@@ -15,34 +15,36 @@ long as you match its config convention it can take care of itself.
 import logging
 from typing import Dict, Any
 
-from mirantis.testing.metta.plugin import Type
 from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.provisioner import ProvisionerBase
-from mirantis.testing.metta.fixtures import UCCTFixturesPlugin
 
 logger = logging.getLogger('metta.contrib.dummy.provisioner')
 
 
-class DummyProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
+class DummyProvisionerPlugin(ProvisionerBase):
     """ Dummy provisioner class """
 
     def __init__(self, environment: Environment, instance_id: str,
-                 fixtures: Dict[str, Dict[str, Any]] = {}):
+                 fixtures: Dict[str, Dict[str, Any]] = None):
         """ Run the super constructor but also set class properties """
-        ProvisionerBase.__init__(self, environment, instance_id)
+        super().__init__(environment, instance_id)
 
-        fixtures = environment.add_fixtures_from_dict(plugin_list=fixtures)
+        if fixtures is not None:
+            fixtures = environment.add_fixtures_from_dict(plugin_list=fixtures)
+        else:
+            fixtures = Fixtures()
+        self.fixtures: Fixtures = fixtures
         """ All fixtures added to this dummy plugin. """
-        UCCTFixturesPlugin.__init__(self, fixtures)
 
     def apply(self):
         """ pretend to bring a cluster up """
-        logger.info("{}:execute: apply()".format(self.instance_id))
+        logger.info("%s:execute: apply()", self.instance_id)
 
     def prepare(self):
         """ pretend to prepare the cluster """
-        logger.info("{}:execute: prepare()".format(self.instance_id))
+        logger.info("%s:execute: apply()", self.instance_id)
 
     def destroy(self):
         """ pretend to brind a cluster down """
-        logger.info("{}:execute: destroy()".format(self.instance_id))
+        logger.info("%s:execute: apply()", self.instance_id)

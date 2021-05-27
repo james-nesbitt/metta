@@ -1,6 +1,6 @@
 
 my_messages:
-    type: metta.plugin.client
+    plugin_type: client
     plugin_id: my_client
 
     # for plugisn that take a label/key pair as factory arguments, this points

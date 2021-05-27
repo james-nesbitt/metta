@@ -1,7 +1,15 @@
+"""
+
+Common configuration used for mirantis metta functionality integration.
+
+The mirantis_metta module is based around custom functionality which we use to
+extend metta, but which may not be desired by all users. This common core
+allows integration of common config used for that functionalty.
+
+"""
+
 import logging
 import pkg_resources
-
-import appdirs
 
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH as CONFIGERUS_SOURCE_PATH
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT as CONFIGERUS_SOURCE_DICT
@@ -23,7 +31,7 @@ METTA_MIRANTIS_CONFIG_PATH = pkg_resources.resource_filename(
 
 
 def add_common_config(environment: Environment):
-    """ Add some common configuration sources
+    """Add some common configuration sources.
 
     The following could be added:
 
@@ -33,30 +41,31 @@ def add_common_config(environment: Environment):
 
     Parameters:
     -----------
-
     environment (Environment) : METTA environment to be modified
 
     """
-
     # If we haven't already done it, add the metta_mirantis/config path as a
     # config source.  This allows us to provide config defaults in this module
-    metta_mirantis_config_instance_id = "{}-config".format(
-        METTA_MIRANTIS_COMMON_NAME)
+    metta_mirantis_config_instance_id = f"{METTA_MIRANTIS_COMMON_NAME}-config"
     if not environment.config.has_source(metta_mirantis_config_instance_id):
-        environment.config.add_source(
+        source = environment.config.add_source(
             CONFIGERUS_SOURCE_PATH,
             metta_mirantis_config_instance_id,
-            priority=METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_path(METTA_MIRANTIS_CONFIG_PATH)
+            priority=METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS)
+        source.set_path(METTA_MIRANTIS_CONFIG_PATH)
 
-    # Add a "{path:metta_mirantis}" config value so that paths to this module can
-    # be built.  We use this to allow file resources from this module to be used
-    # as a part of config.  For example we build paths to the terraform plans in
-    # this module.
-    metta_mirantis_paths_instance_id = "{}-paths".format(
-        METTA_MIRANTIS_COMMON_NAME)
+    # Add a "{path:metta_mirantis}" config value so that paths to this module
+    # can be built.  We use this to allow file resources from this module to be
+    # used as a part of config.  For example we build paths to the terraform
+    # plans in this module.
+    metta_mirantis_paths_instance_id = f"{METTA_MIRANTIS_COMMON_NAME}-paths"
     if not environment.config.has_source(metta_mirantis_paths_instance_id):
-        environment.config.add_source(CONFIGERUS_SOURCE_DICT, metta_mirantis_paths_instance_id, priority=METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_data({
-            environment.config.paths_label(): {
-                METTA_MIRANTIS_COMMON_NAME: METTA_MIRANTIS_PATH
-            }
-        })
+        source = environment.config.add_source(
+            CONFIGERUS_SOURCE_DICT, metta_mirantis_paths_instance_id,
+            priority=METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS)
+        source.set_data(
+            {
+                environment.config.paths_label(): {
+                    METTA_MIRANTIS_COMMON_NAME: METTA_MIRANTIS_PATH
+                }
+            })

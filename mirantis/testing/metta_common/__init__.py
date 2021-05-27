@@ -1,6 +1,9 @@
 """
 
-Common METTA plugins
+Common METTA plugins and functionality.
+
+Package for common shared Metta plugins that can be used by various
+other plugins as a based.
 
 """
 from typing import Dict, Any
@@ -9,96 +12,97 @@ from configerus import Config
 from configerus.loaded import LOADED_KEY_ROOT
 from configerus.plugin import FormatFactory
 
-from mirantis.testing.metta.plugin import Factory, Type
+from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
+from mirantis.testing.metta.output import METTA_PLUGIN_TYPE_OUTPUT
+from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
 
 from .common_config import add_common_config
-from .dict_output import DictOutputPlugin
-from .text_output import TextOutputPlugin
-from .combo_provisioner import ComboProvisionerPlugin, COMBO_PROVISIONER_CONFIG_LABEL
-from .binhelper_utility import DownloadableExecutableUtility, METTA_PLUGIN_ID_UTILITY_BINHELPER, BINHELPER_UTILITY_CONFIG_LABEL
-from .config_format_output import ConfigFormatOutputPlugin
-from .user_cli import UserCliPlugin
+from .dict_output import DictOutputPlugin, METTA_PLUGIN_ID_OUTPUT_DICT
+from .text_output import TextOutputPlugin, METTA_PLUGIN_ID_OUTPUT_TEXT
+from .combo_provisioner import (ComboProvisionerPlugin, METTA_PLUGIN_ID_PROVISIONER_COMBO,
+                                COMBO_PROVISIONER_CONFIG_LABEL)
+from .binhelper_utility import (DownloadableExecutableUtility, METTA_PLUGIN_ID_UTILITY_BINHELPER,
+                                BINHELPER_UTILITY_CONFIG_LABEL)
+from .config_format_output import ConfigFormatOutputPlugin, PLUGIN_ID_FORMAT_OUTPUT
+from .user_cli import UserCliPlugin, METTA_PLUGIN_ID_CLI_USER
 
-METTA_PLUGIN_ID_OUTPUT_DICT = 'dict'
-""" output plugin_id for the dict plugin """
+METTA_PLUGIN_TYPE_UTILITY = 'utility'
+""" metta pluging_type for utility plugins """
 
 
-@Factory(type=Type.OUTPUT, plugin_id=METTA_PLUGIN_ID_OUTPUT_DICT)
+@Factory(plugin_type=METTA_PLUGIN_TYPE_OUTPUT, plugin_id=METTA_PLUGIN_ID_OUTPUT_DICT)
 def metta_plugin_factory_output_dict(
-        environment: Environment, instance_id: str = '', data: Dict = {}, validator: str = ''):
-    """ create an output dict plugin """
+        environment: Environment, instance_id: str = '', data: Dict = None, validator: str = ''):
+    """Create an output dict plugin."""
     return DictOutputPlugin(environment, instance_id, data, validator)
 
 
-METTA_PLUGIN_ID_OUTPUT_TEXT = 'text'
-""" output plugin_id for the text plugin """
-
-
-@Factory(type=Type.OUTPUT, plugin_id=METTA_PLUGIN_ID_OUTPUT_TEXT)
+@Factory(plugin_type=METTA_PLUGIN_TYPE_OUTPUT, plugin_id=METTA_PLUGIN_ID_OUTPUT_TEXT)
 def metta_plugin_factory_output_text(
         environment: Environment, instance_id: str = '', text: str = ''):
-    """ create an output text plugin """
+    """Create an output text plugin."""
     return TextOutputPlugin(environment, instance_id, text)
 
 
-METTA_PLUGIN_ID_PROVISIONER_COMBO = 'combo'
-""" provisioner plugin_id for the combo plugin """
-
-
-@Factory(type=Type.PROVISIONER, plugin_id=METTA_PLUGIN_ID_PROVISIONER_COMBO)
+@Factory(plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, plugin_id=METTA_PLUGIN_ID_PROVISIONER_COMBO)
 def metta_plugin_factory_provisioner_combo(
-        environment: Environment, instance_id: str = '', label: str = COMBO_PROVISIONER_CONFIG_LABEL, base: Any = LOADED_KEY_ROOT):
-    """ create a provisioner combo plugin """
+        environment: Environment,
+        instance_id: str = '',
+        label: str = COMBO_PROVISIONER_CONFIG_LABEL,
+        base: Any = LOADED_KEY_ROOT):
+    """Create a provisioner combo plugin."""
     return ComboProvisionerPlugin(
         environment, instance_id, label=label, base=base)
 
 
-@Factory(type=Type.UTILITY, plugin_id=METTA_PLUGIN_ID_UTILITY_BINHELPER)
+@Factory(plugin_type=METTA_PLUGIN_TYPE_UTILITY, plugin_id=METTA_PLUGIN_ID_UTILITY_BINHELPER)
 def metta_plugin_factory_utility_binhelper(
-        environment: Environment, instance_id: str = '', label: str = BINHELPER_UTILITY_CONFIG_LABEL, base: Any = LOADED_KEY_ROOT):
-    """ create a bin-helper utility plugin """
+        environment: Environment,
+        instance_id: str = '',
+        label: str = BINHELPER_UTILITY_CONFIG_LABEL,
+        base: Any = LOADED_KEY_ROOT):
+    """Create a bin-helper utility plugin."""
     return DownloadableExecutableUtility(
         environment, instance_id, label=label, base=base)
 
 
-""" Congiferus formatter for metta output plugins """
-
-PLUGIN_ID_FORMAT_OUTPUT = 'output'
-""" Format plugin_id for the configerus output format plugin """
-
+# ----- Congiferus formatter for metta output plugins -----
 
 @FormatFactory(plugin_id=PLUGIN_ID_FORMAT_OUTPUT)
 def plugin_factory_format_output(config: Config, instance_id: str = ''):
-    """ create an format plugin which replaces from output contents """
+    """Create an format plugin which replaces from output contents."""
     return ConfigFormatOutputPlugin(config, instance_id)
 
 
-""" metta user cli plugin """
+# ----- metta user cli plugin -----
 
-METTA_PLUGIN_ID_CLI_USER = 'user'
-""" cli plugin_id for the user plugin """
-
-
-@Factory(type=Type.CLI, plugin_id=METTA_PLUGIN_ID_CLI_USER)
+@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_CLI_USER)
 def metta_plugin_factory_user_config(
         environment: Environment, instance_id: str = ''):
-    """ create a user cli plugin """
+    """Create a user cli plugin."""
     return UserCliPlugin(environment, instance_id)
 
 
-""" METTA bootstraps that we will use on config objects """
+# ----- METTA bootstraps that we will use on config objects -----
 
 
+# pylint: disable=unused-argument
 def bootstrap(environment: Environment):
-    """ METTA Bootstrapper - don't actually do anything """
-    pass
+    """METTA_Terraform bootstrap.
 
-# @TODO this should be renamed on the next major version bump.
+    Currently we only use this to import plugins.
+
+    Parameters:
+    -----------
+    env (Environment) : an environment which should have validation config added to.
+
+    """
 
 
 def bootstrap_common(environment: Environment):
-    """ metta configerus bootstrap
+    """Metta configerus bootstrap.
 
     Add some common Mirantis specific config options
 

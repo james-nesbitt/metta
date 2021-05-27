@@ -2,22 +2,21 @@
 
 Ansible METTA provisioner plugin
 
+This package is a WIP and currently doesn't really do anything.
+
 """
 
 import logging
-import json
-import os
-import subprocess
-from typing import Dict, List, Any
+from typing import Any
 
 from configerus.loaded import LOADED_KEY_ROOT
-from mirantis.testing.metta.plugin import METTAPlugin, Type
-from mirantis.testing.metta.fixtures import Fixtures, UCCTFixturesPlugin, METTA_FIXTURES_CONFIG_FIXTURES_LABEL
+
 from mirantis.testing.metta.provisioner import ProvisionerBase
-from mirantis.testing.metta.output import OutputBase
-from mirantis.testing.metta_common import METTA_PLUGIN_ID_OUTPUT_DICT, METTA_PLUGIN_ID_OUTPUT_TEXT
 
 logger = logging.getLogger('metta.contrib.provisioner:ansible')
+
+METTA_ANSIBLE_PROVISIONER_PLUGIN_ID = 'metta_ansible'
+""" Ansible provisioner plugin id """
 
 ANSIBLE_PROVISIONER_CONFIG_LABEL = 'ansible'
 """ config label loading the ansible config """
@@ -35,7 +34,7 @@ ANSIBLE_PROVISIONER_DEFAULT_STATE_SUBPATH = 'metta-state'
 """ Default vars file if none was specified """
 
 
-class AnsibleProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
+class AnsibleProvisionerPlugin(ProvisionerBase):
     """ Ansible provisioner plugin
 
     Provisioner plugin that allows control of and interaction with a ansible
@@ -48,21 +47,7 @@ class AnsibleProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
 
     ## Usage
 
-    ### Plan
-
-    The plan must exists somewhere on disk, and be accessible.
-
-    You must specify the path and related configuration in config, which are read
-    in the .prepare() execution.
-
-    ### Vars/State
-
-    This plugin reads TF vars from config and writes them to a vars file.  We
-    could run without relying on vars file, but having a vars file allows cli
-    interaction with the cluster if this plugin messes up.
-
-    You can override where Ansible vars/state files are written to allow sharing
-    of a plan across test suites.
+    @NOTE his plugin ist still very much a stub, and implements no real functionality.
 
     """
 
@@ -74,7 +59,7 @@ class AnsibleProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         pieces for executing ansible commands
 
         """
-        super(ProvisionerBase, self).__init__(environment, instance_id)
+        super().__init__(environment, instance_id)
 
         logger.info("Preparing Ansible setting")
 
@@ -82,16 +67,6 @@ class AnsibleProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         """ configerus load label that should contain all of the config """
         self.config_base = base
         """ configerus get key that should contain all tf config """
-
-        fixtures = self.environment.add_fixtures_from_config(
-            label=self.config_label,
-            base=[self.config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL])
-        """ All fixtures added to this provisioner plugin. """
-        UCCTFixturesPlugin.__init__(self, fixtures)
-
-        self.ansible_config = self.environment.config.load(
-            self.config_label)
-        """ get a configerus LoadedConfig for the ansible label """
 
     def info(self):
         """ get info about a provisioner plugin """
@@ -102,7 +77,7 @@ class AnsibleProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
             }
         }
 
-    def prepare(self, label: str = '', base: str = ''):
+    def prepare(self):
         """ Prepare the provisioner to apply resources
 
         Initial Provisioner plugin is expected to be of very low cost until
@@ -117,12 +92,21 @@ class AnsibleProvisionerPlugin(ProvisionerBase, UCCTFixturesPlugin):
         desired.
 
         """
-        pass
 
     def apply(self):
-        """ bring a cluster to the configured state """
-        pass
+        """ bring a cluster to the configured state
+
+        Run an ansible playbook to execute functionality on a running cluster.
+
+        @NOTE his plugin ist still very much a stub, and implements no real functionality.
+
+        """
 
     def destroy(self):
-        """ remove all resources created for the cluster """
-        pass
+        """ remove all resources created for the cluster
+
+        Run an aansible palybook to remove any implemented changes
+
+        @NOTE his plugin ist still very much a stub, and implements no real functionality.
+
+        """

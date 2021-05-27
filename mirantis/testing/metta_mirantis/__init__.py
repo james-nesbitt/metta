@@ -1,15 +1,21 @@
 """
 
-metta Mirantis
+Metta Mirantis.
 
+Common components and configuration which are nice to use
+when using metta with Mirantis products.
+
+THese are entirely optional, but it makes a lot of
+operations easier.
 
 """
 
-import logging
 from typing import List, Dict
 
-from mirantis.testing.metta.plugin import Factory, Type
+from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
 
 from .common import add_common_config
 from .presets import add_preset_config
@@ -17,44 +23,56 @@ from .presets import add_preset_config
 from .mke_client import MKEAPIClientPlugin, MKEAPICliPlugin, METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID
 from .msr_client import MSRAPIClientPlugin, MSRAPICliPlugin, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
 
-""" Plugin factories """
+# ----- Plugin factories -----
 
 
-@Factory(type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+# pylint: disable=too-many-arguments
+@Factory(plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
 def metta_mirantis_plugin_factory_client_mke(
-        environment: Environment, instance_id: str = "", accesspoint: str = '', username: str = '', password: str = '', hosts: List[Dict] = []):
-    """ Create a Mirantis MKE API Client """
+        environment: Environment,
+        instance_id: str = "",
+        accesspoint: str = '',
+        username: str = '',
+        password: str = '',
+        hosts: List[Dict] = None):
+    """Create a Mirantis MKE API Client."""
     return MKEAPIClientPlugin(environment, instance_id, accesspoint=accesspoint,
                               username=username, password=password, hosts=hosts)
 
 
-@Factory(type=Type.CLI, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
 def metta_terraform_factory_cli_mke(
         environment: Environment, instance_id: str = ''):
-    """ create an MKE cli plugin """
+    """Create an MKE cli plugin."""
     return MKEAPICliPlugin(environment, instance_id)
 
 
-@Factory(type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+# pylint: disable=too-many-arguments
+@Factory(plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
 def metta_mirantis_plugin_factory_client_msr(
-        environment: Environment, instance_id: str = '', accesspoint: str = '', username: str = '', password: str = '', hosts: List[Dict] = []):
-    """ Create a Mirantis MSR API Client """
+        environment: Environment,
+        instance_id: str = '',
+        accesspoint: str = '',
+        username: str = '',
+        password: str = '',
+        hosts: List[Dict] = None):
+    """Create a Mirantis MSR API Client."""
     return MSRAPIClientPlugin(environment, instance_id, accesspoint=accesspoint,
                               username=username, password=password, hosts=hosts)
 
 
-@Factory(type=Type.CLI, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
 def metta_terraform_factory_cli_msr(
         environment: Environment, instance_id: str = ''):
-    """ create an MSR cli plugin """
+    """Create an MSR cli plugin."""
     return MSRAPICliPlugin(environment, instance_id)
 
 
-""" METTA bootstraps that we will use on config objects """
+# ----- METTA bootstraps that we will use on config objects -----
 
 
 def bootstrap_common(environment: Environment):
-    """ metta configerus bootstrap
+    """Metta configerus bootstrap.
 
     Add some Mirantis specific config options for presets
 
@@ -71,7 +89,7 @@ def bootstrap_common(environment: Environment):
 
 
 def bootstrap_presets(environment: Environment):
-    """ metta configerus bootstrap
+    """Metta configerus bootstrap.
 
     Add some Mirantis specific config options for presets
 
@@ -85,10 +103,3 @@ def bootstrap_presets(environment: Environment):
 
     """
     add_preset_config(environment)
-
-
-__all__ = [
-    bootstrap_common,
-    bootstrap_presets,
-    METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
-    METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID]

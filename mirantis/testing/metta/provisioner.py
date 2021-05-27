@@ -1,21 +1,19 @@
 """
 
-Provisioning
+PLUGIN: Provisioner.
+
+Provisioning plugins meet a common interface standard for managing a testing
+system, where the provisioning keywords relate to creating and tearing down the
+system.
 
 """
 
 import logging
 
-from configerus.config import Config
-from configerus.loaded import LOADED_KEY_ROOT
-
-from .plugin import METTAPlugin, Type
-from .fixtures import Fixtures
-
 logger = logging.getLogger('metta.provisioner')
 
-METTA_PLUGIN_TYPE_PROVISIONER = Type.PROVISIONER
-""" Fast access to the Provisioner plugin_id """
+METTA_PLUGIN_TYPE_PROVISIONER = 'provisioner'
+""" metta plugin type idnetifier for client plugins """
 
 METTA_PROVISIONER_CONFIG_PROVISIONERS_LABEL = 'provisioners'
 """ A centralized configerus load labe for multiple provisioners """
@@ -27,11 +25,11 @@ METTA_PROVISIONER_CONFIG_PROVISIONER_KEY = 'provisioner'
 """ A centralized configerus key for one provisioner """
 
 
-class ProvisionerBase(METTAPlugin):
-    "Base Provisioner plugin class"
+class ProvisionerBase:
+    """Base Provisioner plugin class."""
 
-    def prepare(self, label: str = '', base: str = ''):
-        """ Prepare the provisioner to apply resources
+    def prepare(self):
+        """Prepare the provisioner to apply resources.
 
         Initial Provisioner plugin is expected to be of very low cost until
         prepare() is executed.  At this point the plugin should load any config
@@ -49,11 +47,11 @@ class ProvisionerBase(METTAPlugin):
             'This provisioner has not yet implemented prepare')
 
     def apply(self):
-        """ bring a cluster to the configured state """
+        """Bring a cluster to the configured state."""
         raise NotImplementedError(
             'This provisioner has not yet implemented apply')
 
     def destroy(self):
-        """ remove all resources created for the cluster """
+        """Remove all resources created for the cluster."""
         raise NotImplementedError(
             'This provisioner has not yet implemented destroy')

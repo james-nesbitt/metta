@@ -1,114 +1,69 @@
+"""
+
+CLI Plugins base.
+
+@TODO move to the metta_cli package
+
+Define a base class and some constants for the CLI plugins.  The CLI plugins
+provide functionality for the metta cli tool, which is provided by the
+metta_cli package.  This is here because the plugin types are defined as an
+enum in this package, and so the base class is here too.
+
+"""
 import logging
-import os
-import sys
+import json
+from typing import Any
 
-from mirantis.testing.metta import environment_names, get_environment, discover, new_environment
-from mirantis.testing.metta.plugin import Type, Factory
-
+from mirantis.testing.metta.environment import Environment
 
 logger = logging.getLogger('metta.cli.base')
 
-UCC_CLI_FIXTURE_KEY_CONFIG = 'config'
-
-FILES = {
-    'metta': 'metta.py',
-    'mettac': 'mettac.py',
-}
+METTA_PLUGIN_TYPE_CLI = "cli"
+""" Metta plugin_type identifier for CLI plugins """
 
 
-class Base:
-    """ The Metta CLI program
+# pylint: disable=too-few-public-methods
+class CliBase:
+    """Base class/interface for cli plugins.
 
-    This CLI let's you interact with a metta environment for the purpose of
-    introspection, debugging and manual interaction.
-
-    All groups and commands come from metta CLI plugins.
+    Mainly here as an interface definition so that you know what you have to
+    add to get it to work with the metta_cli system.
 
     """
 
-    def __init__(self, environment: str = '', state: str = ''):
-        """
+    def __init__(self, environment: Environment, instance_id: str):
+        """Inject Environment and instance_id into plugin."""
+        self.environment = environment
+        """ Environemnt in which this plugin exists """
+        self.instance_id = instance_id
+        """ Unique id for this plugin instance """
 
-        Parameters:
-        -----------
+    def fire(self):
+        """Execute the fire cli hook."""
+        raise NotImplementedError("this functionality not avialble.")
 
-        environment (str) : Environment name in case you want to switch to an
-            alternate environment.
 
-        state (str) : Environment state to consider active.  Will throw an error
-            if the state doesn't exist for the selected environment.
+def cli_output(structure: Any) -> str:
+    """Format data for output from cli commands.
 
-        """
+    Parameters:
+    -----------
+    structure (Any) : data to be formatted for cli return
 
-        # Try to make an environment using
-        discover()
+    Returns:
+    --------
+    String conversion, as json
 
-        try:
-            if environment == '':
-                environment = environment_names()[0]
-        except (KeyError, IndexError) as e:
-            logger.warn(
-                "No environment object has been defined (making one now.) Are you in a project folder?")
-            environment = 'empty'
-            new_environment(environment)
+    """
+    return json.dumps(structure, indent=2, default=_serialize_last_resort)
 
-        try:
-            self._environment = get_environment(environment)
 
-            if state:
-                self._environment.set_state(state)
-        except KeyError:
-            raise ValueError(
-                "Could not load environment '{}', not found; Existing environments: {}".format(
-                    environment, environment_names()))
+def _serialize_last_resort(target: Any) -> str:
+    """Serialzie anything.
 
-        # collect any comands from all discovered cli plugins
-        self._collect_commands()
+    Returns:
+    --------
+    This target as a string.  Serialized for output only.
 
-    def _collect_commands(self):
-        """ collect commands from all cli plugins
-
-        Create an instance of any registered cli plugin.
-        From the plugin, collect the commands and add each command to this
-        object directly, so that Fire can see them.
-
-        """
-
-        plugin_list = {}
-        for plugin_id in Factory.registry[Type.CLI.value]:
-            plugin_list[plugin_id] = {
-                'type': Type.CLI.value,
-                'plugin_id': plugin_id
-            }
-
-        for plugin in self._environment.add_fixtures_from_dict(
-                plugin_list=plugin_list, type=Type.CLI).get_plugins():
-            logger.info("loading cli plugin: {}".format(plugin_id))
-
-            if hasattr(plugin, 'fire'):
-                try:
-                    commands = plugin.fire()
-                except TypeError as e:
-                    raise NotImplementedError(
-                        "Plugin {} did not implement the correct fire(fixtures) interface: {}".format(
-                            plugin_id, e)) from e
-
-                if not isinstance(commands, dict):
-                    raise ValueError(
-                        "Plugin returned invalid commands : {}".format(commands))
-
-                ValueError(
-                    "Plugin returned invalid commands : {}".format(commands))
-
-                for (command_name, command) in commands.items():
-                    logger.debug(
-                        "adding cli plugin command: {}->{}".format(plugin_id, command_name))
-
-                    # if the command name already exists and is a dict then
-                    # maybe we should merge them
-                    if hasattr(self, command_name) and isinstance(
-                            getattr(self, command_name), dict) and isinstance(command, dict):
-                        getattr(self, command_name).update(command)
-                        continue
-
-                    setattr(self, command_name, command)
+    """
+    return f"{target}"
