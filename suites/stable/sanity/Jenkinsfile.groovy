@@ -9,10 +9,9 @@ pipeline {
             apiVersion: v1
             kind: Pod
             spec:
-              volumes:
               containers:
               - name: workspace
-                image: jamesnmirantis/dockerized-builds:0.1.12
+                image: msr.ci.mirantis.com/jnesbitt/dockerized-builds:0.1.8
                 command:
                 - sleep
                 args:
@@ -29,8 +28,9 @@ pipeline {
         text(name: 'METTA_CONFIGJSON', defaultValue: '', description: 'Include JSON config to override config options.  This will be consumed as an ENV variable.')
     }
     environment {
+        TEST_CHANNEL = "stable"
         TEST_SUITE = "sanity"
-    }    
+    }
     stages {
 
         stage('Prepare workspace') {
@@ -38,7 +38,7 @@ pipeline {
                 container('workspace') {
                     script {
 
-                        dir("suites/${env.TEST_SUITE}") {
+                        dir("suites/${env.TEST_CHANNEL}/${env.TEST_SUITE}") {
 
                             GIT_TAG = sh(
                                 label: "Confirming git branch",
@@ -50,7 +50,7 @@ pipeline {
 
                             currentBuild.displayName = "${env.TEST_SUITE} (${GIT_TAG}) ${env.BUILD_DISPLAY_NAME}"
 
-                            /** Starting PIP preparation */
+                            /** METTa pip install */
 
                             sh(
                                 label: "Installing metta (pip)",
@@ -70,16 +70,16 @@ pipeline {
                 METTA_CONFIGJSON="${params.METTA_CONFIGJSON}"
                 METTA_VARIABLES_ID="ci-${env.TEST_SUITE}-${env.BUILD_NUMBER}"
                 METTA_USER_ID="ci"
-            }              
+            }
             steps {
                 container('workspace') {
                     script {
 
-                        dir("suites/${env.TEST_SUITE}") {
+                        dir("suites/${env.TEST_CHANNEL}/${env.TEST_SUITE}") {
 
                             withCredentials([
-                                [ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds-docker-core', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
-                                usernamePassword(credentialsId: 'docker-hub-generic-up', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')
+                                [ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'testeng-aws-docker-core-access-keys', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
+                                usernamePassword(credentialsId: 'testeng-dockerhub-up', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')
                             ]) {
 
                                 try {
@@ -147,34 +147,36 @@ pipeline {
         stage('Reporting') {
             steps {
                 container('workspace') {
+                    script {
 
-                    dir("suites/${env.TEST_SUITE}") {
+                        dir("suites/${env.TEST_CHANNEL}/${env.TEST_SUITE}") {
 
-                        if (fileExists('reports')) {
-                            dir('reports') {
-                                archiveArtifacts artifacts:'*', allowEmptyArchive: true
+                            if (fileExists('reports')) {
+                                dir('reports') {
+                                    archiveArtifacts artifacts:'*', allowEmptyArchive: true
 
-                                if (fileExists('junit.xml')) {
-                                    junit 'junit.xml'
-                                }
-                                if (fileExists('pytest.html')) {
-                                    publishHTML (target : [
-                                        allowMissing: false,
-                                        alwaysLinkToLastBuild: true,
-                                        keepAll: true,
-                                        reportFiles: 'pytest.html',
-                                        reportDir: '.',
-                                        reportName: 'PyTest Report'
-                                    ])
+                                    if (fileExists('junit.xml')) {
+                                        junit 'junit.xml'
+                                    }
+                                    if (fileExists('pytest.html')) {
+                                        publishHTML (target : [
+                                            allowMissing: false,
+                                            alwaysLinkToLastBuild: true,
+                                            keepAll: true,
+                                            reportFiles: 'pytest.html',
+                                            reportDir: '.',
+                                            reportName: 'PyTest Report'
+                                        ])
+                                    }
                                 }
                             }
-                        }
-                        if (fileExists('results')) {
-                            archiveArtifacts artifacts: 'results/*', allowEmptyArchive: true
+                            if (fileExists('results')) {
+                                archiveArtifacts artifacts: 'results/*', allowEmptyArchive: true
+                            }
+
                         }
 
                     }
- 
                 }
             }
         }

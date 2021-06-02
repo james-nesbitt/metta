@@ -3,7 +3,7 @@ platform_repo: public
 platform: ubuntu_20.04
 # Versions to test against.
 mcr_channel: stable
-mcr_version: 20.10.4
+mcr_version: 20.10.5
 mke_image_repo: docker.io/mirantiseng
 mke_version: 3.4.2
 
