@@ -14,7 +14,7 @@ fixtures.yml
 ```
 # cncf :: metta.plugin.workload:
 cncf:
-    type: workload
+    plugin_type: workload
     plugin_id: metta_sonobuoy_workload
 
     # build the plugin from this config, by passing this label/base to it
@@ -39,7 +39,7 @@ Now your workload plugin can be accessed and used:
 
 ```
     cncf = environment_up.fixtures.get_plugin(
-        type=Type.WORKLOAD, instance_id='cncf')
+        plugin_type='workload', instance_id='cncf')
     """ cncf workload plugin """
 
     instance = cncf.create_instance(environment_up.fixtures)
@@ -59,11 +59,8 @@ Now your workload plugin can be accessed and used:
         plugin_results = results.plugin('e2e')
         if plugin_results.status() in [Status.FAILED]:
             for item in plugin_results:
-                logger.error(
-                    "{}: {} ({})".format(
-                        plugin_id,
-                        item.name,
-                        item.meta_file_path()))
+                logger.error("%s: %s (%s)", plugin_id, item.name,
+                             item.meta_file_path()))
 ```
 
 ### Use the workload plugin using the metta cli

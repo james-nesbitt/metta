@@ -10,14 +10,14 @@ import logging
 
 import fire
 
-from .base import Base
+from .root import Root
 
 logger = logging.getLogger('metta.cli.entrypoint')
 
 
 def main():
     """ Main entrypoint """
-    fire.Fire(Base)
+    fire.Fire(Root)
 
 
 if __name__ == '__main__':

@@ -29,9 +29,9 @@ def test_kubectl_client(provisioner_up):
     kubectl_client = environment.get_plugin(type=metta.plugin.Type.CLIENT,
         plugin_id="metta_kubernetes")
 
-    coreV1 = kubectl_client.get_CoreV1Api_client()
-    ns = coreV1.read_namespace(name="kube-system")
-    print("NS: {}".format(ns))
+    core_v1 = kubectl_client.get_CoreV1Api_client()
+    nsp = core_v1.read_namespace(name="kube-system")
+    print(f"NS: {nsp}")
 
     assert ns.metadata.name == "kube-system", "Wrong namespace given"
 ```

@@ -1,68 +1,78 @@
-import logging
-from typing import Dict, Any
+"""
 
-import json
+Metta CLI : Environment commands.
+
+Various commands that allow introspection of the available environments.
+
+"""
+import logging
 
 from mirantis.testing.metta import environment_names, get_environment
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.cli import CliBase
+
+from .base import CliBase, cli_output
 
 logger = logging.getLogger('metta.cli.environment')
 
 
+# this interface is common for all Metta plugins, but CLI plugins underuse it
+# pylint: disable=too-few-public-methods
 class EnvironmentCliPlugin(CliBase):
+    """Fire command/group generator for environment commands."""
 
     def fire(self):
-        """ return a dict of commands """
+        """Return a dict of commands."""
         return {
             'environment': EnvironmentGroup(self.environment)
         }
 
 
 class EnvironmentGroup():
+    """ase Fire command group for environment commands."""
 
     def __init__(self, environment: Environment):
+        """Create CLI command group."""
         self.environment = environment
 
+    # needs to be a method for registration in fire
+    # pylint: disable=no-self-use
     def list(self, raw: bool = False):
-        """ List all of the environment names  """
+        """List all of the environment names."""
         names = environment_names()
         if raw:
             return names
-        else:
-            return json.dumps(names)
+        return cli_output(names)
 
     def _environment(self, environment: str = ''):
-        """ select an environment """
+        """Select an environment."""
         if not environment:
             return self.environment
         return get_environment(environment)
 
     def name(self, environment: str = ''):
-        """ return env name """
-        environment = self._environment(environment)
-        return environment.name
+        """Return env name."""
+        environment_object = self._environment(environment)
+        return environment_object.name
 
     def info(self, environment: str = ''):
-        """ return info about an environment """
-        environment = self._environment(environment)
+        """Return info about an environment."""
+        environment_object = self._environment(environment)
 
         info = {
-            'name': environment.name
+            'name': environment_object.name
         }
 
-        if len(environment.states) > 0:
+        if len(environment_object.states) > 0:
             info['states'] = {
-                'available': environment.states,
-                'active': environment.state
+                'available': environment_object.states,
+                'active': environment_object.state
             }
 
-        return json.dumps(info, indent=2, default=lambda X: "{}".format(X))
+        return cli_output(info)
 
     def bootstraps(self, environment: str = ''):
-        """ List bootstraps that have been applied to the environment """
-        environment = self._environment(environment)
+        """List bootstraps that have been applied to the environment."""
+        environment_object = self._environment(environment)
+        bootstrap_list = list(bootstrap for bootstrap in environment_object.bootstrapped)
 
-        list = [bootstrap for bootstrap in environment.bootstrapped]
-
-        return json.dumps(list, indent=2, default=lambda X: "{}".format(X))
+        return cli_output(bootstrap_list)

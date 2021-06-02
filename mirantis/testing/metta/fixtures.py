@@ -1,14 +1,19 @@
 """
 
-A set of plugin instances kept as a managed set, we call these fixtures
+Fixture management code.
+
+A Fixture is a plugin isntance wrapper that keeps metadata about the plugin
+instance. A Fixtures object is a collection of plugin instances kept as an
+ordered, managed set.
 
 """
 import logging
-from typing import Dict, List, Any
+from typing import List, Iterator
 
-from .plugin import (METTAPlugin, Type, METTA_PLUGIN_CONFIG_KEY_PLUGINID,
-                     METTA_PLUGIN_CONFIG_KEY_INSTANCEID, METTA_PLUGIN_CONFIG_KEY_TYPE,
-                     METTA_PLUGIN_CONFIG_KEY_PRIORITY)
+# pylint: disable=W0511
+# TODO move these to this file as METTA_FIXTURE_KEY_XXXXX
+from .plugin import (METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE, METTA_PLUGIN_CONFIG_KEY_PLUGINID,
+                     METTA_PLUGIN_CONFIG_KEY_INSTANCEID, METTA_PLUGIN_CONFIG_KEY_PRIORITY)
 
 logger = logging.getLogger('metta.fixtures')
 
@@ -22,7 +27,7 @@ METTA_FIXTURE_VALIDATION_JSONSCHEMA = {
     'properties': {
         METTA_PLUGIN_CONFIG_KEY_PLUGINID: {'type': 'string'},
         METTA_PLUGIN_CONFIG_KEY_INSTANCEID: {'type': 'string'},
-        METTA_PLUGIN_CONFIG_KEY_TYPE: {'type': 'string'},
+        METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE: {'type': 'string'},
         METTA_PLUGIN_CONFIG_KEY_PRIORITY: {
             'type': 'integer', 'minimum': 1, 'maximum': 100}
     },
@@ -31,387 +36,311 @@ METTA_FIXTURE_VALIDATION_JSONSCHEMA = {
 """ json schema validation definition for a plugin """
 
 
+# pylint: disable=too-few-public-methods
 class Fixture:
-    """ A plugin wrapper struct that keep metadata about the plugin in a set """
+    """A plugin wrapper struct that keep metadata about the plugin in a set.
 
-    def __init__(self, plugin: object, type: Type,
-                 plugin_id: str, instance_id: str, priority: int):
-        """
+    pylint: R0903 ; if we replace this with a Dict then we have to define the
+        key values as a constant set.  it would be cumbersome to import such
+        things all over the place.
+
+    """
+
+    # pylint: disable=too-many-arguments
+    def __init__(self, plugin: object, plugin_type: str, plugin_id: str, instance_id: str,
+                 priority: int):
+        """Initialize struct contents.
 
         Parameters:
         -----------
-
-        fixture : the fixture plugin instance
+        plugin : the fixture plugin instance
 
         Filtering parameters:
 
-        type (.plugin.Type|str) : Type of plugin
+        plugin_type (str) : Type of plugin
         plugin_id (str) : registry plugin_id
         instance_id (str) : plugin instance identifier
 
         """
-        self.type = type
+        self.plugin_type = plugin_type
         self.plugin_id = plugin_id
         self.instance_id = instance_id
         self.priority = priority
         self.plugin = plugin
 
+    def __eq__(self, other):
+        """Compare to another fixture.
+
+        Parameters:
+        -----------
+        other (Fixture) : fixture to compare this fixture against.
+
+        Returns:
+        --------
+        Boolean True if the other fixture matches this one in metadata,
+        otherwise False.
+
+        """
+        if not isinstance(other, Fixture):
+            return False
+
+        return (self.plugin_type == other.plugin_type
+                and self.plugin_id == other.plugin_id
+                and self.instance_id == other.instance_id)
+
 
 class Fixtures:
-    """ A set if plugins as a managed set
+    """A managed set of Fixture objects.
 
     A set of plugins that can be added in an arbitrary order but retrieved
-    using filters and sorting.
+    using filters and sorting.  The plugins are wrapped as Fixtures, which are
+    used for the sorting and filtering.
+
+    To use this, create an instance, and then add fixtures using either new()
+    or add().  You can also combine two collections using merge().
+    To get fixtures out, either iterator across the Fixtures object, or use
+    get() to retrieve a single matching item.  use filter() to produce a new
+    Fixtures object as a reduced set.
 
     """
 
     def __init__(self):
-        self.fixtures = []
+        """Create initial empty fixtures list."""
+        self._fixtures: List[Fixture] = []
+        """ object List of fixtures. """
 
     def __len__(self) -> int:
-        """ Return how many plugin instances we have """
-        return self.count()
+        """Return how many plugin instances we have.
 
-    def __getitem__(self, instance_id: str) -> object:
-        """ Handle subscription request
+        Returns:
+        --------
+        Integer length of the collection of Fixture objects.
 
-        For subscriptions assume that an instance_id is being retrieved and that
-        a plugin is desired for return.
+        """
+        return len(self._fixtures)
+
+    def __iter__(self) -> Iterator[Fixture]:
+        """Create an iterator for the fixtures object.
+
+        @TODO switch to just using a generator?
+
+        Returns:
+        --------
+        An Iterator of Fixture objects
+
+        """
+        # Iterate across the to_list() set, as it is sorted.
+        return iter(self.to_list())
+
+    def __reversed__(self) -> Iterator[Fixture]:
+        """Create a reversed iterator for the fixtures object.
+
+        @TODO switch to just using a generator?
+
+        Returns:
+        --------
+        An Iterator of Fixture objects
+
+        """
+        # Iterate across the to_list() set, as it is sorted.
+        return reversed(self.to_list())
+
+    def merge(self, merge_from: 'Fixtures'):
+        """Merge fixture instances from another Fixtures object into this one.
 
         Parameters:
         -----------
-
-        instance_id (str) : Instance instance_id to look for
-
-        Returns:
-
-        Plugin object for highest priority plugin with the matching instance_id
+        Merge_from (Fixtures) : fixture instance source
 
         Raises:
         -------
+        May raise a KeyError if there a matching plugin is already in the
+        Fixtures object.
 
-        KeyError if the key cannot be matched,
+        (plugin_type/plugin_id/instance_id)
 
         """
-        return self.get_plugin(instance_id=instance_id)
+        # We use the add_fixture method to centralize the logic for adding fixtures to one function
+        for fixture in merge_from:
+            self.add(fixture)
 
-    def merge_fixtures(self, merge_from: 'Fixtures'):
-        """ merge fixture instances from another Fixtures object into this one
+    # pylint: disable=too-many-arguments
+    def new(self, plugin: object, plugin_type: str, plugin_id: str,
+            instance_id: str, priority: int) -> Fixture:
+        """Add a new fixture by providing the plugin instance and the metadata.
+
+        Create a new Fixture from the passed arguments and add it to the
+        Fixtures set.
 
         Parameters:
         -----------
-
-        merge_from (Fixtures) : fixture instance source
-
-        """
-        self.fixtures += merge_from.fixtures
-
-    def new_fixture(self, plugin: object, type: Type,
-                    plugin_id: str, instance_id: str, priority: int):
-        """ Add a new fixture by providing the plugin instance and the metadata
-
-        Create a new Fixture from the passed arguments and add it to the Fixtures set
-
-        Parameters:
-        -----------
-
         plugin : the fixture plugin instance
 
         Filtering parameters:
 
-        type (.plugin.Type|str) : Type of plugin
+        plugin_type (str) : Type of plugin
         plugin_id (str) : registry plugin_id
         instance_id (str) : plugin instance identifier
+        priority (int) : plugin priority
 
         """
-        fixture = Fixture(
-            type=type,
-            plugin_id=plugin_id,
-            instance_id=instance_id,
-            priority=priority,
-            plugin=plugin)
-        self.fixtures.append(fixture)
-        return fixture
+        return self.add(Fixture(plugin_type=plugin_type, plugin_id=plugin_id,
+                                instance_id=instance_id, priority=priority, plugin=plugin))
 
-    def add_fixture(self, fixture: Fixture):
-        """ Add an existing fixture
+    def add(self, fixture: Fixture, allow_overwrite: bool = True) -> Fixture:
+        """Add an existing fixture.
+
+        If a matching
 
         Parameters:
         -----------
-
         fixture (Fixture) : existing fixture to add
 
+        allow_overwrite (bool) : If True, then this fixture can replace a
+            matching plugin with the same metadata.
+
         """
-        self.fixtures.append(fixture)
+        if self.get(plugin_type=fixture.plugin_type, plugin_id=fixture.plugin_id,
+                    instance_id=fixture.instance_id, exception_if_missing=False):
+
+            if not allow_overwrite:
+                raise KeyError("Fixture index already exists:"
+                               f"[plugin_type:{fixture.plugin_type}][plugin_id:{fixture.plugin_id}]"
+                               f"[instance_id:{fixture.instance_id}]")
+
+            for i in range(len(self._fixtures)):
+                if self._fixtures[i] == fixture:
+                    self._fixtures[i] = fixture
+                    return fixture
+
+        self._fixtures.append(fixture)
+
         return fixture
 
-    def to_list(self):
-        """ retrieve this fixtures as a list """
-        return sort_instance_list(self.fixtures)
-
-    def count(self, type: Type = None, plugin_id: str = '',
-              instance_id: str = ''):
-        """ retrieve the first matching fixture object based on filters and priority
+    def get(self, plugin_type: str = '', plugin_id: str = '', instance_id: str = '',
+            exception_if_missing: bool = True) -> Fixture:
+        """Retrieve the first matching fixture object based on filters and priority.
 
         Parameters:
         -----------
-
         Filtering parameters:
 
-        type (.plugin.Type|str) : Type of plugin
+        plugin_type (str) : Type of plugin
         plugin_id (str) : registry plugin_id
         instance_id (str) : plugin instance identifier
 
         Returns:
         --------
-
-        The fixture plugin object the sorted plugins that match the passed parameters,
-
-        Raises:
-        -------
-
-        KeyError if exception_if_missing is True and no matching fixture was found
-
-        """
-        return len(self._filter_instances(
-            type=type, plugin_id=plugin_id, instance_id=instance_id))
-
-    def get_plugin(self, type: Type = None, plugin_id: str = '',
-                   instance_id: str = '', exception_if_missing: bool = True):
-        """ retrieve the first matching fixture object based on filters and priority
-
-        Parameters:
-        -----------
-
-        Filtering parameters:
-
-        type (.plugin.Type|str) : Type of plugin
-        plugin_id (str) : registry plugin_id
-        instance_id (str) : plugin instance identifier
-
-        Returns:
-        --------
-
         The highest priority matched Fixture fixture.
         If now fixtures matched, and exception_if_missing is False, then None
 
         Raises:
         -------
-
-        KeyError if exception_if_missing is True and no matching fixture was found
+        KeyError if exception_if_missing is True and no matching fixture was
+        found.
 
         """
-        instance = self.get_fixture(
-            type=type,
+        filtered = self.filter(
+            plugin_type=plugin_type,
+            plugin_id=plugin_id,
+            instance_id=instance_id)
+
+        if len(filtered) > 0:
+            return filtered.to_list()[0]
+        if exception_if_missing:
+            raise KeyError("Could not find any matching fixture instances "
+                           f"[plugin_type:{plugin_type}][plugin_id:{plugin_id}]"
+                           f"[instance_id:{instance_id}]")
+        # filtered list was empty, and we were not directed to raise an exception for that.
+        return None
+
+    def get_plugin(self, plugin_type: str = '', plugin_id: str = '', instance_id: str = '',
+                   exception_if_missing: bool = True) -> object:
+        """Retrieve the first matching plugin  based on filters and priority.
+
+        Parameters:
+        -----------
+        Filtering parameters:
+
+        plugin_type (str) : Type of plugin
+        plugin_id (str) : registry plugin_id
+        instance_id (str) : plugin instance identifier
+
+        Returns:
+        --------
+        The highest priority matched Fixture fixture.
+        If now fixtures matched, and exception_if_missing is False, then None
+
+        Raises:
+        -------
+        KeyError if exception_if_missing is True and no matching fixture was
+        found. This error is actually raise in self.get()
+
+        """
+        fixture = self.get(
+            plugin_type=plugin_type,
             plugin_id=plugin_id,
             instance_id=instance_id,
             exception_if_missing=exception_if_missing)
 
-        if not instance is None:
-            return instance.plugin
+        if fixture is None:
+            return None
+        return fixture.plugin
 
-    def get_fixture(self, type: Type = None, plugin_id: str = '',
-                    instance_id: str = '', exception_if_missing: bool = True) -> 'Fixture':
-        """ retrieve the first matching fixture object based on filters and priority
+    def filter(self, plugin_type: str = '', plugin_id: str = '', instance_id: str = '',
+               exception_if_missing: bool = False) -> 'Fixtures':
+        """Filter the fixture instances.
 
         Parameters:
         -----------
-
         Filtering parameters:
 
-        type (.plugin.Type|str) : Type of plugin
+        plugin_type (str) : Type of plugin
         plugin_id (str) : registry plugin_id
         instance_id (str) : plugin instance identifier
 
         Returns:
         --------
-
-        The highest priority matched Fixture fixture.
-        If now fixtures matched, and exception_if_missing is False, then None
+        A new Fixtures object with only matching Fixture objects.  It could
+        contain all of the items. If no filters were passed in, or it could
+        be empty if no matches were found and the passed exception_is_missing
+        variable is True
 
         Raises:
         -------
-
         KeyError if exception_if_missing is True and no matching fixture was found
 
         """
-        instances = self.get_fixtures(
-            type=type,
-            plugin_id=plugin_id,
-            instance_id=instance_id).to_list()
-
-        if len(instances):
-            return instances[0]
-        if exception_if_missing:
-            raise KeyError(
-                "Could not find any matching fixture instances [type:{type}][plugin_id:{plugin_id}][instance_id:{instance_id}]".format(
-                    type=type.value if not type is None else '',
-                    plugin_id=plugin_id,
-                    instance_id=instance_id))
-        return None
-
-    def get_plugins(self, type: Type = None, plugin_id: str = '',
-                    instance_id: str = '') -> List[object]:
-        """ retrieve the first matching fixture object based on filters and priority
-
-        Parameters:
-        -----------
-
-        Filtering parameters:
-
-        type (.plugin.Type|str) : Type of plugin
-        plugin_id (str) : registry plugin_id
-        instance_id (str) : plugin instance identifier
-
-        Returns:
-        --------
-
-        A List of sorted Fixture fixture objects that match the arguments,
-        possibly empty.
-
-        """
-        instances = self.get_fixtures(
-            type=type,
-            plugin_id=plugin_id,
-            instance_id=instance_id).to_list()
-        return [instance.plugin for instance in instances]
-
-    def get_fixtures(self, type: Type = None, plugin_id: str = '',
-                     instance_id: str = '') -> 'Fixtures':
-        """ Retrieve an ordered filtered list of Fixtures
-
-        Parameters:
-        -----------
-
-        Filtering parameters:
-
-        type (.plugin.Type|str) : Type of plugin
-        plugin_id (str) : registry plugin_id
-        instance_id (str) : plugin instance identifier
-
-        Returns:
-        --------
-
-        A List of Fixture structs that matched the arguments,
-        possibly empty.
-        If you want a sorted list see .to_list()
-
-        """
-        matches = Fixtures()
-        [matches.add_fixture(match) for match in self._filter_instances(
-            type=type, plugin_id=plugin_id, instance_id=instance_id)]
-        return matches
-
-    def get_filtered(self, type: Type = None,
-                     plugin_id: str = '', instance_id: str = '') -> 'Fixtures':
-        """ Get a new Fixtures object which is a filtered subset of this one """
         filtered = Fixtures()
-        for instance in self._filter_instances(
-                type=type, plugin_id=plugin_id, instance_id=instance_id):
-            filtered.add_fixture(instance)
-        return filtered
-
-    def _filter_instances(self, type: Type = None,
-                          plugin_id: str = '', instance_id: str = '') -> List[Fixture]:
-        """ Filter the fixture instances down to a List
-
-        Parameters:
-        -----------
-
-        Filtering parameters:
-
-        type (.plugin.Type|str) : Type of plugin
-        plugin_id (str) : registry plugin_id
-        instance_id (str) : plugin instance identifier
-
-        Returns:
-        --------
-
-        An unsorted List of Fixture structs that matched the arguments,
-        possibly empty.
-
-        Raises:
-        -------
-
-        KeyError if exception_if_missing is True and no matching fixture was found
-
-        """
-        matched_instances = []
-        for plugin_instance in self.fixtures:
+        for fixture in self._fixtures:
             # Could have one-lined this into a lambda but it would be
             # unreadable
 
-            if plugin_id and not plugin_instance.plugin_id == plugin_id:
+            if plugin_type and not fixture.plugin_type == plugin_type:
                 continue
-            elif instance_id and not plugin_instance.instance_id == instance_id:
+            if plugin_id and not fixture.plugin_id == plugin_id:
                 continue
-            elif type and not type == plugin_instance.type:
+            if instance_id and not fixture.instance_id == instance_id:
                 continue
 
-            matched_instances.append(plugin_instance)
+            filtered.add(fixture)
 
-        return matched_instances
+        if exception_if_missing and len(filtered) == 0:
+            raise KeyError(f"Filter found matches [{plugin_type}][{plugin_id}][{instance_id}]")
+        return filtered
 
+    def to_list(self) -> List[Fixture]:
+        """Order the fixtures based on priority.
 
-def sort_instance_list(list: List[Fixture]) -> List[Fixture]:
-    """ Order a list of objects with a priority value from highest to lowest """
-    return sorted(list, key=lambda i: 1 / i.priority if i.priority else 0)
+        This is usefull if you need a list, but you can rely on the
+        Fixtures.__iter__ for most scenarios, and just iterate across the
+        Fixtures object itself.
 
+        This method is relied on internally.
 
-class UCCTFixturesPlugin:
-    """ Mixin class for plugins that hold fixtures """
-
-    def __init__(self, fixtures: Fixtures = None):
-        """ A Plugin that holds fixtures
+        Returns:
+        --------
+        A List[Fixture] of the contained fixtures sorted using their priority.
 
         """
-        if fixtures is None:
-            fixtures = Fixtures()
-        self.fixtures = fixtures
-        """ Hold plugin fixtures, so that a provisioner can add output/clients etc """
-
-    def get_fixtures(self, type: Type = None, instance_id: str = '',
-                     plugin_id: str = '') -> Fixtures:
-        """ retrieve an fixture plugin from the plugin """
-        return self.fixtures.get_fixtures(
-            type=type, plugin_id=plugin_id, instance_id=instance_id)
-
-    def get_fixture(self, type: Type = None, instance_id: str = '',
-                    plugin_id: str = '', exception_if_missing: bool = True) -> Fixture:
-        """ retrieve an fixture plugin from the plugin """
-        return self.fixtures.get_fixture(
-            type=type, plugin_id=plugin_id, instance_id=instance_id, exception_if_missing=exception_if_missing)
-
-    def get_plugin(self, type: Type = None, plugin_id: str = '',
-                   instance_id: str = '', exception_if_missing: bool = True) -> METTAPlugin:
-        """ Retrieve one of the passed in fixtures """
-        logger.info(
-            "{}:execute: get_plugin({})".format(
-                self.instance_id,
-                type.value))
-        return self.fixtures.get_plugin(
-            type=type, plugin_id=plugin_id, instance_id=instance_id, exception_if_missing=exception_if_missing)
-
-    def get_provisioner(self, plugin_id: str = '', instance_id: str = '',
-                        exception_if_missing: bool = True) -> METTAPlugin:
-        """ Retrieve one of the passed in fixture provisioner """
-        return self.get_plugin(type=Type.PROVISIONER, plugin_id=plugin_id,
-                               instance_id=instance_id, exception_if_missing=exception_if_missing)
-
-    def get_output(self, plugin_id: str = '', instance_id: str = '',
-                   exception_if_missing: bool = True) -> METTAPlugin:
-        """ Retrieve one of the passed in fixture outputs """
-        return self.get_plugin(type=Type.OUTPUT, plugin_id=plugin_id,
-                               instance_id=instance_id, exception_if_missing=exception_if_missing)
-
-    def get_client(self, plugin_id: str = '', instance_id: str = '',
-                   exception_if_missing: bool = True) -> METTAPlugin:
-        """ Retrieve one of the passed in fixture clients """
-        return self.get_plugin(type=Type.CLIENT, plugin_id=plugin_id,
-                               instance_id=instance_id, exception_if_missing=exception_if_missing)
-
-    def get_workload(self, plugin_id: str = '', instance_id: str = '',
-                     exception_if_missing: bool = True) -> METTAPlugin:
-        """ Retrieve one of the passed in fixture workloads """
-        return self.get_plugin(type=Type.WORKLOAD, plugin_id=plugin_id,
-                               instance_id=instance_id, exception_if_missing=exception_if_missing)
+        return sorted(self._fixtures, key=lambda i: 1 / i.priority if i.priority > 0 else 0)

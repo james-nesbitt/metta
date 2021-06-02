@@ -1,6 +1,15 @@
+"""
+
+Metta CLI : Config commands.
+
+Various commands that allow introspection of the configerus config setup and
+values.  There are commands for inspecting which plugins are avaialble, and
+what configuration sources are setup, but also for examining rendered config
+and formatting strings using config - all to allow verification of what
+config is feeding metta.
+
+"""
 import logging
-from typing import Dict, Any
-import json
 
 from configerus.loaded import LOADED_KEY_ROOT
 from configerus.plugin import Type as ConfigerusType
@@ -8,45 +17,53 @@ from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.cli import CliBase
+
+from .base import CliBase, cli_output
 
 logger = logging.getLogger('metta.cli.config')
 
 
+# this interface is common for all Metta plugins, but CLI plugins underuse it
+# pylint: disable=too-few-public-methods
 class ConfigCliPlugin(CliBase):
+    """Fire command/group generator for config commands."""
 
     def fire(self):
-        """ return a dict of commands """
+        """Return a dict of commands."""
         return {
             'config': ConfigGroup(self.environment)
         }
 
 
 class ConfigGroup():
+    """Base Fire command group for output commands."""
 
     def __init__(self, environment: Environment):
+        """Store environment in object."""
         self.environment = environment
 
     def plugins(self, plugin_id: str = '', instance_id: str = '',
-                type: str = ''):
-        """ List configerus plugins """
-        list = [{
-            'type': instance.type.value,
-            'plugin_id': instance.plugin_id,
-            'instance_id': instance.instance_id,
-            'priority': instance.priority,
-        } for instance in self.environment.config.plugins.get_instances(plugin_id=plugin_id, instance_id=instance_id, type=type)]
-
-        return json.dumps(list, indent=2)
+                plugin_type: str = ''):
+        """List configerus plugins."""
+        configerus_plugin_list = []
+        for instance in self.environment.config.plugins.get_instances(
+                plugin_id=plugin_id, instance_id=instance_id, type=plugin_type):
+            configerus_plugin_list.append({
+                'type': instance.plugin_type,
+                'plugin_id': instance.plugin_id,
+                'instance_id': instance.instance_id,
+                'priority': instance.priority,
+            })
+        return cli_output(configerus_plugin_list)
 
     def sources(self, plugin_id: str = '',
                 instance_id: str = '', deep: bool = False):
-        """ List configerus sourceS """
-        list = []
+        """List configerus sources."""
+        source_list = []
         for instance in self.environment.config.plugins.get_instances(
                 plugin_id=plugin_id, instance_id=instance_id, type=ConfigerusType.SOURCE):
             source = {
-                'type': instance.type.value,
+                'type': instance.plugin_type,
                 'plugin_id': instance.plugin_id,
                 'instance_id': instance.instance_id,
                 'priority': instance.priority,
@@ -58,56 +75,49 @@ class ConfigGroup():
                 if instance.plugin_id == PLUGIN_ID_SOURCE_DICT:
                     source['data'] = instance.plugin.data
 
-            list.append(source)
+            source_list.append(source)
 
-        return json.dumps(list, indent=2, default=serialize_last_resort)
+        return cli_output(source_list)
 
     def loaded(self, raw: bool = False):
-        """ List loaded config labels """
+        """List loaded config labels."""
         loaded = self.environment.config.loaded
         value = list(loaded)
         if raw:
             return value
-        else:
-            return json.dumps(value)
+        return cli_output(value)
 
     def get(self, label: str, key: str = LOADED_KEY_ROOT):
-        """ Retrieve configuration from the config object
+        """Retrieve configuration from the config object.
 
         USAGE:
 
             metta config get {label} [{key}]
 
-
         """
         try:
             loaded = self.environment.config.load(label)
-        except KeyError as e:
-            return "Could not find the config label '{}'".format(label)
+        except KeyError:
+            return f"Could not find the config label '{label}'"
 
         try:
             value = loaded.get(key)
-        except KeyError as e:
-            return "Could not find the config key '{}'".format(key)
+        except KeyError:
+            return f"Could not find the config key '{key}'"
 
-        return json.dumps(value, indent=2, default=serialize_last_resort)
+        return cli_output(value)
 
-    def format(self, data: str,
-               default_label: str = 'you did not specify a default', raw: bool = False):
-        """ Format a target string using config templating """
-
+    # broad exception catch just to format error message
+    # pylint: disable=broad-except
+    def format(self, data: str, default_label: str = None, raw: bool = False):
+        """Format a target string using config templating."""
         try:
-            value = self.environment.config.format(
-                data=data, default_label=default_label)
-        except Exception as e:
-            return "Error occured in formatting: '{}'".format(e)
+            if default_label is None:
+                default_label = 'you did not specify a default'
+            value = self.environment.config.format(data=data, default_label=default_label)
+        except Exception as err:
+            return f"Error occured in formatting: '{err}'"
 
         if raw:
             return value
-        else:
-            return json.dumps(value, indent=2, default=serialize_last_resort)
-
-
-def serialize_last_resort(X):
-    """ last attempt at serializing """
-    return "{}".format(X)
+        return cli_output(value)

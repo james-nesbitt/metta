@@ -1,12 +1,12 @@
+"""
 
-import os
+Testkit command line tool caller.
+
+"""
 import logging
-import yaml
-import json
-import datetime
 import subprocess
-import shutil
-from typing import Dict, List, Any
+from typing import List
+
 
 logger = logging.getLogger('metta_testkit:testkit')
 
@@ -20,15 +20,15 @@ TESTKITCLIENT_BIN_PATH = '/home/james/Documents/Mirantis/tools/testkit/testkit'
 
 
 class TestkitClient:
-    """ shell client for interacting with the testkit bin """
+    """Shell client for interacting with the testkit bin."""
 
     def __init__(self, config_file: str = TESTKITCLIENT_CLI_CONFIG_FILE_DEFAULT,
                  working_dir: str = TESTKITCLIENT_WORKING_DIR_DEFAULT,
                  debug: bool = False):
-        """
+        """Initialize Testkit command executer.
+
         Parameters:
         -----------
-
         config_file (str) : path to testkit config file, typically
             testkit.yml
 
@@ -49,47 +49,42 @@ class TestkitClient:
         """ path to testkit executable """
 
     def version(self):
-        """ Output testkit client version """
+        """Return testkit client version."""
         return self._run(['version'], return_output=True)
 
-    def create(self, opts: Dict[str, str]):
-        """ run the testkit create command """
+    def create(self, opts: List[str]):
+        """Run the testkit create command."""
         return self._run(['create'] + opts)
 
     def system_rm(self, system_name: str):
-        """ remove a system from testkit """
+        """Remove a system from testkit."""
         return self._run(['system', 'rm', system_name])
 
-    def _run(self, args: List[str] = ['help'], return_output=False):
-        """ Run a testkit command
+    # this syntax makes it easier to read
+    # pylint: disable=inconsistent-return-statements
+    def _run(self, args: List[str], return_output=False):
+        """Run a testkit command.
 
         Parameters:
-
+        -----------
         args (List[str]) : arguments to pass to the testkit bin using
             subprocess
 
         """
-
-        cmd = [self.bin, '--file={}'.format(self.config_file)]
+        cmd = [self.bin, f'--file={self.config_file}']
 
         if self.debug:
             cmd += ['--debug']
 
         cmd += args
 
-        if return_output:
-            logger.debug(
-                "running testkit command with output capture: %s",
-                " ".join(cmd))
-            exec = subprocess.run(
-                cmd,
-                cwd=self.working_dir,
-                shell=False,
-                stdout=subprocess.PIPE)
-            exec.check_returncode()
-            return exec.stdout.decode('utf-8')
-        else:
+        if not return_output:
             logger.error("running testkit command: %s", " ".join(cmd))
-            exec = subprocess.run(
-                cmd, cwd=self.working_dir, check=True, text=True)
-            exec.check_returncode()
+            res = subprocess.run(cmd, cwd=self.working_dir, check=True, text=True, check=True)
+            res.check_returncode()
+        else:
+            logger.debug("running testkit command with output capture: %s", " ".join(cmd))
+            res = subprocess.run(cmd, cwd=self.working_dir, shell=False, stdout=subprocess.PIPE,
+                                 check=True)
+            res.check_returncode()
+            return res.stdout.decode('utf-8')

@@ -1,15 +1,25 @@
 """
 
-METTA Plugin definition and management
+METTA Plugin definition and management.
 
-@NOTE we would like to type hint the 'environment' variable but it would
-    create a circular import. This is not totally avoidable as plugin
-    holds an Environment, but an Environments creates the plugin
+The basis of plugin management is here.  The functionality allows any code to
+register a plugin by decorating a factory function, or to use the factory to
+ask for an instance of a plugin based on type an id.
+
+Plugins have two important pieces of metadata for their type:
+
+1. Plugin_type : an arbitrary string label which allows semantic grouping of
+        plugins.  Type is used for loose retrieval, for example "to get all of
+        the CLI plugin types", but is also used for introspection (checking
+        out what we have.)
+2. Plugin_Id : an arbitrary string used to label the specific plugin type.
+        This means that when trying to get an instance of a specific plugin,
+        this value can be used.
 
 """
 import logging
 import functools
-from enum import Enum, unique
+from typing import Dict, Callable
 
 logger = logging.getLogger('metta.plugin')
 
@@ -19,111 +29,26 @@ METTA_PLUGIN_CONFIG_KEY_PLUGINID = 'plugin_id'
 """ configerus .get() key for plugin_id """
 METTA_PLUGIN_CONFIG_KEY_INSTANCEID = 'instance_id'
 """ configerus .get() key for plugin_id """
-METTA_PLUGIN_CONFIG_KEY_TYPE = 'type'
+METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE = 'plugin_type'
 """ configerus .get() key for plugin type """
 METTA_PLUGIN_CONFIG_KEY_ARGUMENTS = 'arguments'
 """ configerus .get() key for plugin arguments """
 METTA_PLUGIN_CONFIG_KEY_PRIORITY = 'priority'
-""" will use this Dict key assign an instance a priority when it is created. """
+""" configerus .get()  assign an instance a priority when it is created. """
 METTA_PLUGIN_CONFIG_KEY_CONFIG = 'config'
-""" will use this Dict key as additional config """
+""" configerus .get()  as additional config """
 METTA_PLUGIN_CONFIG_KEY_VALIDATORS = 'validators'
-""" will use this Dict key from the output config to decide what validators to apply to the plugin """
+""" configerus .get()  to decide what validators to apply to the plugin """
 
 
 METTA_PLUGIN_VALIDATION_JSONSCHEMA = {
-    METTA_PLUGIN_CONFIG_KEY_INSTANCEID: {'type': 'string'}
+    METTA_PLUGIN_CONFIG_KEY_INSTANCEID: {'plugin_type': 'string'}
 }
 """ json schema validation definition for a plugin """
 
 
-class METTAPlugin():
-    """ Base metta Plugin which all plugins can extend """
-
-    def __init__(self, environment: object, instance_id: str):
-        """
-        Parameters:
-        -----------
-
-        environment (Environment) : Environment object in which this plugin lives.
-
-        instance_id (str) : instance id for the plugin.  A unique identifier which
-            the plugin can use for naming and introspective identification.
-
-        """
-        self.environment = environment
-        self.instance_id = instance_id
-
-
-@unique
-class Type(Enum):
-    """ Enumerator to match plugin types to plugin labels """
-    CLIENT = 'metta.plugin.client'
-    """ Plugins which interact with clusters """
-    SOURCE = 'metta.plugin.configsource'
-    """ A Config source handler """
-    OUTPUT = 'metta.plugin.output'
-    """ A Config output handler """
-    PROVISIONER = 'metta.plugin.provisioner'
-    """ A cluster provisioner plugin """
-    WORKLOAD = 'metta.plugin.workload'
-    """ Plugins which use clients/provisioners to apply a workload to a cluster """
-    UTILITY = 'metta.plugins.utility'
-    """ plugins that are used for tooling around testing, but don't directly participate in testing """
-    CLI = 'metta.plugin.cli'
-    """ Plugins extend the metta cli """
-
-    def from_string(type_string: str) -> 'Type':
-        """ Try to offer some flexibility when defining a type
-
-        METTA Plugin enum keys are upper case keys such as "OUTPUT" or "CLIENT"
-        and values are in a long form 'metta.plugin.provisioner'.  Both can be
-        difficult to use, especially for config ources which can't
-        programmatically access the enum.
-
-        This function allows some flexibility in naming.
-
-        Parameters:
-        -----------
-
-        type_string (str) : a string attempt to identify a plugin.  It can be
-            an any-case form of the Type key, the full string value of a Type
-            instance, or the part after 'metta.plugin.' of the value.
-
-        Returns:
-        --------
-
-        a Type instance matching the passed string
-
-        Raises:
-        -------
-
-        KeyError if the passed argument could not be matched.
-
-        """
-        if type is None:
-            raise ValueError(
-                "Cannot determine type of plugin sa you passed a None value")
-
-        try:
-            return Type(type_string)
-        except ValueError:
-            pass
-        try:
-            return Type[type_string.upper()]
-        except (KeyError, AttributeError):
-            pass
-        try:
-            return Type('metta.plugin.{}'.format(type_string))
-        except ValueError:
-            pass
-
-        raise KeyError(
-            "Could not identify METTA plugin type requested '{}'".format(type_string))
-
-
 class Factory():
-    """ Python decorator class for metta Plugin factories
+    """Python decorator class for metta Plugin factories.
 
     This class should be used to decorate any function which is meant to be a
     factory for metta plugins.
@@ -132,89 +57,90 @@ class Factory():
     the factory type and id values, and then the factory will be avaialble to
     other code.
 
-    If you are trying to get an instance of a plugin, then create an instance of
-    this class and use the create() method
+    If you are trying to get an instance of a plugin, then create an instance
+    of this class and use the create() method
 
     """
 
-    registry = {}
-    """ A list of all of the registered factory functions """
+    registry: Dict[str, Dict[str, Callable]] = {}
+    """ A dict of registered factory functions, grouped by plugin type """
 
-    def __init__(self, type: Type, plugin_id: str):
-        """ register the decoration
+    def __init__(self, plugin_type: str, plugin_id: str):
+        """Create a new Factory instance.
+
+        This is used in two scenarios:
+
+        1. Execution of a decoration on a factory function.
+        2. Initialization of an object that will be used to for new instances.
 
         Parameters:
         -----------
-
-        type (Type) : Plugin type which the factory created
+        plugin_type (str) : Plugin type label which the factory created
+            pylint W0622 this is used only in this function and it makes for a
+            much more natural decorator syntax
 
         plugin_id (str) : unique identifier for the plugin which this factory
             will create.  This will be used on registration and the matching
             value is used on construction.
 
         """
-        logger.debug(
-            "Plugin factory registered `%s:%s`",
-            type.value,
-            plugin_id)
+        logger.debug("Metta Plugin factory registering `%s:%s`", plugin_type, plugin_id)
         self.plugin_id = plugin_id
-        self.type = type
+        self.plugin_type = plugin_type
 
-        if not self.type.value in self.registry:
-            self.registry[self.type.value] = {}
+        if self.plugin_type not in self.registry:
+            self.registry[self.plugin_type] = {}
 
     def __call__(self, func):
-        """ Decorator factory wrapping function
+        """Wrap the decorator factory wrapping function.
 
         Returns:
         --------
-
-        Decorated construction function(config: Config)
+        Decorated construction function.
 
         """
         functools.update_wrapper(self, func)
 
         def wrapper(environment: object, instance_id: str, *args, **kwargs):
-            logger.debug(
-                "plugin factory exec: %s:%s",
-                self.type.value,
-                self.plugin_id)
+            logger.debug("plugin factory exec: %s:%s", self.plugin_type, self.plugin_id)
             plugin = func(
                 environment=environment,
                 instance_id=instance_id,
                 *args,
                 **kwargs)
-            if not isinstance(plugin, METTAPlugin):
-                logger.warn(
-                    "plugin factory did not return an instance of metta Plugin `{}:{}`".format(
-                        self.type.value, self.plugin_id))
 
             return plugin
 
-        self.registry[self.type.value][self.plugin_id] = wrapper
+        self.registry[self.plugin_type][self.plugin_id] = wrapper
         return wrapper
 
-    def create(self, environment: object, instance_id: str, *args, **kwargs):
-        """ Get an instance of a plugin as created by the decorated
+    def create(self, environment: object, instance_id: str, *args, **kwargs) -> object:
+        """Get an instance of a plugin as created by the decorated.
 
         Parameters:
+        -----------
+        environment (Environment) : Environment object in which this plugin
+            lives.
 
-        environment (Environment) : Environment object in which this plugin lives.
-
-        instance_id (str) : instance id for the plugin.  A unique identifier which
-            the plugin can use for naming and introspective identification.
+        instance_id (str) : instance id for the plugin.  A unique identifier
+            which the plugin can use for naming and introspective
+            identification.
 
         """
         try:
-            factory = self.registry[self.type.value][self.plugin_id]
-        except KeyError:
+            factory = self.registry[self.plugin_type][self.plugin_id]
+        except KeyError as err:
             raise NotImplementedError(
-                "METTA Plugin instance '{}:{}' has not been registered.".format(
-                    self.type.value, self.plugin_id))
-        except Exception as e:
+                f"METTA Plugin instance '{self.plugin_type}:{self.plugin_id}' "
+                "has not been registered.") from err
+        except Exception as err:
             raise Exception(
-                "Could not create Plugin instance '{}:{}' as the plugin factory produced an exception".format(
-                    self.type.value, self.plugin_id)) from e
+                f"Could not create Plugin instance '{self.plugin_type}:{self.plugin_id}' "
+                "due to an unknown error.") from err
 
         return factory(environment=environment,
                        instance_id=instance_id, *args, **kwargs)
+
+    def types(self):
+        """Return a generator of types that have been registered."""
+        return self.registry.keys()

@@ -50,15 +50,15 @@ config source such as`./config/fixtures.yml`.
 
 ```
 my_provisioner:
-  type: metta.plugin.provisioner
+  plugin_type: provisioner
   plugin_id: dummy
 
 my_client:
-  type: metta.plugin.client
+  plugin_type: client
   plugin_id: dummy
 
 my_workload:
-  type: metta.plugin.workload
+  plugin_type: workload
   plugin_id: dummy
 ```
 

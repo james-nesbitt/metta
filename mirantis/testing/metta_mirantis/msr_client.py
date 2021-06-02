@@ -1,19 +1,25 @@
 """
 
-Mirantis MSR API Client
+Mirantis MSR API interaction.
+
+Two Metta plugins:
+
+1. The Metta cli plugin allows CLI interaction with MSR client plugin
+   from the command line tool.
+2. The Metta client plugin allows interaction with the MSR API.
 
 """
 
 import logging
 import json
 from typing import List, Dict
-import requests
 from enum import Enum
 
-from mirantis.testing.metta.plugin import Type
+import requests
+
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.client import ClientBase
-from mirantis.testing.metta.cli import CliBase
+from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta_cli.base import CliBase
 
 logger = logging.getLogger('metta.contrib.metta_mirantis.client.msrapi')
 
@@ -21,46 +27,52 @@ logger = logging.getLogger('metta.contrib.metta_mirantis.client.msrapi')
 METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID = 'metta_mirantis_client_msr'
 """ Mirantis MSR APIP Client plugin id """
 
+# this interface is common for all Metta plugins, but CLI plugins underuse it
+# pylint: disable=too-few-public-methods
+
 
 class MSRAPICliPlugin(CliBase):
-    """ MEtta CLI plugin for injecting MSR API Client commands into the cli """
+    """Metta CLI plugin for injecting MSR API Client commands into the cli."""
 
     def fire(self):
-        """ return a dict of commands for aucnhpad provisioenrs if one hase been registered."""
-        if self.environment.fixtures.get_fixture(
-                type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID, exception_if_missing=False) is not None:
+        """Return any MSR CLI command groups."""
+        if self.environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+                exception_if_missing=False) is not None:
             return {
                 'contrib': {
                     'msr': MSRAPICliGroup(self.environment)
                 }
             }
-        else:
-            return {}
+
+        return {}
 
 
 class MSRAPICliGroup():
-    """ MSR API Client CLI commands """
+    """MSR API Client CLI commands."""
 
     def __init__(self, environment: Environment):
+        """Create a new MSR CLI command group."""
         self.environment = environment
 
     def _select_fixture(self, instance_id: str = ''):
-        """ Pick a matching fixture in case there are more than one """
+        """Pick a matching fixture in case there are more than one."""
         if instance_id:
-            return self.environment.fixtures.get_fixture(
-                type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID, instance_id=instance_id)
-        else:
-            # Get the highest priority fixture
-            return self.environment.fixtures.get_fixture(
-                type=Type.CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+            return self.environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+                instance_id=instance_id)
+
+        # Get the highest priority fixture
+        return self.environment.fixtures.get(
+            plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
 
     def info(self, instance_id: str = '', deep: bool = False):
-        """ get info about a plugin """
+        """Get info about a plugin."""
         fixture = self._select_fixture(instance_id=instance_id)
 
         info = {
             'fixture': {
-                'type': fixture.type.value,
+                'plugin_type': fixture.plugin_type,
                 'plugin_id': fixture.plugin_id,
                 'instance_id': fixture.instance_id,
                 'priority': fixture.priority,
@@ -74,81 +86,86 @@ class MSRAPICliGroup():
         return json.dumps(info, indent=2)
 
     def ping(self, instance_id: str = '', node: int = None):
-        """ ping an MSR replica """
+        """Ping an MSR replica."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return json.dumps(plugin.api_ping(node=node), indent=2)
 
     def pingall(self, instance_id: str = ''):
-        """ check if we can ping all of the nodes directly """
+        """Check if we can ping all of the nodes directly."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         ping = {}
         for index in range(0, plugin.host_count()):
             try:
                 plugin.api_ping(index)
+                # pylint: disable=protected-access
                 ping[plugin._node_address(index)] = True
-            except BaseException:
+            except requests.exceptions.RequestException:
+                # pylint: disable=protected-access
                 ping[plugin._node_address(index)] = False
 
         return json.dumps(ping, indent=2)
 
     def health(self, instance_id: str = '', node: int = None):
-        """ Get the MSR health api response """
+        """Get the MSR health api response."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return json.dumps(plugin.api_health(node=node), indent=2)
 
     def nginx_status(self, instance_id: str = '', node: int = None):
-        """ Get the MSR nginsx status api response """
+        """Get the MSR nginsx status api response."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return json.dumps(plugin.api_nginx_status(node=node), indent=2)
 
     def version(self, instance_id: str = ''):
-        """ get MSR cluster version """
+        """Get MSR cluster version."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return json.dumps(plugin.api_version(), indent=2)
 
     def status(self, instance_id: str = ''):
-        """ get cluster status """
+        """Get cluster status."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return json.dumps(plugin.api_status(), indent=2)
 
     def features(self, instance_id: str = ''):
-        """ get features list """
+        """Get features list."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return json.dumps(plugin.api_features(), indent=2)
 
     def alerts(self, instance_id: str = ''):
-        """ get alerts list """
+        """Get alerts list."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return json.dumps(plugin.api_alerts(), indent=2)
 
 
 class MSRReplicaHealth(Enum):
-    """ MSR replica health values (in the cluster status API response) """
+    """MSR replica health values (in the cluster status API response)."""
+
     OK = 'OK'
 
     def match(self, compare: str) -> bool:
-        """ allow for string comparisons """
+        """Allow for string comparisons."""
+        # pylint: disable=comparison-with-callable
         return self.value == compare
 
 
-class MSRAPIClientPlugin(ClientBase):
-    """ Client for API Connections to MSR """
+# pylint: disable=too-many-instance-attributes
+class MSRAPIClientPlugin:
+    """Client for API Connections to MSR."""
 
+    # pylint: disable=too-many-arguments"
     def __init__(self, environment: Environment, instance_id: str, accesspoint: str,
                  username: str, password: str, hosts: List[Dict], api_version: str = 'v0'):
-        """
+        """Create new MSR Client API plugin.
 
         Parameters:
         -----------
-
         Standard Metta plugin parameters:
 
         environment (Environment) : env in which this plugin exists
@@ -164,11 +181,15 @@ class MSRAPIClientPlugin(ClientBase):
         hosts (List[Dict]) : List of host definition dicts used to define hosts
             that can respond to API requests in the cluster.  This can be used
             to allow directly accessing the API through a specific host.
-            The first node in the list is used as an API endpoint if no endpoint
-            is specified.
-
+            The first node in the list is used as an API endpoint if no
+            endpoint is specified.
 
         """
+        self.environment = environment
+        """ Environemnt in which this plugin exists."""
+        self.instance_id = instance_id
+        """ Unique id for this plugin instance."""
+
         self.accesspoint = accesspoint
         self.username = username
         self.password = password
@@ -186,6 +207,7 @@ class MSRAPIClientPlugin(ClientBase):
         self.verify = False
         """ should we verify ssl certs : default to NO """
         if not self.verify:
+            # pylint: disable=no-member
             requests.packages.urllib3.disable_warnings(
                 requests.packages.urllib3.exceptions.InsecureRequestWarning)
 
@@ -193,11 +215,11 @@ class MSRAPIClientPlugin(ClientBase):
         """ hold the bearer auth token if created by ._auth_headers() """
 
     def host_count(self):
-        """ Return integer host count for MSR cluster """
+        """Return integer host count for MSR cluster."""
         return len(self.hosts)
 
     def info(self, deep: bool = False):
-        """ return information about the plugin """
+        """Return information about the plugin."""
         info = {
             'api': {
                 'accesspoint': self.accesspoint,
@@ -214,7 +236,7 @@ class MSRAPIClientPlugin(ClientBase):
         return info
 
     def api_ping(self, node: int = None) -> bool:
-        """ Check the API ping response """
+        """Check the API ping response."""
         endpoint = self._accesspoint_url('_ping', root_api=True, node=node)
 
         with requests.get(endpoint, verify=self.verify) as response:
@@ -222,7 +244,7 @@ class MSRAPIClientPlugin(ClientBase):
             return response.ok
 
     def api_health(self, node: int = None):
-        """ Check the API ping response """
+        """Check the API ping response."""
         endpoint = self._accesspoint_url('health', root_api=True, node=node)
 
         with requests.get(endpoint, auth=self._api_auth(), verify=self.verify) as response:
@@ -230,52 +252,58 @@ class MSRAPIClientPlugin(ClientBase):
             return json.loads(response.content)
 
     def api_nginx_status(self, node: int = None):
-        """ Check the API ping response
+        """Check the API ping response.
 
-        returns:
-
+        Returns:
+        --------
         parsed string contents of the response
 
         """
         endpoint = self._accesspoint_url(
             'nginx_status', root_api=True, node=node)
 
-        with requests.get(endpoint, auth=self._api_auth(), headers={'content-type': 'application/json'}, verify=self.verify) as response:
+        with requests.get(endpoint, auth=self._api_auth(),
+                          headers={'content-type': 'application/json'},
+                          verify=self.verify) as response:
             response.raise_for_status()
             # @TODO should we parse this?
             return response.content.decode("utf-8")
 
     def api_version(self) -> Dict:
-        """ retrieve version """
-        with requests.get(self._accesspoint_url('admin/version'), auth=self._api_auth(), verify=self.verify) as response:
+        """Retrieve version."""
+        with requests.get(self._accesspoint_url('admin/version'), auth=self._api_auth(),
+                          verify=self.verify) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_status(self) -> Dict:
-        """ retrieve status from the api """
-        with requests.get(self._accesspoint_url('meta/cluster_status'), auth=self._api_auth(), verify=self.verify) as response:
+        """Retrieve status from the api."""
+        with requests.get(self._accesspoint_url('meta/cluster_status'), auth=self._api_auth(),
+                          verify=self.verify) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_features(self) -> Dict:
-        """ retrieve features list from the api """
-        with requests.get(self._accesspoint_url('meta/features'), auth=self._api_auth(), verify=self.verify) as response:
+        """Retrieve features list from the api."""
+        with requests.get(self._accesspoint_url('meta/features'), auth=self._api_auth(),
+                          verify=self.verify) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_alerts(self) -> Dict:
-        """ retrieve alerts list from the api """
-        with requests.get(self._accesspoint_url('meta/alerts'), auth=self._api_auth(), verify=self.verify) as response:
+        """Retrieve alerts list from the api."""
+        with requests.get(self._accesspoint_url('meta/alerts'), auth=self._api_auth(),
+                          verify=self.verify) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def _api_auth(self):
-        """ get the requests auth handler """
+        """Get the requests auth handler."""
         return requests.auth.HTTPBasicAuth(self.username, self.password)
 
     def _accesspoint_url(self, endpoint: str = '',
-                         root_api: bool = False, node: int = None):
-        """ convert an endpoint into a full URL for an API Call
+                         root_api: bool = False, node: int = None) -> str:
+        """Convert an endpoint into a full URL for an API Call.
 
         Pass in a sub-url endpoint and this will convert it into a full URL.
         Most endpoints will have the api/v0/ prefix added (unless it is a root
@@ -285,7 +313,6 @@ class MSRAPIClientPlugin(ClientBase):
 
         Parameters:
         -----------
-
         endpoint (str) : API endpoint you are trying to access
 
         root_api (bool) : If True, then the URL should be for a root API call
@@ -295,6 +322,10 @@ class MSRAPIClientPlugin(ClientBase):
             node index from the list of hosts, as opposed to the generic accesspoint.
             This allows things like ping confirmation on specific host.
 
+        Returns:
+        --------
+        String URL for API endpoint
+
         """
         if node is None:
             target = self.accesspoint
@@ -302,14 +333,12 @@ class MSRAPIClientPlugin(ClientBase):
             target = self._node_address(node)
 
         if root_api:
-            return "https://{accesspoint}/{endpoint}".format(
-                accesspoint=target, endpoint=endpoint)
-        else:
-            return "https://{accesspoint}/api/{version}/{endpoint}".format(
-                accesspoint=target, version=self.version, endpoint=endpoint)
+            return f"https://{target}/{endpoint}"
 
-    def _node_address(self, node: int = 0):
-        """ get the ip address from the node for the node index
+        return f"https://{target}/api/{self.version}/{endpoint}"
+
+    def _node_address(self, node: int = 0) -> str:
+        """Get the ip address from the node for the node index.
 
         We get this information from the list of nodes.  This list of nodes can
         come in various forms, because the primary consumer here is a list of
@@ -317,11 +346,17 @@ class MSRAPIClientPlugin(ClientBase):
         It's not great coding, but we allow for variability here to handle
         differing incoming formats.
 
+        Returns:
+        --------
+        String node address
+
         """
-        node = self.hosts[node]
-        if 'address' in node:
-            return node['address']
-        elif 'ssh' in node:
-            return node['ssh']['address']
-        elif 'winrm' in node:
-            return node['winrm']['address']
+        node_dict = self.hosts[node]
+        if 'address' in node_dict:
+            return node_dict['address']
+        if 'ssh' in node_dict:
+            return node_dict['ssh']['address']
+        if 'winrm' in node_dict:
+            return node_dict['winrm']['address']
+
+        raise ValueError(f"No node address could be found for the node {node}")

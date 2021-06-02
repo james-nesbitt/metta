@@ -1,3 +1,13 @@
+"""
+
+On bootstrap, add some common config values that can be useful to a project,
+such as some information about the current user and current path, platform and
+a fixed single datetime for operation.
+
+This is optional, and may conflict or cloud some ways of using metta, so it is
+only meant to be used when the infomration is useful.
+
+"""
 import os
 import logging
 import getpass
@@ -9,7 +19,6 @@ import appdirs
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH as CONFIGERUS_SOURCE_PATH
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT as CONFIGERUS_SOURCE_DICT
 from mirantis.testing.metta.environment import Environment
-import mirantis.testing.metta as metta
 
 logger = logging.getLogger("metta.common")
 
@@ -25,6 +34,14 @@ METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS = 35
 """ Config source priority for added common config """
 METTA_COMMON_PROJECT_CONFIG_SUBPATH = "config"
 """ convention for configuration path as a subfolder of the cwd path """
+
+MARKER_FILES = {
+    'metta.py',
+    'mettac.py',
+    'conftest.py',
+    'pytest.ini',
+}
+""" Files which mark the root of a project """
 
 
 def add_common_config(environment: Environment):
@@ -62,7 +79,11 @@ def add_common_config(environment: Environment):
             METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_path(user_conf_path)
 
     # Add some dymanic values for config
-    environment.config.add_source(CONFIGERUS_SOURCE_DICT, METTA_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID, priority=METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_data({
+    environment.config.add_source(
+        CONFIGERUS_SOURCE_DICT,
+        METTA_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID,
+        priority=METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS
+    ).set_data({
         "user": {
             "id": getpass.getuser()  # override user id with a host value
         },
@@ -97,21 +118,14 @@ def find_project_root_path():
 
     """
 
-    MARKER_FILES = {
-        'metta.py',
-        'mettac.py',
-        'conftest.py',
-        'pytest.ini',
-    }
-
     # Try to add a path from cwd and up that contains a mettac.py file
     check_path = DIR
     while check_path:
         if check_path == '/':
             return DIR
 
-        for MARKER_FILE in MARKER_FILES:
-            marker_path = os.path.join(check_path, MARKER_FILE)
+        for marker_file in MARKER_FILES:
+            marker_path = os.path.join(check_path, marker_file)
             if os.path.isfile(marker_path):
                 return check_path
 

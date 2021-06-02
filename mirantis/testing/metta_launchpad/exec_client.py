@@ -1,9 +1,15 @@
+"""
 
+Metta client plugin for executing commands (ssh/winrm) on hosts provisioned.
+
+On a cluster of hosts provisioned using the Launchpad provisioner, execute
+a command over ssh/winrm on one of the hosts.
+
+"""
 import logging
 from typing import List
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.client import ClientBase
 
 from .launchpad import LaunchpadClient
 
@@ -11,35 +17,38 @@ logger = logging.getLogger('metta.contrib.kubernetes.client')
 
 
 METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID = "metta_launchpad_exec"
+""" metta plugin ID for the metta exec client plugin """
 
 
-class LaunchpadExecClientPlugin(ClientBase):
-    """ Client for exec into hosts using launchpad """
+class LaunchpadExecClientPlugin:
+    """Client for exec into hosts using launchpad."""
 
     def __init__(self, environment: Environment,
                  instance_id: str, client: LaunchpadClient):
-        """
+        """Create launchpad exec plugin.
 
         Parameters:
         -----------
-
         client (LaunchpadClient) : A configured launchpad client to use to run
             exec commands
 
         """
-        ClientBase.__init__(self, environment, instance_id)
+        self.environment = environment
+        """ Environemnt in which this plugin exists """
+        self.instance_id = instance_id
+        """ Unique id for this plugin instance """
 
         self.client = client
+        """ Launchpad client """
 
     def hosts(self, deep: bool = False):
-        """ list the hosts in the cluster """
-
+        """List the hosts in the cluster."""
         config = self.client.describe_config()
 
         if deep:
-            list = [host for host in config['spec']['hosts']]
+            host_list = list(config['spec']['hosts'])
         else:
-            list = []
+            host_list = []
             for host in config['spec']['hosts']:
                 list_host = {
                     'role': host['role']
@@ -55,15 +64,10 @@ class LaunchpadExecClientPlugin(ClientBase):
                         'address': host['winrm']['address']
                     })
 
-                list.append(list_host)
+                host_list.append(list_host)
 
-        return list
+        return host_list
 
     def exec(self, cmds: List[str], host_index: int):
-        """ Exec a string arg list command on a single host """
-
-        client_config = self.client.describe_config()
-        hosts = client_config['spec']['hosts']
-        host = hosts[host_index]
-
+        """Exec a string arg list command on a single host."""
         return self.client.exec(host_index, cmds)

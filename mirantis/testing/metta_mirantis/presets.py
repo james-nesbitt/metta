@@ -1,17 +1,28 @@
+"""
+
+Mirantis preset functionality.
+
+The preset functionality allows reuse of common sets of configuration that is
+commonly used for various testcases.  This allows centralized definition of
+things like release versions of Mirantis products.
+
+To consume the presets, you define some config in the mirantis label, which
+will tell this code to include more config, in the package root config folder.
+
+"""
 import os.path
 import logging
 import pkg_resources
 
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
-from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 from mirantis.testing.metta.environment import Environment
 
 logger = logging.getLogger("metta_mirantis.presets")
 
 METTA_PRESET_CONFIG_LABEL = "mirantis"
-""" This config label will be loaded to interpret config in add_preset_config """
+""" This config label loaded to interpret config in add_preset_config """
 METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX = "metta_mirantis-preset"
-""" All config that we add here will have its source instance_id prefixed with this """
+""" prefix for all config that we add here """
 METTA_CONFIG_CONFIG_PRESET_BASE = 'presets'
 """ preset configuration will be found under this config .get() key """
 METTA_PRESET_DEFAULT_PRIORITY = 60
@@ -20,13 +31,16 @@ METTA_PRESET_PACKAGE = 'mirantis.testing.metta_mirantis'
 
 
 def preset_config():
-    """ List of available presets that you can include in load("metta").get('presets')
-        (key, preset_root_path):
-            key: config key that will find the preset value under the base value
-                from METTA_CONFIG_CONFIG_PRESET_BASE
-            path: preset root path that should contains a path matching the value
-                which will be added as a source config path
-            priority delta: preset relative priority compared to other presets
+    """List of available presets that you can include in presets.
+
+    In load("metta").get('presets')
+
+    (key, preset_root_path):
+        key: config key that will find the preset value under the base value
+            from METTA_CONFIG_CONFIG_PRESET_BASE
+        path: preset root path that should contains a path matching the value
+            which will be added as a source config path
+        priority delta: preset relative priority compared to other presets
     """
     return [
         ("variation", pkg_resources.resource_filename(
@@ -42,7 +56,7 @@ def preset_config():
 
 def add_preset_config(environment: Environment,
                       priority=METTA_PRESET_DEFAULT_PRIORITY):
-    """ Read metta config and interpret it for modifying the config
+    """Read metta config and interpret it for modifying the config.
 
     Interprests config.load("metta") to determine if any `presets` config
     sources should be added.
@@ -67,7 +81,6 @@ def add_preset_config(environment: Environment,
 
     Parameter:
     ----------
-
     config (configerus.config.Config) : a configerus Config object which will
         have config sources added
 
@@ -75,11 +88,9 @@ def add_preset_config(environment: Environment,
 
     Throws:
     -------
-
     Can throw a KeyError if a preset id requested that does not exist
 
     """
-
     # Now we start to process `presets`
     # To do this we load the `metta` config label and look for preset
     # keys in the loaded config.
@@ -103,26 +114,23 @@ def add_preset_config(environment: Environment,
             [METTA_CONFIG_CONFIG_PRESET_BASE, preset_key], default='')
 
         if preset_value:
-            preset_instance_id = "{}-{}-{}".format(
-                METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX, preset_key, preset_value.replace('/', '_'))
+            prefix = METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX
+            preset_key = preset_value.replace('/', '_')
+            preset_instance_id = f"{prefix}-{preset_key}-{preset_key}"
             # quick check to see if we've already added this preset.
             if not environment.config.has_source(preset_instance_id):
                 # build a preset config path and add it as a source if it
                 # exists
                 preset_full_path = os.path.join(preset_root_path, preset_value)
                 if os.path.isdir(preset_full_path):
-                    logger.debug(
-                        "Using metta preset {}:{} => {}".format(
-                            preset_key, preset_value, preset_full_path))
+                    logger.debug("Using metta preset %s:%s => %s", preset_key, preset_value,
+                                 preset_full_path)
                     environment.config.add_source(
                         PLUGIN_ID_SOURCE_PATH,
                         preset_instance_id,
                         preset_priority).set_path(preset_full_path)
                 else:
-                    raise KeyError(
-                        "metta doesn't have a preset '%s:%s'",
-                        preset_key,
-                        preset_value)
+                    raise KeyError(f"metta doesn't have a preset '{preset_key}:{preset_value}'")
 
         else:
-            logger.debug("No metta preset selected for {}".format(preset_key))
+            logger.debug("No metta preset selected for %s", preset_key)

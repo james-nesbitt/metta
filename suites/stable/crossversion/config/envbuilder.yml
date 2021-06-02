@@ -1,0 +1,119 @@
+# This is consumed by the envbuilder code to produce a number of environments
+# as variations on a common base. This makes it simpler and less verbose to
+# configure a large number of variations.
+#
+# @See ../envbuilder
+#
+# One environment will be created per variation described here.  Each variation can
+# describe common overrides, and a before/after set of config overrides.
+# Each variation will include the common settings from the "base" found at the
+# bottom of the file.
+variations:
+
+  # Upgrade MCR from 20.10.0 -> 20.10.4
+  20100-20104:
+    common:
+      variables:
+        id: 20100_20104
+        mcr_channel: test
+    states:
+      before:
+        variables:
+          mcr_version: 20.10.0
+      after:
+        variables:
+          mcr_version: 20.10.4-rc1
+
+  # Upgrade MCR from 19.03.15-rc1 -> 20.10.0
+  190315-20100:
+    common:
+      variables:
+        id: 190315_20100
+        mcr_channel: test
+    states:
+      before:
+          variables:
+            mcr_version: 19.03.15-rc1
+      after:
+          variables:
+            mcr_version: 20.10.0
+
+  # Upgrade MCR from 19.3.14 -> 19.03.15-rc1
+  190314-190315:
+    common:
+      variables:
+        id: 190314_190315
+        mcr_channel: test
+    states:
+      before:
+          variables:
+            mcr_version: 19.03.14
+      after:
+          variables:
+            mcr_version: 19.03.15-rc1
+
+  # Upgrade MCR from 19.03.15-rc1 -> 20.10.4-rc1
+  190315-20104:
+    common:
+      variables:
+        id: 190315_20104
+        mcr_channel: test
+    states:
+      before:
+          variables:
+            mcr_version: 19.03.15-rc1
+      after:
+          variables:
+            mcr_version: 20.10.4-rc1
+
+  # Upgrade MCR from 19.3.14 -> 20.10.4-rc1
+  190314-20100:
+    common:
+      variables:
+        id: 190314_20100
+        mcr_channel: stable
+    states:
+      before:
+          variables:
+            mcr_version: 19.03.14
+      after:
+          variables:
+            mcr_version: 20.10.0
+
+
+# All of the environments will include this base
+base:
+  bootstraps:
+    metta:
+    - metta_common
+    - metta_docker
+    - metta_kubernetes
+    - metta_terraform
+    - metta_launchpad
+    - metta_common_config
+    - metta_mirantis_common
+    - metta_mirantis_presets
+
+  fixtures:
+    from_config:
+      # Load the fixtures from fixtures(.yml) source.
+      label: fixtures
+
+  config:
+    sources:
+      default_specs:
+          # Include the env specific path as a config source for this environment
+          plugin_id: dict
+          priority: 80
+          data:
+            mirantis:
+              # If these are not overrideng in a variation, then these values will be used.
+              presets:
+                  # This will tell metta to include metta/config/variation/tal
+                  variation: tal
+                  # this will tell metta to include metta/config/release/patch/202101
+                  release: patch/202101
+                  # This will tell metta to include metta/config/cluster/poc
+                  cluster: poc
+                  # This will tell metta to include metta/config/platform/public/ubuntu-1804
+                  platform: public/ubuntu/18.04

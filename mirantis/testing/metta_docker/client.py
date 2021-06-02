@@ -1,52 +1,71 @@
+"""
 
-from mirantis.testing.metta.client import ClientBase
-from docker import DockerClient
+Metta Client plugin for a docker client using docker-py.
+
+"""
 import logging
 import os
 
+from docker import DockerClient
+
 logger = logging.getLogger('metta.contrib.docker.client.dockerpy')
 
+METTA_PLUGIN_ID_DOCKER_CLIENT = 'metta_docker'
+""" client plugin_id for the metta dummy plugin """
 
-class DockerPyClientPlugin(ClientBase, DockerClient):
-    """ metta Client plugin for docker using the docker-py library
 
+# this interface is common for all Metta plugins, but CLI plugins underuse it
+# pylint: disable=too-few-public-methods
+class DockerPyClientPlugin(DockerClient):
+    """Metta Client plugin for docker using the docker-py library.
+
+    Most of the functionality is provided by the docker-py::DockerClient class,
+    while the metta plugin side is respondible for configuring the client.
 
     """
 
+    # This is really what it takes to configure both the plugin and the client
+    # pylint: disable=too-many-arguments
     def __init__(self, environment, instance_id, host: str, cert_path: str, tls_verify: bool = True,
                  compose_tls_version: str = 'TLSv1_2', version: str = 'auto'):
-        """ Run the super constructor but also set class properties
+        """Set class properties.
 
-        In order to decorate this existing class as a DockerClient, without using the
-        DockerClient constructor, nor the from_env class method, we have to reproduce
-        the APIClient construction.
-        We could rewrite some of the DockerClient functionality, or we can just create
-        a throwaway DockerClient instance and steal its ApiClient and use it.
+        In order to decorate this existing class as a DockerClient, without
+        using the DockerClient constructor, nor the from_env class method, we
+        have to reproduce the APIClient construction.
+        We could rewrite some of the DockerClient functionality, or we can just
+        create a throwaway DockerClient instance and steal its ApiClient and
+        use it.
 
-        This also lets us easily include any other env variables that might be in
-        scope.
+        This also lets us easily include any other env variables that might be
+        in scope.
 
-        @Note that we don't run the docker-py constructor as we build our own client.
+        @Note that we don't run the docker-py constructor as we build our own
+            client.
 
         Parameters:
         -----------
-
-        All of the arguments are handed off to the DockerClient.from_env class method.
-        All arguments are converted to the related ENV equivalent if it had been set
-        outside of this python code.
+        All of the arguments are handed off to the DockerClient.from_env class
+        method. All arguments are converted to the related ENV equivalent if it
+        had been set outside of this python code.
 
         host (str) [DOCKER_HOST] what daemon host to use (docker socket)
+
         cert_path (str) [DOCKER_CERT_PATH] path to rsa keys for authorization
-        tls_verify (bool) [DOCKER_TLS_VERIFY] should the client pursue TLS verification
+
+        tls_verify (bool) [DOCKER_TLS_VERIFY] should the client pursue TLS
+            verification
+
         compose_tls_version (str) [COMPOSE_TLS_VERSION] what TLS version should
             the Docker client use for docker compose.
 
-
         """
-        super(ClientBase, self).__init__(environment, instance_id)
+        self.environment = environment
+        """ Environemnt in which this plugin exists """
+        self.instance_id = instance_id
+        """ Unique id for this plugin instance """
 
-        logger.debug(
-            "Configuring docker client with args for host:{}".format(host))
+        logger.debug("Configuring docker client with args for host: %s", host)
 
         self.host = host
         self.cert_path = cert_path
@@ -59,11 +78,13 @@ class DockerPyClientPlugin(ClientBase, DockerClient):
         env['DOCKER_TLS_VERIFY'] = self.tls_verify
         env['COMPOSE_TLS_VERSION'] = self.compose_tls_version
 
+        # Build a client in the classical way, but we just take it's api and
+        # throw the client away
         throwaway = DockerClient.from_env(environment=env, version=version)
         self.api = throwaway.api
 
     def info(self):
-        """ Return dict data about this plugin for introspection """
+        """Return dict data about this plugin for introspection."""
         return {
             'docker': {
                 'host': self.host,

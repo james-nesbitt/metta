@@ -1,6 +1,6 @@
 """
 
-An environment is meant to represent a testable cluster as a testing harness
+An environment is meant to represent a testable cluster as a testing harness.
 
 In METTA an environment is a single configerus Config object and a set of
 METTA plugins in a manageable set.
@@ -15,7 +15,7 @@ mix a bunch of plugin objects of different types together and manage them.
 import logging
 import random
 import string
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 from importlib import metadata
 
 from configerus.config import Config
@@ -25,31 +25,15 @@ from configerus.contrib.jsonschema import PLUGIN_ID_VALIDATE_JSONSCHEMA
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH, CONFIGERUS_PATH_KEY
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT, CONFIGERUS_DICT_DATA_KEY
 from configerus.contrib.env import (
-    PLUGIN_ID_SOURCE_ENV_SPECIFIC,
-    CONFIGERUS_ENV_SPECIFIC_BASE_KEY,
-    PLUGIN_ID_SOURCE_ENV_JSON,
+    PLUGIN_ID_SOURCE_ENV_SPECIFIC, CONFIGERUS_ENV_SPECIFIC_BASE_KEY, PLUGIN_ID_SOURCE_ENV_JSON,
     CONFIGERUS_ENV_JSON_ENV_KEY)
 
 from .plugin import (
-    Factory,
-    Type,
-    METTAPlugin,
-    METTA_PLUGIN_CONFIG_KEY_TYPE,
-    METTA_PLUGIN_CONFIG_KEY_PLUGINID,
-    METTA_PLUGIN_CONFIG_KEY_INSTANCEID,
-    METTA_PLUGIN_CONFIG_KEY_ARGUMENTS,
-    METTA_PLUGIN_CONFIG_KEY_PRIORITY,
-    METTA_PLUGIN_CONFIG_KEY_CONFIG,
-    METTA_PLUGIN_CONFIG_KEY_VALIDATORS)
+    Factory, METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE, METTA_PLUGIN_CONFIG_KEY_PLUGINID,
+    METTA_PLUGIN_CONFIG_KEY_INSTANCEID, METTA_PLUGIN_CONFIG_KEY_ARGUMENTS,
+    METTA_PLUGIN_CONFIG_KEY_PRIORITY, METTA_PLUGIN_CONFIG_KEY_VALIDATORS)
 from .fixtures import (
-    Fixtures,
-    Fixture,
-    METTA_FIXTURES_CONFIG_FIXTURE_KEY,
-    METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
-    METTA_FIXTURE_VALIDATION_JSONSCHEMA)
-
-
-import logging
+    Fixtures, Fixture, METTA_FIXTURES_CONFIG_FIXTURES_LABEL, METTA_FIXTURE_VALIDATION_JSONSCHEMA)
 
 logger = logging.getLogger('metta.environment')
 
@@ -71,7 +55,7 @@ METTA_PLUGIN_CONFIG_KEY_BOOTSTRAPS_METTA = 'bootstraps.metta'
 METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_STATES = 'states.available'
 """ this config key inside an environment config can describe states """
 METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_DEFAULT_STATE = 'states.default'
-""" this config key inside an environment config that can indicates overrides using the first state as a default """
+""" this config key inside an environment config that overrides using the first state as default """
 METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG = 'from_config'
 """ config key that indicates that the plugin will be build from aconfig label/key pair """
 
@@ -82,16 +66,18 @@ DEFAULT_SOURCE_PRIORITY = 40
 """ If the environment constructor finds config sources to add, this is their default priority """
 
 
+# pylint: disable=R0902
 class Environment:
-    """ A testing environment, usually composed of a config and plugins """
+    """A testing environment, usually composed of a config and plugins."""
 
-    def __init__(self, name: str, config: Config, bootstraps: List[str] = [
-    ], config_label: str = '', config_base: str = LOADED_KEY_ROOT):
-        """
+    # pylint: disable=too-many-arguments
+    def __init__(self, name: str, config: Config, bootstraps: List[str] = None,
+                 config_label: str = '', config_base: Union[str, List[Any]] = None,
+                 default_priority: int = DEFAULT_SOURCE_PRIORITY):
+        """Initialize environment state.
 
         Parameters:
         -----------
-
         config (configerus.Config) : A single config object which will be used
             to define the environment.
 
@@ -99,15 +85,23 @@ class Environment:
             combined with a default set, and may also be combined with a set
             from config.
 
+        default_priority (int) : integer values are used to sort created fixtures.
+            this value is used in cases where no priority has been specified.
+
         # Config Context : the following two parameters will tell the Environment
             object to examine config for additional actions to take.  For example
             additional config source may be added, and fixtures may be created.
 
         Label (str) : Config label to load to find environment config.
-
-        Base (str) : config base key to use to find environment config.
+        Base (Mixed) : config base key to use to find environment config.  This can
+            be either a string or any nested combination of Lists of strings, which
+            Configerus joins into a flat list.
 
         """
+        if bootstraps is None:
+            bootstraps = []
+        if config_base is None:
+            config_base = LOADED_KEY_ROOT
 
         self.name = name
         """ what does the environment call itself """
@@ -119,10 +113,17 @@ class Environment:
         self.config_backup = config.copy()
         """ Make a dupe of the starting config which we will use whenever we change state """
 
-        self.config_label = config_label
+        # Config label & base are configerus concepts used for loading data:
+        # label (str) : can roughly be compared with config file name, without the file suffix
+        #     but it will contain merged config from multiple sources.
+        # base (str of List of stuff) : directs the path down the loaded config from the label.
+        self.config_label: str = config_label
+        """ configerus load label """
         self.config_base = config_base
-        """ environment config label/key pair.  Not always passed, but if it is this
-            can play a role in extensible environment configuration """
+        """ environment config base """
+
+        self.default_priority = int(default_priority)
+        """ Default priority int value used for when no priority is assigned """
 
         self.fixtures = Fixtures()
         """ fixtures/plugins that can interact with the environment """
@@ -131,45 +132,36 @@ class Environment:
 
         self.bootstraps = bootstraps
         """ keep the original list of bootstraps to be applied on every state change """
-        self.bootstrapped = []
+        self.bootstrapped: List[str] = []
         """ list of bootstraps that have already been applied to prevent repetition """
 
-        self.states = []
+        self.states: List[str] = []
         """ list of allowed states for the environment """
-        self.state = None
+        self.state: str = ''
         """ currently active state for the environment """
 
         if not self.config_label:
             # this environment does not have a related configuration to program
             # itself with, but it could have had bootstraps.
-
-            logger.info(
-                "New environment created: {} (not from config)".format(name))
+            logger.info("New environment created: %s (not from config)", name)
 
             self.bootstrap(bootstraps)
-
-            # this was the original mechanisms for defining environments, and
-            # does have usecases left today for simple environment definition,
-            # but any serious environment usage would be much better served by
-            # using the configuration options; it lets you define more config
-            # sources, fixtures, bootstraps etc.
+            # this was the original mechanisms for defining environments, and  does have usecases
+            # left today for simple environment definition, but any serious environment usage would
+            # be much better served by using the configuration options; it lets you define more
+            # config sources, fixtures, bootstraps etc.
 
         else:
 
-            logger.info(
-                "New environment created: {} ({}:{})".format(
-                    name,
-                    self.config_label,
-                    self.config_base))
+            logger.info("New environment created: %s", name)
 
             # There is a config dict to add to the environment
             config_environment = self.config.load(self.config_label)
 
             try:
                 config_environment.get(self.config_base)
-            except ValueError:
-                raise ValueError(
-                    "Environment config didn't contain described label/key: {}:{}".format(label, base))
+            except ValueError as err:
+                raise ValueError("Environment config not found") from err
 
             # Grab all of the environment state keys/names. Default to an empty
             # list,
@@ -184,14 +176,14 @@ class Environment:
                 # which will ignore all state configurations.
                 state = config_environment.get(
                     [config_base, METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_DEFAULT_STATE], default='')
-                """ what state should be activated on construction.  Can be empty, which indicates no state """
+                """ what state should be activated on construction.  Can be empty """
 
             # We run this function even if we have no state, just so we can put
             # all of the config loading in that loader.
             self.set_state(state)
 
     def set_state(self, state: str = METTA_ENVIRONMENT_STATE_UNUSED_NAME):
-        """ set the enivronment state to one of the options for the state
+        """Set the enivronment state to one of the options for the state.
 
         Reload the environment with a new state.  This reloads the entire
         environment, configuring the environment for one of the preconfigured
@@ -204,7 +196,6 @@ class Environment:
 
         Parameters:
         -----------
-
         state (str) : string state label, which indicates that configuration
             from that state set should be included.
 
@@ -213,15 +204,13 @@ class Environment:
         allowed.
 
         """
-
         # If we are already in that requested state then back out
         if self.state == state:
             return
 
         # is the requested state in the list of avialabler states
         if not (state == METTA_ENVIRONMENT_STATE_UNUSED_NAME or state in self.states):
-            raise KeyError(
-                "Requested environment state has not been configured: {}".format(state))
+            raise KeyError(f"Requested environment state has not been configured: {state}")
 
         self.state = state
         self.config = self.config_backup.copy()
@@ -241,13 +230,10 @@ class Environment:
         # if the state looks liek a real key then we build a config base for it
         # for loading config from that path, otherwsie we leave it as None
         # which is used for testing later in this method.
-        if state == METTA_ENVIRONMENT_STATE_UNUSED_NAME or state == '':
+        if state in [METTA_ENVIRONMENT_STATE_UNUSED_NAME, state]:
             state_config_base = None
         else:
-            state_config_base = [
-                config_base,
-                METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_STATES,
-                state]
+            state_config_base = [config_base, METTA_PLUGIN_CONFIG_KEY_ENVIRONMENT_STATES, state]
             """ config base for the selected state """
 
         # Check for config sources from the environment configuration that is
@@ -275,17 +261,19 @@ class Environment:
         # Look for fixture definitions in the environment config.
         #
         # One of two options is available here, either:
-        # 1. your config has a fixtures dict of fixture definitions, or
-        # 2. you fixtures config has a from_config dict which tells us to look
-        # elsewhere
-        # (the same rules are then applied to the active state)
+        # 1. your environment config has a fixtures dict of fixture definitions, or
+        # 2. your environment config has a from_config dict which tells us to look
+        #    elsewhere.
+        # (the same rules are then applied globally and to the active state)
 
         # If your environment config has a fixtures definition with from_config
         # then the fixtures will be loaded from a different config source.
         # we will look for config like .fixtures and
         # .fictures.from_config.[label|base]
-        if config_environment.has(
-                [config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL, METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG]):
+        if config_environment.has([config_base,
+                                   METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
+                                   METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG]):
+            # here is case #2 ^ - we have been told to look elsewhere for fixtures.
             label = config_environment.get([config_base,
                                             METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
                                             METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG,
@@ -305,8 +293,9 @@ class Environment:
             # if your state definition has a fixtures "from_config" section,
             # then it will be loaded from a different config source as describe
             # using a label/base pair
-            if config_environment.has(
-                    [state_config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL, METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG]):
+            if config_environment.has([state_config_base,
+                                       METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
+                                       METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG]):
                 label = config_environment.get(
                     [state_config_base,
                      METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
@@ -327,8 +316,21 @@ class Environment:
                     label=label, base=[
                         config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL])
 
-    def _add_config_sources_from_config(self, label, base):
-        """ add more config sources based on in config settings """
+    def _add_config_sources_from_config(self, label: str, base: Union[str, List[Any]]):
+        """Ddd more config sources based on in config settings.
+
+        Read some config which will tell us where more config can be found.  This lets us use config
+        to extend config, and is what make metta entirely extensible from a single metta.yml file.
+
+        In the trade-off battle between configurable and convention, this leans heavily towards
+        configuration, but it easily lends to standards.
+
+        Parameters:
+        -----------
+        label (str) : configurus load label.
+        base (str|List[str]) : configerus get key as a base for retrieving all config settings.
+
+        """
         config_environment = self.config.load(label)
         config_sources = config_environment.get(base, default={})
 
@@ -342,8 +344,8 @@ class Environment:
             priority = config_environment.get(
                 [instance_base, 'priority'], default=DEFAULT_SOURCE_PRIORITY)
 
-            logger.debug(
-                "Adding metta sourced config plugin to '{}' environment: {}:{}".format(self.name, plugin_id, instance_id))
+            logger.debug("Adding metta sourced config plugin to '%s' environment: %s:%s",
+                         self.name, plugin_id, instance_id)
             plugin = self.config.add_source(
                 plugin_id=plugin_id, instance_id=instance_id, priority=priority)
 
@@ -365,15 +367,16 @@ class Environment:
                 source_env = config_environment.get(
                     [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY])
                 plugin.set_env(env=source_env)
-            elif hasattr(plugin, set_data):
+            # this should probably be a configerus standard
+            elif hasattr(plugin, 'set_data'):
                 data = config_environment.get([instance_base, 'data'])
                 plugin.set_data(data=data)
             else:
-                logger.warn(
-                    "had no way of configuring new Configerus source plugin {}".format(plugin_id))
+                logger.warning("had no way of configuring new Configerus source plugin %s",
+                               plugin_id)
 
-    def bootstrap(self, entrypoints: List[str] = []):
-        """ BootStrap some METTA distributions
+    def bootstrap(self, entrypoints: List[str]):
+        """Bootstrap some METTA distributions.
 
         METTA bootstrapping is an attempt to allow an easy in to including contrib
         functionality without having to do a lot of Python imports.
@@ -392,7 +395,6 @@ class Environment:
 
         Parameters:
         -----------
-
         bootstrap (List[str]) : a list of string bootstrapper entry_points for the
             ucct.bootstrap entry_points (part of setuptools.)
             Each value needs to refer to a valid entrypoint which will be executed
@@ -400,7 +402,6 @@ class Environment:
 
         Raises:
         -------
-
         Raises a KeyError in cases of a bootstrap ID that cannot be found.
 
         Bootstrappers themselves may raise an exception.
@@ -408,45 +409,37 @@ class Environment:
         """
         for entrypoint in entrypoints:
             if entrypoint not in self.bootstrapped:
-                logger.info(
-                    "Running metta bootstrap entrypoint: %s",
-                    entrypoint)
-                eps = metadata.entry_points()[METTA_BOOTSTRAP_ENTRYPOINT]
-                for ep in eps:
-                    if ep.name == entrypoint:
-                        plugin = ep.load()
+                logger.debug("Running metta bootstrap entrypoint: %s ", entrypoint)
+                for metta_ep in metadata.entry_points()[METTA_BOOTSTRAP_ENTRYPOINT]:
+                    if metta_ep.name == entrypoint:
+                        plugin = metta_ep.load()
                         plugin(self)
                         self.bootstrapped.append(entrypoint)
                         break
                 else:
-                    raise KeyError(
-                        "Bootstrap not found {}:{}".format(
-                            METTA_BOOTSTRAP_ENTRYPOINT,
-                            entrypoint))
+                    raise KeyError(f"Bootstrap not found {METTA_BOOTSTRAP_ENTRYPOINT}:{entrypoint}")
+            else:
+                logger.debug("Skipping boostrap %s, as it has already been imported", entrypoint)
 
     def plugin_priority(self, delta: int = 0):
-        """ Return a default plugin priority with a delta """
-        return DEFAULT_PLUGIN_PRIORITY + delta
+        """Return a default plugin priority with a delta."""
+        return self.default_priority + delta
 
-    """
+    # Generic Plugin construction
 
-    Generic Plugin construction
+    def add_fixtures_from_config(
+            self, label: str = METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
+            base: Union[str, List[Any]] = LOADED_KEY_ROOT, plugin_type: str = None,
+            validator: str = '', exception_if_missing: bool = False,
+            arguments: Dict[str, Any] = None) -> Fixtures:
+        """Create plugin fixtures from some config.
 
-    """
-
-    def add_fixtures_from_typeconfig(
-            self, label: str, base: Any = LOADED_KEY_ROOT, validator: str = '') -> Fixtures:
-        """ Create multiple different fixtures from a structured config source
-
-        This approach to creating fixtures keeps a tree:
-
-        {type}:
-            {instance_id}:
-                ... {instance config} ...
+        This method will interpret some config values as being usable to build a collection
+        of plugins from.  The plugins will be built, wrapped as fixtures and added to the
+        Environment.  The plugins will then be returned as a Fixtures collection.
 
         Parameters:
         -----------
-
         config (Config) : Used to load and get the plugin configuration
 
         label (str) : config label to load to pull plugin configuration. That
@@ -459,83 +452,7 @@ class Environment:
             We call this base instead of key as we will be searching for sub-paths
             to pull individual elements
 
-        validator (str) : optionally use a configerus validator on the instance
-            config/dict before a plugin is created.
-
-        arguments (Dict[str, Any]) : A Dict of named arguments to pass to the
-            plugin constructor.  Constructors should be able to work without
-            requiring the arguments, but these tend to be pivotal for them.
-
-        Returns:
-        --------
-
-        Fixtures of your type
-
-        Raises:
-        -------
-
-        If you ask for a plugin which has not been registered, then you're going to
-        get a NotImplementedError exception.
-        To make sure that your desired plugin is registered, make sure to import
-        the module that contains the factory method with a decorator.
-
-        """
-        fixtures = Fixtures()
-        """ plugin set which will be used to create new plugins """
-
-        try:
-            plugin_config = self.config.load(label)
-            plugin_type_list = plugin_config.get(
-                base)
-        except KeyError as e:
-            if exception_if_missing:
-                return KeyError(
-                    'Could not load any config for plugin generation')
-                # there is not config so we can ignore this
-            else:
-                return fixtures
-
-        # Upper/Outer layer defines plugin type
-        for type, plugin_list in plugin_type_list.items():
-            # Lower/Inner layer is a list of plugins to create of that type
-            for instance_id in plugin_list.keys():
-                # This fixture gets effectively added to 2 different Fixtures object.
-                # 1. we manually add it to our Fixtures object for this function call
-                # 2. the add_fixture_from_config() adds it to the fixture for this
-                #    environment object.
-                fixture = self.add_fixture_from_config(
-                    label=label,
-                    base=[base, instance_id],
-                    type=type,
-                    instance_id=instance_id,
-                    validator=validator)
-                fixtures.add_fixture(fixture)
-
-        return fixtures
-
-    def add_fixtures_from_config(self, label: str = METTA_FIXTURES_CONFIG_FIXTURES_LABEL, base: Any = LOADED_KEY_ROOT, type: Type = None, validator: str = '',
-                                 exception_if_missing: bool = False, arguments: Dict[str, Any] = {}) -> Fixtures:
-        """ Create plugins from some config
-
-        This method will interpret some config values as being usable to build a Dict
-        of plugins from.
-
-        Parameters:
-        -----------
-
-        config (Config) : Used to load and get the plugin configuration
-
-        label (str) : config label to load to pull plugin configuration. That
-            label is loaded and config is pulled to produce a list of plugins
-
-        base (str|List) : config key to get a Dict of plugins configurations.  This
-            should point to a dict of plugin configurations.
-            A list of strings is valid as configerus.loaded.get() can take that as
-            an argument.
-            We call this base instead of key as we will be searching for sub-paths
-            to pull individual elements
-
-        type (.plugin.Type) : plugin type to create, pulled from the config/dict if
+        type (str) : plugin type to create, pulled from the config/dict if
             omitted.  If Type is provided by neither argument nor source then
             you're gonna have a bad time.
 
@@ -548,31 +465,29 @@ class Environment:
 
         Returns:
         --------
-
         Fixtures of your type
 
         Raises:
         -------
-
         If you ask for a plugin which has not been registered, then you're going to
         get a NotImplementedError exception.
         To make sure that your desired plugin is registered, make sure to import
         the module that contains the factory method with a decorator.
 
         """
+        if arguments is None:
+            arguments = {}
+
         fixtures = Fixtures()
         """ plugin set which will be used to create new plugins """
 
         try:
             plugin_config = self.config.load(label)
             plugin_list = plugin_config.get(base)
-        except KeyError as e:
+        except KeyError as err:
             if exception_if_missing:
-                raise KeyError(
-                    'Could not load any config for plugin generation') from e
-                # there is not config so we can ignore this
-            else:
-                return fixtures
+                raise KeyError('Could not load any config for plugin generation') from err
+            return fixtures
 
         for instance_id in plugin_list.keys():
             # This fixture gets effectively added to 2 different Fixtures object.
@@ -580,77 +495,20 @@ class Environment:
             # 2. the add_fixture_from_config() adds it to the fixture for this
             #    environment object.
             fixture = self.add_fixture_from_config(
-                label=label,
-                base=[base, instance_id],
-                type=type,
-                instance_id=instance_id,
-                validator=validator,
-                arguments=arguments)
-            fixtures.add_fixture(fixture)
+                label=label, base=[base, instance_id], plugin_type=plugin_type,
+                instance_id=instance_id, validator=validator, arguments=arguments)
+            fixtures.add(fixture)
 
         return fixtures
 
-    def add_fixtures_from_dict(self, plugin_list: Dict[str, Dict[str, Any]], type: Type = None,
-                               validator: str = '', arguments: Dict[str, Any] = {}) -> Fixtures:
-        """ Create a set of plugins from Dict information
+    def add_fixture_from_config(self, label: str, base: Union[str, List[Any]] = LOADED_KEY_ROOT,
+                                plugin_type: str = None, instance_id: str = '', priority: int = -1,
+                                validator: str = '', arguments: Dict[str, Any] = None) -> Fixture:
+        """Create and add a new plugin fixture from some config.
 
-        The passed dict should be a key=>details map of plugins, which will be turned
-        into a Fixtures map of plugins that can be used to interact with the
-        objects.
-
-        Parameters:
-        -----------
-
-        config (Config) : configerus.Config object passed to each generated plugins.
-
-        type (.plugin.Type) : plugin type to create, pulled from the config/dict if
-            omitted
-
-        provisioner_list (Dict[str, Dict]) : map of key=> config dicts, where each dict
-            contains all of the information that is needed to build the plugin.
-
-            for details, @see add_fixture_from_dict
-
-        validator (str) : optionally use a configerus validator on the instance
-            config/dict before a plugin is created.
-
-        arguments (Dict[str, Any]) : A Dict of named arguments to pass to the
-            plugin constructor.  Constructors should be able to work without
-            requiring the arguments, but these tend to be pivotal for them.
-
-        Returns:
-        --------
-
-        A Fixtures object with the plugin objects created
-
-        """
-        fixtures = Fixtures()
-
-        if not isinstance(plugin_list, dict):
-            raise ValueError(
-                'Did not receive a good dict of config to make plugins from: %s',
-                plugin_list)
-
-        for instance_id, plugin_dict in plugin_list.items():
-            # This fixture gets effectively added to 2 different Fixtures object.
-            # 1. we manually add it to our Fixtures object for this function call
-            # 2. the add_fixture_from_config() adds it to the fixture for this
-            #    environment object.
-            fixture = self.add_fixture_from_dict(
-                plugin_dict=plugin_dict,
-                type=type,
-                instance_id=instance_id,
-                validator=validator,
-                arguments=arguments)
-            fixtures.add_fixture(fixture)
-
-        return fixtures
-
-    def add_fixture_from_config(self, label: str, base: Any = LOADED_KEY_ROOT, type: Type = None,
-                                instance_id: str = '', priority: int = -1, validator: str = '', arguments: Dict[str, Any] = {}) -> Fixture:
-        """ Create a plugin from some config
-
-        This method will interpret some config values as being usable to build plugin
+        This method will interpret some config values as being usable to build a single
+        plugin.  The plugin will be built, wrapped as a Fixture, and added to the environment.
+        The plugin Fixture is returned.
 
         @see add_fixture_from_loadedconfig
 
@@ -660,10 +518,9 @@ class Environment:
 
         Parameters:
         -----------
-
         config (Config) : Used to load and get the plugin configuration
 
-        type (.plugin.Type) : plugin type to create, pulled from the config/dict if
+        type (str) : plugin type to create, pulled from the config/dict if
             omitted. An exception will be thrown if Type is found from neither
             this argument nor the passed config.
 
@@ -684,8 +541,7 @@ class Environment:
 
         Returns:
         --------
-
-        A Fixture object with the new plugin added
+        A Fixture object that wraps the created plugin.
 
         The Fixtures has already been added to the environment, but is returned
         so that the consumer can act on it separately without haveing to
@@ -693,7 +549,6 @@ class Environment:
 
         Raises:
         -------
-
         If you ask for a plugin which has not been registered, then you're going
         to get a NotImplementedError exception. To make sure that your desired
         plugin is registered, make sure to import the module that contains the
@@ -707,19 +562,21 @@ class Environment:
         target was passed and validation failed.
 
         """
+        if arguments is None:
+            arguments = {}
+
         try:
             plugin_loaded = self.config.load(label)
-        except KeyError as e:
-            raise KeyError("Could not load plugin config source.") from e
-        """ loaded configuration for the plugin """
+            """ loaded configuration for the plugin """
+        except KeyError as err:
+            raise KeyError("Could not load plugin config source.") from err
 
         # If arguments were given then pass them on
         try:
-            config_arguments = plugin_loaded.get(
-                [base, METTA_PLUGIN_CONFIG_KEY_ARGUMENTS])
+            config_arguments = plugin_loaded.get([base, METTA_PLUGIN_CONFIG_KEY_ARGUMENTS])
             config_arguments.update(arguments)
             arguments = config_arguments
-        except KeyError as e:
+        except KeyError:
             if not arguments:
                 # if no arguments were specified, then consider a special case of
                 # 'from_config' which build arguments for a config based plugin
@@ -732,25 +589,23 @@ class Environment:
                         [base, METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG])
 
                     if isinstance(config_fromconfig, dict):
-                        logger.debug(
-                            "Using from_config, and passing label/base as arguments")
+                        logger.debug("Using from_config, and passing label/base as arguments")
                         arguments = config_fromconfig
                     else:
                         logger.debug(
                             "Using from_config, and passing current label/base as arguments")
-                        arguments = {
-                            'label': label,
-                            'base': base
-                        }
-                except KeyError as e:
+                        arguments = {'label': label, 'base': base}
+                except KeyError:
                     pass
 
-        return self.add_fixture_from_loadedconfig(loaded=plugin_loaded, base=base, type=type,
-                                                  instance_id=instance_id, priority=priority, validator=validator, arguments=arguments)
+        return self.add_fixture_from_loadedconfig(
+            loaded=plugin_loaded, base=base, plugin_type=plugin_type, instance_id=instance_id,
+            priority=priority, validator=validator, arguments=arguments)
 
-    def add_fixture_from_dict(self, plugin_dict: Dict[str, Any], type: Type = None,
-                              instance_id: str = '', validator: str = '', arguments: Dict[str, Any] = {}) -> Fixture:
-        """ Create a single plugin from a Dict of information for it
+    def add_fixture_from_dict(
+            self, plugin_dict: Dict[str, Any], plugin_type: str = None, instance_id: str = '',
+            validator: str = '', arguments: Dict[str, Any] = None) -> Fixture:
+        """Create a single plugin from a Dict of information for it.
 
         Create a new plugin from a map/dict of settings for the needed parameters.
 
@@ -758,10 +613,9 @@ class Environment:
 
         Parameters:
         -----------
-
         config (Config) : configerus.Config object passed to each generated plugins.
 
-        type (.plugin.Type) : plugin type to create, pulled from the config/dict if
+        type (str) : plugin type to create, pulled from the config/dict if
             omitted
 
         client_dict (Dict[str,Any]) : Dict from which all needed information will
@@ -777,7 +631,6 @@ class Environment:
 
         Return:
         -------
-
         A Fixture object with the new plugin added
 
         The Fixtures has already been added to the environment, but is returned
@@ -796,12 +649,20 @@ class Environment:
         base = LOADED_KEY_ROOT
         """ to keep this function similar to add_fixture_from_config we use an empty .get() base """
 
-        return self.add_fixture_from_loadedconfig(
-            loaded=mock_config_loaded, base=base, type=type, instance_id=instance_id, validator=validator, arguments=arguments)
+        if arguments is None:
+            arguments = {}
 
-    def add_fixture_from_loadedconfig(self, loaded: Loaded, base: Any = LOADED_KEY_ROOT, type: Type = None,
-                                      instance_id: str = '', priority: int = -1, validator: str = '', arguments: Dict[str, Any] = {}) -> Fixture:
-        """ Create a plugin from loaded config
+        return self.add_fixture_from_loadedconfig(
+            loaded=mock_config_loaded, base=base, plugin_type=plugin_type, instance_id=instance_id,
+            validator=validator, arguments=arguments)
+
+    # This is where we centralize all logic around creating fixtures, so it is complex
+    # pylint: disable=too-many-branches, too-many-locals
+    def add_fixture_from_loadedconfig(
+            self, loaded: Loaded, base: Union[str, List[Any]] = LOADED_KEY_ROOT,
+            plugin_type: str = None, instance_id: str = '', priority: int = -1,
+            validator: str = '', arguments: Dict[str, Any] = None) -> Fixture:
+        """Create a plugin from a Configerus loaded config object.
 
         This method will interpret some config values as being usable to build plugin.
         This function starts with a loaded config object because we can leverage
@@ -823,11 +684,10 @@ class Environment:
 
         Parameters:
         -----------
-
         config (Config) : Used to load and get the plugin configuration
 
-        type (.plugin.Type) : plugin type to create, pulled from the config/dict if
-            omitted. An exception will be thrown if Type is found from neither
+        plugin_type (str) : plugin type to create, pulled from the config/dict if
+            omitted. An exception will be thrown if type is found from neither
             this argument nor the passed config.
 
         label (str) : config label to load to pull plugin configuration. That
@@ -847,7 +707,6 @@ class Environment:
 
         Returns:
         --------
-
         A Fixture object with the new plugin added
 
         The Fixtures has already been added to the environment, but is returned
@@ -856,7 +715,6 @@ class Environment:
 
         Raises:
         -------
-
         If you ask for a plugin which has not been registered, then you're going
         to get a NotImplementedError exception. To make sure that your desired
         plugin is registered, make sure to import the module that contains the
@@ -870,91 +728,89 @@ class Environment:
         target was passed and validation failed.
 
         """
-        logger.debug(
-            'Construct config plugin [{}][{}]'.format(
-                type, instance_id))
-
+        # Retrieve all of the plugin config, to test that it exists
         # it might be expensive to retrieve all this but we do it to catch early
         # faults in config.
         plugin_base = loaded.get(base)
+        """ configuration base object for the plugin """
         if plugin_base is None:
-            raise ValueError(
-                "Cannot build plugin as provided config was empty.")
+            raise ValueError("Cannot build plugin as provided config was empty.")
 
         # get any validators from config, defaulting to just the jsonschema
         # validator for a fixture
-        validators = loaded.get([base, METTA_PLUGIN_CONFIG_KEY_VALIDATORS], default=[
-                                {PLUGIN_ID_VALIDATE_JSONSCHEMA: METTA_FIXTURE_VALIDATION_JSONSCHEMA}])
+        validators = loaded.get(
+            [base, METTA_PLUGIN_CONFIG_KEY_VALIDATORS],
+            default=[{PLUGIN_ID_VALIDATE_JSONSCHEMA: METTA_FIXTURE_VALIDATION_JSONSCHEMA}])
+
         if validator:
             # if a validator arg was passed in, then add it
             validators.append(validator)
         if len(validators):
             # Run configerus validation on the config base once per validator
             try:
-                for validator in validators:
-                    loaded.validate(plugin_base, validate_target=validator)
-            except ValidationError as e:
-                raise e
+                for val in validators:
+                    loaded.validate(plugin_base, validate_target=val)
+            except ValidationError as err:
+                raise err
 
-        if type is None:
+        if not plugin_type:
             try:
-                type = loaded.get([base, METTA_PLUGIN_CONFIG_KEY_TYPE])
-            except KeyError as e:
-                raise ValueError(
-                    "Could not find a plugin type when trying to create a plugin : {}".format(
-                        loaded.get(base))) from e
-        if isinstance(type, str):
-            # If a string type was passed in, ask the Type enum to convert it
-            type = Type.from_string(type)
+                plugin_type = str(loaded.get([base, METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE]))
+            except KeyError as err:
+                full_config = loaded.get(base)
+                raise ValueError("Could not find a plugin type when trying to create a"
+                                 f"plugin : {full_config}") from err
 
         try:
-            plugin_id = loaded.get([base, METTA_PLUGIN_CONFIG_KEY_PLUGINID])
-        except KeyError as e:
+            plugin_id = str(loaded.get([base, METTA_PLUGIN_CONFIG_KEY_PLUGINID]))
+        except KeyError as err:
+            full_config = loaded.get(base)
             raise ValueError(
-                "Could not find a plugin_id when trying to create a '{}' plugin from config: {}".format(
-                    type, loaded.get(base))) from e
+                "Could not find a plugin_id when trying to create a "
+                f"'{type}' plugin from config: {full_config}") from err
 
         # if no instance_id was passed, try to load one or just make one up
         if not instance_id:
-            instance_id = loaded.get(
-                [base, METTA_PLUGIN_CONFIG_KEY_INSTANCEID], default='')
+            instance_id = str(loaded.get([base, METTA_PLUGIN_CONFIG_KEY_INSTANCEID], default=''))
             if not instance_id:
-                instance_id = '{}-{}-{}'.format(type.value, plugin_id, ''.join(
-                    random.choice(string.ascii_lowercase) for i in range(10)))
+                instance_rand = ''.join(random.choice(string.ascii_lowercase) for i in range(10))
+                instance_id = f"{plugin_type}-{plugin_id}-{instance_rand}"
 
         if priority < 0:
-            priority = loaded.get([base,
-                                   METTA_PLUGIN_CONFIG_KEY_PRIORITY],
-                                  default=self.plugin_priority())
+            priority = int(loaded.get([base, METTA_PLUGIN_CONFIG_KEY_PRIORITY],
+                                      default=self.plugin_priority()))
             """ instance priority - this is actually a stupid way to get it """
 
-        # If arguments were given then pass them on
         config_arguments = loaded.get(
             [base, METTA_PLUGIN_CONFIG_KEY_ARGUMENTS], default={})
         if len(config_arguments) > 0:
-            arguments = arguments.copy()
+            if arguments is None:
+                arguments = {}
+            else:
+                # if we have config arguments from two different sources, then add the config args
+                # to a copy of the function parameter args.  We use a copy so that we make no
+                # context mistakes by altering a passed Dict that may get used for more than
+                # one plugin.
+                arguments = arguments.copy()
+
             arguments.update(config_arguments)
 
         # Use the factory to make the .fixtures.Fixture
         fixture = self.add_fixture(
-            type=type,
-            plugin_id=plugin_id,
-            instance_id=instance_id,
-            priority=priority,
-            arguments=arguments)
+            plugin_type=plugin_type, plugin_id=plugin_id, instance_id=instance_id,
+            priority=priority, arguments=arguments)
 
         return fixture
 
-    def add_fixture(self, type: Type, plugin_id: str,
-                    instance_id: str, priority: int, arguments: Dict[str, Any] = {}) -> Fixture:
-        """ Create a new plugin from parameters
+    def add_fixture(self, plugin_type: str, plugin_id: str, instance_id: str, priority: int,
+                    arguments: Dict[str, Any] = None) -> Fixture:
+        """Create a new plugin from parameters.
 
         Parameters:
         -----------
-
         config (Config) : configerus.Config object passed to each generated plugins.
 
-        type (.plugin.Type) : plugin type to create.
+        type (str) : plugin type to create.
 
         plugin_id (str) : METTA plugin id for the plugin type, to tell us what plugin
             factory to load.
@@ -972,7 +828,6 @@ class Environment:
 
         Return:
         -------
-
         A Fixture object with the new plugin added
 
         The Fixtures has already been added to the environment, but is returned
@@ -981,16 +836,20 @@ class Environment:
 
         Raises:
         -------
-
         NotImplementedError if you asked for an unregistered plugin_id/type
 
         """
-        fac = Factory(type, plugin_id)
+        if arguments is None:
+            arguments = {}
+
+        if not (isinstance(plugin_type, str) and isinstance(plugin_id, str) and
+                isinstance(instance_id, str) and isinstance(priority, int)):
+            raise ValueError(f"Bad value types passed for creating a fixture: {plugin_type}"
+                             f":{plugin_id}:{instance_id} ({priority})")
+
+        fac = Factory(plugin_type, plugin_id)
         plugin = fac.create(self, instance_id, **arguments)
-        fixture = self.fixtures.new_fixture(
-            plugin=plugin,
-            type=type,
-            plugin_id=plugin_id,
-            instance_id=instance_id,
+        fixture = self.fixtures.new(
+            plugin=plugin, plugin_type=plugin_type, plugin_id=plugin_id, instance_id=instance_id,
             priority=priority)
         return fixture

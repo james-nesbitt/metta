@@ -1,10 +1,15 @@
+"""
+
+Quick metta demo for injecting custom test-case code into a suite.
+
+"""
 
 from mirantis.testing.metta import discover, get_environment
-from mirantis.testing.metta.plugin import Type
+from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 
 
 def main():
-    """ Main entrypoint """
+    """Main entrypoint."""
 
     # Tell metta to scan for automatic configuration of itself.
     # It starts my looking in paths upwards for a 'metta.yml' file; if it finds
@@ -12,8 +17,8 @@ def main():
     discover()
 
     env = get_environment()
-    my_client = env.fixtures.get_plugin(
-        type=Type.CLIENT, plugin_id="my_client")
+    fixture = env.fixtures.get(plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id="my_client")
+    my_client = fixture.plugin
 
     while len(my_client):
         print(my_client.get_message())
