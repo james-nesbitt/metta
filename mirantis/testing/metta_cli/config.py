@@ -49,7 +49,7 @@ class ConfigGroup():
         for instance in self.environment.config.plugins.get_instances(
                 plugin_id=plugin_id, instance_id=instance_id, type=plugin_type):
             configerus_plugin_list.append({
-                'type': instance.plugin_type,
+                'type': instance.type,
                 'plugin_id': instance.plugin_id,
                 'instance_id': instance.instance_id,
                 'priority': instance.priority,
@@ -63,7 +63,6 @@ class ConfigGroup():
         for instance in self.environment.config.plugins.get_instances(
                 plugin_id=plugin_id, instance_id=instance_id, type=ConfigerusType.SOURCE):
             source = {
-                'type': instance.plugin_type,
                 'plugin_id': instance.plugin_id,
                 'instance_id': instance.instance_id,
                 'priority': instance.priority,

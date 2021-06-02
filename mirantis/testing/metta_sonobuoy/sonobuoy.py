@@ -472,3 +472,5 @@ class Status(Enum):
     """ testing has completed without failure """
     PASSED = 'passed'
     """ testing has passed """
+    POSTPROCESS = 'post-processing'
+    """ testing has finished and is being processed """

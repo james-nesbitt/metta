@@ -1,7 +1,5 @@
 #!groovy
 /**
- * Jenkins: Sanity test suite execute
- *
  * @NOTE this expects to be run from the repo root.
  */
 pipeline {
@@ -11,26 +9,13 @@ pipeline {
             apiVersion: v1
             kind: Pod
             spec:
-              volumes:
-              - name: docker-socket
-                emptyDir: {}
               containers:
-              - name: docker
-                image: jamesnmirantis/dockerized-builds:0.1.12
+              - name: workspace
+                image: msr.ci.mirantis.com/jnesbitt/dockerized-builds:0.1.8
                 command:
                 - sleep
                 args:
                 - 99d
-                volumeMounts:
-                - name: docker-socket
-                  mountPath: /var/run
-              - name: docker-daemon
-                image: docker:dind
-                securityContext:
-                  privileged: true
-                volumeMounts:
-                - name: docker-socket
-                  mountPath: /var/run
             """.stripIndent()
         }
     }
@@ -42,69 +27,75 @@ pipeline {
         string(name: 'PYTEST_TESTS', defaultValue: '', description: 'Optionally limit which tests pytest will run. IF empty, all tests will be run.')
         text(name: 'METTA_CONFIGJSON', defaultValue: '', description: 'Include JSON config to override config options.  This will be consumed as an ENV variable.')
     }
+    environment {
+        TEST_CHANNEL = "dev"
+        TEST_SUITE = "testkit"
+    }
     stages {
-        stage('Test Execute') {
-            when { not { changeRequest() } }
-            environment {
-                DOCKER_BUILDKIT = '1'
-                TEST_SUITE = "sanity"
-                METTA_CONFIGJSON="${params.METTA_CONFIGJSON}"
-                METTA_VARIABLES_ID="ci-sanity-${env.BUILD_NUMBER}"
-                METTA_USER_ID="sandbox-ci"
-            }
+
+        stage('Prepare workspace') {
             steps {
-                container('docker') {
+                container('workspace') {
                     script {
 
-                        GIT_TAG = sh(
-                            label: "Confirming git branch",
-                            script: """
-                                git describe --tags
-                            """,
-                            returnStdout: true
-                        ).trim()
+                        dir("suites/${env.TEST_CHANNEL}/${env.TEST_SUITE}") {
 
-                        currentBuild.displayName = "${env.TEST_SUITE} (${GIT_TAG}) ${env.BUILD_DISPLAY_NAME}"
+                            GIT_TAG = sh(
+                                label: "Confirming git branch",
+                                script: """
+                                    git describe --tags
+                                """,
+                                returnStdout: true
+                            ).trim()
 
-                        /** Starting PIP preparation */
+                            currentBuild.displayName = "${env.TEST_SUITE} (${GIT_TAG}) ${env.BUILD_DISPLAY_NAME}"
 
-                        sh(
-                            label: "Installing metta (pip)",
-                            script: """
-                                pip install --upgrade .
-                            """
-                        )
-                        dir('suites') {
+                            /** METTa pip install */
+
                             sh(
-                                label: "Installing metta-suites",
+                                label: "Installing metta (pip)",
                                 script: """
                                     pip install --upgrade .
                                 """
                             )
+
                         }
+                    }
+                }
+            }
+        }
 
-                        withCredentials([
-                            [ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds-docker-core', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
-                            usernamePassword(credentialsId: 'docker-hub-generic-up', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')
-                        ]) {
+        stage('Test Execute') {
+            environment {
+                METTA_CONFIGJSON="${params.METTA_CONFIGJSON}"
+                METTA_VARIABLES_ID="ci-${env.TEST_SUITE}-${env.BUILD_NUMBER}"
+                METTA_USER_ID="ci"
+            }
+            steps {
+                container('workspace') {
+                    script {
 
-                            dir("suites/${env.TEST_SUITE}") {
+                        dir("suites/${env.TEST_CHANNEL}/${env.TEST_SUITE}") {
+
+                            withCredentials([
+                                [ $class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'testeng-aws-docker-core-access-keys', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
+                                usernamePassword(credentialsId: 'testeng-dockerhub-up', usernameVariable: 'REGISTRY_USERNAME', passwordVariable: 'REGISTRY_PASSWORD')
+                            ]) {
 
                                 try {
 
                                     sh(
-                                        label: "Running sanity test",
+                                        label: "Running ${env.TEST_SUITE} test",
                                         script: """
-                                            pytest -s --junitxml=reports/junit.xml --html=reports/pytest.html ${params.PYTEST_TESTS}
+                                            pytest -s --junitxml=./reports/junit.xml --html=./reports/report.html ${params.PYTEST_TESTS}
                                         """
                                     )
 
                                 } catch (Exception e) {
 
                                     dir('error') {
-                                        if (METTA_CONFIGJSON != '') {
-                                            writeFile file:'metta.config.overrides.json', text:env.METTA_CONFIGJSON
-                                        }
+                                        // Build a whole bunch of error data from metta calls
+
                                         try {
                                             sh(
                                                 label: "Exporting metta debug information",
@@ -115,12 +106,18 @@ pipeline {
                                                     metta fixtures info --deep > metta.fixtures.json
                                                 """
                                             )
+
+                                            if (METTA_CONFIGJSON != '') {
+                                               writeFile file:'metta.config.overrides.json', text:env.METTA_CONFIGJSON
+                                            }
                                         } catch(Exception edown) {
                                             print "Exception occurred reading catching metta output"
                                         }
                                     }
 
                                     try {
+
+                                        // sometimes an exception leaves an orphan cluster
                                         sh(
                                             label: "Terminating resources on exception",
                                             script: """
@@ -136,38 +133,53 @@ pipeline {
 
                                     currentBuild.result = 'FAILURE'
 
-                                } finally {
-
-                                    if (fileExists('reports')) {
-                                        dir('reports') {
-                                            archiveArtifacts artifacts:'*', allowEmptyArchive: true
-
-                                            if (fileExists('junit.xml')) {
-                                                junit 'junit.xml'
-                                            }
-                                            if (fileExists('pytest.html')) {
-                                                publishHTML (target : [
-                                                    allowMissing: false,
-                                                    alwaysLinkToLastBuild: true,
-                                                    keepAll: true,
-                                                    reportFiles: 'pytest.html',
-                                                    reportDir: '.',
-                                                    reportName: 'PyTest Report'
-                                                ])
-                                            }
-                                        }
-                                    }
-                                    if (fileExists('results')) {
-                                        archiveArtifacts artifacts: 'results/*', allowEmptyArchive: true
-                                    }
-
                                 }
+
                             }
+
                         }
 
                     }
                 }
             }
         }
+
+        stage('Reporting') {
+            steps {
+                container('workspace') {
+                    script {
+
+                        dir("suites/${env.TEST_CHANNEL}/${env.TEST_SUITE}") {
+
+                            if (fileExists('reports')) {
+                                dir('reports') {
+                                    archiveArtifacts artifacts:'*', allowEmptyArchive: true
+
+                                    if (fileExists('junit.xml')) {
+                                        junit 'junit.xml'
+                                    }
+                                    if (fileExists('pytest.html')) {
+                                        publishHTML (target : [
+                                            allowMissing: false,
+                                            alwaysLinkToLastBuild: true,
+                                            keepAll: true,
+                                            reportFiles: 'pytest.html',
+                                            reportDir: '.',
+                                            reportName: 'PyTest Report'
+                                        ])
+                                    }
+                                }
+                            }
+                            if (fileExists('results')) {
+                                archiveArtifacts artifacts: 'results/*', allowEmptyArchive: true
+                            }
+
+                        }
+
+                    }
+                }
+            }
+        }
+
     }
 }
