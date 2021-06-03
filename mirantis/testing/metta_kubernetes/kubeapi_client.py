@@ -113,11 +113,21 @@ class KubernetesApiClientPlugin:
 
     def info(self) -> Dict[str, Any]:
         """Return dict data about this plugin for introspection."""
-        return {
+        info = {
             'kubernetes': {
                 'config_file': self.config_file
             }
         }
+
+        try:
+            info['nodes'] = self.nodes()
+
+        # pylint: disable=broad-except
+        except Exception:
+            # Still continue to run
+            pass
+
+        return info
 
     def get_api(self, api: str):
         """Get an kubernetes API."""
@@ -136,7 +146,23 @@ class KubernetesApiClientPlugin:
         return kubernetes.utils.create_from_dict(
             k8s_client=self.api_client, data=data, **kwargs)
 
-    def ready_wait(self, timeout: int = 30, period: int = 1):
+    def nodes(self):
+        """Return V1Node list.
+
+        Returns:
+        --------
+        List of kubernetes cluster nodes as V1Node objects.
+        https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Node.md
+
+        You can get node status from node.status
+        https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1NodeStatus.md
+
+        """
+        node_items = self.get_api('CoreV1Api').list_node().items
+
+        return node_items
+
+    def readyz_wait(self, timeout: int = 30, period: int = 1):
         """Wait until kubernetes is ready before returning."""
         err = None
         while timeout > 0:

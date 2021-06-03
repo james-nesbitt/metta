@@ -100,7 +100,7 @@ class ProvisionerGroup():
             raise ValueError('This provisioner does not keep fixtures.')
 
         fixture_list = {}
-        for fixture in provisioner_plugin.get_fixtures().to_list():
+        for fixture in provisioner_plugin.get_fixtures():
 
             info = {
                 'fixture': {
@@ -117,7 +117,7 @@ class ProvisionerGroup():
 
                 if hasattr(fixture.plugin, 'get_fixtures'):
                     fixtures = {}
-                    for sub_fixture in fixture.plugin.get_fixtures().to_list():
+                    for sub_fixture in fixture.plugin.get_fixtures():
                         fixture_info = {
                             'fixture': {
                                 'plugin_type': sub_fixture.plugin_type,

@@ -12,7 +12,7 @@ import json
 import datetime
 import subprocess
 import shutil
-from typing import Dict, List
+from typing import Dict, List, Any
 
 import yaml
 
@@ -142,8 +142,15 @@ class LaunchpadClient:
         """Uninstall using the launchpad client."""
         if os.path.isfile(self.config_file):
             if not quick:
-                self._run(['reset', '--force'])
-            self.rm_client_bundles()
+                try:
+                    self._run(['reset', '--force'])
+                except subprocess.TimeoutExpired:
+                    pass
+
+            try:
+                self.rm_client_bundles()
+            except FileNotFoundError:
+                pass
 
             try:
                 os.remove(self.config_file)
@@ -168,8 +175,8 @@ class LaunchpadClient:
         """List bundle users which have been downloaded."""
         return self._mke_client_downloaded_bundle_user_paths().keys()
 
-    def bundle(self, user: str, reload: bool = False):
-        """Retrieve a client bundle and return the metadata as a dict."""
+    def get_bundle(self, user: str, reload: bool = True):
+        """Retrieve the client bundle from the MKE endpoint."""
         client_bundle_path = self._mke_client_bundle_path(user)
         client_bundle_meta_file = os.path.join(
             client_bundle_path, METTA_USER_LAUNCHPAD_BUNDLE_META_FILE)
@@ -191,7 +198,24 @@ class LaunchpadClient:
             else:
                 raise RuntimeError("Numerous attempts to download the client bundle failed.")
 
-        data = {}
+    def bundle(self, user: str):
+        """Interpret the bundle metadata as a dict.
+
+            @NOTE why doesn't this download the bundle automatically?
+
+            We avoid including a bundle download in this step as we need to have an option
+            for trying to detect the bundle without getting any timeout type errors.
+            This method can be used as a quick fail attempt to decide if launchpad has 
+            installed on the cluster, but checking to see if a client bundle has been
+            downloaded.
+            If you perform an action, you should consider asking for the client bundle.
+
+        """
+        client_bundle_path = self._mke_client_bundle_path(user)
+        client_bundle_meta_file = os.path.join(
+            client_bundle_path, METTA_USER_LAUNCHPAD_BUNDLE_META_FILE)
+
+        data: Dict[str, Any] = {}
         """ Will hold data pulled from the client meta data file """
         try:
             with open(client_bundle_meta_file) as json_file:
@@ -221,19 +245,13 @@ class LaunchpadClient:
 
     def rm_client_bundles(self):
         """Remove any downloaded client bundles."""
-        try:
-            base = os.path.join(
-                METTA_USER_LAUNCHPAD_CLUSTER_PATH,
-                self._cluster_name(),
-                METTA_USER_LAUNCHPAD_BUNDLE_SUBPATH)
+        base = os.path.join(
+            METTA_USER_LAUNCHPAD_CLUSTER_PATH,
+            self._cluster_name(),
+            METTA_USER_LAUNCHPAD_BUNDLE_SUBPATH)
 
-            if os.path.isdir(base):
-                shutil.rmtree(base)
-
-        except subprocess.CalledProcessError:
-            # most likely we could't determine a cluster_name, because we don't
-            # have a config file.
-            return
+        if os.path.isdir(base):
+            shutil.rmtree(base)
 
     def _mke_client_bundle_root(self):
         """Root path to the launchpad user conf."""
@@ -285,7 +303,7 @@ class LaunchpadClient:
         try:
             return str(config_data['metadata']['name'])
         except KeyError as err:
-            raise ValueError('Launchpad yaml file did not container a cluster name') from err
+            raise ValueError('Launchpad yaml file did not contain a cluster name') from err
 
     def _run(self, args: List[str], return_output=False, debug: bool = False):
         """Run a launchpad command.

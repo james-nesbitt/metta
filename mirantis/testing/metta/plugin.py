@@ -85,13 +85,13 @@ class Factory():
 
         """
         logger.debug("Metta Plugin factory registering `%s:%s`", plugin_type, plugin_id)
-        self.plugin_id = plugin_id
-        self.plugin_type = plugin_type
+        self.plugin_id: str = plugin_id
+        self.plugin_type: str = plugin_type
 
         if self.plugin_type not in self.registry:
             self.registry[self.plugin_type] = {}
 
-    def __call__(self, func):
+    def __call__(self, func: Callable):
         """Wrap the decorator factory wrapping function.
 
         Returns:
@@ -141,6 +141,12 @@ class Factory():
         return factory(environment=environment,
                        instance_id=instance_id, *args, **kwargs)
 
-    def types(self):
+    @classmethod
+    def plugin_types(cls):
         """Return a generator of types that have been registered."""
-        return self.registry.keys()
+        return cls.registry.keys()
+
+    @classmethod
+    def plugins(cls, plugin_type: str):
+        """Return a generator of registered plugin keys for a passed plugin type registered."""
+        return cls.registry[plugin_type].keys()

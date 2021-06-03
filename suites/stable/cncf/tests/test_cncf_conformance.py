@@ -35,8 +35,14 @@ def kubeapi_client(environment):
         kubeapi_client = environment.fixtures.get_plugin(
             plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
 
-        logger.info("Waiting for kubernetes to be ready")
+        logger.info("Waiting for kubernetes to report readiness")
         kubeapi_client.ready_wait(45)
+
+        # Sometimes the sonobuoy pod gives an unavoidable taint error, even
+        # though we are passing taint skips.  This is solved by a wait, so
+        # it is likely a deeper k8 isn't ready issue (poor dignosis).
+        logger.info("Forcing sleep to wait for kubernetes.")
+        time.sleep(60)
 
         return kubeapi_client
 

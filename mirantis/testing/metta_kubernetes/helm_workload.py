@@ -143,9 +143,11 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
                     'chart': workload_config.get(
                         [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART]),
                     'set': workload_config.get(
-                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESSET]),
+                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESSET],
+                        default={}),
                     'values': workload_config.get(
-                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_VALUES])
+                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_VALUES],
+                        default={})
                 },
                 'required_fixtures': {
                     'kubernetes': {

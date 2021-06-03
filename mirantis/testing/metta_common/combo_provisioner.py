@@ -15,6 +15,8 @@ from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures, Fixture
+from mirantis.testing.metta.plugin import (METTA_PLUGIN_CONFIG_KEY_INSTANCEID,
+                                           METTA_PLUGIN_CONFIG_KEY_PRIORITY)
 from mirantis.testing.metta.provisioner import ProvisionerBase, METTA_PLUGIN_TYPE_PROVISIONER
 
 logger = logging.getLogger('metta.contrib.provisioner:combo')
@@ -71,7 +73,6 @@ class ComboProvisionerPlugin(ProvisionerBase):
 
     Parameters:
     -----------
-
     environment (Environment) : All metta plugins receive the environment
         object in which they were created.
     instance_id (str) : all metta plugins receive their own string identity.
@@ -118,17 +119,17 @@ class ComboProvisionerPlugin(ProvisionerBase):
         # environment and adding it to our UCCTFixturesPlugin fixtures list.
         self.backends = Fixtures()
         for backend in backends_list:
-            backend_instance_id = backend['instance_id']
+            backend_instance_id = backend[METTA_PLUGIN_CONFIG_KEY_INSTANCEID]
             try:
                 fixture = self.environment.fixtures.get(
                     plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id=backend_instance_id)
             except KeyError as err:
                 raise ValueError(
                     "Combo provisioner was given a backend provisioner key that it could not "
-                    f"correlated with a configured fixture: {backend_instance_id}") from err
+                    f"correlate with a existing fixture: {backend_instance_id}") from err
 
-            if hasattr(backend, "priority"):
-                fixture.priority = backend['priority']
+            if hasattr(backend, METTA_PLUGIN_CONFIG_KEY_PRIORITY):
+                fixture.priority = backend[METTA_PLUGIN_CONFIG_KEY_PRIORITY]
 
             self.backends.add(fixture)
 
@@ -208,20 +209,18 @@ class ComboProvisionerPlugin(ProvisionerBase):
         for backend_fixture in self._get_backend_iter():
             plugin = backend_fixture.plugin
             if hasattr(plugin, 'fixtures'):
-                matches.merge(plugin.filter(plugin_type=plugin_type, plugin_id=plugin_id,
-                                            instance_id=instance_id))
+                matches.merge(plugin.fixtures.filter(plugin_type=plugin_type, plugin_id=plugin_id,
+                                                     instance_id=instance_id))
         return matches
 
     def get_fixture(self, plugin_type: str = '', instance_id: str = '',
                     plugin_id: str = '', exception_if_missing: bool = True) -> Fixture:
         """Retrieve the first matching fixture from ordered backends."""
-        for backend_fixture in self._get_backend_iter():
-            plugin = backend_fixture.plugin
-            if hasattr(plugin, 'get_fixture'):
-                fixture = plugin.get(plugin_type=plugin_type, plugin_id=plugin_id,
-                                     instance_id=instance_id, exception_if_missing=False)
-                if fixture is not None:
-                    return fixture
+        matches = self.get_fixtures(plugin_type=plugin_type, plugin_id=plugin_id,
+                                    instance_id=instance_id)
+
+        if len(matches) > 0:
+            return matches.get()
 
         if exception_if_missing:
             raise KeyError("No matching fixture was found")
@@ -238,6 +237,7 @@ class ComboProvisionerPlugin(ProvisionerBase):
         if fixture is not None:
             return fixture.plugin
 
+        # this if is not needed, as get_fixture() handles exception_if_missing
         if exception_if_missing:
             raise KeyError("No matching plugin was found")
         return None

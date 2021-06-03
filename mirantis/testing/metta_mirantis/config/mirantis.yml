@@ -13,6 +13,8 @@ terraform:
                 v9: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v9"
                 # Fifth iteration with some cleanup and fixes
                 v10: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v10"
+                # sisxth iteration with fixes for ephemeral resources
+                v11: "{{paths:metta-mirantis}}/terraform/plans/prodeng/aws/v11"
         # Launchpad example terraform charts.
         example:
             aws:
