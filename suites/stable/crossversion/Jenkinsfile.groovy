@@ -103,7 +103,7 @@ pipeline {
                                                     metta config get metta > metta.config.metta.json
                                                     metta config get environment > metta.config.environment.json
                                                     metta config get variables > metta.config.variables.json
-                                                    metta fixtures info --deep > metta.fixtures.json
+                                                    metta fixture info --deep > metta.fixtures.json
                                                 """
                                             )
 
