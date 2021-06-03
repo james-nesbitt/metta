@@ -51,8 +51,24 @@ def mke(environment):
 def kubeapi(environment):
     """ get the kubeapi client """
     try:
-        return environment.fixtures.get_plugin(
+        kubeapi_client = environment.fixtures.get_plugin(
             plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+
+        try:
+            # helms wil fail if the kubeapi isn't ready
+            logger.info("Waiting for kubernetes to be ready")
+            kubeapi_client.ready_wait(45)
+
+        except Exception as err:
+            raise Exception(
+                "Failed waiting for kubernetes to be ready") from err
+
+        # @TODO remove4 this hardcoded sleep
+        # this is only needed as helm sometimes fails without it
+        logger.info("Extending wait period to fix an unknown helm issue. Waiting 30 seconds.")
+        time.sleep(30)
+
+        return kubeapi_client
 
     except KeyError as err:
         raise ValueError(
@@ -77,20 +93,6 @@ def environment_up_unlocked(environment_up, mke, kubeapi):
 
     except Exception as err:
         raise Exception("Failed when trying to raise the MKE limits for pods/node") from err
-
-    try:
-        # helms wil fail if the kubeapi isn't ready
-        logger.info("Waiting for kubernetes to be ready")
-        kubeapi.ready_wait(45)
-
-    except Exception as err:
-        raise Exception(
-            "Failed waiting for kubernetes to be ready") from err
-
-    # @TODO remove4 this hardcoded sleep
-    # this is only needed as helm sometimes fails without it
-    logger.info("Extending wait period to fix an unknown helm issue.  Waiting 30 seconds.")
-    time.sleep(30)
 
     # we didn't touch this but this is the return target
     return environment_up
