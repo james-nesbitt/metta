@@ -1,14 +1,16 @@
 """
 
-Test that some clients work
+Run the CNCF Conformance test suite.
 
 """
 import time
 import logging
 import pytest
 
+from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
 
+from mirantis.testing.metta_kubernetes.kubeapi_client import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 from mirantis.testing.metta_sonobuoy import METTA_PLUGIN_ID_SONOBUOY_WORKLOAD
 from mirantis.testing.metta_sonobuoy.sonobuoy import Status
 
@@ -26,20 +28,28 @@ SONOBUOY_TEST_TIMER_STEP = 10
 # pylint: disable=redefined-outer-name
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="package")
+def kubeapi_client(environment):
+    """Get the kubeapi client plugin."""
+    try:
+        kubeapi_client = environment.fixtures.get_plugin(
+            plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+
+        logger.info("Waiting for kubernetes to be ready")
+        kubeapi_client.ready_wait(45)
+
+        return kubeapi_client
+
+    except KeyError as err:
+        raise ValueError(
+            "No Kubernetes client could be found. Is Kubernetes orchestration enabled??") from err
+
+
+@pytest.fixture(scope="package")
 def cncf_workload(environment_up):
     """Retrieve the CNCF workload instance."""
-
-    # if we don't put in a small delay then we get an error out of sonobuoy:
-    # e2e: Can't schedule pod: 0/1 nodes are available: 1 node(s) had taint \
-    #      {com.docker.ucp.manager: }, that the pod didn't tolerate. \
-    #      (errors/global/error.json)
-    #
-    # This error goes away with a short delay.
-
     return environment_up.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
-                                              plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
-                                              instance_id='cncf')
+                                              plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD)
 
 
 @pytest.fixture()
@@ -48,9 +58,13 @@ def cncf_workload_instance(environment_up, cncf_workload):
     return cncf_workload.create_instance(environment_up.fixtures)
 
 
-def test_cncf_conformance(cncf_workload_instance):
-    """ run cncf conformance test suite """
+def test_cncf_conformance(cncf_workload_instance, kubeapi_client):
+    """Run cncf conformance test suite."""
     try:
+
+        logger.info("Checking if kubernetes thinks it is ready")
+        logger.debug("Kube readyz: %s", kubeapi_client.readyz())
+
         # start the CNCF conformance run
         logger.info("Starting sonobuoy run")
         cncf_workload_instance.apply(wait=True)

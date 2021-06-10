@@ -157,20 +157,24 @@ class SonobuoyWorkloadPlugin(WorkloadBase):
         """Return dict data about this plugin for introspection."""
         loaded = self.environment.config.load(self.config_label)
         """ get a configerus LoadedConfig for the sonobuoy label """
+        sonobuoy_config = loaded.get(self.config_base, default={})
+        """ load the sonobuoy conifg (e.g. sonobuoy.yml) """
 
-        sonobuoy_config = loaded.get(self.config_base)
-
-        kubeclient = self.environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+        try:
+            kubeclient = self.environment.fixtures.get_plugin(
+                plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+        except KeyError:
+            # we will just work around a missing kube api plugin
+            kubeclient = None
 
         info = {
             'workload': {
                 'cncf': sonobuoy_config,
-                'kube_client': kubeclient.info(),
                 'required_fixtures': {
                     'kubernetes': {
                         'plugin_type': METTA_PLUGIN_TYPE_CLIENT,
-                        'plugin_id': 'metta_kubernetes'
+                        'plugin_id': 'metta_kubernetes',
+                        'kube_client': kubeclient.info() if hasattr(kubeclient, 'info') else None
                     }
                 }
             }

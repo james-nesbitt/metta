@@ -104,6 +104,8 @@ pipeline {
                                                     metta config get environment > metta.config.environment.json
                                                     metta config get variables > metta.config.variables.json
                                                     metta fixture info --deep > metta.fixtures.json
+                                                    metta config get launchpad > metta.config.launchpad.json
+                                                    metta config get terraform > metta.config.terraform.json
                                                 """
                                             )
 
