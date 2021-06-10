@@ -38,10 +38,9 @@ class FixturesGroup():
     def list(self, plugin_type: str = '', plugin_id: str = '', instance_id: str = ''):
         """Return List all fixture instance_ids."""
         fixture_list = []
-        for fixture in self._environment.fixtures.filter(
-            plugin_type=plugin_type,
-            plugin_id=plugin_id,
-            instance_id=instance_id):
+        for fixture in self._environment.fixtures.filter(plugin_type=plugin_type,
+                                                         plugin_id=plugin_id,
+                                                         instance_id=instance_id):
 
             fixture_list.append(fixture.instance_id)
 
@@ -52,15 +51,13 @@ class FixturesGroup():
     def plugin_types(self):
         """List plugins that have been registered with the environment."""
         plugin_list = {}
-        for plugin_type in Factory.registry:
+        for plugin_type in Factory.plugin_types():
             plugin_list[plugin_type] = []
-            for plugin_id in Factory.registry[plugin_type]:
+            for plugin_id in Factory.plugins(plugin_type):
                 plugin_list[plugin_type].append(plugin_id)
 
         return cli_output(plugin_list)
 
-    # just lots of optional filtering arguments
-    # pylint: disable=too-many-arguments
     def info(self, deep: bool = False, include_cli_plugins: bool = False):
         """Return Info for all fixtures."""
         fixture_info_list = []

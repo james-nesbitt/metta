@@ -1,0 +1,45 @@
+manager_count        = 1
+worker_count         = 3
+msr_count            = 0
+windows_worker_count = 0
+username             = "alex"
+task_name            = "ostrich"
+project              = "ST-SZNG"
+expire_duration      = "72h"
+mcr_version          = "19.03.14"
+mke_version          = "3.3.7"
+kube_orchestration   = true
+msr_version          = "2.8.5"
+
+###
+# Popular options which already have sane defaults; you can change these here.
+# Refer to the root variables.tf to see what else you can add here to override.
+###
+#
+# Choose from a plethora of platforms.
+# Refer to platforms.auto.tfvars.json for available choices.
+# platform                       = "rhel_7.8"
+
+# Choose either "public" or "mirantis". If you choose "mirantis", refer to
+# platforms.auto.tfvars.json to see what you can set 'platform' to.
+# platform_repo                  = "public"
+
+# List of MSR installer flags. What you see here is the default behavior.
+# msr_install_flags    = ["--ucp-insecure-tls"]
+
+# Sets the security group wide open, but only from your IP address.
+# Mainly for debugging purposes.
+# open_sg_for_myip               = true
+
+# This is the %age over the current spot price. Default is 2%.
+# If set to 0, it uses the on-demand price.
+# pct_over_spot_price            = 0
+
+# As the var names suggest, these are the MKE/MSR 'admin' and the Windows 'Administrator'
+# password values.
+# While you _can_ set these here, the much better approach is to create a file in this dir
+# named something like 'passwords.auto.tfvars' (the 'passwords' part can be any name)
+# and put them there. This lets you share your terraform.tfvars file without sharing your
+# passwords.
+# admin_password                 = "abcd1234changemepleasedontusemeatall"
+# windows_administrator_password = "tfaws,,CHANGEME..ExampleButPleaseStillDontUseMe"

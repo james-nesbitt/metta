@@ -43,8 +43,8 @@ config:
   # raw config at this time.
   managers: 1
   specs:
-  - platform: "ubuntu_20.04"
-    ssh_user: "docker"
+  - platform: "{{variables:platform}}"
+    ssh_user: "{{variables:ssh_user}}"
     count: 6
     is_windows: False
     arch: "x86_64"

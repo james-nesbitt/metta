@@ -79,9 +79,37 @@ class KubernetesGroup():
 
         if deep:
             if hasattr(fixture.plugin, 'info'):
-                collect_info.update(fixture.plugin.info(True))
+                collect_info.update(fixture.plugin.info(deep))
 
         return cli_output(collect_info)
+
+    def nodes(self, workload: str = '', node: int = None):
+        """Get info about a client plugin."""
+        fixture = self._select_client(instance_id=workload)
+        nodes = fixture.plugin.nodes()
+
+        if node is None:
+            return cli_output(list(nodes.to_dict() for node in nodes))
+        return cli_output(nodes[node].to_dict())
+
+    def nodes_status(self, workload: str = '', node: int = None):
+        """Get info about a client plugin."""
+        fixture = self._select_client(instance_id=workload)
+        nodes = fixture.plugin.nodes()
+
+        if node is None:
+            return cli_output(list(node.status.to_dict() for node in nodes))
+        return cli_output(nodes[node].status.to_dict())
+
+    def nodes_sysinfo(self, workload: str = '', node: int = None):
+        """Get info about a client plugin."""
+        fixture = self._select_client(instance_id=workload)
+
+        nodes = fixture.plugin.nodes()
+
+        if node is None:
+            return cli_output(list(node.status.node_info.to_dict() for node in nodes))
+        return cli_output(nodes[node].status.node_info.to_dict())
 
     def readyz(self, workload: str = ''):
         """Get kubernetes readiness info from the plugin."""

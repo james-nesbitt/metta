@@ -20,7 +20,8 @@ from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
 from .common import add_common_config
 from .presets import add_preset_config
 
-from .mke_client import MKEAPIClientPlugin, MKEAPICliPlugin, METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID
+from .mke_client import (MKEAPIClientPlugin, MKEAPICliPlugin, METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+                         METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT)
 from .msr_client import MSRAPIClientPlugin, MSRAPICliPlugin, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
 
 # ----- Plugin factories -----
@@ -34,10 +35,12 @@ def metta_mirantis_plugin_factory_client_mke(
         accesspoint: str = '',
         username: str = '',
         password: str = '',
-        hosts: List[Dict] = None):
+        hosts: List[Dict] = None,
+        bundle_root: str = METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT):
     """Create a Mirantis MKE API Client."""
     return MKEAPIClientPlugin(environment, instance_id, accesspoint=accesspoint,
-                              username=username, password=password, hosts=hosts)
+                              username=username, password=password, hosts=hosts,
+                              bundle_root=bundle_root)
 
 
 @Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)

@@ -32,6 +32,7 @@ extra_tags:
 # Typically overridden in a platform config variables file
 platform_repo: public
 platform: ubuntu_20.04
+ssh_user: "docker"
 
 driver: "aws"
 

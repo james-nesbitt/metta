@@ -27,7 +27,7 @@ PLUGIN_ID_FORMAT_OUTPUT = 'output'
 
 
 class ConfigFormatOutputPlugin:
-    """ Configerus formatter plugin that uses Metta outputs as a source """
+    """Configerus formatter plugin that uses Metta outputs as a source."""
 
     def __init__(self, config: Config, instance_id: str):
         """Create configerus format plugin."""

@@ -119,6 +119,7 @@ class TerraformClient:
         try:
             self._run(['destroy', '-auto-approve'], with_state=True,
                       with_vars=True, return_output=False)
+            self._rm_vars_file()
         except subprocess.CalledProcessError as err:
             logger.error("Terraform client failed to run init in %s: %s", self.working_dir,
                          err.output)
@@ -166,6 +167,12 @@ class TerraformClient:
                 json.dump(self.vars, var_file, sort_keys=True, indent=4)
         except Exception as err:
             raise Exception(f"Could not create terraform vars file: {vars_path}") from err
+
+    def _rm_vars_file(self):
+        """Remove any created vars file."""
+        vars_path = self.vars_path
+        if os.path.isfile(vars_path):
+            os.remove(vars_path)
 
     def _run(self, args: List[str], append_args: List[str] = None, with_state=True,
              with_vars=True, return_output=False):

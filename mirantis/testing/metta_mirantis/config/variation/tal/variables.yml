@@ -14,7 +14,7 @@ files_path: .
 files_prefix: "{{id}}"
 
 # Path to the terraform plan to be used
-terraform_plan: "{{mirantis:terraform.plans.prodeng.aws.v10}}"
+terraform_plan: "{{mirantis:terraform.plans.prodeng.aws.v11}}"
 # Prefix for terraform resources for identifcation and variations
 resource_prefix: "{{id}}"
 # AWS region for resources
@@ -40,12 +40,12 @@ platform: ubuntu_20.04
 mcr_repo_url: "https://repos.mirantis.com/"
 # mcr_repo_url: "https://s3.amazonaws.com/repos-internal.mirantis.com/"
 mcr_channel: stable
-mcr_version: 20.10.4
+mcr_version: 20.10.5
 mcr_install_url_linux: "https://get.mirantis.com/"
 mcr_install_url_windows: "https://get.mirantis.com/install.ps1"
 
 mke_image_repo: docker.io/mirantis
-mke_version: 3.4.0
+mke_version: 3.4.2
 # These are actually poor design, as we are putting app defaults in config
 # in order to support easy overrides, in order to maintain an easy to read
 # config only lunchpad.yaml config source.
@@ -54,7 +54,7 @@ mke_install_nodeport_range: "32768-35535"
 mke_install_defaultorchestrator: kubernetes
 
 msr_image_repo: docker.io/mirantis
-msr_version: 2.9.0
+msr_version: 2.9.1
 
 # machine/node counts to use
 # typically overridden in a cluster config variables file

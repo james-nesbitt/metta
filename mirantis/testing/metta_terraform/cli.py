@@ -106,14 +106,12 @@ class TerraformGroup():
     def fixtures(self, provisioner: str = ''):
         """List all fixtures for this provisioner."""
         provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        if not hasattr(provisioner, 'get_fixtures'):
-            raise ValueError('This provisioner does not keep fixtures.')
         fixture_list = [{
             'plugin_type': fixture.plugin_type,
             'plugin_id': fixture.plugin_id,
             'instance_id': fixture.instance_id,
             'priority': fixture.priority,
-        } for fixture in provisioner_plugin.get_fixtures().to_list()]
+        } for fixture in provisioner_plugin.fixtures]
 
         cli_output(fixture_list)
 

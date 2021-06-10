@@ -19,5 +19,5 @@ The `metta.yml` contents could be like:
 metta.yml
 ```
 presets:
-    release: release/2021Q1
+    release: patch/202106
 ```
