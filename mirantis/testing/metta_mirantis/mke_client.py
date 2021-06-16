@@ -524,11 +524,15 @@ class MKEAPIClientPlugin:
         # use the parent UCCTFixturesPlugin methods for adding fixtures
         self.fixtures.add(fixture)
 
-    def rm_bundle_clients(self):
+    def rm_bundle(self):
         """Remove any downloaded client bundles."""
         bundle_dir = self._bundle_user_path()
-        if os.path.isdir(bundle_dir):
-            shutil.rmtree(bundle_dir)
+
+        if not os.path.isdir(bundle_dir):
+            logger.warning("MKE Client was asked to delete client bundle, but we don't have one.")
+            return None
+
+        return shutil.rmtree(bundle_dir)
 
     def _bundle_user_path(self):
         """Build a string path to where the user client bundle should be put."""

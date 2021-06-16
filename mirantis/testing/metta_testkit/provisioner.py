@@ -5,7 +5,8 @@ Metta provisioner plugin for testkit.
 """
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List
+from subprocess import CalledProcessError
 
 import yaml
 
@@ -15,6 +16,9 @@ from configerus.validator import ValidationError
 
 from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.provisioner import ProvisionerBase
+from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta_mirantis import (METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+                                             METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
 
 from .testkit import TestkitClient, TESTKITCLIENT_CLI_CONFIG_FILE_DEFAULT
 
@@ -40,12 +44,21 @@ TESTKIT_CONFIG_KEY_CONFIGFILE = 'config_file'
 TESTKIT_CONFIG_DEFAULT_CONFIGFILE = TESTKITCLIENT_CLI_CONFIG_FILE_DEFAULT
 """ default value for where to put the testkit config file """
 
+METTA_TESTKIT_CONFIG_MKE_ACCESSPOINT_KEY = 'mke.accesspoint'
+""" config key for the MKE endpoint, usually the manager load-balancer """
+METTA_TESTKIT_CONFIG_MKE_USERNAME_KEY = 'mke.username'
+""" config key for the MKE username """
+METTA_TESTKIT_CONFIG_MKE_PASSWORD_KEY = 'mke.password'
+""" config key for the MKE password """
+METTA_TESTKIT_CONFIG_MKE_CLIENTBUNDLE_KEY = 'mke.client_bundle_root'
+""" Config key for the MKE client bundle root path """
+
 METTA_TESTKIT_CONFIG_VALIDATE_JSONSCHEMA = {
     'type': 'object',
     'properties': {
-        'mcr': {'type': 'object'},
-        'mke': {'type': 'object'},
-        'msr': {'type': 'object'}
+        'ucp': {'type': 'object'},
+        'dtr': {'type': 'object'},
+        '': {'type': 'object'}
     },
     'required': []
 }
@@ -138,6 +151,11 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         self.testkit = TestkitClient(config_file=self.config_file)
         """ testkit client object """
 
+        self.fixtures = Fixtures()
+        """This object makes and keeps track of fixtures for MKE/MSR clients."""
+
+        self.make_fixtures()
+
     # the deep argument is a standard for the info hook
     # pylint: disable=unused-argument
     def info(self, deep: bool = False) -> Dict[str, Any]:
@@ -162,6 +180,36 @@ class TestkitProvisionerPlugin(ProvisionerBase):
             'config': testkit_config.get([self.config_base, TESTKIT_CONFIG_KEY_CONFIG])
         }
 
+        if deep:
+
+            hosts: List[Dict[str, Any]] = []
+            try:
+                for node in self.testkit.machine_ls(self.system_name):
+                    hosts.append(node)
+            except CalledProcessError:
+                pass
+            info['hosts'] = hosts
+
+            fixtures = {}
+            try:
+                for fixture in self.fixtures:
+                    fixture_info = {
+                        'fixture': {
+                            'plugin_type': fixture.plugin_type,
+                            'plugin_id': fixture.plugin_id,
+                            'instance_id': fixture.instance_id,
+                            'priority': fixture.priority,
+                        }
+                    }
+                    if hasattr(fixture.plugin, 'info'):
+                        plugin_info = fixture.plugin.info()
+                        if isinstance(plugin_info, dict):
+                            fixture_info.update(plugin_info)
+                    fixtures[fixture.instance_id] = plugin_info
+            except CalledProcessError:
+                pass
+            info['fixtures'] = fixtures
+
         return info
 
     def prepare(self):
@@ -183,16 +231,82 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         """ retrieve testkit client options from config """
         opt_list = []
         for key, value in opts.items():
-            opt_list.append(f'--{key}={value}')
+            if isinstance(value, str):
+                opt_list.append(f'--{key}="{value}"')
+            else:
+                opt_list.append(f'--{key}={value}')
 
         # run the testkit client command to provisioner the cluster
         self.testkit.create(opts=opt_list)
+
+        # as we have likely changed MKE, let's make sure that a new client bundle
+        # is downloaded.
+        try:
+            mke = self.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+                                           plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+            mke.api_get_bundle(force=True)
+            mke.make_bundle_clients()
+
+        except KeyError as err:
+            raise RuntimeError("Launchpad MKE client failed to download client bundle.") from err
 
     def destroy(self):
         """Destroy any created resources."""
         # run the testkit client command to provisioner the cluster
         self.testkit.system_rm(self.system_name)
         self._rm_config_file()
+
+    def make_fixtures(self):
+        """Make related fixtures from a testkit installation.
+
+        Creates:
+        --------
+
+        MKE client : if we have manager nodes, then we create an MKE client
+            which will then create docker and kubernestes clients if they are
+            appropriate.
+
+        MSR Client : if we have an MSR node, then the related client is
+            created.
+
+        """
+        testkit_config = self.environment.config.load(self.config_label, force_reload=True)
+        """ load the plugin configuration so we can retrieve options """
+        testkit_hosts = self.testkit.machine_ls(system_name=self.system_name)
+        """ list of all of the testkit hosts. """
+        mke_hosts = []
+        msr_hosts = []
+        for host in testkit_hosts:
+            host['address'] = host['public_ip']
+            if host['ucp_controller'] == 'yes':
+                mke_hosts.append(host)
+
+        if len(mke_hosts) > 0:
+            mke_api_username = testkit_config.get(
+                [self.config_base, METTA_TESTKIT_CONFIG_MKE_USERNAME_KEY])
+            mke_api_password = testkit_config.get(
+                [self.config_base, METTA_TESTKIT_CONFIG_MKE_PASSWORD_KEY])
+            mke_client_bundle_root = testkit_config.get(
+                [self.config_base, METTA_TESTKIT_CONFIG_MKE_CLIENTBUNDLE_KEY], default='.')
+
+            instance_id = f"{self.instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}-{mke_api_username}"
+            fixture = self.environment.add_fixture(
+                METTA_PLUGIN_TYPE_CLIENT,
+                plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+                instance_id=instance_id,
+                priority=70,
+                arguments={'accesspoint': None, 'username': mke_api_username,
+                           'password': mke_api_password, 'hosts': mke_hosts,
+                           'bundle_root': mke_client_bundle_root})
+            self.fixtures.add(fixture)
+
+
+            fixture.plugin.api_get_bundle(force=True)
+            fixture.plugin.make_bundle_clients()
+
+        else:
+            logger.warning('No MKE master hosts found, not creating an MKE client.')
+
 
     def _write_config_file(self):
         """Write the config file for testkit."""

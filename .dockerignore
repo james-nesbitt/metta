@@ -1,7 +1,8 @@
 demos
 docs
 metta.egg-info
-bin
+build
+dist
 
 **/.git
 .gitignore
@@ -10,3 +11,4 @@ bin
 **/__pycache__
 **/.terraform
 **/*.tfstate
+**/*.pem

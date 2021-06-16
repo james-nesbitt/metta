@@ -102,7 +102,7 @@ class TerraformClient:
         except subprocess.CalledProcessError as err:
             logger.error("Terraform client failed to run apply in %s: %s", self.working_dir,
                          err.stderr)
-            raise Exception("Terraform client failed to run") from err
+            raise RuntimeError("Terraform client failed to run") from err
 
     def plan(self):
         """Check a terraform plan."""
@@ -112,7 +112,7 @@ class TerraformClient:
         except subprocess.CalledProcessError as err:
             logger.error("Terraform client failed to run plan in %s: %s", self.working_dir,
                          err.stderr)
-            raise Exception("Terraform client failed to plan") from err
+            raise RuntimeError("Terraform client failed to plan") from err
 
     def destroy(self):
         """Apply a terraform plan."""
@@ -123,7 +123,7 @@ class TerraformClient:
         except subprocess.CalledProcessError as err:
             logger.error("Terraform client failed to run init in %s: %s", self.working_dir,
                          err.output)
-            raise Exception("Terraform client failed to run destroy") from err
+            raise RuntimeError("Terraform client failed to run destroy") from err
 
     def output(self, name: str = ''):
         """Retrieve terraform outputs.
@@ -150,7 +150,7 @@ class TerraformClient:
         except subprocess.CalledProcessError as err:
             logger.error("Terraform client failed to run init in %s: %s", self.working_dir,
                          err.output)
-            raise Exception("Terraform client failed to retrieve output") from err
+            raise RuntimeError("Terraform client failed to retrieve output") from err
 
         return json.loads(output)
 
@@ -166,7 +166,7 @@ class TerraformClient:
             with open(vars_path, 'w') as var_file:
                 json.dump(self.vars, var_file, sort_keys=True, indent=4)
         except Exception as err:
-            raise Exception(f"Could not create terraform vars file: {vars_path}") from err
+            raise RuntimeError(f"Could not create terraform vars file: {vars_path}") from err
 
     def _rm_vars_file(self):
         """Remove any created vars file."""

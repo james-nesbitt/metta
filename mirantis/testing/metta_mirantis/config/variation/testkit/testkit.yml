@@ -5,15 +5,19 @@ system_name: "{{variables:id}}"
 # put the testkit yml file in the project folder
 config_file: "{{variables:files_path}}/{{variables:files_prefix}}.testkit.yml"
 
+mke:
+  username: "{{variables:admin_user?admin}}"
+  password: "{{vairables:admin_password?orcaorcaorca}}"
+  client_bundle_root: "{{variables:files_path}}/{{variables:files_prefix}}.mke.bundles"
 
 options:
   # Options to pass to the client on create runs
   create:
-    kube: true
+    kube: false
     ucp: true
     dtr: true
     # dry-run: true
-    args: "--admin-username={{admin_user?admin}} --admin-password={{admin_password?orcaorcaorca}}"
+    args: "--admin-username={{mke.username}} --admin-password={{mke.password}}"
 
 # Config to put into testkit
 config:
@@ -37,18 +41,23 @@ config:
   # aws_instanceiprofile: ""
   aws_security_group: "{{variables:aws_security_group?testkit}}"
   aws_volume_size: "{{variables:manager_volume_size}}"
-  aws_volume_size: "{{variables:manager_volume_size}}"
 
   # We can define specs in yaml, but we don't have a way of building it with
   # raw config at this time.
-  managers: 1
+  managers: "{{variables:manager_count}}"
   specs:
   - platform: "{{variables:platform}}"
     ssh_user: "{{variables:ssh_user}}"
-    count: 6
+    count: "{{variables:manager_count}}"
     is_windows: False
     arch: "x86_64"
-    # InstanceType: "{{variables:manager_type}}"" # defaults to above
+    instanceType: "{{variables:manager_type}}"
+  - platform: "{{variables:platform}}"
+    ssh_user: "{{variables:ssh_user}}"
+    count: "{{variables:worker_count}}"
+    is_windows: False
+    arch: "x86_64"
+    instanceType: "{{variables:worker_type}}"
 
   # Define script or image-pull provisioners
   # @SEE https://github.com/Mirantis/testkit/blob/60eee74c18c5ec888498491df8b4ab5c64b23235/provisioner/factory.go#L25

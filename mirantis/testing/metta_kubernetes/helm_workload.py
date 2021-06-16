@@ -139,9 +139,11 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
             'workload': {
                 'deployment': {
                     'repos': workload_config.get(
-                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS]),
+                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS],
+                        default=''),
                     'chart': workload_config.get(
-                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART]),
+                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART],
+                        default=''),
                     'set': workload_config.get(
                         [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESSET],
                         default={}),
@@ -165,7 +167,7 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
 class KubernetesHelmV3WorkloadInstance:
     """A workload instance, which is a single active helm chart.
 
-    A workload plugin can create many isntances.
+    A workload plugin can create many instances.
 
     """
 

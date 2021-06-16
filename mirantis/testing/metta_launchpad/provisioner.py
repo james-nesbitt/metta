@@ -350,7 +350,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         try:
             mke = self.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_CLIENT,
                                            plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
-            mke.rm_bundle_clients()
+            mke.rm_bundle()
 
         except KeyError as err:
             raise RuntimeError("Launchpad MKE client failed to download client bundle.") from err
@@ -364,8 +364,8 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         """Write the config state to the launchpad file."""
         try:
             # load all of the launchpad configuration, force a reload to get up to date contents
-            launchpad_config = self.environment.config.load(self.config_label, force_reload=True)
-            launchpad_config = launchpad_config.get(
+            launchpad_loaded = self.environment.config.load(self.config_label, force_reload=True)
+            launchpad_config: Dict[str, Any] = launchpad_loaded.get(
                 [self.config_base, METTA_LAUNCHPAD_CONFIG_KEY],
                 validator=METTA_LAUNCHPAD_CONFIG_VALIDATE_TARGET)
         except KeyError as err:
@@ -373,11 +373,60 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         except ValidationError as err:
             raise ValueError("Launchpad config failed validation") from err
 
+        # Our launchpad config differs slightly from the schema that launchpad
+        # consumes, so we need a small conversion
+        launchpad_config = self._convert_launchpad_config_to_file_format(launchpad_config)
+
         # write the launchpad output to our yaml file target (after creating
         # the path)
         os.makedirs(os.path.dirname(os.path.realpath(self.config_file)), exist_ok=True)
         with open(os.path.realpath(self.config_file), 'w') as file:
             yaml.dump(launchpad_config, file)
+
+    def _convert_launchpad_config_to_file_format(self, config):
+        """Convert our launchpad config to the schema that launchpad uses."""
+        # 1 discover the hosts counts
+        hosts = []
+        managers = []
+        workers = []
+        msrs = []
+        for host in config['spec']['hosts']:
+            hosts.append(host)
+            if host['role'] == 'manager':
+                managers.append(host)
+            if host['role'] == 'worker':
+                workers.append(host)
+            if host['role'] == 'msr':
+                msrs.append(host)
+
+        # convert install flags and update flags to lists from dicts
+        def dict_to_list(dic):
+            """Convert dict flags to lists."""
+            return list(f"--{key}={value}" for (key,value) in dic.items())
+
+        try:
+            config['spec']['mke']['installFlags'] = dict_to_list(config['spec']['mke']['installFlags'])
+        except KeyError:
+            pass
+        try:
+            config['spec']['mke']['upgradeFlags'] = dict_to_list(config['spec']['mke']['upgradeFlags'])
+        except KeyError:
+            pass
+        try:
+            config['spec']['msr']['installFlags'] = dict_to_list(config['spec']['msr']['installFlags'])
+        except KeyError:
+            pass
+        try:
+            config['spec']['msr']['upgradeFlags'] = dict_to_list(config['spec']['msr']['upgradeFlags'])
+        except KeyError:
+            pass
+
+        # xi32. is no msrs, then drop the msr block and force the type.
+        if len(msrs) == 0:
+            config['kind'] = 'mke'
+            config['spec'].pop('msr')
+
+        return config
 
     # @TODO break this into many make client functions
     # pylint: disable=too-many-locals
@@ -424,7 +473,6 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
                 arguments={'accesspoint': mke_api_accesspoint, 'username': mke_api_username,
                            'password': mke_api_password, 'hosts': mke_hosts,
                            'bundle_root': mke_client_bundle_root})
-            # use the parent UCCTFixturesPlugin methods for adding fixtures
             self.fixtures.add(fixture)
 
         # MSR Client
@@ -448,7 +496,6 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
                 priority=70,
                 arguments={'accesspoint': msr_api_accesspoint, 'username': msr_api_username,
                            'password': msr_api_password, 'hosts': msr_hosts})
-            # use the parent UCCTFixturesPlugin methods for adding fixtures
             self.fixtures.add(fixture)
 
         # EXEC CLIENT
@@ -461,7 +508,6 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
                 instance_id=instance_id,
                 priority=69,
                 arguments={'client': self.client})
-            # use the parent UCCTFixturesPlugin methods for adding fixtures
             self.fixtures.add(fixture)
 
 def clean_accesspoint(accesspoint: str) -> str:

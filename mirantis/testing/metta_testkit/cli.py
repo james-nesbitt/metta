@@ -86,3 +86,15 @@ class TestkitGroup():
         """Run the provisioner destroy, which runs testkit system rm."""
         plugin = self._select_provisioner(instance_id=provisioner).plugin
         return cli_output(plugin.destroy())
+
+    def system_ls(self, provisioner: str = ''):
+        """List the systems that testkit is aware of."""
+        plugin = self._select_provisioner(instance_id=provisioner).plugin
+        testkit = plugin.testkit
+        return cli_output(testkit.system_ls())
+
+    def hosts(self, provisioner: str = ''):
+        """List the systems that testkit is aware of."""
+        plugin = self._select_provisioner(instance_id=provisioner).plugin
+        testkit = plugin.testkit
+        return cli_output(testkit.machine_ls(plugin.system_name))

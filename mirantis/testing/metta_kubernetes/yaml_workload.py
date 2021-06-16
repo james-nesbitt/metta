@@ -90,9 +90,9 @@ class KubernetesYamlWorkloadPlugin(WorkloadBase):
         resource_yaml = workload_config.get(
             [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML], default=[])
         file = workload_config.get(
-            [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE], default=None)
+            [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE], default='')
 
-        if yaml is None and file is None:
+        if yaml is None and file == '':
             raise ValueError(
                 "Either inline yaml or a file path to a yaml is required.")
 
@@ -174,6 +174,8 @@ class KubernetesYamlWorkloadInstance(WorkloadInstanceBase):
                     ))
 
         else:
+            with open('./temp.yaml','w') as temp_file:
+                temp_file.write(yaml.safe_dump(self.data))
             self.k8s_objects.append(self.client.utils_create_from_dict(
                 data=self.data,
                 namespace=self.namespace

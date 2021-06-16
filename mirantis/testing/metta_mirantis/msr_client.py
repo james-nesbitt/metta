@@ -19,7 +19,7 @@ import requests
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta_cli.base import CliBase
+from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 logger = logging.getLogger('metta.contrib.metta_mirantis.client.msrapi')
 
@@ -83,13 +83,13 @@ class MSRAPICliGroup():
             if hasattr(fixture.plugin, 'info'):
                 info.update(fixture.plugin.info(deep))
 
-        return json.dumps(info, indent=2)
+        return cli_output(info)
 
     def ping(self, instance_id: str = '', node: int = None):
         """Ping an MSR replica."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
-        return json.dumps(plugin.api_ping(node=node), indent=2)
+        return cli_output(plugin.api_ping(node=node))
 
     def pingall(self, instance_id: str = ''):
         """Check if we can ping all of the nodes directly."""
@@ -105,44 +105,51 @@ class MSRAPICliGroup():
                 # pylint: disable=protected-access
                 ping[plugin._node_address(index)] = False
 
-        return json.dumps(ping, indent=2)
+        return cli_output(ping)
 
     def health(self, instance_id: str = '', node: int = None):
         """Get the MSR health api response."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
-        return json.dumps(plugin.api_health(node=node), indent=2)
+        return cli_output(plugin.api_health(node=node))
 
     def nginx_status(self, instance_id: str = '', node: int = None):
         """Get the MSR nginsx status api response."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
-        return json.dumps(plugin.api_nginx_status(node=node), indent=2)
+        return cli_output(plugin.api_nginx_status(node=node))
 
     def version(self, instance_id: str = ''):
         """Get MSR cluster version."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
-        return json.dumps(plugin.api_version(), indent=2)
+        return cli_output(plugin.api_version())
 
     def status(self, instance_id: str = ''):
         """Get cluster status."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
-        return json.dumps(plugin.api_status(), indent=2)
+        return cli_output(plugin.api_status())
 
     def features(self, instance_id: str = ''):
         """Get features list."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
-        return json.dumps(plugin.api_features(), indent=2)
+        return cli_output(plugin.api_features())
 
     def alerts(self, instance_id: str = ''):
         """Get alerts list."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
-        return json.dumps(plugin.api_alerts(), indent=2)
+        return cli_output(plugin.api_alerts())
 
+    def auth(self, instance_id: str = ''):
+        """Get an access token."""
+        fixture = self._select_fixture(instance_id=instance_id)
+        plugin = fixture.plugin
+        # using private method for introspection access
+        # pylint: disable=protected-access
+        return cli_output(plugin._api_auth())
 
 class MSRReplicaHealth(Enum):
     """MSR replica health values (in the cluster status API response)."""
