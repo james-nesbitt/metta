@@ -205,7 +205,7 @@ class LaunchpadClient:
 
             We avoid including a bundle download in this step as we need to have an option
             for trying to detect the bundle without getting any timeout type errors.
-            This method can be used as a quick fail attempt to decide if launchpad has 
+            This method can be used as a quick fail attempt to decide if launchpad has
             installed on the cluster, but checking to see if a client bundle has been
             downloaded.
             If you perform an action, you should consider asking for the client bundle.

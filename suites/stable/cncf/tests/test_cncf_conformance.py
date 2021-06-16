@@ -36,7 +36,7 @@ def kubeapi_client(environment):
             plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
 
         logger.info("Waiting for kubernetes to report readiness")
-        kubeapi_client.ready_wait(45)
+        kubeapi_client.readyz_wait(45)
 
         # Sometimes the sonobuoy pod gives an unavoidable taint error, even
         # though we are passing taint skips.  This is solved by a wait, so

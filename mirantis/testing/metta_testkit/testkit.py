@@ -5,6 +5,7 @@ Testkit command line tool caller.
 """
 import logging
 import subprocess
+import json
 from typing import List
 
 
@@ -50,19 +51,28 @@ class TestkitClient:
 
     def version(self):
         """Return testkit client version."""
-        return self._run(['version'], return_output=True)
+        return self._run(['version'], return_output=True, use_config_file=False)
 
     def create(self, opts: List[str]):
         """Run the testkit create command."""
         return self._run(['create'] + opts)
 
+    def system_ls(self):
+        """List all of the systems testkit can see using our config."""
+        return json.loads(self._run(['system', 'ls', '--json'], return_output=True))
+
     def system_rm(self, system_name: str):
         """Remove a system from testkit."""
         return self._run(['system', 'rm', system_name])
 
+    def machine_ls(self, system_name: str):
+        """Remove a system from testkit."""
+        return json.loads(self._run(['machine', 'ls', '--filter', f'name={system_name}', '--json'],
+                          return_output=True))
+
     # this syntax makes it easier to read
     # pylint: disable=inconsistent-return-statements
-    def _run(self, args: List[str], return_output=False):
+    def _run(self, args: List[str], return_output=False, use_config_file: bool = True):
         """Run a testkit command.
 
         Parameters:
@@ -71,7 +81,10 @@ class TestkitClient:
             subprocess
 
         """
-        cmd = [self.bin, f'--file={self.config_file}']
+        cmd = [self.bin]
+
+        if use_config_file:
+            cmd += [f'--file={self.config_file}']
 
         if self.debug:
             cmd += ['--debug']
@@ -80,7 +93,7 @@ class TestkitClient:
 
         if not return_output:
             logger.error("running testkit command: %s", " ".join(cmd))
-            res = subprocess.run(cmd, cwd=self.working_dir, check=True, text=True, check=True)
+            res = subprocess.run(cmd, cwd=self.working_dir, text=True, check=True)
             res.check_returncode()
         else:
             logger.debug("running testkit command with output capture: %s", " ".join(cmd))

@@ -14,7 +14,12 @@ from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
+from .kubeapi_client import METTA_PLUGIN_ID_KUBERNETES_CLIENT
+
 logger = logging.getLogger('metta.cli.kubernetes')
+
+METTA_PLUGIN_ID_KUBERNETES_CLI = 'metta_kubernetes'
+""" client plugin_id for the metta kubernetes cli plugin """
 
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
@@ -25,7 +30,7 @@ class KubernetesCliPlugin(CliBase):
     def fire(self) -> Dict[str, Any]:
         """Return command groups for Kubernetes plugins."""
         if self.environment.fixtures.get(plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                                         plugin_id='metta_kubernetes',
+                                         plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
                                          exception_if_missing=False) is not None:
 
             return {
@@ -79,7 +84,7 @@ class KubernetesGroup():
 
         if deep:
             if hasattr(fixture.plugin, 'info'):
-                collect_info.update(fixture.plugin.info(deep))
+                collect_info.update(fixture.plugin.info())
 
         return cli_output(collect_info)
 
@@ -89,7 +94,7 @@ class KubernetesGroup():
         nodes = fixture.plugin.nodes()
 
         if node is None:
-            return cli_output(list(nodes.to_dict() for node in nodes))
+            return cli_output(list(node.to_dict() for node in nodes))
         return cli_output(nodes[node].to_dict())
 
     def nodes_status(self, workload: str = '', node: int = None):
@@ -181,7 +186,7 @@ class KubernetesYamlWorkloadGroup():
 
         if deep:
             if hasattr(fixture.plugin, 'info'):
-                collect_info.update(fixture.plugin.info(True))
+                collect_info.update(fixture.plugin.info())
 
         return cli_output(collect_info)
 
@@ -237,7 +242,7 @@ class KubernetesHelmWorkloadGroup():
 
         if deep:
             if hasattr(fixture.plugin, 'info'):
-                collect_info.update(fixture.plugin.info(True))
+                collect_info.update(fixture.plugin.info())
 
         return cli_output(collect_info)
 

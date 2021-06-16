@@ -34,7 +34,8 @@ def metta_plugin_factory_cli_testkit(environment: Environment, instance_id: str 
 # ----- SetupTools EntryPoint METTA BootStrapping -----
 
 
-def bootstrap():
+# pylint: disable=unused-argument
+def bootstrap(environment):
     """METTA_testkit bootstrap.
 
     Currently we only use this to import plugins.

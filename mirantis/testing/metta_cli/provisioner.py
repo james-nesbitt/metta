@@ -137,6 +137,14 @@ class ProvisionerGroup():
 
         return cli_output(fixture_list)
 
+    # 'up' is a common handler for provisioning.
+    # pylint: disable=invalid-name
+    def up(self, provisioner: str = ''):
+        """Prepare and apply a provisioner."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin.prepare()
+        provisioner_plugin.apply()
+
     def prepare(self, provisioner: str = ''):
         """Run provisioner prepare."""
         provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin

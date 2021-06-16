@@ -45,8 +45,8 @@ msr:
 # that can be overridden.
 config:
     apiVersion: launchpad.mirantis.com/mke/v1.3
-    kind: mke+msr
-
+    # metta_launchpad will change this if no MSR is present
+    kind: "mke+msr"
     metadata:
       name: "{{name}}"
 
@@ -69,19 +69,22 @@ config:
         imageRepo: "{{variables:mke_image_repo}}"
         adminUsername: "{{admin_user?admin}}"
         adminPassword: "{{admin_password?orcaorcaorca}}"
+        # metta_launchpad will convert this dict to a list
         installFlags:
-        - "--san={{output::mke_san?NoSanConfigured}}"
-        - "--default-node-orchestrator={{variables:mke_install_defaultorchestrator}}"
-        - "--nodeport-range={{variables:mke_install_nodeport_range}}"
-
+          san: "{{output::mke_san?NoSanConfigured}}"
+          default-node-orchestrator: "{{variables:mke_install_defaultorchestrator}}"
+          nodeport-range: "{{variables:mke_install_nodeport_range}}"
+        # metta_launchpad will convert this dict to a list
         upgradeFlags:
-        - "--force-recent-backup"
-        - "--force-minimums"
+          force-recent-backup: true
+          force-minimums: true
         version: "{{variables:mke_version}}"
 
+      # metta_launchpad may remove this block if no msr hosts are configured.
       msr:
         imageRepo: "{{variables:msr_image_repo}}"
+        # metta_launchpad will convert this dict to a list
         installFlags:
-        - "--ucp-insecure-tls"
+          ucp-insecure-tls: true
         replicaIDs: "{{variables:msr_replicaids?sequential}}"
         version: "{{variables:msr_version}}"

@@ -11,7 +11,7 @@ import logging
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
 
-from .base import CliBase, cli_output, METTA_PLUGIN_TYPE_CLI
+from .base import CliBase, cli_output
 
 logger = logging.getLogger('metta.cli.fixtures')
 
@@ -58,13 +58,12 @@ class FixturesGroup():
 
         return cli_output(plugin_list)
 
-    def info(self, deep: bool = False, include_cli_plugins: bool = False):
-        """Return Info for all fixtures."""
+    def info(self, deep: bool = False, plugin_type: str = '', plugin_id: str = '',
+             instance_id: str = ''):
+        """Return Info for fixtures."""
         fixture_info_list = []
-        for fixture in self._environment.fixtures:
-
-            if not include_cli_plugins and fixture.plugin_type is METTA_PLUGIN_TYPE_CLI:
-                continue
+        for fixture in self._environment.fixtures.filter(
+                plugin_type=plugin_type, plugin_id=plugin_id, instance_id=instance_id):
 
             info = {
                 'fixture': {

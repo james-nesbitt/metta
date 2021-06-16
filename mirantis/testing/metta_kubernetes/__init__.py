@@ -26,7 +26,7 @@ from .yaml_workload import (KubernetesYamlWorkloadPlugin, METTA_PLUGIN_ID_KUBERN
 from .helm_workload import (KubernetesHelmWorkloadPlugin, METTA_PLUGIN_ID_KUBERNETES_HELM_WORKLOAD,
                             KUBERNETES_HELM_WORKLOAD_CONFIG_LABEL,
                             KUBERNETES_HELM_WORKLOAD_CONFIG_BASE)
-from .cli import KubernetesCliPlugin
+from .cli import KubernetesCliPlugin, METTA_PLUGIN_ID_KUBERNETES_CLI
 
 
 @Factory(plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
@@ -68,7 +68,7 @@ def metta_plugin_factory_workload_kubernetes_helm(
         environment, instance_id, label=label, base=base)
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLI)
 def metta_terraform_factory_cli_kubernetes(
         environment: Environment, instance_id: str = ''):
     """Create a kubernetes cli plugin."""
