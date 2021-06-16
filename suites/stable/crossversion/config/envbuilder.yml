@@ -109,11 +109,11 @@ base:
             mirantis:
               # If these are not overrideng in a variation, then these values will be used.
               presets:
-                  # This will tell metta to include metta/config/variation/tal
+                  # include metta_mirantis/config/variation/tal
                   variation: tal
-                  # this will tell metta to include metta/config/release/patch/202101
+                  # this will tell metta to include metta_mirantis/config/release/patch/202101
                   release: patch/202101
-                  # This will tell metta to include metta/config/cluster/poc
+                  # include metta_mirantis/config/cluster/poc
                   cluster: poc
-                  # This will tell metta to include metta/config/platform/public/ubuntu-1804
+                  # include metta_mirantis/config/platform/public/ubuntu-1804
                   platform: public/ubuntu/18.04

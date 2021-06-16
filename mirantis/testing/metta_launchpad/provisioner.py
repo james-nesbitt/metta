@@ -9,7 +9,7 @@ Launchpad.
 import os.path
 import logging
 from typing import Any, List, Dict
-
+import subprocess
 import yaml
 
 from configerus.loaded import LOADED_KEY_ROOT
@@ -353,11 +353,14 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             mke.rm_bundle()
 
         except KeyError as err:
-            raise RuntimeError("Launchpad MKE client failed to download client bundle.") from err
+            logger.warning("Launchpad's MKE plugin failed do remove a client bundle: %s", err)
 
         # now tell the launchpad client to reset
-        self.client.reset()
+        try:
+            self.client.reset()
 
+        except subprocess.CalledProcessError as err:
+            logger.warning("Launchpad failed to destroy installed resources: %s", err)
     # ----- CLUSTER INTERACTION -----
 
     def _write_launchpad_file(self):
@@ -400,24 +403,24 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
                 msrs.append(host)
 
         # convert install flags and update flags to lists from dicts
-        def dict_to_list(dic):
+        def dtol(dic):
             """Convert dict flags to lists."""
             return list(f"--{key}={value}" for (key,value) in dic.items())
 
         try:
-            config['spec']['mke']['installFlags'] = dict_to_list(config['spec']['mke']['installFlags'])
+            config['spec']['mke']['installFlags'] = dtol(config['spec']['mke']['installFlags'])
         except KeyError:
             pass
         try:
-            config['spec']['mke']['upgradeFlags'] = dict_to_list(config['spec']['mke']['upgradeFlags'])
+            config['spec']['mke']['upgradeFlags'] = dtol(config['spec']['mke']['upgradeFlags'])
         except KeyError:
             pass
         try:
-            config['spec']['msr']['installFlags'] = dict_to_list(config['spec']['msr']['installFlags'])
+            config['spec']['msr']['installFlags'] = dtol(config['spec']['msr']['installFlags'])
         except KeyError:
             pass
         try:
-            config['spec']['msr']['upgradeFlags'] = dict_to_list(config['spec']['msr']['upgradeFlags'])
+            config['spec']['msr']['upgradeFlags'] = dtol(config['spec']['msr']['upgradeFlags'])
         except KeyError:
             pass
 

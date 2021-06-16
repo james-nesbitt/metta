@@ -1,4 +1,4 @@
-# DOCENG manual
+# ENGDOCS manual
 
 An infrastructure stack for managing a standing cluster used for manual verification
 of documentation changes.

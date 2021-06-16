@@ -13,7 +13,7 @@ See metta_terraform for the plans and metta_mirantis/config for the more
 complex config.
 Note that we leverage the metta 'variation' and 'release' concepts which
 allow us to set simple values in our `config/metta` file which tell
-that module to add more config sources from the `metta/config` path.
+that module to add more config sources from the `metta_mirantis/config` path.
 @see `metta/__init__.py:config_interpret_metta()`.
 
 We also allow metta_common to add some common config sources, such as its own
@@ -22,10 +22,10 @@ user folder.
 
 ### Presets
 
-The nature of the ltc config layout allows us to focus overriding its config
+The nature of the tal config layout allows us to focus overriding its config
 with values by including other preset or in our own `config/variables` config.
 
-@see `metta/config/variation/tal`.
+@see `metta_mirantis/config/variation/tal`.
 
 ### Fixtures
 

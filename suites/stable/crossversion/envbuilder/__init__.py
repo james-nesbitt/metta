@@ -12,7 +12,6 @@ The build() method is used in our conftest as a part of environment discovery.
 import copy
 from typing import Any, List
 import logging
-import json
 
 from configerus.config import Config
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
@@ -86,8 +85,8 @@ def build(config: Config, additional_metta_bootstraps: List[str]):
             'available': states
         }
 
-        raise ValueError(f"{variation}-common: {json.dumps(config_common, indent=2)}")
-        raise ValueError(f"{variation}: {json.dumps(environments[variation], indent=2)}")
+        # raise ValueError(f"{variation}-common: {json.dumps(config_common, indent=2)}")
+        # raise ValueError(f"{variation}: {json.dumps(environments[variation], indent=2)}")
 
     # Add our constructed environments list as a config source
     config.add_source(plugin_id=PLUGIN_ID_SOURCE_DICT, instance_id='env-builder').set_data({

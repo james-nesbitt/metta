@@ -40,7 +40,7 @@ class CliBase:
 
     def fire(self):
         """Execute the fire cli hook."""
-        raise NotImplementedError("this functionality not avialble.")
+        raise NotImplementedError("this functionality not available.")
 
 
 def cli_output(structure: Any) -> str:

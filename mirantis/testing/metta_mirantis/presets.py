@@ -105,7 +105,7 @@ def add_preset_config(environment: Environment,
     for preset in preset_config():
         # For each of the available presets, look in the loaded metta
         # config for values matching the preset key.  if the key is found then
-        # we try to match a path in the metta/config/{key}/{value}
+        # we try to match a path in the metta_mirantis/config/{key}/{value}
         # and add the path as a config source.
 
         (preset_key, preset_root_path, preset_priority_delta) = preset
