@@ -29,16 +29,18 @@ extra_tags:
   metta.mirantis.preset.cluster: "custom"
   metta.mirantis.preset.release: "custom"
   metta.mirantis.preset.platform: "{{mirantis:presets.platform}}"
+  mirantis.mcr.version: "{{mcr_version}}"
+  mirantis.mke.version: "{{mke_version}}"
 
 # Open up network access from my machine
 open_sg_for_myip: True
 
 # Let's manually define our cluster for this test
 manager_count: 3
-manager_type: m5.2xlarge
+manager_type: t3.2xlarge
 manager_volume_size: 100
 worker_count: 5
-worker_type: m5.2xlarge
+worker_type: t3.2xlarge
 worker_volume_size: 100
 windows_worker_count: 0
 
