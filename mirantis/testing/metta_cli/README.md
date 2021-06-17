@@ -21,7 +21,7 @@ Bootstrapping happens in the following stages:
    a METTA environment.
 
 2. All CLI plugins that have been registered during bootstrapping are created
-   and asked for cli commands, which are added to scope
+   and asked for cli commands, which are added to scope.
 
 3. Fire CLI takes over and interprets your cli arguments as commands.
 

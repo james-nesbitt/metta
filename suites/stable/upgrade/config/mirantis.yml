@@ -15,15 +15,15 @@
 # sees a big changes.
 #
 presets:
-    # This will tell metta to include metta/config/variation/ltc
+    # include metta_mirantis/config/variation/tal
     # Which combines terraform, ansible and launchpad.  You can configure
     # the variation from the variables/yml file.
     variation: tal
-    # This will tell metta to include metta/config/cluster/poc
+    # include metta_mirantis/config/cluster/poc
     # Which is a small cluster
     cluster: poc
-    # This will tell metta to include metta/config/platform/public/ubuntu/18.04
-    platform: public/ubuntu/18.04
+    # include metta_mirantis/config/platform/public/ubuntu/20.04
+    platform: public/ubuntu/20.04
 
     # @NOTE we don't use a 'release' preset here, as we put that into the
     #   ./before and ./after environment states

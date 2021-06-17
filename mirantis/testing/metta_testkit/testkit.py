@@ -92,7 +92,7 @@ class TestkitClient:
         cmd += args
 
         if not return_output:
-            logger.error("running testkit command: %s", " ".join(cmd))
+            logger.debug("running testkit command: %s", " ".join(cmd))
             res = subprocess.run(cmd, cwd=self.working_dir, text=True, check=True)
             res.check_returncode()
         else:

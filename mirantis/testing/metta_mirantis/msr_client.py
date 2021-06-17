@@ -151,6 +151,7 @@ class MSRAPICliGroup():
         # pylint: disable=protected-access
         return cli_output(plugin._api_auth())
 
+
 class MSRReplicaHealth(Enum):
     """MSR replica health values (in the cluster status API response)."""
 

@@ -2,6 +2,10 @@
 
 Metta provisioner plugin for testkit.
 
+A provisioner plugin that uses testkit to create infra
+and optionally to install either kubernetes or Mirantis
+MKE/MSR onto the infra.
+
 """
 import logging
 import os
@@ -52,6 +56,13 @@ METTA_TESTKIT_CONFIG_MKE_PASSWORD_KEY = 'mke.password'
 """ config key for the MKE password """
 METTA_TESTKIT_CONFIG_MKE_CLIENTBUNDLE_KEY = 'mke.client_bundle_root'
 """ Config key for the MKE client bundle root path """
+
+METTA_TESTKIT_CONFIG_MSR_ACCESSPOINT_KEY = 'msr.accesspoint'
+""" config key for the MSR endpoint, usually a load-balancer """
+METTA_TESTKIT_CONFIG_MSR_USERNAME_KEY = 'msr.username'
+""" config key for the MSR username """
+METTA_TESTKIT_CONFIG_MSR_PASSWORD_KEY = 'msr.password'
+""" config key for the MSR password """
 
 METTA_TESTKIT_CONFIG_VALIDATE_JSONSCHEMA = {
     'type': 'object',
@@ -289,7 +300,8 @@ class TestkitProvisionerPlugin(ProvisionerBase):
             mke_client_bundle_root = testkit_config.get(
                 [self.config_base, METTA_TESTKIT_CONFIG_MKE_CLIENTBUNDLE_KEY], default='.')
 
-            instance_id = f"{self.instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}-{mke_api_username}"
+            instance_id = (f"{self.instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}"
+                           f"-{mke_api_username}")
             fixture = self.environment.add_fixture(
                 METTA_PLUGIN_TYPE_CLIENT,
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
@@ -300,13 +312,29 @@ class TestkitProvisionerPlugin(ProvisionerBase):
                            'bundle_root': mke_client_bundle_root})
             self.fixtures.add(fixture)
 
-
+            # We got an MKE client, so let's activate it.
             fixture.plugin.api_get_bundle(force=True)
             fixture.plugin.make_bundle_clients()
 
         else:
             logger.warning('No MKE master hosts found, not creating an MKE client.')
 
+        if len(msr_hosts) > 0:
+            msr_api_username = testkit_config.get(
+                [self.config_base, METTA_TESTKIT_CONFIG_MSR_USERNAME_KEY])
+            msr_api_password = testkit_config.get(
+                [self.config_base, METTA_TESTKIT_CONFIG_MSR_PASSWORD_KEY])
+
+            instance_id = (f"{self.instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}"
+                           f"-{msr_api_username}")
+            fixture = self.environment.add_fixture(
+                METTA_PLUGIN_TYPE_CLIENT,
+                plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+                instance_id=instance_id,
+                priority=70,
+                arguments={'accesspoint': None, 'username': msr_api_username,
+                           'password': msr_api_password, 'hosts': msr_hosts})
+            self.fixtures.add(fixture)
 
     def _write_config_file(self):
         """Write the config file for testkit."""

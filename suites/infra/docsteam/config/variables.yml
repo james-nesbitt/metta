@@ -3,11 +3,11 @@
 
 # WHAT CAN I PUT HERE?
 #
-# If you are using the ltc variation, then look at metta/config/variations/ltc
+# If you are using the tal variation, then look at metta_mirantis/config/variations/tal
 # at the variables file there, and how variables:X are injected into the other config
 # files there.
 # Note also that values in metta may tell metta to load more variables data from
-# other folders in metta/config. You can still override those values here
+# other folders in metta_mirantis/config. You can still override those values here
 
 # Used in terraform resource tagging (user:id gets set in conftest.py)
 user: "engdocs"

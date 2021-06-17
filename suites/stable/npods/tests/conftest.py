@@ -57,7 +57,7 @@ def kubeapi(environment):
         try:
             # helms wil fail if the kubeapi isn't ready
             logger.info("Waiting for kubernetes to be ready")
-            kubeapi_client.ready_wait(45)
+            kubeapi_client.readyz_wait(45)
 
         except Exception as err:
             raise Exception(

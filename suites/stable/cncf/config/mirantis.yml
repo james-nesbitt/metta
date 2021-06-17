@@ -15,8 +15,8 @@
 # sees a big changes.
 #
 presets:
-    # This will tell metta to include metta/config/variation/tal
+    # include metta_mirantis/config/variation/tal
     variation: tal
-    # This will tell metta to include metta/config/cluster/pocnomsr
+    # include metta_mirantis/config/cluster/pocnomsr
     # which installs a small cluster with no MSR replicas
     cluster: pocnomsr

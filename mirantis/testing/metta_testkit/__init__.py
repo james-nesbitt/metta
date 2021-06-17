@@ -2,7 +2,8 @@
 
 Metta testkit functionality.
 
-this module registers the testkit metta plugin factories to make them avaialble for use.
+this module registers the testkit metta plugin factories to make them available
+for use.
 
 """
 from typing import Any

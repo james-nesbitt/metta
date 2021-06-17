@@ -45,6 +45,7 @@ METTA_MIRANTIS_MKE_BUNDLE_INFO_FILENAME = 'meta.json'
 METTA_MIRANTIS_MKE_DOCKER_VERSION_DEFAULT = '1.40'
 """ Default value for the docker client version number."""
 
+
 # this interface is common for all Metta plugins, but CLI plugins underuse it
 # pylint: disable=too-few-public-methods
 class MKEAPICliPlugin(CliBase):
@@ -186,9 +187,10 @@ class MKEAPICliGroup():
         plugin = fixture.plugin
         return cli_output(plugin.api_metrics_discovery())
 
+    # we violate private method to provide manual access on the cli
     # pylint: disable=protected-access
     def auth(self, instance_id: str = ''):
-        """Retrieve auth headersg."""
+        """Retrieve auth headers."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return cli_output(plugin._auth_headers())
@@ -200,11 +202,12 @@ class MKEAPICliGroup():
         return cli_output(plugin.api_read_bundle_meta())
 
     def get_bundle(self, instance_id: str = '', force: bool = False):
-        """Get the client bundle"""
+        """Get the client bundle."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         plugin.api_get_bundle(force=force)
         return cli_output(plugin.api_read_bundle_meta())
+
 
 class MKENodeState(Enum):
     """MKE Node state in the node status API response."""
@@ -421,7 +424,7 @@ class MKEAPIClientPlugin:
         bundle_dir = self._bundle_user_path()
         """ Path in which we should put the client bundle for this user """
         bundle_zip_file = os.path.join(bundle_dir,
-                                  METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME)
+                                       METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME)
         """ Path to the zip file we will download """
 
         if (not force) and os.path.isdir(bundle_dir):

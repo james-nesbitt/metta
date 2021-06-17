@@ -1,6 +1,6 @@
 
 # sanity_kubernetes_deployment :: metta.plugin.workload:
-sanity_kubernetes_deployment:
+stability_deployment:
     plugin_type: workload
     plugin_id: metta_kubernetes_deployment
 

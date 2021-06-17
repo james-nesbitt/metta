@@ -28,7 +28,7 @@ class EnvironmentCliPlugin(CliBase):
 
 
 class EnvironmentGroup():
-    """ase Fire command group for environment commands."""
+    """Base Fire command group for environment commands."""
 
     def __init__(self, environment: Environment):
         """Create CLI command group."""
