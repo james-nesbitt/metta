@@ -8,6 +8,13 @@ lint:
 	    if [ -d "$$package" ]; then echo "$$package"; pylint -d duplicate-code -d pointless-string-statement -d import-error $$package; fi; \
 	done
 
-.PHONY: pep8
-pep8:
-	autopep8 --recursive --aggressive --in-place --max-line-length=100 .
+.PHONY: clean
+clean:
+	rm -rf build dist *.log *.egg-info
+
+build:
+	python -m build
+
+.PHONY: push
+push:
+	python -m -m twine upload dist/*
