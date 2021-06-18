@@ -11,9 +11,10 @@ allowing creation by any provisioning source.
 import logging
 import re
 import time
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 import kubernetes
+import kubernetes.client.models as models
 
 logger = logging.getLogger('metta.contrib.kubernetes.client.kubeapi')
 
@@ -146,21 +147,49 @@ class KubernetesApiClientPlugin:
         return kubernetes.utils.create_from_dict(
             k8s_client=self.api_client, data=data, **kwargs)
 
-    def nodes(self):
+    def nodes(self) -> List[models.v1_node.V1Node]:
         """Return V1Node list.
 
         Returns:
         --------
         List of kubernetes cluster nodes as V1Node objects.
-        https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1Node.md
 
-        You can get node status from node.status
-        https://github.com/kubernetes-client/python/blob/master/kubernetes/docs/V1NodeStatus.md
+        You can get node status from node.status.
 
         """
         node_items = self.get_api('CoreV1Api').list_node().items
 
         return node_items
+
+    def kubelet_ready_wait(self, timeout: int = 30, period: int = 1):
+        """Wait until all nodes' kubelets are ready.
+
+        Some operations need all k8s nodes to be ready or they will fail.
+        In such cases the readyz approach does not suffice, as it only
+        guarantees that enough nodes are online to allow api calls to
+        work.
+
+        An example is a daemonset.
+
+        """
+        err = None
+        while timeout > 0:
+            try:
+                for node in self.nodes():
+                    kubelet_condition = node_status_condition(node, 'KubeletReady')
+
+                    if not kubelet_condition.status == 'True':
+                        raise RuntimeError(f"Node kubelet is not ready: {node.metadata.name}")
+                return True
+
+            except RuntimeError as this_err:
+                logger.warning("node kubelet not ready: %s", this_err)
+                err = this_err
+                time.sleep(period)
+                timeout = timeout - period
+                continue
+
+        raise RuntimeError('Timed out waiting for kubernetes to become ready') from err
 
     def readyz_wait(self, timeout: int = 30, period: int = 1):
         """Wait until kubernetes is ready before returning."""
@@ -236,3 +265,14 @@ class KubernetesApiClientPlugin:
     def watch(self):
         """Get a kubernetes watch instance."""
         return kubernetes.watch.Watch()
+
+
+def node_status_condition(node: models.v1_node.V1Node, cond_reason: str,
+                          cond_type: str = "Ready") -> models.v1_node_condition.V1NodeCondition:
+    """Retrieve a status condition of matching reason from a node."""
+    status: models.v1_node_status.V1NodeStatus = node.status
+
+    for condition in status.conditions:
+        if condition.reason == cond_reason and condition.type == cond_type:
+            return condition
+    raise RuntimeError(f"No matching condition found for {cond_reason}/{cond_type}")

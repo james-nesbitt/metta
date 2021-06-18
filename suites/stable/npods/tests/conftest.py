@@ -1,13 +1,12 @@
 """
 
-PyTest NPods specific fixtures
+PyTest NPods specific fixtures.
 
 Fixtures that are common only to these npods tests, so they are kept out of the outer
 conftest file.
 
 """
 import logging
-import time
 import json
 
 import pytest
@@ -30,7 +29,7 @@ logger = logging.getLogger('npods-test-conftest')
 
 @pytest.fixture(scope="package")
 def npods_config(environment):
-    """ get the npods yaml config object """
+    """Get the npods yaml config object."""
     loaded = environment.config.load('npods')
     logger.info("Using npods config: %s", json.dumps(loaded.get(), indent=2))
     return loaded
@@ -38,7 +37,7 @@ def npods_config(environment):
 
 @pytest.fixture(scope="package")
 def mke(environment):
-    """ get the mke client """
+    """Get the mke client."""
     try:
         return environment.fixtures.get_plugin(
             plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
@@ -49,7 +48,7 @@ def mke(environment):
 
 @pytest.fixture(scope="package")
 def kubeapi(environment):
-    """ get the kubeapi client """
+    """Get the kubeapi client."""
     try:
         kubeapi_client = environment.fixtures.get_plugin(
             plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
@@ -57,16 +56,14 @@ def kubeapi(environment):
         try:
             # helms wil fail if the kubeapi isn't ready
             logger.info("Waiting for kubernetes to be ready")
+            # general wait using readyz
             kubeapi_client.readyz_wait(45)
+            # full wait until all kubelets are ready, or daemonsets will fail.
+            kubeapi_client.kubelet_ready_wait(45)
 
         except Exception as err:
             raise Exception(
                 "Failed waiting for kubernetes to be ready") from err
-
-        # @TODO remove4 this hardcoded sleep
-        # this is only needed as helm sometimes fails without it
-        logger.info("Extending wait period to fix an unknown helm issue. Waiting 30 seconds.")
-        time.sleep(30)
 
         return kubeapi_client
 
@@ -77,7 +74,7 @@ def kubeapi(environment):
 
 @pytest.fixture(scope="package")
 def environment_up_unlocked(environment_up, mke, kubeapi):
-    """ environment with pods/node unlocked using the mke client
+    """Return environment with pods-per-node unlocked using the mke client.
 
     Use this to get the environment object, after the pods/node limit has
     been raised.
@@ -85,7 +82,6 @@ def environment_up_unlocked(environment_up, mke, kubeapi):
     This also performs an environment sanity test on clients.
 
     """
-
     try:
         data = mke.api_ucp_configtoml_get()
         data['cluster_config']['kubelet_max_pods'] = 2000
@@ -100,7 +96,7 @@ def environment_up_unlocked(environment_up, mke, kubeapi):
 
 @pytest.fixture(scope="module")
 def npods(environment_up_unlocked, npods_config):
-    """ create an instance of our helm workload plugin using fixtures from our env """
+    """Create helm workload plugin using fixtures from our env."""
     npods_plugin = environment_up_unlocked.fixtures.get_plugin(
         plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id='npods-workload')
     npods_instance = npods_plugin.create_instance(environment_up_unlocked.fixtures)
@@ -120,7 +116,7 @@ def npods(environment_up_unlocked, npods_config):
 
 @pytest.fixture(scope="package")
 def loki(environment_up_unlocked, npods_config):
-    """ create an instance of the monitoring helm workload plugin using fixtures from our env """
+    """Create monitoring helm workload plugin using fixtures from our env."""
     loki_plugin = environment_up_unlocked.fixtures.get_plugin(
         plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id='loki-workload')
     loki_instance = loki_plugin.create_instance(environment_up_unlocked.fixtures)
