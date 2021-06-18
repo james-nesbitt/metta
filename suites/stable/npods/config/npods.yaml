@@ -7,7 +7,7 @@
 # Control cluster monitoring
 monitoring:
   # enable the loki helm chart
-  enable: true
+  enable: false
 
 workload:
   # default/template values for the npods helm workload yaml
