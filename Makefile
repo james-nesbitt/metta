@@ -17,4 +17,4 @@ build:
 
 .PHONY: push
 push:
-	python -m -m twine upload dist/*
+	python -m twine upload dist/*
