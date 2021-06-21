@@ -38,22 +38,31 @@ pipeline {
                 container('workspace') {
                     script {
 
+                        GIT_TAG = sh(
+                            label: "Confirming git branch",
+                            script: """
+                                git describe --tags
+                            """,
+                            returnStdout: true
+                        ).trim()
+
+                        currentBuild.displayName = "${env.TEST_SUITE} (${GIT_TAG}) ${env.BUILD_DISPLAY_NAME}"
+
+                        /** METTa pip install */
+
+                        sh(
+                            label: "Installing metta (pip)",
+                            script: """
+                                pip install --upgrade .
+                            """
+                        )
+
                         dir("suites/${env.TEST_CHANNEL}/${env.TEST_SUITE}") {
 
-                            GIT_TAG = sh(
-                                label: "Confirming git branch",
-                                script: """
-                                    git describe --tags
-                                """,
-                                returnStdout: true
-                            ).trim()
-
-                            currentBuild.displayName = "${env.TEST_SUITE} (${GIT_TAG}) ${env.BUILD_DISPLAY_NAME}"
-
-                            /** METTa pip install */
+                            /** suite pip install */
 
                             sh(
-                                label: "Installing metta (pip)",
+                                label: "Installing suite (pip)",
                                 script: """
                                     pip install --upgrade .
                                 """
