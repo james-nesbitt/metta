@@ -16,8 +16,6 @@ from mirantis.testing.metta_sonobuoy.sonobuoy import Status
 
 logger = logging.getLogger("cncf conformance")
 
-SONOBUOY_TEST_INTERESTING_PLUGINS = ['e2e']
-""" we only care about this plugin, the others can fail """
 SONOBUOY_TEST_TIMER_LIMIT = 1440
 """ time limit test run in second """
 SONOBUOY_TEST_TIMER_STEP = 10
@@ -73,7 +71,7 @@ def test_cncf_conformance(cncf_workload_instance, kubeapi_client):
 
         # start the CNCF conformance run
         logger.info("Starting sonobuoy run")
-        cncf_workload_instance.apply(wait=True)
+        cncf_workload_instance.apply(wait=False)
         logger.debug("Sonobuoy started, waiting for finish")
 
         # Every X seconds output some status report to show that it is still
@@ -83,12 +81,12 @@ def test_cncf_conformance(cncf_workload_instance, kubeapi_client):
             status = cncf_workload_instance.status()
 
             if status is not None:
-                for plugin_id in SONOBUOY_TEST_INTERESTING_PLUGINS:
+                for plugin_id in status.plugin_list():
                     if not status.plugin_status(plugin_id) in [
                             Status.COMPLETE, Status.FAILED]:
                         break
 
-                    logger.debug("%s:: Checking %s:%s",
+                    logger.info("%s:: Checking %s:%s",
                                  i * SONOBUOY_TEST_TIMER_STEP, plugin_id,
                                  status.plugin(plugin_id))
                 else:
@@ -102,8 +100,9 @@ def test_cncf_conformance(cncf_workload_instance, kubeapi_client):
 
         results = cncf_workload_instance.retrieve()
 
+        status = cncf_workload_instance.status()
         no_errors = True
-        for plugin_id in SONOBUOY_TEST_INTERESTING_PLUGINS:
+        for plugin_id in status.plugin_list():
             plugin_results = results.plugin(plugin_id)
 
             if plugin_results.status() in [Status.FAILED]:

@@ -15,14 +15,19 @@ from typing import List, Dict
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
 from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
 
 from .common import add_common_config
 from .presets import add_preset_config
 
-from .mke_client import (MKEAPIClientPlugin, MKEAPICliPlugin, METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+from .mke_client import (MKEAPIClientPlugin, METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
                          METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT)
-from .msr_client import MSRAPIClientPlugin, MSRAPICliPlugin, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
+from .mke_cli import MKEAPICliPlugin
+from .mke_healthcheck import MKEHealthCheckPlugin
+from .msr_client import MSRAPIClientPlugin, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
+from .msr_cli import MSRAPICliPlugin
+from .msr_healthcheck import MSRHealthCheckPlugin
 
 # ----- Plugin factories -----
 
@@ -36,7 +41,7 @@ def metta_mirantis_plugin_factory_client_mke(
         username: str = '',
         password: str = '',
         hosts: List[Dict] = None,
-        bundle_root: str = METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT):
+        bundle_root: str = METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT) -> MKEAPIClientPlugin:
     """Create a Mirantis MKE API Client."""
     return MKEAPIClientPlugin(environment, instance_id, accesspoint=accesspoint,
                               username=username, password=password, hosts=hosts,
@@ -45,9 +50,17 @@ def metta_mirantis_plugin_factory_client_mke(
 
 @Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
 def metta_terraform_factory_cli_mke(
-        environment: Environment, instance_id: str = ''):
+        environment: Environment, instance_id: str = '') -> MKEAPICliPlugin:
     """Create an MKE cli plugin."""
     return MKEAPICliPlugin(environment, instance_id)
+
+
+@Factory(plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+def metta_terraform_factory_healthcheck_mke(environment: Environment,
+                                            instance_id: str,
+                                            mke_api: MKEAPIClientPlugin) -> MKEHealthCheckPlugin:
+    """Create an MKE cli plugin."""
+    return MKEHealthCheckPlugin(environment, instance_id, mke_api)
 
 
 # pylint: disable=too-many-arguments
@@ -70,6 +83,13 @@ def metta_terraform_factory_cli_msr(
     """Create an MSR cli plugin."""
     return MSRAPICliPlugin(environment, instance_id)
 
+
+@Factory(plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+def metta_terraform_factory_healthcheck_msr(environment: Environment,
+                                            instance_id: str,
+                                            msr_api: MSRAPIClientPlugin) -> MSRHealthCheckPlugin:
+    """Create an MSR cli plugin."""
+    return MSRHealthCheckPlugin(environment, instance_id, msr_api)
 
 # ----- METTA bootstraps that we will use on config objects -----
 

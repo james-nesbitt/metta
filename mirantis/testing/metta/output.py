@@ -15,7 +15,7 @@ It is expected that a small number of output plugins can handle most needs.
 """
 
 METTA_PLUGIN_TYPE_OUTPUT = 'output'
-""" metta plugin type idnetifier for output plugins """
+""" metta plugin type identifier for output plugins """
 
 METTA_OUTPUT_CONFIG_OUTPUTS_LABEL = 'outputs'
 """ A centralized configerus load label for multiple outputs """
