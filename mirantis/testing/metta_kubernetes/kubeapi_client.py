@@ -16,6 +16,10 @@ from typing import Dict, Any, List
 import kubernetes
 import kubernetes.client.models as models
 
+from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
+
 logger = logging.getLogger('metta.contrib.kubernetes.client.kubeapi')
 
 METTA_PLUGIN_ID_KUBERNETES_CLIENT = 'metta_kubernetes'
@@ -85,7 +89,8 @@ class KubernetesApiClientPlugin:
 
     """
 
-    def __init__(self, environment, instance_id, kube_config_file: str = ''):
+    def __init__(self, environment: Environment, instance_id: str,
+                 kube_config_file: str = ''):
         """Run the super constructor but also set class properties.
 
         This implements the args part of the client interface.
@@ -111,6 +116,9 @@ class KubernetesApiClientPlugin:
 
         self.config_file = kube_config_file
         """ Kube config file, in case you need to steal it. """
+
+        self.healthchecks()
+        """Add some healthcheck plugins for this instance."""
 
     def info(self) -> Dict[str, Any]:
         """Return dict data about this plugin for introspection."""
@@ -160,6 +168,20 @@ class KubernetesApiClientPlugin:
         node_items = self.get_api('CoreV1Api').list_node().items
 
         return node_items
+
+    def healthchecks(self) -> Fixtures:
+        """Create and return healthcheck plugins for this client instance."""
+        healthcheck_fixtures = Fixtures()
+
+        kubeapi_healthcheck = self.environment.add_fixture(
+            plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
+            plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+            instance_id=f"{self.instance_id}-healhtcheck",
+            priority=70,
+            arguments={'kubeapi_client': self})
+        healthcheck_fixtures.add(kubeapi_healthcheck)
+
+        return healthcheck_fixtures
 
     def kubelet_ready_wait(self, timeout: int = 30, period: int = 1):
         """Wait until all nodes' kubelets are ready.

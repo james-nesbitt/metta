@@ -1,5 +1,5 @@
 project:
-  name: clients-pytest
+  name: docsteam
 
 # Also include the following sources of configuration
 config:
