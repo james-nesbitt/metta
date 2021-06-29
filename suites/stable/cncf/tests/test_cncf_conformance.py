@@ -6,6 +6,7 @@ Run the CNCF Conformance test suite.
 import time
 import logging
 import pytest
+from subprocess import CalledProcessError
 
 from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
@@ -35,12 +36,8 @@ def kubeapi_client(environment):
 
         logger.info("Waiting for kubernetes to report readiness")
         kubeapi_client.readyz_wait(45)
-
-        # Sometimes the sonobuoy pod gives an unavoidable taint error, even
-        # though we are passing taint skips.  This is solved by a wait, so
-        # it is likely a deeper k8 isn't ready issue (poor dignosis).
-        logger.info("Forcing sleep to wait for kubernetes.")
-        time.sleep(60)
+        kubeapi_client.kubelet_ready_wait(45)
+        logger.info("Kubernetes thinks it is ready.")
 
         return kubeapi_client
 
@@ -73,12 +70,33 @@ def test_cncf_conformance(cncf_workload_instance, kubeapi_client):
         logger.info("Starting sonobuoy run")
         cncf_workload_instance.apply(wait=False)
         logger.debug("Sonobuoy started, waiting for finish")
+        
+        # Every X seconds output some status report to show that it is still
+        # working
+        for i in range(0, round(SONOBUOY_TEST_TIMER_LIMIT /
+                                SONOBUOY_TEST_TIMER_STEP)):
+            # give one sleep just to give sonobuoy a change to start
+            time.sleep(SONOBUOY_TEST_TIMER_STEP)
+
+            try:
+                status = cncf_workload_instance.status()
+            except CalledProcessError:
+                status = None
+
+            if status is not None:
+                break
+
+            else:
+                logger.warning("starting ...")
 
         # Every X seconds output some status report to show that it is still
         # working
         for i in range(0, round(SONOBUOY_TEST_TIMER_LIMIT /
                                 SONOBUOY_TEST_TIMER_STEP)):
-            status = cncf_workload_instance.status()
+            try:
+                status = cncf_workload_instance.status()
+            except CalledProcessError:
+                status = None
 
             if status is not None:
                 for plugin_id in status.plugin_list():
@@ -87,15 +105,15 @@ def test_cncf_conformance(cncf_workload_instance, kubeapi_client):
                         break
 
                     logger.info("%s:: Checking %s:%s",
-                                 i * SONOBUOY_TEST_TIMER_STEP, plugin_id,
+                                 int(time.perf_counter()), plugin_id,
                                  status.plugin(plugin_id))
                 else:
                     break
 
             else:
-                logger.debug("starting ...")
+                logger.warning("Could not retrieve status ...")
 
-            logger.info("sonobuoy tick")
+            logger.info("sonobuoy tick %s", i)
             time.sleep(SONOBUOY_TEST_TIMER_STEP)
 
         results = cncf_workload_instance.retrieve()
