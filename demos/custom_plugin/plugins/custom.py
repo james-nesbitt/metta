@@ -22,7 +22,8 @@ from mirantis.testing.metta.environment import Environment
 
 @Factory(plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id="my_client")
 def my_client_plugin_factory(
-        environment: Environment, instance_id: str, label: str = 'my_client', base: str = ''):
+    environment: Environment, instance_id: str, label: str = "my_client", base: str = ""
+):
     """Build a custom client plugin which returns a custom output."""
     return MyMessageClientPlugin(environment, instance_id, label, base)
 
@@ -58,8 +59,7 @@ class MyMessageClientPlugin:
         self.environment = environment
         self.instance_id = instance_id
 
-        self.messages = environment.config.load(label).get(
-            [base, 'messages'])
+        self.messages = environment.config.load(label).get([base, "messages"])
         """ keep a list of string messages which we will serve one at a time """
 
     def __len__(self):
@@ -72,7 +72,4 @@ class MyMessageClientPlugin:
 
     def info(self) -> Dict[str, Any]:
         """Return structured information about the plugin for introspection."""
-        return {
-            'messages': self.messages,
-            'length': len(self)
-        }
+        return {"messages": self.messages, "length": len(self)}

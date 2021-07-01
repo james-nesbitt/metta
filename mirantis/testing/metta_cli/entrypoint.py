@@ -12,13 +12,13 @@ import fire
 
 from .root import Root
 
-logger = logging.getLogger('metta.cli.entrypoint')
+logger = logging.getLogger("metta.cli.entrypoint")
 
 
 def main():
-    """ Main entrypoint """
+    """Main entrypoint"""
     fire.Fire(Root)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

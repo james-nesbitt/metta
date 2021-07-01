@@ -16,18 +16,18 @@ import logging
 
 from .fixtures import Fixtures
 
-logger = logging.getLogger('metta.workload')
+logger = logging.getLogger("metta.workload")
 
 METTA_PLUGIN_TYPE_WORKLOAD = "workload"
 """ Fast access to the workload type """
 
-METTA_WORKLOAD_CONFIG_WORKLOADS_LABEL = 'workloads'
+METTA_WORKLOAD_CONFIG_WORKLOADS_LABEL = "workloads"
 """ A centralized configerus load label for multiple workloads """
-METTA_WORKLOAD_CONFIG_WORKLOAD_LABEL = 'workload'
+METTA_WORKLOAD_CONFIG_WORKLOAD_LABEL = "workload"
 """ A centralized configerus load label for a workload """
-METTA_WORKLOAD_CONFIG_WORKLOADS_KEY = 'workloads'
+METTA_WORKLOAD_CONFIG_WORKLOADS_KEY = "workloads"
 """ A centralized configerus key for multiple workloads """
-METTA_WORKLOAD_CONFIG_WORKLOAD_KEY = 'workload'
+METTA_WORKLOAD_CONFIG_WORKLOAD_KEY = "workload"
 """ A centralized configerus key for one workload """
 
 
@@ -35,7 +35,7 @@ METTA_WORKLOAD_CONFIG_WORKLOAD_KEY = 'workload'
 class WorkloadBase:
     """Base class for workload plugins."""
 
-    def create_instance(self, fixtures: Fixtures) -> 'WorkloadInstanceBase':
+    def create_instance(self, fixtures: Fixtures) -> "WorkloadInstanceBase":
         """Create a workload instance from a set of fixtures."""
 
 
@@ -49,10 +49,8 @@ class WorkloadInstanceBase:
               Use .set_fixtures() first
 
         """
-        raise NotImplementedError(
-            "This workload plugin has not implemented apply()")
+        raise NotImplementedError("This workload plugin has not implemented apply()")
 
     def destroy(self):
         """Destroy any created resources."""
-        raise NotImplementedError(
-            "This workload plugin has not implemented destroy()")
+        raise NotImplementedError("This workload plugin has not implemented destroy()")

@@ -17,10 +17,10 @@ from mirantis.testing.metta_cli.base import CliBase
 
 from .common_config import METTA_COMMON_APP_NAME
 
-logger = logging.getLogger('metta.cli.user')
+logger = logging.getLogger("metta.cli.user")
 
 
-METTA_PLUGIN_ID_CLI_USER = 'user'
+METTA_PLUGIN_ID_CLI_USER = "user"
 """ cli plugin_id for the user plugin """
 
 
@@ -31,12 +31,10 @@ class UserCliPlugin(CliBase):
 
     def fire(self):
         """Return a dict of commands."""
-        return {
-            'user': UserGroup(self.environment)
-        }
+        return {"user": UserGroup(self.environment)}
 
 
-class UserGroup():
+class UserGroup:
     """Commands relating to the current user.
 
     These commands can be used to manage the user/system settings for defining functionality that
@@ -50,15 +48,15 @@ class UserGroup():
 
     def info(self):
         """Output any user related information."""
-        user_config = self._environment.config.load('user')
+        user_config = self._environment.config.load("user")
         user_config_dir = _user_path()
 
         info = {
-            'config': user_config.get(default={}),
-            'system': {
-                'path': user_config_dir,
-                'exists': os.path.isdir(user_config_dir)
-            }
+            "config": user_config.get(default={}),
+            "system": {
+                "path": user_config_dir,
+                "exists": os.path.isdir(user_config_dir),
+            },
         }
 
         return json.dumps(info, indent=2)
@@ -69,7 +67,8 @@ class UserGroup():
         user_config_dir = _user_path()
         if _user_path_exists():
             raise RuntimeError(
-                f"User has already been initialized on this system: {user_config_dir}")
+                f"User has already been initialized on this system: {user_config_dir}"
+            )
 
         os.mkdir(user_config_dir)
 
@@ -78,20 +77,21 @@ class UserGroup():
         """Set the user id for the user on the system."""
         if not _user_path_exists():
             raise RuntimeError(
-                "No user configuration has been initialized on this system.  Run `init` first")
+                "No user configuration has been initialized on this system.  Run `init` first"
+            )
 
         user_config_dir = _user_path()
 
-        config_path_user = os.path.join(user_config_dir, 'user.yml')
+        config_path_user = os.path.join(user_config_dir, "user.yml")
         try:
-            with open(config_path_user, 'r') as user_config_file:
+            with open(config_path_user, "r") as user_config_file:
                 user_config = yaml.load(user_config_file)
         except FileNotFoundError:
             user_config = {}
 
-        user_config['id'] = uid
+        user_config["id"] = uid
 
-        with open(config_path_user, 'w') as user_config_file:
+        with open(config_path_user, "w") as user_config_file:
             yaml.dump(user_config, user_config_file)
 
 

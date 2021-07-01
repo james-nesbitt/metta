@@ -1,0 +1,21 @@
+{{- if and (eq .Values.registry.storage.backend "persistentVolume") (not .Values.registry.storage.persistentVolume.existingCLaim) }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "msr.fullname" . }}
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - {{ .Values.registry.storage.persistentVolume.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.registry.storage.persistentVolume.size | quote }}
+{{- if .Values.registry.storage.persistentVolume.storageClass }}
+{{- if (eq "-" .Values.registry.storage.persistentVolume.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.registry.storage.persistentVolume.storageClass }}"
+{{- end }}
+{{- end }}
+{{- end }}

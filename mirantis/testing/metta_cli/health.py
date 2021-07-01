@@ -8,13 +8,16 @@ their contents.
 """
 import logging
 
-
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
+from mirantis.testing.metta.healthcheck import (
+    METTA_PLUGIN_TYPE_HEALTHCHECK,
+    HealthStatus,
+    HealthMessage,
+)
 
 from .base import CliBase, cli_output
 
-logger = logging.getLogger('metta.cli.healthcheck')
+logger = logging.getLogger("metta.cli.healthcheck")
 
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
@@ -24,12 +27,10 @@ class HealthcheckCliPlugin(CliBase):
 
     def fire(self):
         """Return a dict of commands."""
-        return {
-            'healthcheck': HealthcheckGroup(self.environment)
-        }
+        return {"healthcheck": HealthcheckGroup(self.environment)}
 
 
-class HealthcheckGroup():
+class HealthcheckGroup:
     """Base Fire command group for healthcheck commands."""
 
     def __init__(self, environment: Environment):
@@ -39,39 +40,67 @@ class HealthcheckGroup():
     def list(self, raw: bool = False):
         """List all healthchecks."""
         healthcheck_list = [
-            fixture.plugin.instance_id for fixture in self.environment.fixtures.filter(
-                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK)]
+            fixture.plugin.instance_id
+            for fixture in self.environment.fixtures.filter(
+                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK
+            )
+        ]
 
         if raw:
             return list
         return cli_output(healthcheck_list)
 
-    def health(self, instance_id: str = ''):
+    def health(self, instance_id: str = ""):
         """Output health status of healtchecks."""
         if instance_id:
             healthchecks = self.environment.fixtures.filter(
-                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
-                instance_id=instance_id)
+                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK, instance_id=instance_id
+            )
         else:
             healthchecks = self.environment.fixtures.filter(
-                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK)
+                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK
+            )
 
         health_info = {}
         for health_fixture in healthchecks:
             health_plugin = health_fixture.plugin
-            health_plugin_results = health_plugin.health()
-            health_info[health_plugin.instance_id] = {
-                'instance_id': health_plugin.instance_id,
-                'status': health_plugin_results.status,
-                'messages': health_plugin_results.messages
-            }
+
+            try:
+                health_plugin_results = health_plugin.health()
+
+            # we turn any exception into a health marker
+            # pylint: disable=broad-except
+            except Exception as err:
+                health_info[health_plugin.instance_id] = {
+                    "fixture": {
+                        "plugin_id": health_fixture.plugin_id,
+                        "instance_id": health_fixture.instance_id,
+                        "priority": health_fixture.priority,
+                    },
+                    "status": HealthStatus.CRITICAL,
+                    "messages": [
+                        HealthMessage(status=HealthStatus.CRITICAL, message=str(err))
+                    ],
+                }
+
+            else:
+                health_info[health_plugin.instance_id] = {
+                    "fixture": {
+                        "plugin_id": health_fixture.plugin_id,
+                        "instance_id": health_fixture.instance_id,
+                        "priority": health_fixture.priority,
+                    },
+                    "status": health_plugin_results.status,
+                    "messages": health_plugin_results.messages,
+                }
 
         return cli_output(health_info)
 
-    def _select_healthcheck(self, instance_id: str = ''):
+    def _select_healthcheck(self, instance_id: str = ""):
         """Pick a matching healthcheck."""
         if instance_id:
-            return self.environment.fixtures.get(plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
-                                                 instance_id=instance_id)
+            return self.environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK, instance_id=instance_id
+            )
         # Get the highest priority healthcheck
         return self.environment.fixtures.get(plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK)

@@ -23,11 +23,11 @@ METTA_PRESET_CONFIG_LABEL = "mirantis"
 """ This config label loaded to interpret config in add_preset_config """
 METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX = "metta_mirantis-preset"
 """ prefix for all config that we add here """
-METTA_CONFIG_CONFIG_PRESET_BASE = 'presets'
+METTA_CONFIG_CONFIG_PRESET_BASE = "presets"
 """ preset configuration will be found under this config .get() key """
 METTA_PRESET_DEFAULT_PRIORITY = 60
 """ Default priority to use for preset config sources """
-METTA_PRESET_PACKAGE = 'mirantis.testing.metta_mirantis'
+METTA_PRESET_PACKAGE = "mirantis.testing.metta_mirantis"
 
 
 def preset_config():
@@ -43,19 +43,30 @@ def preset_config():
         priority delta: preset relative priority compared to other presets
     """
     return [
-        ("variation", pkg_resources.resource_filename(
-            METTA_PRESET_PACKAGE, "config/variation"), 0),
-        ("cluster", pkg_resources.resource_filename(
-            METTA_PRESET_PACKAGE, "config/cluster"), 1),
-        ("platform", pkg_resources.resource_filename(
-            METTA_PRESET_PACKAGE, "config/platform"), 1),
-        ("release", pkg_resources.resource_filename(
-            METTA_PRESET_PACKAGE, "config/release"), 1)
+        (
+            "variation",
+            pkg_resources.resource_filename(METTA_PRESET_PACKAGE, "config/variation"),
+            0,
+        ),
+        (
+            "cluster",
+            pkg_resources.resource_filename(METTA_PRESET_PACKAGE, "config/cluster"),
+            1,
+        ),
+        (
+            "platform",
+            pkg_resources.resource_filename(METTA_PRESET_PACKAGE, "config/platform"),
+            1,
+        ),
+        (
+            "release",
+            pkg_resources.resource_filename(METTA_PRESET_PACKAGE, "config/release"),
+            1,
+        ),
     ]
 
 
-def add_preset_config(environment: Environment,
-                      priority=METTA_PRESET_DEFAULT_PRIORITY):
+def add_preset_config(environment: Environment, priority=METTA_PRESET_DEFAULT_PRIORITY):
     """Read metta config and interpret it for modifying the config.
 
     Interprests config.load("metta") to determine if any `presets` config
@@ -111,11 +122,12 @@ def add_preset_config(environment: Environment,
         (preset_key, preset_root_path, preset_priority_delta) = preset
         preset_priority = priority + preset_priority_delta
         preset_value = metta_config.get(
-            [METTA_CONFIG_CONFIG_PRESET_BASE, preset_key], default='')
+            [METTA_CONFIG_CONFIG_PRESET_BASE, preset_key], default=""
+        )
 
         if preset_value:
             prefix = METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX
-            preset_key = preset_value.replace('/', '_')
+            preset_key = preset_value.replace("/", "_")
             preset_instance_id = f"{prefix}-{preset_key}"
             # quick check to see if we've already added this preset.
             if not environment.config.has_source(preset_instance_id):
@@ -123,14 +135,19 @@ def add_preset_config(environment: Environment,
                 # exists
                 preset_full_path = os.path.join(preset_root_path, preset_value)
                 if os.path.isdir(preset_full_path):
-                    logger.debug("Using metta preset %s:%s => %s", preset_key, preset_value,
-                                 preset_full_path)
+                    logger.debug(
+                        "Using metta preset %s:%s => %s",
+                        preset_key,
+                        preset_value,
+                        preset_full_path,
+                    )
                     environment.config.add_source(
-                        PLUGIN_ID_SOURCE_PATH,
-                        preset_instance_id,
-                        preset_priority).set_path(preset_full_path)
+                        PLUGIN_ID_SOURCE_PATH, preset_instance_id, preset_priority
+                    ).set_path(preset_full_path)
                 else:
-                    raise KeyError(f"metta doesn't have a preset '{preset_key}:{preset_value}'")
+                    raise KeyError(
+                        f"metta doesn't have a preset '{preset_key}:{preset_value}'"
+                    )
 
         else:
             logger.debug("No metta preset selected for %s", preset_key)

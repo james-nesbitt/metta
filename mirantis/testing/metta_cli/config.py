@@ -20,7 +20,7 @@ from mirantis.testing.metta.environment import Environment
 
 from .base import CliBase, cli_output
 
-logger = logging.getLogger('metta.cli.config')
+logger = logging.getLogger("metta.cli.config")
 
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
@@ -30,49 +30,51 @@ class ConfigCliPlugin(CliBase):
 
     def fire(self):
         """Return a dict of commands."""
-        return {
-            'config': ConfigGroup(self.environment)
-        }
+        return {"config": ConfigGroup(self.environment)}
 
 
-class ConfigGroup():
+class ConfigGroup:
     """Base Fire command group for output commands."""
 
     def __init__(self, environment: Environment):
         """Store environment in object."""
         self.environment = environment
 
-    def plugins(self, plugin_id: str = '', instance_id: str = '',
-                plugin_type: str = ''):
+    def plugins(
+        self, plugin_id: str = "", instance_id: str = "", plugin_type: str = ""
+    ):
         """List configerus plugins."""
         configerus_plugin_list = []
         for instance in self.environment.config.plugins.get_instances(
-                plugin_id=plugin_id, instance_id=instance_id, type=plugin_type):
-            configerus_plugin_list.append({
-                'type': instance.type,
-                'plugin_id': instance.plugin_id,
-                'instance_id': instance.instance_id,
-                'priority': instance.priority,
-            })
+            plugin_id=plugin_id, instance_id=instance_id, type=plugin_type
+        ):
+            configerus_plugin_list.append(
+                {
+                    "type": instance.type,
+                    "plugin_id": instance.plugin_id,
+                    "instance_id": instance.instance_id,
+                    "priority": instance.priority,
+                }
+            )
         return cli_output(configerus_plugin_list)
 
-    def sources(self, plugin_id: str = '',
-                instance_id: str = '', deep: bool = False):
+    def sources(self, plugin_id: str = "", instance_id: str = "", deep: bool = False):
         """List configerus sources."""
         source_list = []
         for instance in self.environment.config.plugins.get_instances(
-                plugin_id=plugin_id, instance_id=instance_id, type=ConfigerusType.SOURCE):
+            plugin_id=plugin_id, instance_id=instance_id, type=ConfigerusType.SOURCE
+        ):
             source = {
-                'plugin_id': instance.plugin_id,
-                'instance_id': instance.instance_id,
-                'priority': instance.priority,
+                "plugin_id": instance.plugin_id,
+                "instance_id": instance.instance_id,
+                "priority": instance.priority,
             }
 
             if deep:
                 if instance.plugin_id == PLUGIN_ID_SOURCE_PATH:
-                    source['path'] = instance.plugin.path
+                    source["path"] = instance.plugin.path
                 if instance.plugin_id == PLUGIN_ID_SOURCE_DICT:
-                    source['data'] = instance.plugin.data
+                    source["data"] = instance.plugin.data
 
             source_list.append(source)
 
@@ -112,8 +114,10 @@ class ConfigGroup():
         """Format a target string using config templating."""
         try:
             if default_label is None:
-                default_label = 'you did not specify a default'
-            value = self.environment.config.format(data=data, default_label=default_label)
+                default_label = "you did not specify a default"
+            value = self.environment.config.format(
+                data=data, default_label=default_label
+            )
         except Exception as err:
             return f"Error occured in formatting: '{err}'"
 

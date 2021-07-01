@@ -10,13 +10,13 @@ from typing import Dict, Any
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
 
-logger = logging.getLogger('metta.contrib.dummy.client')
+logger = logging.getLogger("metta.contrib.dummy.client")
 
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
 # pylint: disable=too-few-public-methods
 class DummyClientPlugin:
-    """ Dummy client class
+    """Dummy client class
 
     As with all dummies, this is a failsafe plugin, that should never throw any
     exceptions if used according to metta standards.
@@ -29,8 +29,12 @@ class DummyClientPlugin:
     anything
     """
 
-    def __init__(self, environment: Environment, instance_id: str,
-                 fixtures: Dict[str, Dict[str, Any]] = None):
+    def __init__(
+        self,
+        environment: Environment,
+        instance_id: str,
+        fixtures: Dict[str, Dict[str, Any]] = None,
+    ):
         """Sset class properties
 
         Arguments:

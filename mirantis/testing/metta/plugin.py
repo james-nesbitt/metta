@@ -21,33 +21,33 @@ import logging
 import functools
 from typing import Dict, Callable
 
-logger = logging.getLogger('metta.plugin')
+logger = logging.getLogger("metta.plugin")
 
-METTA_PLUGIN_CONFIG_KEY_PLUGIN = 'plugin'
+METTA_PLUGIN_CONFIG_KEY_PLUGIN = "plugin"
 """ configerus .get() key for a single plugin """
-METTA_PLUGIN_CONFIG_KEY_PLUGINID = 'plugin_id'
+METTA_PLUGIN_CONFIG_KEY_PLUGINID = "plugin_id"
 """ configerus .get() key for plugin_id """
-METTA_PLUGIN_CONFIG_KEY_INSTANCEID = 'instance_id'
+METTA_PLUGIN_CONFIG_KEY_INSTANCEID = "instance_id"
 """ configerus .get() key for plugin_id """
-METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE = 'plugin_type'
+METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE = "plugin_type"
 """ configerus .get() key for plugin type """
-METTA_PLUGIN_CONFIG_KEY_ARGUMENTS = 'arguments'
+METTA_PLUGIN_CONFIG_KEY_ARGUMENTS = "arguments"
 """ configerus .get() key for plugin arguments """
-METTA_PLUGIN_CONFIG_KEY_PRIORITY = 'priority'
+METTA_PLUGIN_CONFIG_KEY_PRIORITY = "priority"
 """ configerus .get()  assign an instance a priority when it is created. """
-METTA_PLUGIN_CONFIG_KEY_CONFIG = 'config'
+METTA_PLUGIN_CONFIG_KEY_CONFIG = "config"
 """ configerus .get()  as additional config """
-METTA_PLUGIN_CONFIG_KEY_VALIDATORS = 'validators'
+METTA_PLUGIN_CONFIG_KEY_VALIDATORS = "validators"
 """ configerus .get()  to decide what validators to apply to the plugin """
 
 
 METTA_PLUGIN_VALIDATION_JSONSCHEMA = {
-    METTA_PLUGIN_CONFIG_KEY_INSTANCEID: {'plugin_type': 'string'}
+    METTA_PLUGIN_CONFIG_KEY_INSTANCEID: {"plugin_type": "string"}
 }
 """ json schema validation definition for a plugin """
 
 
-class Factory():
+class Factory:
     """Python decorator class for metta Plugin factories.
 
     This class should be used to decorate any function which is meant to be a
@@ -104,10 +104,8 @@ class Factory():
         def wrapper(environment: object, instance_id: str, *args, **kwargs):
             logger.debug("plugin factory exec: %s:%s", self.plugin_type, self.plugin_id)
             plugin = func(
-                environment=environment,
-                instance_id=instance_id,
-                *args,
-                **kwargs)
+                environment=environment, instance_id=instance_id, *args, **kwargs
+            )
 
             return plugin
 
@@ -132,14 +130,17 @@ class Factory():
         except KeyError as err:
             raise NotImplementedError(
                 f"METTA Plugin instance '{self.plugin_type}:{self.plugin_id}' "
-                "has not been registered.") from err
+                "has not been registered."
+            ) from err
         except Exception as err:
             raise Exception(
                 f"Could not create Plugin instance '{self.plugin_type}:{self.plugin_id}' "
-                "due to an unknown error.") from err
+                "due to an unknown error."
+            ) from err
 
-        return factory(environment=environment,
-                       instance_id=instance_id, *args, **kwargs)
+        return factory(
+            environment=environment, instance_id=instance_id, *args, **kwargs
+        )
 
     @classmethod
     def plugin_types(cls):

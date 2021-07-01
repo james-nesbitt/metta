@@ -1,0 +1,162 @@
+
+# Kubernetes cert-manager (MSR needs this)
+cert-manager:
+    plugin_type: workload
+    plugin_id: metta_kubernetes_helm
+
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
+
+    repos:
+        jetstack: https://charts.jetstack.io
+
+    namespace: cert-manager
+    chart: jetstack/cert-manager
+
+    file: "{{variables:files_path}}/{{variables:resource_prefix}}.helm.msr.yaml"
+    values:
+        installCRDs: true
+
+        nodeSelector:
+            "beta.kubernetes.io/os": linux
+            "beta.kubernetes.io/arch": amd64
+
+        cainjector:
+            nodeSelector:
+                "beta.kubernetes.io/os": linux
+                "beta.kubernetes.io/arch": amd64
+
+        webhook:
+            nodeSelector:
+                "beta.kubernetes.io/os": linux
+                "beta.kubernetes.io/arch": amd64
+
+msr-pvs:
+    plugin_type: workload
+    plugin_id: metta_kubernetes_yaml
+
+    from_config: true 
+
+    yaml:
+        apiVersion: v1
+        kind: PersistentVolume
+        metadata:
+            name: msr-pv-001
+        spec:
+            capacity:
+              storage: 100Gi
+            volumeMode: Filesystem
+            accessModes:
+              - ReadWriteOnce
+            persistentVolumeReclaimPolicy: Delete
+            storageClassName: local-storage
+            local:
+                path: /tmp/msr-pv
+            nodeAffinity:
+                required:
+                  nodeSelectorTerms:
+                  - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: In
+                      values:
+                      - example-node
+
+# Local MSR installation using MKE as a K8S cluster
+msr:
+    plugin_type: workload
+    plugin_id: metta_kubernetes_helm
+
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
+
+    namespace: msr
+    chart: "{{paths:project}}/helm/msr-0.1.1.tgz"
+
+    file: "{{variables:files_path}}/{{variables:resource_prefix}}.helm.msr.yaml"
+    values:
+      registry:
+        storage:
+          persistentVolume:
+            storageClass: local-storage
+
+# loki workload : monitoring tooling workload
+loki-workload:
+    plugin_type: workload
+    plugin_id: metta_kubernetes_helm
+
+    # build the plugin from this config, by passing this label/base to it
+    from_config: true
+
+    repos:
+      grafana: https://grafana.github.io/helm-charts
+
+    namespace: loki
+    chart: grafana/loki-stack
+
+    file: "{{variables:files_path}}/{{variables:resource_prefix}}.helm.loki.yaml"
+    values:
+
+      loki:
+        nodeSelector:
+          com.docker.ucp.collection: system
+
+      promtail:
+        nodeSelector:
+          com.docker.ucp.collection: system
+
+      fluent-bit:
+        nodeSelector:
+          com.docker.ucp.collection: system
+
+      grafana:
+        enabled: true
+        image:
+          tag: 7.4.5
+
+        adminUser: admin
+        adminPassword: admin
+
+        nodeSelector:
+          com.docker.ucp.collection: system
+
+        imageRenderer:
+          enabled: true
+
+        dashboardProviders:
+          dashboardproviders.yaml:
+            apiVersion: 1
+            providers:
+              - name: default
+                orgId: 1
+                folder: ""
+                type: file
+                disableDeletion: false
+                editable: true
+                options:
+                  path: /var/lib/grafana/dashboards/default
+
+        dashboards:
+          default:
+            node-exporter-server-metrics:
+              title: NodeExporter
+              folder: general
+              gnetId: 11952
+              version: 1
+              datasource: Prometheus
+              refresh: 10s
+              time:
+                from: "now-30m"
+                to: "now"
+
+      prometheus:
+        enabled: true
+
+        nodeSelector:
+          com.docker.ucp.collection: system
+
+        alertmanager:
+          persistentVolume:
+            enabled: false
+        server:
+          persistentVolume:
+            enabled: false

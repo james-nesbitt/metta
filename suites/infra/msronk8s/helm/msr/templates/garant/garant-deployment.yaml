@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "msr.fullname" . }}-garant
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: garant
+spec:
+  replicas: {{ .Values.garant.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "msr.commonSelectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: garant
+  template:
+    metadata:
+      labels:
+        {{- include "msr.labels" . | nindent 8 }}
+        app.kubernetes.io/component: garant
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: default
+      containers:
+        - name: garant
+          securityContext: {}
+          image: "{{ include "msr.imageRef" (list $ "garant") }}"
+          imagePullPolicy: {{ .Values.garant.image.pullPolicy }}
+          ports:
+            - name: https
+              containerPort: 443
+              protocol: TCP
+          env:
+            - name: GARANT_TLS_CERTIFICATE
+              value: /certs/server/tls.crt
+            - name: GARANT_TLS_KEY
+              value: /certs/server/tls.key
+            - name: GARANT_TLS_CLIENTCACERTIFICATES
+              value: /certs/client/ca.crt
+            - name: GARANT_AUTH_PARAMETERS_RETHINKDBADDR
+              value: "{{ .Release.Name }}-rethinkdb-proxy:{{ .Values.rethinkdb.ports.driver }}"
+            - name: GARANT_AUTH_PARAMETERS_RETHINKDBCLIENTCERTFILE
+              value: /certs/rethinkdb-client/tls.crt
+            - name: GARANT_AUTH_PARAMETERS_RETHINKDBCLIENTKEYFILE
+              value: /certs/rethinkdb-client/tls.key
+            - name: GARANT_AUTH_PARAMETERS_RETHINKDBCACERTFILE
+              value: /certs/rethinkdb/ca.crt
+            - name: GARANT_AUTH_PARAMETERS_ENZICLIENTCERTFILE
+              value: /certs/enziservice-client/tls.crt
+            - name: GARANT_AUTH_PARAMETERS_ENZICLIENTKEYFILE
+              value: /certs/enziservice-client/tls.key
+            - name: GARANT_SIGNINGKEY
+              value: /certs/signing/tls.key
+            - name: GARANT_AUTH_PARAMETERS_SIGNINGKEYCACERTFILE
+              value: /certs/signing/ca.crt
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+      volumes:
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: "{{ include "msr.fullname" . }}-garant-server-cert"
+                  items:
+                    - key: tls.key
+                      path: server/tls.key
+                    - key: tls.crt
+                      path: server/tls.crt
+              - secret:
+                  name: "{{ include "msr.fullname" . }}-nginx-client-ca-cert"
+                  items:
+                    - key: ca.crt
+                      path: client/ca.crt
+              - secret:
+                  name: "{{ include "msr.fullname" . }}-rethinkdb-driver-client-cert-0"
+                  items:
+                    - key: tls.key
+                      path: rethinkdb-client/tls.key
+                    - key: tls.crt
+                      path: rethinkdb-client/tls.crt
+              - secret:
+                  name: "{{ include "msr.fullname" . }}-rethinkdb-driver-ca-cert"
+                  items:
+                    - key: ca.crt
+                      path: rethinkdb/ca.crt
+              - secret:
+                  name: "{{ include "msr.fullname" . }}-enzi-client-cert"
+                  items:
+                    - key: tls.key
+                      path: enziservice-client/tls.key
+                    - key: tls.crt
+                      path: enziservice-client/tls.crt
+              - secret:
+                  name: "{{ include "msr.fullname" . }}-auth-signing-cert"
+                  items:
+                    - key: tls.key
+                      path: signing/tls.key
+                    - key: ca.crt
+                      path: signing/ca.crt

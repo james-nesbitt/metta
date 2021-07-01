@@ -14,11 +14,11 @@ from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 from mirantis.testing.metta.workload import WorkloadBase, WorkloadInstanceBase
 
-logger = logging.getLogger('metta.contrib.docker.workload.run')
+logger = logging.getLogger("metta.contrib.docker.workload.run")
 
-DOCKER_RUN_WORKLOAD_CONFIG_LABEL = 'docker'
+DOCKER_RUN_WORKLOAD_CONFIG_LABEL = "docker"
 """ Configerus label for retrieving docker run workloads """
-DOCKER_RUN_WORKLOAD_CONFIG_BASE = 'workload.run'
+DOCKER_RUN_WORKLOAD_CONFIG_BASE = "workload.run"
 """ Configerus get base for retrieving the default run workload """
 
 
@@ -26,11 +26,12 @@ class DockerPyRunWorkloadPlugin(WorkloadBase):
     """Docker Run workload class for the DockerPy."""
 
     def __init__(
-            self,
-            environment: Environment,
-            instance_id: str,
-            label: str = DOCKER_RUN_WORKLOAD_CONFIG_LABEL,
-            base: Any = DOCKER_RUN_WORKLOAD_CONFIG_BASE):
+        self,
+        environment: Environment,
+        instance_id: str,
+        label: str = DOCKER_RUN_WORKLOAD_CONFIG_LABEL,
+        base: Any = DOCKER_RUN_WORKLOAD_CONFIG_BASE,
+    ):
         """Run the super constructor but also set class properties.
 
         Parameters:
@@ -64,12 +65,13 @@ class DockerPyRunWorkloadPlugin(WorkloadBase):
 
         """
         client = fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id='metta_docker')
+            plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id="metta_docker"
+        )
 
         run_config = self.environment.config.load(self.config_label)
         """ get a configerus LoadedConfig for the docker run label """
 
-        run = run_config.get([self.config_base, 'run'])
+        run = run_config.get([self.config_base, "run"])
 
         return DockerRunWorkloadInstance(client, run)
 
@@ -79,16 +81,14 @@ class DockerPyRunWorkloadPlugin(WorkloadBase):
         """ get a configerus LoadedConfig for the docker run label """
 
         return {
-            'workload': {
-                'run': {
-                    'run': run_config.get([self.config_base, 'run'])
-                },
-                'required_fixtures': {
-                    'docker': {
-                        'plugin_type': METTA_PLUGIN_TYPE_CLIENT,
-                        'plugin_id': 'metta_docker'
+            "workload": {
+                "run": {"run": run_config.get([self.config_base, "run"])},
+                "required_fixtures": {
+                    "docker": {
+                        "plugin_type": METTA_PLUGIN_TYPE_CLIENT,
+                        "plugin_id": "metta_docker",
                     }
-                }
+                },
             }
         }
 
@@ -96,7 +96,7 @@ class DockerPyRunWorkloadPlugin(WorkloadBase):
 # This is a small workload instance, but it does its job
 # pylint: disable=too-few-public-methods
 class DockerRunWorkloadInstance(WorkloadInstanceBase):
-    """ A workload instance for a docker run """
+    """A workload instance for a docker run"""
 
     def __init__(self, client, run):
         """Inject docker client, and run definition into workload instance."""
@@ -109,7 +109,7 @@ class DockerRunWorkloadInstance(WorkloadInstanceBase):
         @NOTE Needs a docker client fixture to run.  Use .set_fixtures() first
 
         """
-        assert 'image' in self.run, "Run command had no image"
+        assert "image" in self.run, "Run command had no image"
 
         self.run = self.client.containers.run(**self.run)
         return self.run

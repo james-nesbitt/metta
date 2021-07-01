@@ -16,7 +16,7 @@ from typing import Any
 
 from mirantis.testing.metta.environment import Environment
 
-logger = logging.getLogger('metta.cli.base')
+logger = logging.getLogger("metta.cli.base")
 
 METTA_PLUGIN_TYPE_CLI = "cli"
 """ Metta plugin_type identifier for CLI plugins """

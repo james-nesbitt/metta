@@ -10,13 +10,15 @@ from mirantis.testing.metta.healthcheck import Health, HealthStatus
 
 from .mke_client import MKEAPIClientPlugin, MKENodeState
 
-logger = logging.getLogger('metta_mirantis.mke_health')
+logger = logging.getLogger("metta_mirantis.mke_health")
 
 
 class MKEHealthCheckPlugin:
     """Metta healthcheck plugin that checks on MKE health using an api client."""
 
-    def __init__(self, environment: Environment, instance_id: str, mke_api: MKEAPIClientPlugin):
+    def __init__(
+        self, environment: Environment, instance_id: str, mke_api: MKEAPIClientPlugin
+    ):
         """Create a healthcheck plugin for a specific API plugin instance."""
         self.environment = environment
         self.instance_id = instance_id
@@ -27,13 +29,11 @@ class MKEHealthCheckPlugin:
     def info(self, deep: bool = False):
         """Return information about the plugin."""
         info = {
-            'fixtures': {
-                'instance_id': self.instance_id
-            },
+            "fixtures": {"instance_id": self.instance_id},
         }
 
         if deep:
-            info['api_plugin'] = self.mke_api.info()
+            info["api_plugin"] = self.mke_api.info()
 
         return info
 
@@ -44,7 +44,7 @@ class MKEHealthCheckPlugin:
         for test_health_function in [
             self.test_launchpad_self_mke_api_id,
             self.test_launchpad_mke_nodes,
-            self.test_launchpad_mke_swarminfo
+            self.test_launchpad_mke_swarminfo,
         ]:
             test_health = test_health_function()
             mke_health.merge(test_health)
@@ -60,8 +60,8 @@ class MKEHealthCheckPlugin:
         health.info(f"MKE Cluster ID: {info['ID']}")
 
         no_warnings = True
-        if hasattr(info, 'Warnings'):
-            for warning in info['Warnings']:
+        if hasattr(info, "Warnings"):
+            for warning in info["Warnings"]:
                 health.warning(f"Warning : {warning}")
                 no_warnings = False
 
@@ -78,8 +78,10 @@ class MKEHealthCheckPlugin:
 
         all_healthy = True
         for node in nodes:
-            if not MKENodeState.READY.match(node['Status']['State']):
-                health.warning(f"MKE NODE {node['ID']} was not in a READY state: {node['Status']}")
+            if not MKENodeState.READY.match(node["Status"]["State"]):
+                health.warning(
+                    f"MKE NODE {node['ID']} was not in a READY state: {node['Status']}"
+                )
                 all_healthy = False
 
         if all_healthy:
@@ -94,10 +96,10 @@ class MKEHealthCheckPlugin:
         info = self.mke_api.api_info()
 
         swarm_healthy = True
-        if 'Swarm' in info:
-            swarm_info = info['Swarm']
+        if "Swarm" in info:
+            swarm_info = info["Swarm"]
 
-            if swarm_info['Nodes'] == 0:
+            if swarm_info["Nodes"] == 0:
                 health.error("MKE reports no nodes in the cluster")
                 swarm_healthy = False
 

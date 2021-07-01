@@ -26,13 +26,15 @@ def myapp_running(environment_up: Environment):
         In our case, the launchpad provisioner produces that plugin.
 
     """
-    logger.info("Starting a kubernetes workload in this environment, so "
-                "that we can run litmus chaos against it.")
+    logger.info(
+        "Starting a kubernetes workload in this environment, so "
+        "that we can run litmus chaos against it."
+    )
 
     sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id='myapp_deployment')
-    instance = sanity_kubernetes_deployment.create_instance(
-        environment_up.fixtures)
+        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="myapp_deployment"
+    )
+    instance = sanity_kubernetes_deployment.create_instance(environment_up.fixtures)
     deployment = instance.apply()
 
     assert deployment is not None
@@ -62,7 +64,8 @@ def litmuschaos_installed(environment_up: Environment):
     logger.info("Preparing Litmus Chaos workload.")
 
     litmuchchaos_run = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id='chaos_litmuschaos')
+        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="chaos_litmuschaos"
+    )
     instance = litmuchchaos_run.create_instance(environment_up.fixtures)
     instance.prepare()
 

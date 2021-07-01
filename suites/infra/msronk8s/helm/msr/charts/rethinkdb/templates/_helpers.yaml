@@ -1,0 +1,79 @@
+{{/* vim: set filetype=mustache: */}}
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "rethinkdb.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "rethinkdb.fullname" -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "rethinkdb.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "rethinkdb.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "rethinkdb.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+The name of the stored secret containing the driver TLS credentials.
+*/}}
+{{- define "rethinkdb.driverTLSSecretName" -}}
+{{- if .Values.proxy.driverTLS.enabled -}}
+    {{ default (print (include "rethinkdb.fullname" .) "-driver-tls") (tpl .Values.proxy.driverTLS.secretName .) }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+The name of the stored secret containing the mTLS CA data.
+*/}}
+{{- define "rethinkdb.driverTLSMutualSecretName" -}}
+{{- if and .Values.proxy.driverTLS.enabled (or .Values.proxy.driverTLS.mutual.secretName .Values.proxy.driverTLS.mutual.cert) -}}
+    {{ default (print (include "rethinkdb.fullname" .) "-driver-tls-mutual") (tpl .Values.proxy.driverTLS.mutual.secretName .) }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+The name of the stored secret containing the cluster TLS credentials.
+*/}}
+{{- define "rethinkdb.clusterTLSSecretName" -}}
+{{- if .Values.cluster.clusterTLS.enabled -}}
+    {{ default (print (include "rethinkdb.fullname" .) "-cluster-tls") (tpl .Values.cluster.clusterTLS.secretName .) }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Build the image reference from the items contained in the "image" value.
+*/}}
+{{- define "rethinkdb.imageRef" -}}
+
+{{- $namespace := tpl .Values.image.namespace . -}}
+{{- if $namespace -}}
+{{- $namespace = print $namespace "/" -}}
+{{- end -}}
+
+{{- $tag := tpl .Values.image.tag . -}}
+{{- if $tag -}}
+{{- $tag = print ":" $tag -}}
+{{- end -}}
+
+{{ $namespace }}{{ .Values.image.repository }}{{ $tag }}
+{{- end }}

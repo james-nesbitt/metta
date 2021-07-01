@@ -1,0 +1,90 @@
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "msr.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "msr.fullname" -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "msr.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "msr.labels" -}}
+helm.sh/chart: {{ include "msr.chart" . }}
+{{ include "msr.commonSelectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels common to multiple objects
+*/}}
+{{- define "msr.commonSelectorLabels" -}}
+app.kubernetes.io/name: {{ include "msr.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Selector labels for nginx pods
+*/}}
+{{- define "msr.nginxSelectorLabels" -}}
+{{ include "msr.commonSelectorLabels" . }}
+app.kubernetes.io/component: nginx
+{{- end }}
+
+{{/*
+Build the image reference from the items contained in the "${component}.image" value.
+
+Note: The usage of this is somewhat awkward because we want to pass the component
+name in and also need to continue receiving the root level context, but Helm only
+supports receiving a single value. The workaround is to pass in a list which
+contains both of these - we've chosen for the first parameter to be the root and the
+second to be the component name.  So, for example, to invoke this for the registry
+component whose section in Values.yaml is named "registry", you would do:
+{{ include "msr.imageRef" (list $ "registry") }}
+*/}}
+{{- define "msr.imageRef" }}
+
+{{- $root := index . 0 }}
+{{- $component := index . 1 }}
+
+{{- $image := index $root "Values" $component "image"}}
+
+{{- $namespace := tpl $image.namespace $root }}
+{{- if $namespace }}
+{{- $namespace = print $namespace "/" }}
+{{- end }}
+
+{{- $tag := tpl $image.tag $root }}
+{{- if $tag }}
+{{- $tag = print ":" $tag }}
+{{- end }}
+
+{{- $namespace }}{{ $image.repository }}{{ $tag }}
+{{- end }}

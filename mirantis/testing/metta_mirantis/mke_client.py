@@ -30,29 +30,29 @@ from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
-logger = logging.getLogger('metta.contrib.metta_mirantis.client.mkeapi')
+logger = logging.getLogger("metta.contrib.metta_mirantis.client.mkeapi")
 
-METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID = 'metta_mirantis_client_mke'
+METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID = "metta_mirantis_client_mke"
 """ Mirantis MKE API Client plugin id """
 
-METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT = '.'
+METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT = "."
 """ Default path to be used as a root dir for client bundles """
-METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME = 'mke_bundle.zip'
+METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME = "mke_bundle.zip"
 """ Default filename for downloaded client bundle zip file """
-METTA_MIRANTIS_MKE_BUNDLE_INFO_FILENAME = 'meta.json'
+METTA_MIRANTIS_MKE_BUNDLE_INFO_FILENAME = "meta.json"
 """ Filename in the bundle which contains the bundle metadata. """
 
-METTA_MIRANTIS_MKE_DOCKER_VERSION_DEFAULT = '1.40'
+METTA_MIRANTIS_MKE_DOCKER_VERSION_DEFAULT = "1.40"
 """ Default value for the docker client version number."""
 
 
 class MKENodeState(Enum):
     """MKE Node state in the node status API response."""
 
-    UNKNOWN = 'unknown'
-    DOWN = 'down'
-    READY = 'ready'
-    DISCONNECTED = 'disconnected'
+    UNKNOWN = "unknown"
+    DOWN = "down"
+    READY = "ready"
+    DISCONNECTED = "disconnected"
 
     # pylint: disable=comparison-with-callable
     def match(self, compare: str) -> bool:
@@ -65,9 +65,16 @@ class MKEAPIClientPlugin:
     """Metta Client plugin for API Connections to MKE."""
 
     # pylint: disable=too-many-arguments"
-    def __init__(self, environment: Environment, instance_id: str,
-                 accesspoint: str, username: str, password: str, hosts: List[Dict],
-                 bundle_root: str = METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT):
+    def __init__(
+        self,
+        environment: Environment,
+        instance_id: str,
+        accesspoint: str,
+        username: str,
+        password: str,
+        hosts: List[Dict],
+        bundle_root: str = METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT,
+    ):
         """Create an MKE Client plugin instance.
 
         Parameters:
@@ -121,7 +128,8 @@ class MKEAPIClientPlugin:
         if not self.verify:
             # pylint: disable=no-member
             requests.packages.urllib3.disable_warnings(
-                requests.packages.urllib3.exceptions.InsecureRequestWarning)
+                requests.packages.urllib3.exceptions.InsecureRequestWarning
+            )
 
         self.auth_token = None
         """ hold the bearer auth token created by ._auth_headers() (cache) """
@@ -140,7 +148,7 @@ class MKEAPIClientPlugin:
         try:
             self.make_bundle_clients()
         except ValueError as err:
-            logger.debug("MKE client was unable to create clients: %s",err)
+            logger.debug("MKE client was unable to create clients: %s", err)
 
     def host_count(self):
         """Return integer host count for MKE cluster."""
@@ -149,18 +157,18 @@ class MKEAPIClientPlugin:
     def info(self, deep: bool = False):
         """Return information about the plugin."""
         info = {
-            'api': {
-                'accesspoint': self.accesspoint,
-                'username': self.username,
+            "api": {
+                "accesspoint": self.accesspoint,
+                "username": self.username,
             },
-            'bundle_root': self.bundle_root,
-            'hosts': self.hosts
+            "bundle_root": self.bundle_root,
+            "hosts": self.hosts,
         }
 
         if deep:
-            info['id'] = self.api_id()
-            info['version'] = self.api_version()
-            info['api_info'] = self.api_info()
+            info["id"] = self.api_id()
+            info["version"] = self.api_version()
+            info["api_info"] = self.api_info()
 
         return info
 
@@ -173,7 +181,8 @@ class MKEAPIClientPlugin:
             plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
             instance_id=f"{self.instance_id}-healthcheck",
             priority=70,
-            arguments={'mke_api': self})
+            arguments={"mke_api": self},
+        )
         healthcheck_fixtures.add(kubeapi_healthcheck)
         self.fixtures.add(kubeapi_healthcheck)
 
@@ -186,9 +195,9 @@ class MKEAPIClientPlugin:
     def api_ping(self, node: int = None) -> bool:
         """Check the API ping response."""
         if node is not None:
-            endpoint = self._accesspoint_url('_ping', node=node)
+            endpoint = self._accesspoint_url("_ping", node=node)
         else:
-            endpoint = self._accesspoint_url('_ping')
+            endpoint = self._accesspoint_url("_ping")
 
         with requests.get(endpoint, verify=self.verify) as response:
             response.raise_for_status()
@@ -196,105 +205,140 @@ class MKEAPIClientPlugin:
 
     def api_id(self) -> Dict:
         """Retrieve the API id."""
-        with requests.get(self._accesspoint_url('id'), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        with requests.get(
+            self._accesspoint_url("id"),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_version(self) -> Dict:
         """Retrieve version."""
-        with requests.get(self._accesspoint_url('version'), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        with requests.get(
+            self._accesspoint_url("version"),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_info(self) -> Dict:
         """Retrieve the API info."""
-        with requests.get(self._accesspoint_url('info'), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        with requests.get(
+            self._accesspoint_url("info"),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
-    def api_nodes(self, node_id: str = '') -> Dict:
+    def api_nodes(self, node_id: str = "") -> Dict:
         """Retrieve the API nodes."""
-        endpoint = f'nodes/{node_id}' if node_id else 'nodes'
-        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        endpoint = f"nodes/{node_id}" if node_id else "nodes"
+        with requests.get(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
-    def api_services(self, service_id: str = '') -> Dict:
+    def api_services(self, service_id: str = "") -> Dict:
         """Retrieve the API services."""
-        endpoint = f'services/{service_id}' if service_id else 'services'
-        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        endpoint = f"services/{service_id}" if service_id else "services"
+        with requests.get(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_metrics_discovery(self):
         """Retrieve the API metrics."""
-        endpoint = 'metricsdiscovery'
-        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        endpoint = "metricsdiscovery"
+        with requests.get(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_tasks(self):
         """Retrieve the API tasks."""
-        endpoint = 'tasks'
-        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        endpoint = "tasks"
+        with requests.get(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_task(self, task_id: str):
         """Retrieve the API tasks."""
-        endpoint = f'tasks/{task_id}'
-        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        endpoint = f"tasks/{task_id}"
+        with requests.get(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_ucp_configtoml_get(self):
         """Retrieve config toml as a struct."""
-        endpoint = 'api/ucp/config-toml'
-        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        endpoint = "api/ucp/config-toml"
+        with requests.get(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return toml.loads(response.text)
 
     def api_ucp_configtoml_put(self, data):
         """Send struct config as a toml string."""
-        endpoint = 'api/ucp/config-toml'
+        endpoint = "api/ucp/config-toml"
         data_toml = toml.dumps(data)
-        with requests.put(self._accesspoint_url(endpoint), headers=self._auth_headers(),
-                          verify=self.verify, data=data_toml) as response:
+        with requests.put(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+            data=data_toml,
+        ) as response:
             response.raise_for_status()
-            return {'response': json.loads(response.content), 'data': data}
+            return {"response": json.loads(response.content), "data": data}
 
     def api_get_bundle(self, force: bool = True):
         """Download and extract client bundle to path."""
-        endpoint = 'api/clientbundle'
+        endpoint = "api/clientbundle"
 
         bundle_dir = self._bundle_user_path()
         """ Path in which we should put the client bundle for this user """
-        bundle_zip_file = os.path.join(bundle_dir,
-                                       METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME)
+        bundle_zip_file = os.path.join(
+            bundle_dir, METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME
+        )
         """ Path to the zip file we will download """
 
         if (not force) and os.path.isdir(bundle_dir):
             return
 
         logger.info("MKE client downloading client bundle for %s", self.username)
-        with requests.get(self._accesspoint_url(endpoint), headers=self._auth_headers(),
-                          verify=self.verify) as response:
+        with requests.get(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
 
             if os.path.isdir(bundle_dir):
                 shutil.rmtree(bundle_dir)
             pathlib.Path(bundle_dir).mkdir(parents=True, exist_ok=True)
 
-            with open(bundle_zip_file, 'wb') as bundle_zip:
+            with open(bundle_zip_file, "wb") as bundle_zip:
                 bundle_zip.write(response.content)
 
         with zipfile.ZipFile(bundle_zip_file) as zipfile_object:
@@ -306,8 +350,9 @@ class MKEAPIClientPlugin:
 
     def api_read_bundle_meta(self):
         """Parse and return the client bundle metadata."""
-        client_bundle_meta_file = os.path.join(self._bundle_user_path(),
-                                               METTA_MIRANTIS_MKE_BUNDLE_INFO_FILENAME)
+        client_bundle_meta_file = os.path.join(
+            self._bundle_user_path(), METTA_MIRANTIS_MKE_BUNDLE_INFO_FILENAME
+        )
         """ Path to the client bundle metadata file. """
         bundle_dir = self._bundle_user_path()
         """ Path in which we should put the client bundle for this user """
@@ -319,22 +364,25 @@ class MKEAPIClientPlugin:
                 data = json.load(json_file)
 
                 # helm complains if this file has loose permissions
-                client_bundle_kubeconfig_file = os.path.join(bundle_dir, 'kube.yml')
+                client_bundle_kubeconfig_file = os.path.join(bundle_dir, "kube.yml")
                 os.chmod(client_bundle_kubeconfig_file, 0o600)
         except FileNotFoundError as err:
-            raise ValueError(f"failed to open the launchpad client bundle meta "
-                             f"file : {client_bundle_meta_file}") from err
+            raise ValueError(
+                f"failed to open the launchpad client bundle meta "
+                f"file : {client_bundle_meta_file}"
+            ) from err
 
         # Not sure why this isn't in there:
-        data['Endpoints']['kubernetes']['kubeconfig'] = client_bundle_kubeconfig_file
+        data["Endpoints"]["kubernetes"]["kubeconfig"] = client_bundle_kubeconfig_file
         # add some stuff that a client bundle always has
-        data['path'] = bundle_dir
-        data['modified'] = datetime.datetime.fromtimestamp(
-            os.path.getmtime(client_bundle_meta_file)).strftime("%Y-%m-%d %H:%M:%S")
+        data["path"] = bundle_dir
+        data["modified"] = datetime.datetime.fromtimestamp(
+            os.path.getmtime(client_bundle_meta_file)
+        ).strftime("%Y-%m-%d %H:%M:%S")
         # this stuff should already be in the bundle, but it isn't
-        data['tls_paths'] = {
-            'docker': os.path.join(bundle_dir, 'tls', 'docker'),
-            'kubernetes': os.path.join(bundle_dir, 'tls', 'kubernetes'),
+        data["tls_paths"] = {
+            "docker": os.path.join(bundle_dir, "tls", "docker"),
+            "kubernetes": os.path.join(bundle_dir, "tls", "kubernetes"),
         }
 
         return data
@@ -345,7 +393,7 @@ class MKEAPIClientPlugin:
 
         # KUBE Client
 
-        kube_config = os.path.join(bundle_info['path'], 'kube.yml')
+        kube_config = os.path.join(bundle_info["path"], "kube.yml")
         if os.path.exists(kube_config):
             instance_id = f"{self.instance_id}-{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
             fixture = self.environment.add_fixture(
@@ -353,7 +401,8 @@ class MKEAPIClientPlugin:
                 plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
                 instance_id=instance_id,
                 priority=70,
-                arguments={'kube_config_file': kube_config})
+                arguments={"kube_config_file": kube_config},
+            )
             # use the parent UCCTFixturesPlugin methods for adding fixtures
             self.fixtures.add(fixture)
 
@@ -363,12 +412,13 @@ class MKEAPIClientPlugin:
         #   client failed because the python library was ahead in API version
 
         try:
-            host = bundle_info['Endpoints']['docker']['Host']
-            cert_path = bundle_info['tls_paths']['docker']
+            host = bundle_info["Endpoints"]["docker"]["Host"]
+            cert_path = bundle_info["tls_paths"]["docker"]
         except TypeError as err:
             logger.error(
                 "Could not read client bundle properly: %s",
-                bundle_info['Endpoints']['docker']['Host'])
+                bundle_info["Endpoints"]["docker"]["Host"],
+            )
             raise err
 
         instance_id = f"{self.instance_id}-{METTA_PLUGIN_ID_DOCKER_CLIENT}"
@@ -377,8 +427,12 @@ class MKEAPIClientPlugin:
             plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
             instance_id=instance_id,
             priority=70,
-            arguments={'host': host, 'cert_path': cert_path,
-                       'version': METTA_MIRANTIS_MKE_DOCKER_VERSION_DEFAULT})
+            arguments={
+                "host": host,
+                "cert_path": cert_path,
+                "version": METTA_MIRANTIS_MKE_DOCKER_VERSION_DEFAULT,
+            },
+        )
         # use the parent UCCTFixturesPlugin methods for adding fixtures
         self.fixtures.add(fixture)
 
@@ -387,7 +441,9 @@ class MKEAPIClientPlugin:
         bundle_dir = self._bundle_user_path()
 
         if not os.path.isdir(bundle_dir):
-            logger.warning("MKE Client was asked to delete client bundle, but we don't have one.")
+            logger.warning(
+                "MKE Client was asked to delete client bundle, but we don't have one."
+            )
             return None
 
         return shutil.rmtree(bundle_dir)
@@ -399,19 +455,19 @@ class MKEAPIClientPlugin:
     def _auth_headers(self):
         """Get an auth token."""
         if self.auth_token is None:
-            data = {
-                "password": self.password,
-                "username": self.username
-            }
-            with requests.post(self._accesspoint_url('auth/login'), data=json.dumps(data),
-                               verify=self.verify) as response:
+            data = {"password": self.password, "username": self.username}
+            with requests.post(
+                self._accesspoint_url("auth/login"),
+                data=json.dumps(data),
+                verify=self.verify,
+            ) as response:
                 response.raise_for_status()
                 content = json.loads(response.content)
-                self.auth_token = content['auth_token']
+                self.auth_token = content["auth_token"]
 
-        return {'Authorization': f'Bearer {self.auth_token}'}
+        return {"Authorization": f"Bearer {self.auth_token}"}
 
-    def _accesspoint_url(self, endpoint: str = '', node: int = None):
+    def _accesspoint_url(self, endpoint: str = "", node: int = None):
         """Convert an endpoint into a full URL for an API Call.
 
         Pass in a sub-url endpoint and this will convert it into a full URL.
@@ -437,11 +493,11 @@ class MKEAPIClientPlugin:
     def _node_address(self, node: int = 0):
         """Get the ip address from the node for the node index."""
         node_dict = self.hosts[node]
-        if 'address' in node_dict:
-            return node_dict['address']
-        if 'ssh' in node_dict:
-            return node_dict['ssh']['address']
-        if 'winrm' in node_dict:
-            return node_dict['winrm']['address']
+        if "address" in node_dict:
+            return node_dict["address"]
+        if "ssh" in node_dict:
+            return node_dict["ssh"]["address"]
+        if "winrm" in node_dict:
+            return node_dict["winrm"]["address"]
 
         raise ValueError(f"No node address could be found for the node {node}")

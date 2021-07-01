@@ -1,0 +1,150 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "msr.fullname" . }}-api
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "msr.commonSelectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        {{- include "msr.labels" . | nindent 8 }}
+        app.kubernetes.io/component: api
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/registry/registry-config.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      containers:
+        - name: api
+          securityContext: {}
+          image: "{{ include "msr.imageRef" (list $ "api") }}"
+          args: ["api-server"]
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          ports:
+            - name: https
+              containerPort: 443
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/dtr
+            - name: certs
+              mountPath: /certs
+            - name: scanningstore-certs
+              mountPath: /config
+          {{- if eq .Values.registry.storage.backend "persistentVolume" }}
+            - name: storage
+              mountPath: /storage
+          {{- end }}
+          env:
+            - name: MSR_RETHINKDB_ADDR
+              value: "{{ .Release.Name }}-rethinkdb-proxy:{{ .Values.rethinkdb.ports.driver }}"
+            - name: MSR_RETHINKDB_CLIENT_CERT_FILE
+              value: /certs/rethinkdb-client/tls.crt
+            - name: MSR_RETHINKDB_CLIENT_KEY_FILE
+              value: /certs/rethinkdb-client/tls.key
+            - name: MSR_RETHINKDB_CA_CERT_FILE
+              value: /certs/rethinkdb/ca.crt
+            - name: MSR_API_SERVER_CERT_FILE
+              value: /certs/api/tls.crt
+            - name: MSR_API_SERVER_KEY_FILE
+              value: /certs/api/tls.key
+            - name: MSR_API_CLIENT_CA_CERT_FILE
+              value: /certs/api-client/ca.crt
+            - name: MSR_ENZI_CLIENT_CERT_FILE
+              value: /certs/enziservice-client/tls.crt
+            - name: MSR_ENZI_CLIENT_KEY_FILE
+              value: /certs/enziservice-client/tls.key
+            - name: MSR_TOKEN_AUTH_CA_CERT_FILE
+              value: /certs/signing/ca.crt
+            - name: MSR_NOTARYSERVER_URL
+              value: "https://{{ include "msr.fullname" . }}-notary"
+            - name: MSR_NOTARYSERVER_CLIENT_CERT_FILE
+              value: /certs/notary-client/tls.crt
+            - name: MSR_NOTARYSERVER_CLIENT_KEY_FILE
+              value: /certs/notary-client/tls.key
+            - name: MSR_NOTARYSERVER_CA_CERT_FILE
+              value: /certs/backend/ca.crt
+            - name: MSR_NOTARYSERVER_AUTH_SIGNING_KEY_FILE
+              value: /certs/signing/tls.key
+            - name: MSR_PG_HOST
+              value: {{ include "msr.scanningstore.svc" . }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "msr.fullname" . }}-registry-config
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: {{ include "msr.fullname" . }}-api-server-cert
+                  items:
+                    - key: tls.key
+                      path: api/tls.key
+                    - key: tls.crt
+                      path: api/tls.crt
+              - secret:
+                  name: {{ include "msr.fullname" . }}-nginx-client-ca-cert
+                  items:
+                    - key: ca.crt
+                      path: api-client/ca.crt
+              - secret:
+                  name: {{ include "msr.fullname" . }}-auth-signing-cert
+                  items:
+                    - key: ca.crt
+                      path: signing/ca.crt
+                    - key: tls.key
+                      path: signing/tls.key
+              - secret:
+                  name: {{ include "msr.fullname" . }}-rethinkdb-driver-client-cert-0
+                  items:
+                    - key: tls.crt
+                      path: rethinkdb-client/tls.crt
+                    - key: tls.key
+                      path: rethinkdb-client/tls.key
+              - secret:
+                  name: {{ include "msr.fullname" . }}-rethinkdb-driver-ca-cert
+                  items:
+                    - key: ca.crt
+                      path: rethinkdb/ca.crt
+              - secret:
+                  name: {{ include "msr.fullname" . }}-enzi-client-cert
+                  items:
+                    - key: tls.crt
+                      path: enziservice-client/tls.crt
+                    - key: tls.key
+                      path: enziservice-client/tls.key
+              - secret:
+                  name: {{ include "msr.fullname" . }}-backend-server-ca-cert
+                  items:
+                    - key: ca.crt
+                      path: backend/ca.crt
+              - secret:
+                  name: {{ include "msr.fullname" . }}-api-to-notary-cert
+                  items:
+                    - key: tls.crt
+                      path: notary-client/tls.crt
+                    - key: tls.key
+                      path: notary-client/tls.key
+        - name: scanningstore-certs
+          projected:
+            sources:
+              {{- include "msr.scanningstore.clienttls.volumeProjection" . | nindent 14 }}
+        {{- if eq .Values.registry.storage.backend "persistentVolume" }}
+        - name: storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.registry.storage.persistentVolume.existingClaim | default (include "msr.fullname" .) }}
+        {{- end }}

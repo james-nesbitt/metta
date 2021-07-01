@@ -15,14 +15,14 @@ from mirantis.testing.metta.output import METTA_PLUGIN_TYPE_OUTPUT
 from mirantis.testing.metta_common.dict_output import DictOutputPlugin
 from mirantis.testing.metta_common.text_output import TextOutputPlugin
 
-logger = logging.getLogger('configerus.contrib.files:output')
+logger = logging.getLogger("configerus.contrib.files:output")
 
 
-OUTPUT_FORMAT_MATCH_PATTERN = r'(?P<output>(\w+)+)(\/(?P<base>[\-\.\w]+))?'
+OUTPUT_FORMAT_MATCH_PATTERN = r"(?P<output>(\w+)+)(\/(?P<base>[\-\.\w]+))?"
 """ A regex pattern to identify outputs that should be embedded """
 
 
-PLUGIN_ID_FORMAT_OUTPUT = 'output'
+PLUGIN_ID_FORMAT_OUTPUT = "output"
 """ Format plugin_id for the configerus output format plugin """
 
 
@@ -68,24 +68,27 @@ class ConfigFormatOutputPlugin:
         if not match:
             raise KeyError(f"Could not interpret Format action key '{key}'")
 
-        output = match.group('output')
+        output = match.group("output")
 
         try:
             output_plugin = self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_OUTPUT, instance_id=output).plugin
+                plugin_type=METTA_PLUGIN_TYPE_OUTPUT, instance_id=output
+            ).plugin
 
             if isinstance(output_plugin, DictOutputPlugin):
-                base = match.group('base')
+                base = match.group("base")
                 if base is not None:
                     return output_plugin.get_output(base)
                 return output_plugin.get_output()
             if isinstance(output_plugin, TextOutputPlugin):
                 return output_plugin.get_output()
-            if hasattr(output_plugin, 'get_output'):
+            if hasattr(output_plugin, "get_output"):
                 return output_plugin.get_output()
 
-            return ''
+            return ""
 
         except KeyError as err:
-            raise KeyError(f"Config replace for output failed as output '{output}' was not found, "
-                           "and no default value was suggested.") from err
+            raise KeyError(
+                f"Config replace for output failed as output '{output}' was not found, "
+                "and no default value was suggested."
+            ) from err

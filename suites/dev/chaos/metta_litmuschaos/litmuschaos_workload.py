@@ -7,7 +7,9 @@ from typing import Any, List
 import logging
 
 from configerus.loaded import LOADED_KEY_ROOT
-from configerus.contrib.jsonschema.validate import PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL
+from configerus.contrib.jsonschema.validate import (
+    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL,
+)
 from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
@@ -16,15 +18,18 @@ from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 from mirantis.testing.metta.workload import WorkloadBase, WorkloadInstanceBase
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
-from .litmuschaos import (LitmusChaos, LITMUSCHAOS_OPERATOR_DEFAULT_VERSION,
-                          LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS)
+from .litmuschaos import (
+    LitmusChaos,
+    LITMUSCHAOS_OPERATOR_DEFAULT_VERSION,
+    LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS,
+)
 
-logger = logging.getLogger('metta_litmuschaos.workload')
+logger = logging.getLogger("metta_litmuschaos.workload")
 
-METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD = 'metta_litmuschaos_run'
+METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD = "metta_litmuschaos_run"
 """ workload plugin_id for the litmuschaos plugin """
 
-LITMUSCHAOS_WORKLOAD_CONFIG_LABEL = 'litmuschaos'
+LITMUSCHAOS_WORKLOAD_CONFIG_LABEL = "litmuschaos"
 """ Configerus label for retrieving LitmusChaos config """
 LITMUSCHAOS_WORKLOAD_CONFIG_BASE = LOADED_KEY_ROOT
 """ Configerus get base for retrieving the default workload config """
@@ -42,20 +47,14 @@ LITMUSCHAOS_CONFIG_KEY_EXPERIMENTS = "experiments"
 
 
 LITMUSCHAOS_VALIDATE_JSONSCHEMA = {
-    'type': 'object',
-    'properties': {
-        'type': {'type': 'string'},
-        'plugin_id': {'type': 'string'},
-
-        'version': {'type': 'string'},
-
-        'experiments': {
-            'type': 'array',
-            'items': {'type': 'string'}
-        },
-
+    "type": "object",
+    "properties": {
+        "type": {"type": "string"},
+        "plugin_id": {"type": "string"},
+        "version": {"type": "string"},
+        "experiments": {"type": "array", "items": {"type": "string"}},
     },
-    'required': ['experiments']
+    "required": ["experiments"],
 }
 """ Validation jsonschema for litmuschaos config contents """
 LITMUSCHAOS_VALIDATE_TARGET = {
@@ -67,9 +66,13 @@ LITMUSCHAOS_VALIDATE_TARGET = {
 class LitmusChaosWorkloadPlugin(WorkloadBase):
     """Workload class for the LitmusChaos."""
 
-    def __init__(self, environment: Environment, instance_id: str,
-                 label: str = LITMUSCHAOS_WORKLOAD_CONFIG_LABEL,
-                 base: Any = LITMUSCHAOS_WORKLOAD_CONFIG_BASE):
+    def __init__(
+        self,
+        environment: Environment,
+        instance_id: str,
+        label: str = LITMUSCHAOS_WORKLOAD_CONFIG_LABEL,
+        base: Any = LITMUSCHAOS_WORKLOAD_CONFIG_BASE,
+    ):
         """Configure workload plugin object.
 
         Parameters:
@@ -92,10 +95,10 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
         config_loaded = self.environment.config.load(self.config_label)
 
         info = {
-            'config': {
-                'label': self.config_label,
-                'base': self.config_base,
-                'contents': config_loaded.get(self.config_base, default={})
+            "config": {
+                "label": self.config_label,
+                "base": self.config_base,
+                "contents": config_loaded.get(self.config_base, default={}),
             }
         }
 
@@ -115,35 +118,44 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
 
         # Validate the config overall using jsonschema
         try:
-            loaded.get(
-                self.config_base,
-                validator=LITMUSCHAOS_VALIDATE_TARGET)
+            loaded.get(self.config_base, validator=LITMUSCHAOS_VALIDATE_TARGET)
         except ValidationError as err:
             raise ValueError("Invalid litmus chaos config received") from err
 
-        kube_client = fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                                          plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+        kube_client = fixtures.get_plugin(
+            plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+            plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+        )
 
         namespace = loaded.get(
             [self.config_base, LITMUSCHAOS_CONFIG_KEY_NAMESPACE],
-            default=LITMUSCHAOS_CONFIG_DEFAULT_NAMESPACE)
+            default=LITMUSCHAOS_CONFIG_DEFAULT_NAMESPACE,
+        )
 
         version = loaded.get(
             [self.config_base, LITMUSCHAOS_CONFIG_KEY_VERSION],
-            default=LITMUSCHAOS_OPERATOR_DEFAULT_VERSION)
+            default=LITMUSCHAOS_OPERATOR_DEFAULT_VERSION,
+        )
 
         experiments = loaded.get(
             [self.config_base, LITMUSCHAOS_CONFIG_KEY_EXPERIMENTS],
-            default=LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS)
+            default=LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS,
+        )
 
         return LitmusChaosWorkloadPluginInstance(
-            kube_client=kube_client, namespace=namespace, version=version, experiments=experiments)
+            kube_client=kube_client,
+            namespace=namespace,
+            version=version,
+            experiments=experiments,
+        )
 
 
 class LitmusChaosWorkloadPluginInstance(WorkloadInstanceBase):
-    """ Individual instance of the LitmusChaos workload for execution """
+    """Individual instance of the LitmusChaos workload for execution"""
 
-    def __init__(self, kube_client: str, namespace: str, version: str, experiments: List[str]):
+    def __init__(
+        self, kube_client: str, namespace: str, version: str, experiments: List[str]
+    ):
         """Configure the worload instance.
 
         Parameters:
@@ -162,13 +174,12 @@ class LitmusChaosWorkloadPluginInstance(WorkloadInstanceBase):
             kube_client=kube_client,
             namespace=namespace,
             version=version,
-            experiments=experiments)
+            experiments=experiments,
+        )
 
     def info(self):
         """Return an object/dict of inforamtion about the instance for debugging."""
-        info = {
-            'client': self.litmuschaos.info()
-        }
+        info = {"client": self.litmuschaos.info()}
 
         return info
 

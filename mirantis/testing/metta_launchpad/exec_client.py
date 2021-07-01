@@ -13,7 +13,7 @@ from mirantis.testing.metta.environment import Environment
 
 from .launchpad import LaunchpadClient
 
-logger = logging.getLogger('metta.contrib.kubernetes.client')
+logger = logging.getLogger("metta.contrib.kubernetes.client")
 
 
 METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID = "metta_launchpad_exec"
@@ -23,8 +23,9 @@ METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID = "metta_launchpad_exec"
 class LaunchpadExecClientPlugin:
     """Client for exec into hosts using launchpad."""
 
-    def __init__(self, environment: Environment,
-                 instance_id: str, client: LaunchpadClient):
+    def __init__(
+        self, environment: Environment, instance_id: str, client: LaunchpadClient
+    ):
         """Create launchpad exec plugin.
 
         Parameters:
@@ -46,23 +47,19 @@ class LaunchpadExecClientPlugin:
         config = self.client.describe_config()
 
         if deep:
-            host_list = list(config['spec']['hosts'])
+            host_list = list(config["spec"]["hosts"])
         else:
             host_list = []
-            for host in config['spec']['hosts']:
-                list_host = {
-                    'role': host['role']
-                }
-                if 'ssh' in host:
-                    list_host.update({
-                        'is_windows': False,
-                        'address': host['ssh']['address']
-                    })
-                if 'winrm' in host:
-                    list_host.update({
-                        'is_windows': True,
-                        'address': host['winrm']['address']
-                    })
+            for host in config["spec"]["hosts"]:
+                list_host = {"role": host["role"]}
+                if "ssh" in host:
+                    list_host.update(
+                        {"is_windows": False, "address": host["ssh"]["address"]}
+                    )
+                if "winrm" in host:
+                    list_host.update(
+                        {"is_windows": True, "address": host["winrm"]["address"]}
+                    )
 
                 host_list.append(list_host)
 

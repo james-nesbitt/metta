@@ -21,25 +21,21 @@ from configerus.config import Config
 from configerus.loaded import LOADED_KEY_ROOT
 
 from .globals import all_environments
-from .discover import (discover_project_root, discover_sources_from_config,
-                       discover_imports)
+from .discover import (
+    discover_project_root,
+    discover_sources_from_config,
+    discover_imports,
+)
 from .environment import Environment, METTA_PLUGIN_CONFIG_LABEL_ENVIRONMENTS
 
-logger = logging.getLogger('metta')
+logger = logging.getLogger("metta")
 
 """ METTA and Configerus bootstrapping """
 
-FIXED_CONFIGERUS_BOOSTRAPS = [
-    "get",
-    "env",
-    "jsonschema",
-    "files"
-]
+FIXED_CONFIGERUS_BOOSTRAPS = ["get", "env", "jsonschema", "files"]
 """ configerus bootstraps that we will use on config objects. We use functionality
     in the core which heavily depends on this config, so it is necessary """
-FIXED_METTA_BOOTSTRAPS = [
-    "metta_common"
-]
+FIXED_METTA_BOOTSTRAPS = ["metta_common"]
 """ Metta bootstraps to apply to any created environemnt.  We use functionality
     in the core which heavily depends on these, so they are necessary """
 DEFAULT_ADDITIONAL_METTA_BOOTSTRAPS = [
@@ -47,11 +43,11 @@ DEFAULT_ADDITIONAL_METTA_BOOTSTRAPS = [
     "metta_docker",
     "metta_dummy",
     "metta_kubernetes",
-    "metta_terraform"
+    "metta_terraform",
 ]
 """ default metta bootstrap calls to add to any created cluster """
 
-DEFAULT_ENVIRONMENT_NAME = 'default'
+DEFAULT_ENVIRONMENT_NAME = "default"
 """ If you don't provide a particular environment name """
 
 CWD = os.path.realpath(os.getcwd())
@@ -60,9 +56,11 @@ CWD = os.path.realpath(os.getcwd())
 # ----- Environment interaction-----
 
 
-def discover(path: str = CWD,
-             additional_configerus_bootstraps: List[str] = None,
-             additional_metta_bootstraps: List[str] = None):
+def discover(
+    path: str = CWD,
+    additional_configerus_bootstraps: List[str] = None,
+    additional_metta_bootstraps: List[str] = None,
+):
     """Discover project config, environment and fixtures.
 
     If you want to just write some config and get defined config and
@@ -97,8 +95,9 @@ def discover(path: str = CWD,
         additional_metta_bootstraps = DEFAULT_ADDITIONAL_METTA_BOOTSTRAPS
 
     logger.info("Creating project from path %s", path)
-    configerus_bootstraps = FIXED_CONFIGERUS_BOOSTRAPS + \
-        additional_configerus_bootstraps
+    configerus_bootstraps = (
+        FIXED_CONFIGERUS_BOOSTRAPS + additional_configerus_bootstraps
+    )
     config = configerus_new_config(bootstraps=configerus_bootstraps)
 
     # Look for project root, and root config (and look in that root config for
@@ -106,34 +105,43 @@ def discover(path: str = CWD,
     discover_project_config(config=config, path=path)
     # Create any environments defined in config
 
-    metta_config = config.load('metta')
+    metta_config = config.load("metta")
 
-    if metta_config.has(['environments', 'from_config']):
-        environment_config = metta_config.get(['environments', 'from_config'])
-        label = environment_config['label'] if 'label' in environment_config else 'metta'
-        base = environment_config['base'] if 'base' in environment_config else LOADED_KEY_ROOT
+    if metta_config.has(["environments", "from_config"]):
+        environment_config = metta_config.get(["environments", "from_config"])
+        label = (
+            environment_config["label"] if "label" in environment_config else "metta"
+        )
+        base = (
+            environment_config["base"]
+            if "base" in environment_config
+            else LOADED_KEY_ROOT
+        )
         new_environments_from_config(
             config=config,
             additional_metta_bootstraps=additional_metta_bootstraps,
             label=label,
-            base=base)
+            base=base,
+        )
 
-    elif metta_config.has(['environments', 'from_builder']):
-        environment_config = metta_config.get(['environments', 'from_builder'])
-        module = environment_config['import']
-        method = environment_config['method']
+    elif metta_config.has(["environments", "from_builder"]):
+        environment_config = metta_config.get(["environments", "from_builder"])
+        module = environment_config["import"]
+        method = environment_config["method"]
         new_environments_from_builder(
             config=config,
             additional_metta_bootstraps=additional_metta_bootstraps,
             module=module,
-            method=method)
+            method=method,
+        )
 
-    elif metta_config.has('environments'):
+    elif metta_config.has("environments"):
         new_environments_from_config(
             config=config,
             additional_metta_bootstraps=additional_metta_bootstraps,
-            label='metta',
-            base='environments')
+            label="metta",
+            base="environments",
+        )
 
 
 def discover_project_config(config: Config, path: str = CWD):
@@ -171,11 +179,12 @@ def discover_project_config(config: Config, path: str = CWD):
 
 
 def new_environment(
-        name: str = DEFAULT_ENVIRONMENT_NAME,
-        additional_metta_bootstraps: List[str] = None,
-        additional_configerus_bootstraps: List[str] = None,
-        load_more_from_label: str = '',
-        load_more_from_base: str = LOADED_KEY_ROOT):
+    name: str = DEFAULT_ENVIRONMENT_NAME,
+    additional_metta_bootstraps: List[str] = None,
+    additional_configerus_bootstraps: List[str] = None,
+    load_more_from_label: str = "",
+    load_more_from_base: str = LOADED_KEY_ROOT,
+):
     """Make new environment object after making a new config.
 
     First create a config object, then use it to create an environment
@@ -209,8 +218,9 @@ def new_environment(
         additional_configerus_bootstraps = []
 
     logger.info("Creating single environment from config")
-    configerus_bootstraps = FIXED_CONFIGERUS_BOOSTRAPS + \
-        additional_configerus_bootstraps
+    configerus_bootstraps = (
+        FIXED_CONFIGERUS_BOOSTRAPS + additional_configerus_bootstraps
+    )
     config = configerus_new_config(bootstraps=configerus_bootstraps)
 
     metta_bootstraps = FIXED_METTA_BOOTSTRAPS + additional_metta_bootstraps
@@ -219,15 +229,17 @@ def new_environment(
         config=config,
         bootstraps=metta_bootstraps,
         config_label=load_more_from_label,
-        config_base=load_more_from_base)
+        config_base=load_more_from_base,
+    )
     return add_environment(name, environment)
 
 
 def new_environments_from_config(
-        config: Config,
-        additional_metta_bootstraps: List[str] = None,
-        label: str = METTA_PLUGIN_CONFIG_LABEL_ENVIRONMENTS,
-        base: str = LOADED_KEY_ROOT):
+    config: Config,
+    additional_metta_bootstraps: List[str] = None,
+    label: str = METTA_PLUGIN_CONFIG_LABEL_ENVIRONMENTS,
+    base: str = LOADED_KEY_ROOT,
+):
     """Create new environments from config.
 
     Ask the passed config object for information about environments.  From that
@@ -258,22 +270,28 @@ def new_environments_from_config(
             metta_bootstraps = FIXED_METTA_BOOTSTRAPS + additional_metta_bootstraps
             for name in environments_dict.keys():
                 environment_base = [base, name]
-                logger.debug("creating new environment from config: %s:%s", label, environment_base)
+                logger.debug(
+                    "creating new environment from config: %s:%s",
+                    label,
+                    environment_base,
+                )
                 environment = Environment(
                     name=name,
                     config=config,
                     bootstraps=metta_bootstraps,
                     config_label=label,
-                    config_base=environment_base)
+                    config_base=environment_base,
+                )
                 add_environment(name, environment)
 
 
 def new_environment_from_config(
-        config: Config,
-        name: str = DEFAULT_ENVIRONMENT_NAME,
-        additional_metta_bootstraps: List[str] = None,
-        load_more_from_label: str = '',
-        load_more_from_base: str = LOADED_KEY_ROOT):
+    config: Config,
+    name: str = DEFAULT_ENVIRONMENT_NAME,
+    additional_metta_bootstraps: List[str] = None,
+    load_more_from_label: str = "",
+    load_more_from_base: str = LOADED_KEY_ROOT,
+):
     """Make a new environment from an existing configerus.Config object.
 
     Use a passed configerus Config object to create an environment object,
@@ -305,12 +323,14 @@ def new_environment_from_config(
         config=config,
         bootstraps=bootstraps,
         config_label=load_more_from_label,
-        config_base=load_more_from_base)
+        config_base=load_more_from_base,
+    )
     return add_environment(name, environment)
 
 
 def new_environments_from_builder(
-        config: Config, additional_metta_bootstraps: List[str], module: str, method: str):
+    config: Config, additional_metta_bootstraps: List[str], module: str, method: str
+):
     """Create environments using an external environment builder option.
 
     This method will import and call a method to build environments dynamically.
@@ -346,12 +366,16 @@ def new_environments_from_builder(
     try:
         module = importlib.import_module(module)
     except Exception as err:
-        raise ValueError(f"Env builder could not load suggested python package:{err}") from err
+        raise ValueError(
+            f"Env builder could not load suggested python package:{err}"
+        ) from err
 
     try:
         method = getattr(module, method)
     except Exception as err:
-        raise ValueError(f"Env builder could not execute package method: {err}") from err
+        raise ValueError(
+            f"Env builder could not execute package method: {err}"
+        ) from err
 
     method(config, additional_metta_bootstraps)
 
@@ -366,14 +390,16 @@ def has_environment(name: str) -> bool:
     return name in all_environments.keys()
 
 
-def get_environment(name: str = '') -> Environment:
+def get_environment(name: str = "") -> Environment:
     """Return an environment that has already been created."""
     try:
-        if name == '':
+        if name == "":
             name = list(all_environments.keys())[0]
         return all_environments[name]
     except KeyError as err:
-        raise KeyError(f"Requested environment has not yet been created: {name}") from err
+        raise KeyError(
+            f"Requested environment has not yet been created: {name}"
+        ) from err
 
 
 def add_environment(name: str, environment: Environment):

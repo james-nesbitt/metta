@@ -33,15 +33,19 @@ from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 from mirantis.testing.metta_launchpad import METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID
 from mirantis.testing.metta_mirantis.msr_client import (
-    MSRReplicaHealth, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+    MSRReplicaHealth,
+    METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+)
 from mirantis.testing.metta_mirantis.mke_client import (
-    MKENodeState, METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+    MKENodeState,
+    METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+)
 
-logger = logging.getLogger('sanity:Provisioning')
+logger = logging.getLogger("sanity:Provisioning")
 
 
 def test_01_environment_prepare(environment):
-    """ get the environment but prepare the provisioners before returning
+    """get the environment but prepare the provisioners before returning
 
     This is preferable to the raw provisioner in cases where you want a running
     cluster so that the cluster startup cost does not get reflected in the
@@ -51,7 +55,9 @@ def test_01_environment_prepare(environment):
     plugins can handle it.
     """
 
-    provisioner = environment.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_PROVISIONER)
+    provisioner = environment.fixtures.get_plugin(
+        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER
+    )
     """ Combo provisioner wrapper for terraform/ansible/launchpad """
 
     # We will use this config to make decisions about what we need to create
@@ -61,7 +67,8 @@ def test_01_environment_prepare(environment):
 
     if conf.get("alreadyrunning", default=False):
         logger.info(
-            "test infrastructure is aready in place, and does not need to be provisioned.")
+            "test infrastructure is aready in place, and does not need to be provisioned."
+        )
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
@@ -72,7 +79,7 @@ def test_01_environment_prepare(environment):
 
 
 def test_02_environment_up(environment):
-    """ get the environment but start the provisioners before returning
+    """get the environment but start the provisioners before returning
 
     This is preferable to the raw provisioner in cases where you want a running
     cluster so that the cluster startup cost does not get reflected in the
@@ -82,7 +89,9 @@ def test_02_environment_up(environment):
     plugins can handle it.
     """
 
-    provisioner = environment.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_PROVISIONER)
+    provisioner = environment.fixtures.get_plugin(
+        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER
+    )
     """ Combo provisioner wrapper for terraform/ansible/launchpad """
 
     # We will use this config to make decisions about what we need to create
@@ -92,11 +101,11 @@ def test_02_environment_up(environment):
 
     if conf.get("alreadyrunning", default=False):
         logger.info(
-            "test infrastructure is aready in place, and does not need to be provisioned.")
+            "test infrastructure is aready in place, and does not need to be provisioned."
+        )
     else:
         try:
-            logger.info(
-                "Starting up the testing cluster using the provisioner")
+            logger.info("Starting up the testing cluster using the provisioner")
 
             provisioner.apply()
         except Exception as err:
@@ -105,47 +114,58 @@ def test_02_environment_up(environment):
 
 
 def test_03_terraform_sanity(environment):
-    """ test that the terraform provisioner is happy, and that it has our expected outputs """
+    """test that the terraform provisioner is happy, and that it has our expected outputs"""
 
     environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id='launchpad')
+        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="launchpad"
+    )
 
 
 def test_04_launchpad_sanity(environment):
-    """ test that the launchpad provisioner is happy, and that it produces our expected clients """
+    """test that the launchpad provisioner is happy, and that it produces our expected clients"""
 
     environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id='launchpad')
+        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="launchpad"
+    )
 
 
 def test_05_expected_clients(environment):
-    """ test that the environment gave us some expected clients """
+    """test that the environment gave us some expected clients"""
 
     logger.info("Getting docker client")
-    environment.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                                    plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT)
+    environment.fixtures.get_plugin(
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT
+    )
 
     logger.info("Getting exec client")
-    environment.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                                    plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID)
+    environment.fixtures.get_plugin(
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
+    )
 
     logger.info("Getting K8s client")
-    environment.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                                    plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+    environment.fixtures.get_plugin(
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+    )
 
 
 def test_06_docker_run_workload(environment, benchmark):
-    """ test that we can run a docker run workload """
+    """test that we can run a docker run workload"""
 
     # we have a docker run workload fixture called "sanity_docker_run"
-    sanity_docker_run = environment.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
-                                                        instance_id='sanity_docker_run')
+    sanity_docker_run = environment.fixtures.get_plugin(
+        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="sanity_docker_run"
+    )
     """ workload plugin """
+
     def container_run():
         try:
-            docker_run_instance = sanity_docker_run.create_instance(environment.fixtures)
+            docker_run_instance = sanity_docker_run.create_instance(
+                environment.fixtures
+            )
             run_output = docker_run_instance.apply()
-            assert 'Hello from Docker' in run_output.decode("utf-8")
+            assert "Hello from Docker" in run_output.decode("utf-8")
         except Exception as err:
             raise RuntimeError("Docker run failed") from err
 
@@ -153,62 +173,73 @@ def test_06_docker_run_workload(environment, benchmark):
 
 
 def test_07_mke_api_info(environment):
-    """ did we get a good mke client """
+    """did we get a good mke client"""
 
     # get the mke client.
     # We could get this from the launchpad provisioner if we were worried about
     # which mke client plugin instance we receive,  however there is only one
     # in this case.
     mke_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+    )
 
     info = mke_client.api_info()
-    logger.info("MKE Cluster ID: %s", info['ID'])
-    logger.info("--> Warnings : %s", info['Warnings'])
+    logger.info("MKE Cluster ID: %s", info["ID"])
+    logger.info("--> Warnings : %s", info["Warnings"])
 
 
 def test_08_mke_nodes_health(environment):
-    """ did we get a good mke client """
+    """did we get a good mke client"""
 
     mke_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+    )
 
     nodes = mke_client.api_nodes()
 
     for node in nodes:
-        assert MKENodeState.READY.match(node['Status']['State']), \
-            f"MKE NODE {node['ID']} was not in a READY state: {node['Status']}"
+        assert MKENodeState.READY.match(
+            node["Status"]["State"]
+        ), f"MKE NODE {node['ID']} was not in a READY state: {node['Status']}"
 
 
 def test_09_mke_swarminfo_health(environment):
-    """ did we get a good mke client """
+    """did we get a good mke client"""
 
     mke_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+    )
 
     info = mke_client.api_info()
 
-    if 'Swarm' in info:
-        swarm_info = info['Swarm']
+    if "Swarm" in info:
+        swarm_info = info["Swarm"]
 
-        assert swarm_info['Nodes'] > 0, "MKE reports no nodes in the cluster"
+        assert swarm_info["Nodes"] > 0, "MKE reports no nodes in the cluster"
 
 
 def test_10_msr_client(environment):
-    """ did we get a good msr client """
+    """did we get a good msr client"""
 
     # get the mke client.
     # We could get this from the launchpad provisioner if we were worried about
     # which mke client plugin instance we receive,  however there is only one
     # in this case.
     environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+    )
 
 
 def test_11_msr_root_health(environment):
-    """ test the the node specific ping and health checks don't fail """
+    """test the the node specific ping and health checks don't fail"""
     msr_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+    )
 
     for i in range(0, msr_client.host_count()):
         assert msr_client.api_ping(node=i)
@@ -218,36 +249,47 @@ def test_11_msr_root_health(environment):
 
 
 def test_12_msr_replica_health(environment):
-    """ test that we can access node information """
+    """test that we can access node information"""
 
     msr_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+    )
 
     status = msr_client.api_status()
-    for replica_id, replica_health in status['replica_health'].items():
-        assert MSRReplicaHealth.OK.match(replica_health), \
-            f"Replica [{replica_id}] did is not READY : {replica_health}"
+    for replica_id, replica_health in status["replica_health"].items():
+        assert MSRReplicaHealth.OK.match(
+            replica_health
+        ), f"Replica [{replica_id}] did is not READY : {replica_health}"
 
 
 def test_13_msr_alerts(environment):
-    """ check that we can get alerts """
+    """check that we can get alerts"""
 
     msr_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID)
+        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+    )
 
     alerts = msr_client.api_alerts()
 
     if len(alerts) > 0:
 
         for alert in alerts:
-            logger.warning("%s: %s [%s]", alert['id'], alert['message'],
-                           alert['url'] if 'url' in alert else 'no-url')
+            logger.warning(
+                "%s: %s [%s]",
+                alert["id"],
+                alert["message"],
+                alert["url"] if "url" in alert else "no-url",
+            )
 
 
 def test_14_environment_down(environment):
-    """ tear down the environment """
+    """tear down the environment"""
 
-    provisioner = environment.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_PROVISIONER)
+    provisioner = environment.fixtures.get_plugin(
+        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER
+    )
     """ Combo provisioner wrapper for terraform/ansible/launchpad """
 
     # We will use this config to make decisions about what we need to create
@@ -260,7 +302,8 @@ def test_14_environment_down(environment):
     else:
         try:
             logger.info(
-                "Stopping the test cluster using the provisioner as directed by config")
+                "Stopping the test cluster using the provisioner as directed by config"
+            )
             provisioner.destroy()
         except Exception as err:
             logger.error("Provisioner failed to stop: %s", err)
@@ -271,7 +314,7 @@ def test_14_environment_down(environment):
 
 # pylint: disable=unused-argument
 def test_15_torn_down(environment):
-    """ test that we have a torn down environment
+    """test that we have a torn down environment
 
     @TODO How to confirm that we are down?  Perhaps we can ask for Terraform state?
 

@@ -12,7 +12,7 @@ import logging
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
 
-logger = logging.getLogger('metta.contrib.dummy.workload')
+logger = logging.getLogger("metta.contrib.dummy.workload")
 
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
@@ -20,8 +20,12 @@ logger = logging.getLogger('metta.contrib.dummy.workload')
 class DummyWorkloadPlugin:
     """Dummy workload class."""
 
-    def __init__(self, environment: Environment, instance_id: str,
-                 fixtures: Dict[str, Dict[str, Any]] = None):
+    def __init__(
+        self,
+        environment: Environment,
+        instance_id: str,
+        fixtures: Dict[str, Dict[str, Any]] = None,
+    ):
         """Set class properties.
 
         Parameters:

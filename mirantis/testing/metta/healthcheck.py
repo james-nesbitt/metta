@@ -18,16 +18,16 @@ import time
 from typing import List
 
 
-METTA_PLUGIN_TYPE_HEALTHCHECK = 'healthcheck'
+METTA_PLUGIN_TYPE_HEALTHCHECK = "healthcheck"
 """ metta plugin type identifier for healthcheck plugins """
 
-METTA_HEALTHCHECK_CONFIG_HEALTHCHECKS_LABEL = 'healthchecks'
+METTA_HEALTHCHECK_CONFIG_HEALTHCHECKS_LABEL = "healthchecks"
 """ A centralized configerus load label for multiple healthchecks """
-METTA_HEALTHCHECK_CONFIG_HEALTHCHECK_LABEL = 'healthcheck'
+METTA_HEALTHCHECK_CONFIG_HEALTHCHECK_LABEL = "healthcheck"
 """ A centralized configerus load label for an healthcheck """
-METTA_HEALTHCHECK_CONFIG_HEALTHCHECKS_KEY = 'healthchecks'
+METTA_HEALTHCHECK_CONFIG_HEALTHCHECKS_KEY = "healthchecks"
 """ A centralized configerus key for multiple healthchecks """
-METTA_HEALTHCHECK_CONFIG_HEALTHCHECK_KEY = 'healthcheck'
+METTA_HEALTHCHECK_CONFIG_HEALTHCHECK_KEY = "healthcheck"
 """ A centralized configerus key for one healthcheck """
 
 
@@ -53,11 +53,14 @@ class HealthStatus(Enum):
     CRITICAL = 10
 
 
-def worse_health_status(first: 'HealthStatus', second: 'HealthStatus') -> 'HealthStatus':
+def worse_health_status(
+    first: "HealthStatus", second: "HealthStatus"
+) -> "HealthStatus":
     """Return the worst health status between two."""
     if first.value >= second.value:
         return first
     return second
+
 
 # yes this is a struct
 # pylint: disable=too-few-public-methods
@@ -74,6 +77,7 @@ class HealthMessage:
         """Convert message instance to string."""
         return f"[{int(self.time)}] {self.status} : {self.message}"
 
+
 class Health:
     """Health status.
 
@@ -88,7 +92,7 @@ class Health:
         """Health status for this health object."""
         self.messages: List[HealthMessage] = []
 
-    def merge(self, target: 'Health'):
+    def merge(self, target: "Health"):
         """Combine another HealtStatus into the current one."""
         self.status_bump(target.status)
         self.messages.extend(target.messages)

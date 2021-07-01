@@ -19,26 +19,30 @@ from mirantis.testing.metta.workload import WorkloadBase, WorkloadInstanceBase
 
 from .kubeapi_client import KubernetesApiClientPlugin, METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
-logger = logging.getLogger('metta.contrib.kubernetes.workload.yaml')
+logger = logging.getLogger("metta.contrib.kubernetes.workload.yaml")
 
-KUBERNETES_YAML_WORKLOAD_CONFIG_LABEL = 'kubernetes'
-KUBERNETES_YAML_WORKLOAD_CONFIG_BASE = 'workload.yaml'
+KUBERNETES_YAML_WORKLOAD_CONFIG_LABEL = "kubernetes"
+KUBERNETES_YAML_WORKLOAD_CONFIG_BASE = "workload.yaml"
 
 KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_NAMESPACE = "namespace"
 KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE = "default"
 KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE = "file"
 KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML = "yaml"
 
-METTA_PLUGIN_ID_KUBERNETES_YAML_WORKLOAD = 'metta_kubernetes_yaml'
+METTA_PLUGIN_ID_KUBERNETES_YAML_WORKLOAD = "metta_kubernetes_yaml"
 """ workload plugin_id for the metta_kubernetes yaml plugin """
 
 
 class KubernetesYamlWorkloadPlugin(WorkloadBase):
     """Metta workload plugin for Kubernetes workloads created from yaml."""
 
-    def __init__(self, environment, instance_id,
-                 label: str = KUBERNETES_YAML_WORKLOAD_CONFIG_LABEL,
-                 base: Any = KUBERNETES_YAML_WORKLOAD_CONFIG_BASE):
+    def __init__(
+        self,
+        environment,
+        instance_id,
+        label: str = KUBERNETES_YAML_WORKLOAD_CONFIG_LABEL,
+        base: Any = KUBERNETES_YAML_WORKLOAD_CONFIG_BASE,
+    ):
         """Run the super constructor but also set class properties.
 
         This implements the args part of the client interface.
@@ -74,54 +78,65 @@ class KubernetesYamlWorkloadPlugin(WorkloadBase):
         try:
             client = fixtures.get_plugin(
                 plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+                plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+            )
         except KeyError as err:
             raise NotImplementedError(
                 "Workload could not find the needed client: "
-                f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}") from err
+                f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
+            ) from err
 
         workload_config = self.environment.config.load(self.config_label)
 
         namespace = workload_config.get(
             [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_NAMESPACE],
-            default=KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE)
+            default=KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE,
+        )
 
         # YAML config needs to come from a yaml file path or inline yaml config
         resource_yaml = workload_config.get(
-            [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML], default=[])
+            [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML], default=[]
+        )
         file = workload_config.get(
-            [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE], default='')
+            [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE], default=""
+        )
 
-        if yaml is None and file == '':
-            raise ValueError(
-                "Either inline yaml or a file path to a yaml is required.")
+        if yaml is None and file == "":
+            raise ValueError("Either inline yaml or a file path to a yaml is required.")
 
         return KubernetesYamlWorkloadInstance(
-            client, namespace, data=resource_yaml, file=file)
+            client, namespace, data=resource_yaml, file=file
+        )
 
     def info(self):
         """Return dict data about this plugin for introspection."""
         workload_config = self.environment.config.load(self.config_label)
 
         return {
-            'workload': {
-                'deployment': {
-                    'namespace': workload_config.get(
-                        [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_NAMESPACE],
-                        default=KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE),
-                    'yaml': workload_config.get(
+            "workload": {
+                "deployment": {
+                    "namespace": workload_config.get(
+                        [
+                            self.config_base,
+                            KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_NAMESPACE,
+                        ],
+                        default=KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE,
+                    ),
+                    "yaml": workload_config.get(
                         [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML],
-                        default='None'),
-                    'file': workload_config.get(
+                        default="None",
+                    ),
+                    "file": workload_config.get(
                         [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE],
-                        default='None')
+                        default="None",
+                    ),
                 },
-                'required_fixtures': {
-                    'kubernetes': {
-                        'plugin_type': METTA_PLUGIN_TYPE_CLIENT,
-                        'plugin_id': 'metta_kubernetes'
+                "required_fixtures": {
+                    "kubernetes": {
+                        "plugin_type": METTA_PLUGIN_TYPE_CLIENT,
+                        "plugin_id": "metta_kubernetes",
                     }
-                }
+                },
             }
         }
 
@@ -145,8 +160,13 @@ class KubernetesYamlWorkloadInstance(WorkloadInstanceBase):
 
     """
 
-    def __init__(self, client: KubernetesApiClientPlugin, namespace: str,
-                 data: Dict[str, Any], file: str):
+    def __init__(
+        self,
+        client: KubernetesApiClientPlugin,
+        namespace: str,
+        data: Dict[str, Any],
+        file: str,
+    ):
         """Comfigure new workload instance."""
         self.client = client
         self.namespace = namespace
@@ -168,18 +188,20 @@ class KubernetesYamlWorkloadInstance(WorkloadInstanceBase):
                 resources_yaml = yaml.safe_load_all(res_file)
 
                 for resource in resources_yaml:
-                    self.k8s_objects.append(self.client.utils_create_from_dict(
-                        data=resource,
-                        namespace=self.namespace
-                    ))
+                    self.k8s_objects.append(
+                        self.client.utils_create_from_dict(
+                            data=resource, namespace=self.namespace
+                        )
+                    )
 
         else:
-            with open('./temp.yaml','w') as temp_file:
+            with open("./temp.yaml", "w") as temp_file:
                 temp_file.write(yaml.safe_dump(self.data))
-            self.k8s_objects.append(self.client.utils_create_from_dict(
-                data=self.data,
-                namespace=self.namespace
-            ))
+            self.k8s_objects.append(
+                self.client.utils_create_from_dict(
+                    data=self.data, namespace=self.namespace
+                )
+            )
 
         return self.k8s_objects
 

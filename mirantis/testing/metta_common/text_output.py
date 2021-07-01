@@ -9,9 +9,9 @@ An output plugin which holds a single string value as its content.
 import logging
 
 
-logger = logging.getLogger('metta.contrib.common.output.text')
+logger = logging.getLogger("metta.contrib.common.output.text")
 
-METTA_PLUGIN_ID_OUTPUT_TEXT = 'text'
+METTA_PLUGIN_ID_OUTPUT_TEXT = "text"
 """ output plugin_id for the text plugin """
 
 
@@ -22,7 +22,7 @@ class TextOutputPlugin:
 
     """
 
-    def __init__(self, environment, instance_id, text: str = ''):
+    def __init__(self, environment, instance_id, text: str = ""):
         """Run the super constructor but also set class properties.
 
         Parameters:
@@ -64,8 +64,4 @@ class TextOutputPlugin:
 
     def info(self):
         """Return dict data about this plugin for introspection."""
-        return {
-            'output': {
-                'text': self.text
-            }
-        }
+        return {"output": {"text": self.text}}

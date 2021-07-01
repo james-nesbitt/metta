@@ -19,15 +19,19 @@ from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.provisioner import ProvisionerBase
 
-logger = logging.getLogger('metta.contrib.dummy.provisioner')
+logger = logging.getLogger("metta.contrib.dummy.provisioner")
 
 
 class DummyProvisionerPlugin(ProvisionerBase):
-    """ Dummy provisioner class """
+    """Dummy provisioner class"""
 
-    def __init__(self, environment: Environment, instance_id: str,
-                 fixtures: Dict[str, Dict[str, Any]] = None):
-        """ Run the super constructor but also set class properties """
+    def __init__(
+        self,
+        environment: Environment,
+        instance_id: str,
+        fixtures: Dict[str, Dict[str, Any]] = None,
+    ):
+        """Run the super constructor but also set class properties"""
         super().__init__(environment, instance_id)
 
         if fixtures is not None:
@@ -38,13 +42,13 @@ class DummyProvisionerPlugin(ProvisionerBase):
         """ All fixtures added to this dummy plugin. """
 
     def apply(self):
-        """ pretend to bring a cluster up """
+        """pretend to bring a cluster up"""
         logger.info("%s:execute: apply()", self.instance_id)
 
     def prepare(self):
-        """ pretend to prepare the cluster """
+        """pretend to prepare the cluster"""
         logger.info("%s:execute: apply()", self.instance_id)
 
     def destroy(self):
-        """ pretend to brind a cluster down """
+        """pretend to brind a cluster down"""
         logger.info("%s:execute: apply()", self.instance_id)

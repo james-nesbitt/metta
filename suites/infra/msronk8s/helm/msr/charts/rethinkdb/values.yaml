@@ -1,0 +1,156 @@
+# Specs for the RethinkDB image
+image:
+  repository: rethinkdb-base
+  namespace: mirantiseng # ENGDTR-2434: This will need to be "mirantis" before public release
+  tag: "{{ .Chart.AppVersion }}"
+  pullPolicy: IfNotPresent
+
+  # If this image requires authentication in order to pull, the following
+  # value should be set to the name of a stored secret containing the
+  # credentials.  To create such a secret, see the following:
+  # https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  pullSecret:
+
+
+nodeSelector: {}
+
+
+# RethinkDB Cluster Config
+cluster:
+  replicas: 3
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 512Mi
+  podAnnotations: {}
+  service:
+    annotations: {}
+  storageClass:
+    enabled: false
+    # provisioner: kubernetes.io/gce-pd
+    # parameters:
+    #   type: pd-ssd
+  persistentVolume:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+    annotations: {}
+  # RethinkDB Cache Size in MB
+  rethinkCacheSize: 100
+  livenessProbe:
+    exec:
+      command:
+        - /usr/local/bin/rethinkdb-probe
+    failureThreshold: 3
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+  readinessProbe:
+    exec:
+      command:
+        - /usr/local/bin/rethinkdb-probe
+    failureThreshold: 3
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    successThreshold: 1
+    timeoutSeconds: 5
+  # Secure the intra-cluster communications using TLS.
+  clusterTLS:
+    enabled: false
+    # If enabled, you must supply (below) either the name of a stored
+    # secret containing the TLS credentials, or provide them as inline
+    # data.  If both are provided, a secret by the given name will be
+    # created which contains the inline data.
+    #
+    # Secret of type kubernetes.io/tls from which data fields
+    # 'tls.crt', 'tls.key', and 'ca.crt' will be utilized.
+    secretName:
+    #
+    # Inline certificate and key data.
+    key: # |-
+      # << PRIVATE KEY >>
+    cert: # |-
+      # << CERTIFICATE >>
+    cacert: # |-
+      # << CERTIFICATE BUNDLE >>
+
+# RethinkDB Proxy Config
+proxy:
+  replicas: 1
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 512Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 512Mi
+  podAnnotations: {}
+  service:
+    annotations: {}
+    type: ClusterIP
+    clusterIP: ""
+    # List of IP addresses at which the proxy service is available
+    # Ref: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips
+    #
+    externalIPs: []
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+  # Secure your RethinkDB Driver using TLS.
+  # Hint: You'll need to create your cert with a domain that is pointing
+  # to the External IP Address returned from the LoadBalancer
+  # More Info: https://www.rethinkdb.com/docs/security/#using-tls
+  driverTLS:
+    enabled: false
+    # If enabled, you must supply (below) either the name of a stored
+    # secret containing the TLS credentials, or provide them as inline
+    # data for the key and certificate.  If both are provided, a
+    # secret by the given name will be created which contains the
+    # inline data.
+    #
+    # Secret of type kubernetes.io/tls from which data fields
+    # 'tls.crt' and 'tls.key' will be utilized.
+    secretName: # << STORED SECRET NAME >>
+    #
+    # Inline certificate and key data.
+    key: # |-
+      # << PRIVATE KEY >>
+    cert: # |-
+      # << CERTIFICATE >>
+    #
+    # If driverTLS is enabled, you can also enable mutual TLS below by
+    # either providing the name of a secret containing CA certificate
+    # data or the data itself inline.  If both are provided, a secret
+    # by this name will be created using the inline data.
+    mutual:
+      # Secret from which data field 'ca.crt' will be used to
+      # validate clients.
+      secretName: # << STORED SECRET NAME >>
+      #
+      # Inline CA certificate bundle data.
+      cert: # |-
+        # << CERTIFICATE BUNDLE >>
+
+# RethinkDB Ports
+ports:
+  cluster: 29015
+  driver: 28015
+  admin: 8080
+
+# RethinkDB Admin Password
+rethinkdbPassword: rethinkdb
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:

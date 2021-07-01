@@ -9,23 +9,26 @@ import json
 from typing import List
 
 
-logger = logging.getLogger('metta_testkit:testkit')
+logger = logging.getLogger("metta_testkit:testkit")
 
-TESTKITCLIENT_CLI_CONFIG_FILE_DEFAULT = './testkit.yml'
+TESTKITCLIENT_CLI_CONFIG_FILE_DEFAULT = "./testkit.yml"
 """ Testkit config configuration file key """
 
-TESTKITCLIENT_WORKING_DIR_DEFAULT = '.'
+TESTKITCLIENT_WORKING_DIR_DEFAULT = "."
 """ Testkit Client default working dir """
-TESTKITCLIENT_BIN_PATH = '/home/james/Documents/Mirantis/tools/testkit/testkit'
+TESTKITCLIENT_BIN_PATH = "testkit"
 """ Testkit bin exec for the subprocess """
 
 
 class TestkitClient:
     """Shell client for interacting with the testkit bin."""
 
-    def __init__(self, config_file: str = TESTKITCLIENT_CLI_CONFIG_FILE_DEFAULT,
-                 working_dir: str = TESTKITCLIENT_WORKING_DIR_DEFAULT,
-                 debug: bool = False):
+    def __init__(
+        self,
+        config_file: str = TESTKITCLIENT_CLI_CONFIG_FILE_DEFAULT,
+        working_dir: str = TESTKITCLIENT_WORKING_DIR_DEFAULT,
+        debug: bool = False,
+    ):
         """Initialize Testkit command executer.
 
         Parameters:
@@ -51,24 +54,28 @@ class TestkitClient:
 
     def version(self):
         """Return testkit client version."""
-        return self._run(['version'], return_output=True, use_config_file=False)
+        return self._run(["version"], return_output=True, use_config_file=False)
 
     def create(self, opts: List[str]):
         """Run the testkit create command."""
-        return self._run(['create'] + opts)
+        return self._run(["create"] + opts)
 
     def system_ls(self):
         """List all of the systems testkit can see using our config."""
-        return json.loads(self._run(['system', 'ls', '--json'], return_output=True))
+        return json.loads(self._run(["system", "ls", "--json"], return_output=True))
 
     def system_rm(self, system_name: str):
         """Remove a system from testkit."""
-        return self._run(['system', 'rm', system_name])
+        return self._run(["system", "rm", system_name])
 
     def machine_ls(self, system_name: str):
         """Remove a system from testkit."""
-        return json.loads(self._run(['machine', 'ls', '--filter', f'name={system_name}', '--json'],
-                          return_output=True))
+        return json.loads(
+            self._run(
+                ["machine", "ls", "--filter", f"name={system_name}", "--json"],
+                return_output=True,
+            )
+        )
 
     # this syntax makes it easier to read
     # pylint: disable=inconsistent-return-statements
@@ -84,10 +91,10 @@ class TestkitClient:
         cmd = [self.bin]
 
         if use_config_file:
-            cmd += [f'--file={self.config_file}']
+            cmd += [f"--file={self.config_file}"]
 
         if self.debug:
-            cmd += ['--debug']
+            cmd += ["--debug"]
 
         cmd += args
 
@@ -96,8 +103,15 @@ class TestkitClient:
             res = subprocess.run(cmd, cwd=self.working_dir, text=True, check=True)
             res.check_returncode()
         else:
-            logger.debug("running testkit command with output capture: %s", " ".join(cmd))
-            res = subprocess.run(cmd, cwd=self.working_dir, shell=False, stdout=subprocess.PIPE,
-                                 check=True)
+            logger.debug(
+                "running testkit command with output capture: %s", " ".join(cmd)
+            )
+            res = subprocess.run(
+                cmd,
+                cwd=self.working_dir,
+                shell=False,
+                stdout=subprocess.PIPE,
+                check=True,
+            )
             res.check_returncode()
-            return res.stdout.decode('utf-8')
+            return res.stdout.decode("utf-8")

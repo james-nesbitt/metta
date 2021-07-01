@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "msr.fullname" . }}-registry-config
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+data:
+  registry.yml: |
+    version: 0.1
+    log:
+      level: info
+      formatter: json
+    http:
+      addr: ":443"
+      tls:
+        certificate: /certs/registry/tls.crt
+        key: /certs/registry/tls.key
+        clientcas:
+          - /certs/registry-client/ca.crt
+    auth:
+      token:
+        autoredirect: true
+        # All following config needs to match that of garant.
+        realm: msr
+        service: msr
+        issuer: msr
+        rootcertbundle: /certs/signing/ca.crt
+    storage:
+      {{- if eq .Values.registry.storage.backend "persistentVolume" }}
+      filesystem:
+        rootdirectory: /storage
+      {{- end }}
+      {{- with omit (pick .Values.registry.storage .Values.registry.storage.backend "cache" "delete" "maintenance" "redirect") "persistentVolume" }}
+        {{- if . }}{{ . | toYaml | nindent 6 }}{{ end }}
+      {{- end }}
+    dtr:
+      rethinkdb:
+        addr: "{{ .Release.Name }}-rethinkdb-proxy:{{ .Values.rethinkdb.ports.driver }}"
+        clientcertfile: /certs/rethinkdb-client/tls.crt
+        clientkeyfile: /certs/rethinkdb-client/tls.key
+        cacertfile: /certs/rethinkdb/ca.crt
+      enziclient:
+        certfile: /certs/enziservice-client/tls.crt
+        keyfile: /certs/enziservice-client/tls.key

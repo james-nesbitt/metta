@@ -14,9 +14,9 @@ from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .sonobuoy import METTA_PLUGIN_ID_SONOBUOY_WORKLOAD, Status
 
-logger = logging.getLogger('metta.cli.sonobuoy')
+logger = logging.getLogger("metta.cli.sonobuoy")
 
-METTA_PLUGIN_ID_SONOBUOY_CLI = 'metta_sonobuoy_cli'
+METTA_PLUGIN_ID_SONOBUOY_CLI = "metta_sonobuoy_cli"
 """ cli plugin_id for the sonobuoy plugin """
 
 
@@ -27,42 +27,49 @@ class SonobuoyCliPlugin(CliBase):
 
     def fire(self):
         """Return CLI Command group."""
-        if self.environment.fixtures.get(plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
-                                         plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
-                                         exception_if_missing=False) is not None:
-            return {
-                'contrib': {
-                    'sonobuoy': SonobuoyGroup(self.environment)
-                }
-            }
+        if (
+            self.environment.fixtures.get(
+                plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
+                plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+                exception_if_missing=False,
+            )
+            is not None
+        ):
+            return {"contrib": {"sonobuoy": SonobuoyGroup(self.environment)}}
 
         return {}
 
 
-class SonobuoyGroup():
+class SonobuoyGroup:
     """Base Fire command group for sonobuoy cli commands."""
 
     def __init__(self, environment: Environment):
         """Inject Environment into command group."""
         self.environment = environment
 
-    def _select_fixture(self, instance_id: str = ''):
+    def _select_fixture(self, instance_id: str = ""):
         """Pick a matching workload plugin."""
         try:
             if instance_id:
                 return self.environment.fixtures.get(
                     plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
-                    plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD, instance_id=instance_id)
+                    plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+                    instance_id=instance_id,
+                )
 
             # Get the highest priority provisioner
             return self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD)
+                plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
+                plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+            )
 
         except KeyError as err:
-            raise ValueError("No usable kubernetes client was found for sonobuoy"
-                             "to pull a kubeconfig from") from err
+            raise ValueError(
+                "No usable kubernetes client was found for sonobuoy"
+                "to pull a kubeconfig from"
+            ) from err
 
-    def _select_instance(self, instance_id: str = ''):
+    def _select_instance(self, instance_id: str = ""):
         """Create a sonobuoy workload plugin instance."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
@@ -70,46 +77,45 @@ class SonobuoyGroup():
         instance = plugin.create_instance(self.environment.fixtures)
         return instance
 
-    def info(self, instance_id: str = '', deep: bool = False):
+    def info(self, instance_id: str = "", deep: bool = False):
         """Get info about a provisioner plugin."""
         fixture = self._select_fixture(instance_id=instance_id)
 
         info = {
-            'fixture': {
-                'plugin_type': fixture.plugin_type,
-                'plugin_id': fixture.plugin_id,
-                'instance_id': fixture.instance_id,
-                'priority': fixture.priority,
+            "fixture": {
+                "plugin_type": fixture.plugin_type,
+                "plugin_id": fixture.plugin_id,
+                "instance_id": fixture.instance_id,
+                "priority": fixture.priority,
             }
         }
 
         if deep:
-            if hasattr(fixture.plugin, 'info'):
+            if hasattr(fixture.plugin, "info"):
                 info.update(fixture.plugin.info(True))
 
         return cli_output(info)
 
-    def status(self, instance_id: str = ''):
+    def status(self, instance_id: str = ""):
         """Get active sonobuoy status."""
         instance = self._select_instance(instance_id=instance_id)
         status = instance.status()
 
         if status is None:
-            status_info = {
-                'status': "None",
-                'plugins': {}
-            }
+            status_info = {"status": "None", "plugins": {}}
         else:
             status_info = {
-                'status': status.status.value,
-                'plugins': {plugin_id: status.plugin(plugin_id) for
-                            plugin_id in status.plugin_list()}
+                "status": status.status.value,
+                "plugins": {
+                    plugin_id: status.plugin(plugin_id)
+                    for plugin_id in status.plugin_list()
+                },
             }
 
         return cli_output(status_info)
 
     # pylint: disable=protected-access
-    def crb(self, instance_id: str = '', remove: bool = False):
+    def crb(self, instance_id: str = "", remove: bool = False):
         """Create the crb needed to run sonobuoy."""
         instance = self._select_instance(instance_id=instance_id)
 
@@ -118,27 +124,26 @@ class SonobuoyGroup():
         else:
             instance._create_k8s_crb()
 
-    def run(self, instance_id: str = '', wait: bool = False):
+    def run(self, instance_id: str = "", wait: bool = False):
         """Run sonobuoy workload."""
         instance = self._select_instance(instance_id=instance_id)
         instance.apply(wait=wait)
 
-    def wait(self, instance_id: str = '', step: int = 5, limit: int = 1000):
+    def wait(self, instance_id: str = "", step: int = 5, limit: int = 1000):
         """Wait until no longer running."""
         instance = self._select_instance(instance_id=instance_id)
-        print('{')
+        print("{")
         for i in range(0, limit):
             status = instance.status()
             if status is None:
-                status_info = {
-                    'status': "None",
-                    'plugins': {}
-                }
+                status_info = {"status": "None", "plugins": {}}
             else:
                 status_info = {
-                    'status': status.status.value,
-                    'plugins': {plugin_id: status.plugin(plugin_id) for
-                                plugin_id in status.plugin_list()}
+                    "status": status.status.value,
+                    "plugins": {
+                        plugin_id: status.plugin(plugin_id)
+                        for plugin_id in status.plugin_list()
+                    },
                 }
 
             print(f"{i}: {status_info},")
@@ -146,19 +151,19 @@ class SonobuoyGroup():
                 break
 
             time.sleep(step)
-        print('}')
+        print("}")
 
-    def destroy(self, instance_id: str = '', wait: bool = False):
+    def destroy(self, instance_id: str = "", wait: bool = False):
         """Remove all sonobuoy infrastructure."""
         instance = self._select_instance(instance_id=instance_id)
         instance.destroy(wait=wait)
 
-    def logs(self, instance_id: str = '', follow: bool = False):
+    def logs(self, instance_id: str = "", follow: bool = False):
         """Retrieve sonobuoy logs."""
         instance = self._select_instance(instance_id=instance_id)
         instance.logs(follow=follow)
 
-    def retrieve(self, instance_id: str = ''):
+    def retrieve(self, instance_id: str = ""):
         """Retrieve the results from the sonobuoy workload instance."""
         instance = self._select_instance(instance_id=instance_id)
         try:

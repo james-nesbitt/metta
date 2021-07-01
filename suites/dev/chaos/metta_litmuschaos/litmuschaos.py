@@ -14,7 +14,7 @@ from typing import List
 import requests
 import yaml
 
-logger = logging.getLogger('litmuschaos.client')
+logger = logging.getLogger("litmuschaos.client")
 
 LITMUSCHAOS_YAML_RBAC_PERMISSIVE = """---
 apiVersion: v1
@@ -85,10 +85,14 @@ LITMUSCHAOS_OPERATOR_DEFAULT_VERSION = "v1.13.3"
 LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS = ["charts/generic/experiments.yaml"]
 """ Default value for litmus chaos experiments to run. """
 
-LITMUSCHAOS_OPERATOR_URL_PATTERN = "https://litmuschaos.github.io/litmus/litmus-operator-v{version}.yaml"
+LITMUSCHAOS_OPERATOR_URL_PATTERN = (
+    "https://litmuschaos.github.io/litmus/litmus-operator-v{version}.yaml"
+)
 """ URL pattern to the LC operator kubernetes yaml - needs version """
 
-LITMUSCHAOS_OPERATOR_EXPERIMENT_PATTERN = "https://hub.litmuschaos.io/api/chaos/{version}?file={experiment}"
+LITMUSCHAOS_OPERATOR_EXPERIMENT_PATTERN = (
+    "https://hub.litmuschaos.io/api/chaos/{version}?file={experiment}"
+)
 """ URL pattern to the LC experiment yaml - needs version and experiment yaml chart path """
 
 
@@ -96,11 +100,12 @@ class LitmusChaos:
     """Manage Litmus Chaos in a Kubernetes cluster."""
 
     def __init__(
-            self,
-            kube_client: str,
-            namespace: str,
-            version: str = LITMUSCHAOS_OPERATOR_DEFAULT_VERSION,
-            experiments: List[str] = None):
+        self,
+        kube_client: str,
+        namespace: str,
+        version: str = LITMUSCHAOS_OPERATOR_DEFAULT_VERSION,
+        experiments: List[str] = None,
+    ):
         """
         Parameters:
         -----------
@@ -117,14 +122,15 @@ class LitmusChaos:
         self.kube_client = kube_client
         self.namespace = namespace
         self.version = version
-        self.experiments = experiments if experiments is not None else LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS
+        self.experiments = (
+            experiments
+            if experiments is not None
+            else LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS
+        )
 
     def info(self):
         """Return an object/dict of inforamtion about the instance for debugging."""
-        info = {
-            'kubeconfig': self.kube_client.config_file,
-            'namespace': self.namespace
-        }
+        info = {"kubeconfig": self.kube_client.config_file, "namespace": self.namespace}
 
         return info
 
@@ -154,32 +160,39 @@ class LitmusChaos:
 
         """
         # 1. get and install the operator
-        with requests.get(LITMUSCHAOS_OPERATOR_URL_PATTERN.format(version=self.version),
-                          allow_redirects=True) as res:
+        with requests.get(
+            LITMUSCHAOS_OPERATOR_URL_PATTERN.format(version=self.version),
+            allow_redirects=True,
+        ) as res:
 
             resources_yaml = yaml.safe_load_all(res.text)
 
             for resource in resources_yaml:
                 self.kube_client.utils_create_from_dict(
-                    data=resource, namespace=self.namespace)
+                    data=resource, namespace=self.namespace
+                )
 
         time.sleep(10)
 
         # 2. install experiments
         for experiment in self.experiments:
-            with requests.get(LITMUSCHAOS_OPERATOR_EXPERIMENT_PATTERN.format(version=self.version,
-                                                                             experiment=experiment),
-                              allow_redirects=True) as res:
+            with requests.get(
+                LITMUSCHAOS_OPERATOR_EXPERIMENT_PATTERN.format(
+                    version=self.version, experiment=experiment
+                ),
+                allow_redirects=True,
+            ) as res:
 
                 resources_yaml = yaml.safe_load_all(res.text)
                 for resource in resources_yaml:
                     self.kube_client.utils_create_from_dict(
-                        data=resource, namespace=self.namespace)
+                        data=resource, namespace=self.namespace
+                    )
 
         # 3. RBAC
         self.kube_client.utils_create_from_yaml(
-            yaml.safe_load(LITMUSCHAOS_YAML_RBAC_PERMISSIVE),
-            namespace=self.namespace)
+            yaml.safe_load(LITMUSCHAOS_YAML_RBAC_PERMISSIVE), namespace=self.namespace
+        )
 
     def apply(self):
         """Run the Litmus Chaos experiments."""
@@ -203,31 +216,33 @@ class LitmusChaos:
                   -f https://litmuschaos.github.io/litmus/litmus-operator-v1.13.3.yaml'''
 
         """
-        core = self.kube_client.get_api('CoreV1Api')
-        rbac = self.kube_client.get_api('RbacAuthorizationV1Api')
-        extensions = self.kube_client.get_api('ApiextensionsV1Api')
+        core = self.kube_client.get_api("CoreV1Api")
+        rbac = self.kube_client.get_api("RbacAuthorizationV1Api")
+        extensions = self.kube_client.get_api("ApiextensionsV1Api")
 
         # Remove the RBAC
-        core.delete_namespaced_service_account('litmus', 'litmus')
-        rbac.delete_cluster_role('litmus')
-        rbac.delete_cluster_role_binding('litmus')
+        core.delete_namespaced_service_account("litmus", "litmus")
+        rbac.delete_cluster_role("litmus")
+        rbac.delete_cluster_role_binding("litmus")
 
         # Remove the Litmus namespace
         core.delete_namespace(
-            'litmus',
-            grace_period_seconds=30,
-            propagation_policy='Foreground')
+            "litmus", grace_period_seconds=30, propagation_policy="Foreground"
+        )
 
         # Remove the litmus CRDs
         extensions.delete_custom_resource_definition(
-            'chaosengines.litmuschaos.io',
+            "chaosengines.litmuschaos.io",
             grace_period_seconds=30,
-            propagation_policy='Foreground')
+            propagation_policy="Foreground",
+        )
         extensions.delete_custom_resource_definition(
-            'chaosexperiments.litmuschaos.io',
+            "chaosexperiments.litmuschaos.io",
             grace_period_seconds=30,
-            propagation_policy='Foreground')
+            propagation_policy="Foreground",
+        )
         extensions.delete_custom_resource_definition(
-            'chaosresults.litmuschaos.io',
+            "chaosresults.litmuschaos.io",
             grace_period_seconds=30,
-            propagation_policy='Foreground')
+            propagation_policy="Foreground",
+        )

@@ -1,0 +1,61 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "msr.fullname" . }}-nginx-client-ca
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "msr.fullname" . }}-nginx-client-ca-cert
+  duration: 8760h # 365d
+  renewBefore: 24h
+  commonName: "MSR Frontend-to-Backend Client CA"
+  isCA: true
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  usages:
+  - digital signature
+  - key encipherment
+  - cert sign
+  - client auth
+  issuerRef:
+    name: {{ include "msr.fullname" . }}-selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "msr.fullname" . }}-nginx-client-ca
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ include "msr.fullname" . }}-nginx-client-ca-cert
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "msr.fullname" . }}-nginx-client-cert
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "msr.fullname" . }}-nginx-client-cert
+  commonName: "MSR-Nginx mTLS Client"
+  duration: 4380h
+  renewBefore: 24h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  usages:
+  - client auth
+  dnsNames:
+  - nginx
+  issuerRef:
+    name: {{ include "msr.fullname" . }}-nginx-client-ca
+    kind: Issuer
+    group: cert-manager.io

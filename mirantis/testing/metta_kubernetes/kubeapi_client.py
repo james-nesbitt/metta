@@ -20,13 +20,14 @@ from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
 
-logger = logging.getLogger('metta.contrib.kubernetes.client.kubeapi')
+logger = logging.getLogger("metta.contrib.kubernetes.client.kubeapi")
 
-METTA_PLUGIN_ID_KUBERNETES_CLIENT = 'metta_kubernetes'
+METTA_PLUGIN_ID_KUBERNETES_CLIENT = "metta_kubernetes"
 """ client plugin_id for the metta kubernetes client plugin """
 
 KUBEAPI_CLIENT_INTERPRET_Z_REGEX = re.compile(
-    r'^\[(?P<symbol>[+-])\](?P<name>\S+)\s{1}(?P<ok>\w+)$')
+    r"^\[(?P<symbol>[+-])\](?P<name>\S+)\s{1}(?P<ok>\w+)$"
+)
 
 
 class KubernetesApiClientPlugin:
@@ -89,8 +90,9 @@ class KubernetesApiClientPlugin:
 
     """
 
-    def __init__(self, environment: Environment, instance_id: str,
-                 kube_config_file: str = ''):
+    def __init__(
+        self, environment: Environment, instance_id: str, kube_config_file: str = ""
+    ):
         """Run the super constructor but also set class properties.
 
         This implements the args part of the client interface.
@@ -111,7 +113,8 @@ class KubernetesApiClientPlugin:
 
         logger.debug("Creating Kuberentes client from config file")
         self.api_client = kubernetes.config.new_client_from_config(
-            config_file=kube_config_file)
+            config_file=kube_config_file
+        )
         """ Kubernetes api client """
 
         self.config_file = kube_config_file
@@ -122,14 +125,10 @@ class KubernetesApiClientPlugin:
 
     def info(self) -> Dict[str, Any]:
         """Return dict data about this plugin for introspection."""
-        info = {
-            'kubernetes': {
-                'config_file': self.config_file
-            }
-        }
+        info = {"kubernetes": {"config_file": self.config_file}}
 
         try:
-            info['nodes'] = self.nodes()
+            info["nodes"] = self.nodes()
 
         # pylint: disable=broad-except
         except Exception:
@@ -148,12 +147,14 @@ class KubernetesApiClientPlugin:
     def utils_create_from_yaml(self, yaml_file: str, **kwargs):
         """Run a kube apply from a yaml file."""
         return kubernetes.utils.create_from_yaml(
-            k8s_client=self.api_client, yaml_file=yaml_file, **kwargs)
+            k8s_client=self.api_client, yaml_file=yaml_file, **kwargs
+        )
 
     def utils_create_from_dict(self, data: Dict, **kwargs):
         """Run a kube apply from dict of K8S yaml."""
         return kubernetes.utils.create_from_dict(
-            k8s_client=self.api_client, data=data, **kwargs)
+            k8s_client=self.api_client, data=data, **kwargs
+        )
 
     def nodes(self) -> List[models.v1_node.V1Node]:
         """Return V1Node list.
@@ -165,7 +166,7 @@ class KubernetesApiClientPlugin:
         You can get node status from node.status.
 
         """
-        node_items = self.get_api('CoreV1Api').list_node().items
+        node_items = self.get_api("CoreV1Api").list_node().items
 
         return node_items
 
@@ -176,9 +177,10 @@ class KubernetesApiClientPlugin:
         kubeapi_healthcheck = self.environment.add_fixture(
             plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
             plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
-            instance_id=f"{self.instance_id}-healhtcheck",
+            instance_id=f"{self.instance_id}-healthcheck",
             priority=70,
-            arguments={'kubeapi_client': self})
+            arguments={"kubeapi_client": self},
+        )
         healthcheck_fixtures.add(kubeapi_healthcheck)
 
         return healthcheck_fixtures
@@ -198,10 +200,12 @@ class KubernetesApiClientPlugin:
         while timeout > 0:
             try:
                 for node in self.nodes():
-                    kubelet_condition = node_status_condition(node, 'KubeletReady')
+                    kubelet_condition = node_status_condition(node, "KubeletReady")
 
-                    if not kubelet_condition.status == 'True':
-                        raise RuntimeError(f"Node kubelet is not ready: {node.metadata.name}")
+                    if not kubelet_condition.status == "True":
+                        raise RuntimeError(
+                            f"Node kubelet is not ready: {node.metadata.name}"
+                        )
                 return True
 
             except RuntimeError as this_err:
@@ -211,7 +215,7 @@ class KubernetesApiClientPlugin:
                 timeout = timeout - period
                 continue
 
-        raise RuntimeError('Timed out waiting for kubernetes to become ready') from err
+        raise RuntimeError("Timed out waiting for kubernetes to become ready") from err
 
     def readyz_wait(self, timeout: int = 30, period: int = 1):
         """Wait until kubernetes is ready before returning."""
@@ -226,7 +230,7 @@ class KubernetesApiClientPlugin:
                 timeout = timeout - period
                 continue
 
-        raise RuntimeError('Timed out waiting for kubernetes to become ready') from err
+        raise RuntimeError("Timed out waiting for kubernetes to become ready") from err
 
     def readyz(self):
         """Check the general readyz endpoint.
@@ -240,7 +244,7 @@ class KubernetesApiClientPlugin:
         Will raise an exception is kubernetes isn't avaialble
 
         """
-        return self._interpret_z_response('/readyz')
+        return self._interpret_z_response("/readyz")
 
     def livez(self):
         """Check the general livez endpoint.
@@ -254,10 +258,11 @@ class KubernetesApiClientPlugin:
         Will raise an exception is kubernetes isn't avaialble
 
         """
-        return self._interpret_z_response('/livez')
+        return self._interpret_z_response("/livez")
 
-    def _interpret_z_response(self, endpoint: str, method: str = 'GET',
-                              params: Dict[str, str] = None) -> Dict[str, Dict[str, str]]:
+    def _interpret_z_response(
+        self, endpoint: str, method: str = "GET", params: Dict[str, str] = None
+    ) -> Dict[str, Dict[str, str]]:
         """Interpret that readyz/livez response format into a dict.
 
         because both livez and readyz return similar a machine un-friendly response, we use this
@@ -269,15 +274,16 @@ class KubernetesApiClientPlugin:
             method=method,
             resource_path=endpoint,
             query_params=params if params is not None else {},
-            _preload_content=False)[0]
+            _preload_content=False,
+        )[0]
 
         interpreted = {}
-        for line in response.read().decode("utf-8") .split('\n'):
+        for line in response.read().decode("utf-8").split("\n"):
             match = KUBEAPI_CLIENT_INTERPRET_Z_REGEX.fullmatch(line)
             if match:
-                interpreted[match.group('name')] = {
-                    'symbol': match.group('symbol'),
-                    'ok': match.group('ok')
+                interpreted[match.group("name")] = {
+                    "symbol": match.group("symbol"),
+                    "ok": match.group("ok"),
                 }
 
         return interpreted
@@ -289,8 +295,9 @@ class KubernetesApiClientPlugin:
         return kubernetes.watch.Watch()
 
 
-def node_status_condition(node: models.v1_node.V1Node, cond_reason: str,
-                          cond_type: str = "Ready") -> models.v1_node_condition.V1NodeCondition:
+def node_status_condition(
+    node: models.v1_node.V1Node, cond_reason: str, cond_type: str = "Ready"
+) -> models.v1_node_condition.V1NodeCondition:
     """Retrieve a status condition of matching reason from a node."""
     status: models.v1_node_status.V1NodeStatus = node.status
 
