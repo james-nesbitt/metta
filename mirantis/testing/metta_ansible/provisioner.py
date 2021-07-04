@@ -15,7 +15,7 @@ from mirantis.testing.metta.provisioner import ProvisionerBase
 
 logger = logging.getLogger("metta.contrib.provisioner:ansible")
 
-METTA_ANSIBLE_PROVISIONER_PLUGIN_ID = "metta_ansible"
+METTA_ANSIBLE_PROVISIONER_PLUGIN_ID = "metta_ansible_provisioner"
 """ Ansible provisioner plugin id """
 
 ANSIBLE_PROVISIONER_CONFIG_LABEL = "ansible"
@@ -73,7 +73,9 @@ class AnsibleProvisionerPlugin(ProvisionerBase):
         self.config_base = base
         """ configerus get key that should contain all tf config """
 
-    def info(self):
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
         """get info about a provisioner plugin"""
         return {
             "plugin": {

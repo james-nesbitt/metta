@@ -1,32 +1,34 @@
 """
 
-Test that some clients work
+Test that some clients work.
+
+Here test the docker run workload.
 
 """
-
 import logging
 
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+import pytest
 
-logger = logging.getLogger("test_mirantis_clients")
+logger = logging.getLogger("test_clients.docker")
 
 
-def test_01_docker_run_workload(environment_up, benchmark):
-    """test that we can run a docker run workload"""
-
+@pytest.fixture(scope="module")
+def sanity_docker_run(environment_up):
+    """Get the docker run workload from fixtures/yml."""
     # we have a docker run workload fixture called "sanity_docker_run"
-    sanity_docker_run = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="sanity_docker_run"
-    )
-    """ workload plugin """
+    plugin = environment_up.fixtures.get_plugin(instance_id="sanity_docker_run")
+    plugin.prepare(environment_up.fixtures)
+    return plugin
+
+
+def test_01_docker_run_workload(sanity_docker_run, benchmark):
+    """test that we can run a docker run workload"""
 
     def container_run():
         try:
-            docker_run_instance = sanity_docker_run.create_instance(
-                environment_up.fixtures
-            )
-            run_output = docker_run_instance.apply()
+            run_output = sanity_docker_run.apply()
             assert "Hello from Docker" in run_output.decode("utf-8")
+            sanity_docker_run.destroy()
         except Exception as err:
             raise RuntimeError("Docker run failed") from err
 

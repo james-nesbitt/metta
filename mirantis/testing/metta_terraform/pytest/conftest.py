@@ -15,7 +15,6 @@ import logging
 import pytest
 
 from mirantis.testing.metta import discover, get_environment, Environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
 
 from mirantis.testing.metta_terraform.provisioner import (
     METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
@@ -53,7 +52,6 @@ def environment(environment_discover) -> Environment:
 def terraform_provisioner(environment) -> TerraformProvisionerPlugin:
     """get the metta terraform provisioner plugin"""
     return environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
         plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
     )
 

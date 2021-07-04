@@ -55,6 +55,7 @@ class LaunchpadClient:
         disable_telemetry: bool = False,
         disable_upgrade_check: bool = True,
         debug: bool = False,
+        binary: str = METTA_LAUNCHPADCLIENT_BIN_PATH,
     ):
         """Initialize LaunchpadClient object.
 
@@ -96,7 +97,12 @@ class LaunchpadClient:
         """ if not empty this will be used as a cluster name instead of taking
             it from the yaml file """
 
-        self.bin: str = METTA_LAUNCHPADCLIENT_BIN_PATH
+        if shutil.which(binary) is None:
+            raise ValueError(
+                f"Launchpad binary not found. Launchpad commands cannot be called.  Expected binary at path {binary}"
+            )
+
+        self.bin: str = binary
         """ shell execution target for launchpad """
 
         self.client_bundle_retry_count: int = int(

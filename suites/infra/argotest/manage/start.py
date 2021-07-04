@@ -9,7 +9,7 @@ and investigation.
 import logging
 
 from mirantis.testing.metta import discover, get_environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
 
 logger = logging.getLogger("docsteam-infra")
 
@@ -22,7 +22,7 @@ def main():
     discover()
 
     env = get_environment()
-    prov_fixture = env.fixtures.get(plugin_type=METTA_PLUGIN_TYPE_PROVISIONER)
+    prov_fixture = env.fixtures.get(plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER)
     prov_plugin = prov_fixture.plugin
 
     logger.info("Starting DocsTeam infrastructure")

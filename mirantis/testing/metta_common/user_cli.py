@@ -7,13 +7,12 @@ Examine and declare user configuration for Metta
 """
 import logging
 import os
-import json
 
 import appdirs
 import yaml
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta_cli.base import CliBase
+from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .common_config import METTA_COMMON_APP_NAME
 
@@ -31,7 +30,7 @@ class UserCliPlugin(CliBase):
 
     def fire(self):
         """Return a dict of commands."""
-        return {"user": UserGroup(self.environment)}
+        return {"user": UserGroup(self._environment)}
 
 
 class UserGroup:
@@ -46,7 +45,9 @@ class UserGroup:
         """Add environment to command group."""
         self._environment = environment
 
-    def info(self):
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
         """Output any user related information."""
         user_config = self._environment.config.load("user")
         user_config_dir = _user_path()
@@ -59,7 +60,7 @@ class UserGroup:
             },
         }
 
-        return json.dumps(info, indent=2)
+        return cli_output(info)
 
     # pylint: disable=no-self-use
     def init(self):

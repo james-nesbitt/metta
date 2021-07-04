@@ -15,38 +15,87 @@ from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK, Health
+from mirantis.testing.metta.healthcheck import (
+    METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
+    Health,
+)
 
-logger = logging.getLogger("metta.contrib.common.output.dict")
+logger = logging.getLogger("metta_common.workload.healthpoller")
 
-METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL = "healthpoll"
-""" output plugin_id for the dict plugin """
+METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL = "healthpoll_workload"
+"""Output plugin_id for the healthpoller plugin."""
 
-WORKLOAD_HEALTHPOLL_CONFIG_LABEL = "healthpoll"
+HEALTHPOLL_CONFIG_LABEL = "healthpoll"
 """Default configerus load() label for finding healthpoll configuration."""
 
+HEALTHPOLL_CONFIG_KEY_PERIOD = "poll.period"
+"""Configerus key for finding period from config."""
+HEALTHPOLL_CONFIG_KEY_DURATION = "poll.duration"
+"""Configerus key for finding duration from config."""
 
+HEALTHPOLL_DEFAULT_PERIOD = 30
+"""Default value for how frequently to poll health."""
+HEALTHPOLL_DEFAULT_DURATION = -1
+"""Default value for how may seconds to run the polling for (default to forever)"""
+
+# this is what it takes
+# pylint: disable=too-many-instance-attributes
 class HealthPollWorkload:
-    """workload plugin that polls health in the background."""
+    """Workload plugin that polls health in the background."""
 
     def __init__(
         self,
         environment: Environment,
         instance_id: str,
-        label: str = WORKLOAD_HEALTHPOLL_CONFIG_LABEL,
+        label: str = HEALTHPOLL_CONFIG_LABEL,
         base: Any = LOADED_KEY_ROOT,
     ):
         """Configure the health polls worload plugin instances."""
-        self.environment = environment
-        self.instance_id = instance_id
+        self._environment = environment
+        self._instance_id = instance_id
 
         healthpoll_config = environment.config.load(label)
 
-        self.period = healthpoll_config.get("poll.period", default=30)
+        # make period public and let people tune it live.
+        self.period = healthpoll_config.get(
+            [base, HEALTHPOLL_CONFIG_KEY_PERIOD], default=HEALTHPOLL_DEFAULT_PERIOD
+        )
         """How much time between polls."""
-        self.duration = healthpoll_config.get("poll.duration", default=3600)
+        self.duration = healthpoll_config.get(
+            [base, HEALTHPOLL_CONFIG_KEY_DURATION], default=HEALTHPOLL_DEFAULT_DURATION
+        )
 
-    def create_instance(self, fixtures: Fixtures):
+        self._thread: threading.Thread = None
+        """Thread for polling in case we want to join it."""
+
+        self._health: Dict[str, Health] = {}
+        """Aggregate health per fixture/plugin id."""
+
+        self._terminate: bool = False
+        """Internal value used to allow an early poll exit."""
+
+        self._poll_count = 0
+        """How many times have we polled health (might be interesting.)"""
+
+        self._healthcheck_fixtures: Fixtures = None
+        """Fixtures list which should be searched for healthcheck fixtures."""
+
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
+        """Return dict data about this plugin for introspection."""
+        return {
+            "workload": {
+                "configuration": {"period": self.period, "duration": self.duration},
+                "required_fixtures": {
+                    "healthchecks": {
+                        "interfaces": [METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
+                    }
+                },
+            }
+        }
+
+    def prepare(self, fixtures: Fixtures = None):
         """Create a workload instance from a set of fixtures.
 
         Parameters:
@@ -55,116 +104,65 @@ class HealthPollWorkload:
             retrieve a docker client plugin.
 
         """
-        healthcheck_fixtures = fixtures.filter(
-            plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK
-        )
+        if fixtures is None:
+            fixtures = self._environment.fixtures
 
-        return HealthCheckPollWorkloadInstance(
-            name=f"{self.instance_id}-instance",
-            fixtures=healthcheck_fixtures,
-            period_secs=self.period,
-            expire_secs=self.duration,
-        )
+        self._healthcheck_fixtures = fixtures
 
-    def info(self):
-        """Return dict data about this plugin for introspection."""
-        return {
-            "workload": {
-                "fixture": {"instance_id": self.instance_id},
-                "configuration": {"period": self.period, "duration": self.duration},
-                "required_fixtures": {
-                    "healthchecks": {"plugin_type": METTA_PLUGIN_TYPE_HEALTHCHECK}
-                },
-            }
-        }
-
-
-class HealthCheckPollWorkloadInstance:
-    """Workload instance which starts polling health in the background."""
-
-    def __init__(
-        self,
-        name: str,
-        fixtures: Fixtures,
-        period_secs: int = 10,
-        expire_secs: int = -1,
-    ):
-        """Start polling healthchecks and keep a status.
-
-        Parameters:
-        -----------
-        name (str) : String used to name the polling thread
-        fixture (Fixtures) : fixture set, all healtcheck fixtures will
-            be polled for health.
-
-        period_secs (int) : period in seconds between polls
-        expire_secs (int) : after this many secs polling will stop, Use
-            -1 to indicate no expiry.
-
-        """
-        self.name = name
-        """Keep the string name."""
-        self.fixtures: Fixtures = fixtures.filter(
-            plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK
-        )
-        """Set of healtcheck fixtures to be polled for health."""
-        self.health: Dict[str, Health] = {}
-        """Aggregate health per fixture/plugin id."""
-
-        self.terminate: bool = False
-        """Internal value used to allow an early poll exit."""
-
-        self.poll_count = 0
-        """How many times have we polled health (might be interesting.)"""
-
-        thread = threading.Thread(
-            name=name, target=self._run, args=(period_secs, expire_secs)
-        )
+    def apply(self):
+        """Start polling healthchecks and keep a status."""
+        thread = threading.Thread(name=self._instance_id, target=self._run, args=())
         """Backgroung health poll thread."""
         thread.daemon = True  # Daemonize thread
         thread.start()  # Start the execution
-        self.thread = thread
+        self._thread = thread
 
-    def _run(self, period: int, expire: int):
+    def destroy(self):
+        """Workload instance interface method to stop the workload."""
+        self._terminate = True
+
+    def join(self):
+        """Join the polling thread and wait until it is done."""
+        self._thread.join()
+
+    def _run(self):
         """Periodic poll all healthcheck plugins for health."""
         run_start = time.perf_counter()
         while True:
-            if self.terminate:
+            if self._terminate:
                 # We have been instructed to stop
                 logger.info("terminating health poll")
                 break
 
             poll_start = time.perf_counter() - run_start
 
-            if 0 < expire < poll_start:
+            if 0 < self.duration < poll_start:
                 # expire the poll if we were given a positive expiry
                 # and if that many seconds have passed.
-                logger.info(f"health poll expired")
+                logger.info("health poll expired")
                 break
 
-            self.poll_count += 1
-            for plugin_id, plugin_health in self.healthcheck().items():
-                if hasattr(self.health, plugin_id):
-                    self.health[plugin_id].merge(plugin_health)
+            self._poll_count += 1
+            for plugin_id, plugin_health in self._healthcheck().items():
+                if hasattr(self._health, plugin_id):
+                    self._health[plugin_id].merge(plugin_health)
                 else:
-                    self.health[plugin_id] = plugin_health
+                    self._health[plugin_id] = plugin_health
 
             poll_stop = time.perf_counter() - run_start
-            sleep_dur = ((poll_stop // period) + 1) * period - poll_stop
+            sleep_dur = ((poll_stop // self.period) + 1) * self.period - poll_stop
             """Duration in secs to the period for the next poll_start."""
             # we may have passed over a period, so we don't just substract and divide
             time.sleep(sleep_dur)
 
         print("ended")
 
-    def join(self):
-        """Join the polling thread and wait until it is done."""
-        self.thread.join()
-
-    def healthcheck(self) -> Dict[str, Health]:
+    def _healthcheck(self) -> Dict[str, Health]:
         """Run a single pass healthcheck on all of the fixtures."""
         health_info = {}
-        for health_fixture in self.fixtures:
+        for health_fixture in self._healthcheck_fixtures.filter(
+            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
+        ):
             try:
                 plugin_health = health_fixture.plugin.health()
 
@@ -172,18 +170,20 @@ class HealthCheckPollWorkloadInstance:
             # pylint: disable=broad-except
             except Exception as err:
                 plugin_health = Health()
-                plugin_health.critical(f"Health plugin exception: {err}")
+                plugin_health.critical(
+                    f"Health plugin exception [{health_fixture.instance_id}]: {err}"
+                )
 
             health_info[health_fixture.instance_id] = plugin_health
         return health_info
 
-    def health_aggregate(self) -> Health:
+    def health(self) -> Health:
         """Combine all plugin healths into one Health object."""
         agg_health = Health()
-        for health in self.health.values():
+        for health in self._health.values():
             agg_health.merge(health)
         return agg_health
 
-    def stop(self):
-        """Tell the polling thread to stop before its next poll."""
-        self.terminate = True
+    def poll_count(self) -> int:
+        """Return how many polls have been run."""
+        return self._poll_count

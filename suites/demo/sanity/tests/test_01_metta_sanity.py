@@ -17,8 +17,8 @@ import logging
 
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 
 # import for asserting provisioner plugin ids and classes
 from mirantis.testing.metta_common import METTA_PLUGIN_ID_PROVISIONER_COMBO
@@ -51,39 +51,39 @@ def test_provisioners(environment: Environment):
     # @NOTE all "instance_id" values must match the config/fixtures.yml keys
 
     combo_fixture = environment.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="combo"
+        interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER], instance_id="combo"
     )
     combo = combo_fixture.plugin
     """ the combo provisioner is a special provisioner aggregator """
 
     assert combo_fixture.plugin_id == METTA_PLUGIN_ID_PROVISIONER_COMBO
-    assert combo.instance_id == "combo"
+    assert combo_fixture.instance_id == "combo"
     assert isinstance(combo, ComboProvisionerPlugin)
 
     # Also test that the combo provisioner is the default one
     assert (
-        environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_PROVISIONER
+        environment.fixtures.get(
+            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
         ).instance_id
         == "combo"
     )
 
     launchpad_fixture = environment.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="launchpad"
+        instance_id="launchpad", interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
     )
     launchpad = launchpad_fixture.plugin
 
     assert launchpad_fixture.plugin_id == METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID
-    assert launchpad.instance_id == "launchpad"
+    assert launchpad_fixture.instance_id == "launchpad"
     assert isinstance(launchpad, LaunchpadProvisionerPlugin)
 
     terraform_fixture = environment.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="terraform"
+        instance_id="terraform", interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
     )
     terraform = terraform_fixture.plugin
 
     assert terraform_fixture.plugin_id == METTA_TERRAFORM_PROVISIONER_PLUGIN_ID
-    assert terraform.instance_id == "terraform"
+    assert terraform_fixture.instance_id == "terraform"
     assert isinstance(terraform, TerraformProvisionerPlugin)
 
 
@@ -96,7 +96,7 @@ def test_workload(environment: Environment):
     # see in `metta config get fixtures`. Then we confirm their plugin types.
 
     sanity_docker_run_fixture = environment.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="sanity_docker_run"
+        instance_id="sanity_docker_run",
     )
     sanity_docker_run = sanity_docker_run_fixture.plugin
 

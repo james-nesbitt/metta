@@ -35,15 +35,11 @@ logger = logging.getLogger("metta")
 FIXED_CONFIGERUS_BOOSTRAPS = ["get", "env", "jsonschema", "files"]
 """ configerus bootstraps that we will use on config objects. We use functionality
     in the core which heavily depends on this config, so it is necessary """
-FIXED_METTA_BOOTSTRAPS = ["metta_common"]
+FIXED_METTA_BOOTSTRAPS = []
 """ Metta bootstraps to apply to any created environemnt.  We use functionality
     in the core which heavily depends on these, so they are necessary """
 DEFAULT_ADDITIONAL_METTA_BOOTSTRAPS = [
-    "metta_ansible",
-    "metta_docker",
-    "metta_dummy",
-    "metta_kubernetes",
-    "metta_terraform",
+    "metta_common",
 ]
 """ default metta bootstrap calls to add to any created cluster """
 

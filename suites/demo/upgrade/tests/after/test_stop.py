@@ -16,7 +16,7 @@ from mirantis.testing.metta_mirantis.msr_client import (
 from mirantis.testing.metta_mirantis.mke_client import MKEAPIClientPlugin, MKENodeState
 
 from mirantis.testing.metta_kubernetes.deployment_workload import (
-    KubernetesDeploymentWorkloadInstance,
+    KubernetesDeploymentWorkloadPlugin,
 )
 
 logger = logging.getLogger("test_stop")
@@ -31,19 +31,19 @@ def test_after_up(environment_after_up: Environment):
 
 @pytest.mark.order(2)
 def test_kube_workload_still_running(
-    stability_workload_instance: KubernetesDeploymentWorkloadInstance,
+    stability_workload_up: KubernetesDeploymentWorkloadPlugin,
 ):
     """did we get a good kubectl client"""
     logger.info(
         "AFTER: Getting K8s test deployment which was run in the 'before' environment."
     )
 
-    namespace = stability_workload_instance.namespace
-    name = stability_workload_instance.name
+    namespace = stability_workload_up.namespace
+    name = stability_workload_up.name
 
     # The start test sshould have created this workload, so we should be able
     # to find it.
-    deployment = stability_workload_instance.read()
+    deployment = stability_workload_up.read()
     assert deployment is not None, "Did not find the expected sanity workload running"
     logger.info(deployment)
 
@@ -55,7 +55,7 @@ def test_kube_workload_still_running(
     assert namespace == metadata.namespace
 
     # tear the deployment down
-    status = stability_workload_instance.destroy()
+    status = stability_workload_up.destroy()
     assert status is not None
     assert status.code is None
     logger.info("Sanity deployment destroy status: %s", status)

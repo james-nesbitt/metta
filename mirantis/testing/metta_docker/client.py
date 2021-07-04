@@ -10,12 +10,13 @@ from docker import DockerClient
 
 logger = logging.getLogger("metta.contrib.docker.client.dockerpy")
 
-METTA_PLUGIN_ID_DOCKER_CLIENT = "metta_docker"
+METTA_PLUGIN_ID_DOCKER_CLIENT = "metta_docker_client"
 """ client plugin_id for the metta dummy plugin """
 
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
-# pylint: disable=too-few-public-methods
+# Also we work around the parent constructor.
+# pylint: disable=too-few-public-methods, super-init-not-called
 class DockerPyClientPlugin(DockerClient):
     """Metta Client plugin for docker using the docker-py library.
 
@@ -68,9 +69,9 @@ class DockerPyClientPlugin(DockerClient):
             the Docker client use for docker compose.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         logger.debug("Configuring docker client with args for host: %s", host)
@@ -91,7 +92,10 @@ class DockerPyClientPlugin(DockerClient):
         throwaway = DockerClient.from_env(environment=env, version=version)
         self.api = throwaway.api
 
-    def info(self):
+    # deep argument is an info() standard across plugins, also we are replacing
+    # the parent method.
+    # pylint: disable=unused-argument, arguments-differ
+    def info(self, deep: bool = False):
         """Return dict data about this plugin for introspection."""
         return {
             "docker": {

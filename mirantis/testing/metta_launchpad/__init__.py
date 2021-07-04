@@ -14,9 +14,9 @@ from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.plugin import Factory
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
+from mirantis.testing.metta_cli.base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
 from .launchpad import LaunchpadClient
 from .provisioner import (
@@ -32,8 +32,11 @@ from .cli import LaunchpadCliPlugin, METTA_LAUNCHPAD_CLI_PLUGIN_ID
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
     plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
+    interfaces=[
+        METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
+        METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
+    ],
 )
 def metta_plugin_factory_provisioner_launchpad(
     environment: Environment,
@@ -46,8 +49,8 @@ def metta_plugin_factory_provisioner_launchpad(
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_CLIENT,
     plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLIENT],
 )
 def metta_terraform_factory_cliexec_client_launchpad(
     environment: Environment, instance_id: str = "", client: LaunchpadClient = None
@@ -56,7 +59,10 @@ def metta_terraform_factory_cliexec_client_launchpad(
     return LaunchpadExecClientPlugin(environment, instance_id, client)
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_LAUNCHPAD_CLI_PLUGIN_ID)
+@Factory(
+    plugin_id=METTA_LAUNCHPAD_CLI_PLUGIN_ID,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
 def metta_terraform_factory_cli_launchpad(
     environment: Environment, instance_id: str = ""
 ):

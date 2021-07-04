@@ -6,10 +6,10 @@ In METTA an environment is a single configerus Config object and a set of
 METTA plugins in a manageable set.
 
 METTA uses the Fixtures object to manage a set of plugins, which allows us to
-mix a bunch of plugin objects of different types together and manage them.
+mix a bunch of plugin objects together and manage them.
 
-@NOTE states were just recently added and are currently inelegant and inefficient
-  but should get a refactor soon.
+@NOTE states were just recently added and are currently inelegant and
+    inefficient but should get a refactor soon.
 
 """
 import logging
@@ -33,16 +33,14 @@ from configerus.contrib.env import (
 
 from .plugin import (
     Factory,
-    METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE,
     METTA_PLUGIN_CONFIG_KEY_PLUGINID,
     METTA_PLUGIN_CONFIG_KEY_INSTANCEID,
     METTA_PLUGIN_CONFIG_KEY_ARGUMENTS,
-    METTA_PLUGIN_CONFIG_KEY_PRIORITY,
-    METTA_PLUGIN_CONFIG_KEY_VALIDATORS,
 )
 from .fixtures import (
-    Fixtures,
     Fixture,
+    Fixtures,
+    METTA_FIXTURE_CONFIG_KEY_PRIORITY,
     METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
     METTA_FIXTURE_VALIDATION_JSONSCHEMA,
 )
@@ -103,17 +101,19 @@ class Environment:
             combined with a default set, and may also be combined with a set
             from config.
 
-        default_priority (int) : integer values are used to sort created fixtures.
-            this value is used in cases where no priority has been specified.
+        default_priority (int) : integer values are used to sort created
+            fixtures. this value is used in cases where no priority has been
+            specified.
 
-        # Config Context : the following two parameters will tell the Environment
-            object to examine config for additional actions to take.  For example
-            additional config source may be added, and fixtures may be created.
+        # Config Context : the following parameters will tell the Environment
+            object to examine config for additional actions to take.  For
+            example additional config source may be added, and fixtures may be
+            created.
 
         Label (str) : Config label to load to find environment config.
-        Base (Mixed) : config base key to use to find environment config.  This can
-            be either a string or any nested combination of Lists of strings, which
-            Configerus joins into a flat list.
+        Base (Mixed) : config base key to use to find environment config.  This
+            can be either a string or any nested combination of Lists of
+            strings, which Configerus joins into a flat list.
 
         """
         if bootstraps is None:
@@ -213,10 +213,10 @@ class Environment:
         environment, configuring the environment for one of the preconfigured
         states.
 
-        @NOTE When state is set, all fixtures are forgotten from the environment,
-        but if you have a fixture in scope and use it, it is still aware of its
-        environment and can still cause change in the scope.  It is up to the
-        consumer to be aware of this.
+        @NOTE When state is set, all fixtures are forgotten from the
+            environment, but if you have a fixture in scope and use it, it is
+            still aware of its environment and can still cause change in the
+            scope.  It is up to the consumer to be aware of this.
 
         Parameters:
         -----------
@@ -380,16 +380,18 @@ class Environment:
     def _add_config_sources_from_config(self, label: str, base: Union[str, List[Any]]):
         """Ddd more config sources based on in config settings.
 
-        Read some config which will tell us where more config can be found.  This lets us use config
-        to extend config, and is what make metta entirely extensible from a single metta.yml file.
+        Read some config which will tell us where more config can be found.
+        This lets us use config to extend config, and is what make metta
+        entirely extensible from a single metta.yml file.
 
-        In the trade-off battle between configurable and convention, this leans heavily towards
-        configuration, but it easily lends to standards.
+        In the trade-off battle between configurable and convention, this leans
+        heavily towards configuration, but it easily lends to standards.
 
         Parameters:
         -----------
         label (str) : configurus load label.
-        base (str|List[str]) : configerus get key as a base for retrieving all config settings.
+        base (str|List[str]) : configerus get key as a base for retrieving all
+            config settings.
 
         """
         config_environment = self.config.load(label)
@@ -447,14 +449,14 @@ class Environment:
     def bootstrap(self, entrypoints: List[str]):
         """Bootstrap some METTA distributions.
 
-        METTA bootstrapping is an attempt to allow an easy in to including contrib
-        functionality without having to do a lot of Python imports.
+        METTA bootstrapping is an attempt to allow an easy in to including
+        contrib functionality without having to do a lot of Python imports.
 
-        BootStrapping is a setuptools enabled process, where any python package can
-        declare a bootstraper, and this function will run that bootstrapper on
-        request.
-        The BootStrap entry_points are expected to receive a config object on which
-        they can operate to add any specific or global functionality.
+        BootStrapping is a setuptools enabled process, where any python package
+        can declare a bootstraper, and this function will run that bootstrapper
+        on request.
+        The BootStrap entry_points are expected to receive a config object on
+        which they can operate to add any specific or global functionality.
 
         BootStraps are typically used for two behaviours:
 
@@ -464,10 +466,10 @@ class Environment:
 
         Parameters:
         -----------
-        bootstrap (List[str]) : a list of string bootstrapper entry_points for the
-            ucct.bootstrap entry_points (part of setuptools.)
-            Each value needs to refer to a valid entrypoint which will be executed
-            with the config object as an argument.
+        bootstrap (List[str]) : a list of string bootstrapper entry_points for
+            the ucct.bootstrap entry_points (part of setuptools.)
+            Each value needs to refer to a valid entrypoint which will be
+            executed with the config object as an argument.
 
         Raises:
         -------
@@ -504,16 +506,16 @@ class Environment:
         self,
         label: str = METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
         base: Union[str, List[Any]] = LOADED_KEY_ROOT,
-        plugin_type: str = None,
         validator: str = "",
         exception_if_missing: bool = False,
         arguments: Dict[str, Any] = None,
     ) -> Fixtures:
         """Create plugin fixtures from some config.
 
-        This method will interpret some config values as being usable to build a collection
-        of plugins from.  The plugins will be built, wrapped as fixtures and added to the
-        Environment.  The plugins will then be returned as a Fixtures collection.
+        This method will interpret some config values as being usable to build a
+        collection of plugins from.  The plugins will be built, wrapped as
+        fixtures and added to the Environment.  The plugins will then be
+        returned as a Fixtures collection.
 
         Parameters:
         -----------
@@ -522,16 +524,12 @@ class Environment:
         label (str) : config label to load to pull plugin configuration. That
             label is loaded and config is pulled to produce a list of plugins
 
-        base (str|List) : config key to get a Dict of plugins configurations.  This
+        base (str|List) : config key to get Dict of plugins configurations. This
             should point to a dict of plugin configurations.
-            A list of strings is valid as configerus.loaded.get() can take that as
-            an argument.
-            We call this base instead of key as we will be searching for sub-paths
-            to pull individual elements
-
-        type (str) : plugin type to create, pulled from the config/dict if
-            omitted.  If Type is provided by neither argument nor source then
-            you're gonna have a bad time.
+            A list of strings is valid as configerus.loaded.get() can take that
+            as an argument.
+            We call this base instead of key as we will be searching for
+            sub-paths to pull individual elements
 
         validator (str) : optionally use a configerus validator on the instance
             config/dict before a plugin is created.
@@ -542,12 +540,12 @@ class Environment:
 
         Returns:
         --------
-        Fixtures of your type
+        Fixtures set as directed by the passed config.
 
         Raises:
         -------
-        If you ask for a plugin which has not been registered, then you're going to
-        get a NotImplementedError exception.
+        If you ask for a plugin which has not been registered, then you're going
+        to get a NotImplementedError exception.
         To make sure that your desired plugin is registered, make sure to import
         the module that contains the factory method with a decorator.
 
@@ -576,7 +574,6 @@ class Environment:
             fixture = self.add_fixture_from_config(
                 label=label,
                 base=[base, instance_id],
-                plugin_type=plugin_type,
                 instance_id=instance_id,
                 validator=validator,
                 arguments=arguments,
@@ -589,7 +586,6 @@ class Environment:
         self,
         label: str,
         base: Union[str, List[Any]] = LOADED_KEY_ROOT,
-        plugin_type: str = None,
         instance_id: str = "",
         priority: int = -1,
         validator: str = "",
@@ -597,9 +593,9 @@ class Environment:
     ) -> Fixture:
         """Create and add a new plugin fixture from some config.
 
-        This method will interpret some config values as being usable to build a single
-        plugin.  The plugin will be built, wrapped as a Fixture, and added to the environment.
-        The plugin Fixture is returned.
+        This method will interpret some config values as being usable to build a
+        single plugin.  The plugin will be built, wrapped as a Fixture, and
+        added to the environment. The plugin Fixture is returned.
 
         @see add_fixture_from_loadedconfig
 
@@ -611,24 +607,21 @@ class Environment:
         -----------
         config (Config) : Used to load and get the plugin configuration
 
-        type (str) : plugin type to create, pulled from the config/dict if
-            omitted. An exception will be thrown if Type is found from neither
-            this argument nor the passed config.
-
         label (str) : config label to load to pull plugin configuration. That
             label is loaded and config is pulled to produce a list of plugins.
 
-        base (str|List) : config key used as a .get() base for all gets.  With this
-            you can instruct to pull config from a section of loaded config.
-            A list of strings is valid because configerus.loaded.get() can take that
-            as an argument. We will be using the list syntax anyway.
-            We call this base instead of key as we will be searching for sub-paths
+        base (str|List) : config key used as a .get() base for all gets.  With
+            this you can instruct to pull config from a section of loaded
+            config.
+            A list of strings is valid because configerus.loaded.get() can take
+            that as an argument. We will be using the list syntax anyway. We
+            call this base instead of key as we will be searching for  sub-paths
             to pull individual elements.
 
         instance_id (str) : optionally pass an instance_id for the item.
 
-        validator (str) : optionally use a configerus validator on the entire .get()
-            for the instance config.
+        validator (str) : optionally use a configerus validator on the entire
+            .get() for the instance config.
 
         Returns:
         --------
@@ -660,7 +653,7 @@ class Environment:
             plugin_loaded = self.config.load(label)
             """ loaded configuration for the plugin """
         except KeyError as err:
-            raise KeyError("Could not load plugin config source.") from err
+            raise KeyError(f"Could not load plugin config source {label}") from err
 
         # If arguments were given then pass them on
         try:
@@ -698,7 +691,6 @@ class Environment:
         return self.add_fixture_from_loadedconfig(
             loaded=plugin_loaded,
             base=base,
-            plugin_type=plugin_type,
             instance_id=instance_id,
             priority=priority,
             validator=validator,
@@ -708,14 +700,13 @@ class Environment:
     def add_fixture_from_dict(
         self,
         plugin_dict: Dict[str, Any],
-        plugin_type: str = None,
         instance_id: str = "",
         validator: str = "",
         arguments: Dict[str, Any] = None,
     ) -> Fixture:
         """Create a single plugin from a Dict of information for it.
 
-        Create a new plugin from a map/dict of settings for the needed parameters.
+        Create a new plugin from a map/dict of settings for needed parameters.
 
         @see add_fixture_from_loadedconfig
 
@@ -723,19 +714,16 @@ class Environment:
         -----------
         config (Config) : configerus.Config object passed to each generated plugins.
 
-        type (str) : plugin type to create, pulled from the config/dict if
-            omitted
-
         client_dict (Dict[str,Any]) : Dict from which all needed information will
-            be pulled.  Optionally additional config sources can be included as well
-            as arguments which could be passed to the plugin.
+            be pulled.  Optionally additional config sources can be included as
+            well as arguments which could be passed to the plugin.
 
             @see add_fixture_from_dict for more details.
 
         instance_id (str) : optionally pass an instance_id for the item.
 
-        validator (str) : optionally use a configerus validator on the entire .get()
-            for the instance config.
+        validator (str) : optionally use a configerus validator on the entire
+            .get() for the instance config.
 
         Return:
         -------
@@ -754,7 +742,7 @@ class Environment:
         )
         """ Mock configerus loaded object for config retrieval """
         base = LOADED_KEY_ROOT
-        """ to keep this function similar to add_fixture_from_config we use an empty .get() base """
+        """ keep similar to add_fixture_from_config we use an empty .get() base """
 
         if arguments is None:
             arguments = {}
@@ -762,7 +750,6 @@ class Environment:
         return self.add_fixture_from_loadedconfig(
             loaded=mock_config_loaded,
             base=base,
-            plugin_type=plugin_type,
             instance_id=instance_id,
             validator=validator,
             arguments=arguments,
@@ -774,7 +761,6 @@ class Environment:
         self,
         loaded: Loaded,
         base: Union[str, List[Any]] = LOADED_KEY_ROOT,
-        plugin_type: str = None,
         instance_id: str = "",
         priority: int = -1,
         validator: str = "",
@@ -782,46 +768,45 @@ class Environment:
     ) -> Fixture:
         """Create a plugin from a Configerus loaded config object.
 
-        This method will interpret some config values as being usable to build plugin.
-        This function starts with a loaded config object because we can leverage
-        that from more starting points.
+        This method will interpret some config values as being usable to build
+        plugin. This function starts with a loaded config object because we can
+        leverage that from more starting points.
 
-        Using a configerus config object allows us to leverage advanced configerus
-        features such as tree searching, formatting and validation.
+        Using a configerus config object allows us to leverage advanced
+        configerus features such as tree searching, formatting and validation.
 
         What is looked for:
 
-        1. valdiators if we need to validate the entire label/key before using it
-        2. type if we did not receive a type
-        3. plugin_id : which will tell us what plugin to load
-        4. optional instance_id if none was passed
-        5. config if you want config added - ONLY if fixtures is None
+        1. valdiators if we need to validate the entire label/key before using
+        2. plugin_id : which will tell us what plugin to load
+        3. optional instance_id if none was passed
+        4. config if you want config added - ONLY if fixtures is None
            (plugins in Fixtures cannot override config objects)
-        6. arguments that will be executed on an argument() method if the
+        5. arguments that will be executed on an argument() method if the
             plugin has it.
+
+        @TODO we should probably allow a setting to allow replacing existing
+            fixtures in the environment.
 
         Parameters:
         -----------
         config (Config) : Used to load and get the plugin configuration
 
-        plugin_type (str) : plugin type to create, pulled from the config/dict if
-            omitted. An exception will be thrown if type is found from neither
-            this argument nor the passed config.
-
         label (str) : config label to load to pull plugin configuration. That
             label is loaded and config is pulled to produce a list of plugins.
 
-        base (str|List) : config key used as a .get() base for all gets.  With this
-            you can instruct to pull config from a section of loaded config.
-            A list of strings is valid because configerus.loaded.get() can take that
-            as an argument. We will be using the list syntax anyway.
-            We call this base instead of key as we will be searching for sub-paths
-            to pull individual elements.
+        base (str|List) : config key used as a .get() base for all gets.  With
+            this you can instruct to pull config from a section of loaded
+            config.
+            A list of strings is valid because configerus.loaded.get() can take
+            that as an argument. We will be using the list syntax anyway.
+            We call this base instead of key as we will be searching for
+            sub-paths to pull individual elements.
 
         instance_id (str) : optionally pass an instance_id for the item.
 
-        validator (str) : optionally use a configerus validator on the entire .get()
-            for the instance config.
+        validator (str) : optionally use a configerus validator on the entire
+            .get() for the instance config.
 
         Returns:
         --------
@@ -857,7 +842,7 @@ class Environment:
         # get any validators from config, defaulting to just the jsonschema
         # validator for a fixture
         validators = loaded.get(
-            [base, METTA_PLUGIN_CONFIG_KEY_VALIDATORS],
+            [base, METTA_FIXTURE_VALIDATION_JSONSCHEMA],
             default=[
                 {PLUGIN_ID_VALIDATE_JSONSCHEMA: METTA_FIXTURE_VALIDATION_JSONSCHEMA}
             ],
@@ -874,25 +859,13 @@ class Environment:
             except ValidationError as err:
                 raise err
 
-        if not plugin_type:
-            try:
-                plugin_type = str(
-                    loaded.get([base, METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE])
-                )
-            except KeyError as err:
-                full_config = loaded.get(base)
-                raise ValueError(
-                    "Could not find a plugin type when trying to create a"
-                    f"plugin : {full_config}"
-                ) from err
-
         try:
             plugin_id = str(loaded.get([base, METTA_PLUGIN_CONFIG_KEY_PLUGINID]))
         except KeyError as err:
             full_config = loaded.get(base)
             raise ValueError(
                 "Could not find a plugin_id when trying to create a "
-                f"'{type}' plugin from config: {full_config}"
+                f"plugin from config: {full_config}"
             ) from err
 
         # if no instance_id was passed, try to load one or just make one up
@@ -904,12 +877,12 @@ class Environment:
                 instance_rand = "".join(
                     random.choice(string.ascii_lowercase) for i in range(10)
                 )
-                instance_id = f"{plugin_type}-{plugin_id}-{instance_rand}"
+                instance_id = f"{plugin_id}-{instance_rand}"
 
         if priority < 0:
             priority = int(
                 loaded.get(
-                    [base, METTA_PLUGIN_CONFIG_KEY_PRIORITY],
+                    [base, METTA_FIXTURE_CONFIG_KEY_PRIORITY],
                     default=self.plugin_priority(),
                 )
             )
@@ -922,17 +895,16 @@ class Environment:
             if arguments is None:
                 arguments = {}
             else:
-                # if we have config arguments from two different sources, then add the config args
-                # to a copy of the function parameter args.  We use a copy so that we make no
-                # context mistakes by altering a passed Dict that may get used for more than
-                # one plugin.
+                # if we have config arguments from two different sources, then
+                # add the config args to a copy of the function parameter args.
+                # We use a copy so that we make no context mistakes by altering
+                # a passed Dict that may get used for more than one plugin.
                 arguments = arguments.copy()
 
             arguments.update(config_arguments)
 
         # Use the factory to make the .fixtures.Fixture
         fixture = self.add_fixture(
-            plugin_type=plugin_type,
             plugin_id=plugin_id,
             instance_id=instance_id,
             priority=priority,
@@ -943,33 +915,32 @@ class Environment:
 
     def add_fixture(
         self,
-        plugin_type: str,
         plugin_id: str,
         instance_id: str,
         priority: int,
         arguments: Dict[str, Any] = None,
+        replace_existing=False,
     ) -> Fixture:
         """Create a new plugin from parameters.
 
         Parameters:
         -----------
-        config (Config) : configerus.Config object passed to each generated plugins.
+        config (Config) : configerus.Config passed to each generated plugins.
 
-        type (str) : plugin type to create.
-
-        plugin_id (str) : METTA plugin id for the plugin type, to tell us what plugin
-            factory to load.
+        plugin_id (str) : METTA plugin id to tell us what plugin factory to use.
 
             @see .plugin.Factory for more details on how plugins are loaded.
 
-        instance_id (str) : string instance id that will be passed to the new plugin
-            object.
+        instance_id (str) : string instance id that will be passed to the new
+            plugin object.
 
         priority (int) : Integer priority 1-100 for comparative prioritization
             between other plugins.
 
-        arguments (Dict[str, Any]) : Arguments which should be passed to the
-            plugin constructor after environment and instance_id
+        arguments (Dict[str, Any]) : Keyword Arguments which should be passed to
+            the plugin constructor after environment and instance_id
+
+        replace_existing (bool) : Replace any existing matching fixture.
 
         Return:
         -------
@@ -981,30 +952,27 @@ class Environment:
 
         Raises:
         -------
-        NotImplementedError if you asked for an unregistered plugin_id/type
+        NotImplementedError if you asked for an unregistered plugin_id
 
         """
         if arguments is None:
             arguments = {}
 
         if not (
-            isinstance(plugin_type, str)
-            and isinstance(plugin_id, str)
+            isinstance(plugin_id, str)
             and isinstance(instance_id, str)
             and isinstance(priority, int)
         ):
             raise ValueError(
-                f"Bad value types passed for creating a fixture: {plugin_type}"
+                f"Bad arguments passed for creating a fixture: "
                 f":{plugin_id}:{instance_id} ({priority})"
             )
 
-        fac = Factory(plugin_type, plugin_id)
-        plugin = fac.create(self, instance_id, **arguments)
-        fixture = self.fixtures.new(
-            plugin=plugin,
-            plugin_type=plugin_type,
-            plugin_id=plugin_id,
-            instance_id=instance_id,
-            priority=priority,
+        plugin_instance = Factory.create(
+            plugin_id, instance_id, *[self, instance_id], **arguments
+        )
+        fixture = self.fixtures.add(
+            fixture=Fixture.from_instance(plugin_instance, priority=priority),
+            replace_existing=replace_existing,
         )
         return fixture

@@ -6,6 +6,7 @@ Testkit command line tool caller.
 import logging
 import subprocess
 import json
+import shutil
 from typing import List
 
 
@@ -28,6 +29,7 @@ class TestkitClient:
         config_file: str = TESTKITCLIENT_CLI_CONFIG_FILE_DEFAULT,
         working_dir: str = TESTKITCLIENT_WORKING_DIR_DEFAULT,
         debug: bool = False,
+        binary: str = TESTKITCLIENT_BIN_PATH,
     ):
         """Initialize Testkit command executer.
 
@@ -49,7 +51,12 @@ class TestkitClient:
         self.debug = debug
         """ should testkit be run with verbose output enabled ? """
 
-        self.bin = TESTKITCLIENT_BIN_PATH
+        if shutil.which(binary) is None:
+            raise ValueError(
+                f"Testkit binary not found. Testkit commands cannot be called.  Expected binary at path {binary}"
+            )
+
+        self.bin = binary
         """ path to testkit executable """
 
     def version(self):

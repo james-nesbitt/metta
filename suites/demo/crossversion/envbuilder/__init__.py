@@ -16,7 +16,7 @@ import logging
 from configerus.config import Config
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
 
-import mirantis.testing.metta as metta
+from mirantis.testing import metta
 
 logger = logging.getLogger("env-builder")
 

@@ -11,15 +11,18 @@ import logging
 import pytest
 
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 
 from mirantis.testing.metta_common.healthpoll_workload import (
-    HealthPollWorkload,
     METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
 )
 
-
 logger = logging.getLogger("longevity-conftest")
+
+# impossible to chain pytest fixtures without using the same names
+# pylint: disable=redefined-outer-name
+# unused argument is their to force dependency hierarchy
+# pylint: disable=unused-argument
 
 
 @pytest.fixture(scope="session")
@@ -35,50 +38,51 @@ def workloads(environment_up) -> Fixtures:
     Fixtures list of workloads.
 
     """
-    workloads = Fixtures()
+    workload_fixtures = Fixtures()
 
     # Take any workload plugin other than the healthpoll plugin
     for fixture in environment_up.fixtures.filter(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD
+        interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD]
     ):
-        if fixture.plugin_id != METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL:
-            workloads.add(fixture)
-    return workloads
+        if fixture.plugin_id == METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL:
+            continue
+
+        workload_fixtures.add(fixture)
+
+    return workload_fixtures
 
 
 @pytest.fixture(scope="module")
-def workload_instances_up(environment_up, workloads):
+def workloads_up(environment_up, workloads):
     """Create and apply instances for all workloads."""
-    instances = []
     for workload in workloads:
-        instance = workload.plugin.create_instance(environment_up.fixtures)
-        if hasattr(instance, "apply"):
-            instance.apply()
+        plugin = workload.plugin
+        if hasattr(plugin, "prepare"):
+            plugin.prepare(environment_up.fixtures)
+        if hasattr(plugin, "apply"):
+            plugin.apply()
             logger.info("Workload %s applied.", workload.instance_id)
         else:
             logger.info("Workload %s created.", workload.instance_id)
-        instances.append(instance)
 
-    yield instances
+    yield workloads
 
-    for instance in instances:
-        if hasattr(instance, "destroy"):
-            instance.destroy()
+    for workload in workloads:
+        plugin = workload.plugin
+        if hasattr(plugin, "destroy"):
+            plugin.destroy()
 
 
 @pytest.fixture(scope="module")
-def healthpoll(environment_up) -> HealthPollWorkload:
-    """Retrieve the health-poll workload plugin."""
-    return environment_up.fixtures.get_plugin(
+def healthpoller(environment_up):
+    """Start a running health poll."""
+    healthpoll_workload = environment_up.fixtures.get_plugin(
         plugin_id=METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL
     )
 
+    healthpoll_workload.prepare(environment_up.fixtures)
+    healthpoll_workload.apply()
 
-@pytest.fixture(scope="module")
-def healthpoll_instance(environment_up, healthpoll):
-    """Start a running health poll."""
-    instance = healthpoll.create_instance(environment_up.fixtures)
+    yield healthpoll_workload
 
-    yield instance
-
-    instance.stop()
+    healthpoll_workload.destroy()

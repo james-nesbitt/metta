@@ -14,8 +14,7 @@ from typing import List, Any, Dict
 import yaml
 
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.workload import WorkloadBase, WorkloadInstanceBase
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 
 from .kubeapi_client import KubernetesApiClientPlugin, METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
@@ -29,11 +28,12 @@ KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE = "default"
 KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE = "file"
 KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML = "yaml"
 
-METTA_PLUGIN_ID_KUBERNETES_YAML_WORKLOAD = "metta_kubernetes_yaml"
+METTA_PLUGIN_ID_KUBERNETES_YAML_WORKLOAD = "metta_kubernetes_yaml_workload"
 """ workload plugin_id for the metta_kubernetes yaml plugin """
 
 
-class KubernetesYamlWorkloadPlugin(WorkloadBase):
+# pylint: disable=too-many-instance-attributes
+class KubernetesYamlWorkloadPlugin:
     """Metta workload plugin for Kubernetes workloads created from yaml."""
 
     def __init__(
@@ -56,18 +56,78 @@ class KubernetesYamlWorkloadPlugin(WorkloadBase):
         config_file (str): String path to the kubernetes config file to use
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
-        self.config_label = label
+        self._config_label = label
         """ configerus load label that should contain all of the config """
-        self.config_base = base
+        self._config_base = base
         """ configerus get key that should contain all tf config """
 
-    def create_instance(self, fixtures: Fixtures):
-        """Create a workload instance from a set of fixtures.
+        workload_config = self._environment.config.load(self._config_label)
+
+        self.namespace = workload_config.get(
+            [self._config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_NAMESPACE],
+            default=KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE,
+        )
+
+        # YAML config needs to come from a yaml file path or inline yaml config
+        self.resource_yaml: Dict[str, Any] = workload_config.get(
+            [self._config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML], default={}
+        )
+        """Inline YAML/Dict to source k8s resources."""
+        self.file = workload_config.get(
+            [self._config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE], default=""
+        )
+        """YAML file which will source the k8s resources."""
+
+        if self.resource_yaml is None and self.file == "":
+            raise ValueError("Either inline yaml or a file path to a yaml is required.")
+
+        self.client: KubernetesApiClientPlugin = None
+        """KubeAPI client to connect to the cluster (see prepare())."""
+
+        self.k8s_objects: List[object] = []
+        """List of resource creation objects."""
+
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
+        """Return dict data about this plugin for introspection."""
+        workload_config = self._environment.config.load(self._config_label)
+
+        return {
+            "workload": {
+                "deployment": {
+                    "namespace": workload_config.get(
+                        [
+                            self._config_base,
+                            KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_NAMESPACE,
+                        ],
+                        default=KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE,
+                    ),
+                    "yaml": workload_config.get(
+                        [self._config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML],
+                        default="None",
+                    ),
+                    "file": workload_config.get(
+                        [self._config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE],
+                        default="None",
+                    ),
+                },
+                "required_fixtures": {
+                    "kubernetes": {
+                        "interfaces": [METTA_PLUGIN_INTERFACE_ROLE_CLIENT],
+                        "plugin_id": METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+                    }
+                },
+            }
+        }
+
+    def prepare(self, fixtures: Fixtures):
+        """Get the kubeapi client from a set of fixtures.
 
         Parameters:
         -----------
@@ -76,104 +136,14 @@ class KubernetesYamlWorkloadPlugin(WorkloadBase):
 
         """
         try:
-            client = fixtures.get_plugin(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+            self.client = fixtures.get_plugin(
+                plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT
             )
         except KeyError as err:
             raise NotImplementedError(
                 "Workload could not find the needed client: "
                 f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
             ) from err
-
-        workload_config = self.environment.config.load(self.config_label)
-
-        namespace = workload_config.get(
-            [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_NAMESPACE],
-            default=KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE,
-        )
-
-        # YAML config needs to come from a yaml file path or inline yaml config
-        resource_yaml = workload_config.get(
-            [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML], default=[]
-        )
-        file = workload_config.get(
-            [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE], default=""
-        )
-
-        if yaml is None and file == "":
-            raise ValueError("Either inline yaml or a file path to a yaml is required.")
-
-        return KubernetesYamlWorkloadInstance(
-            client, namespace, data=resource_yaml, file=file
-        )
-
-    def info(self):
-        """Return dict data about this plugin for introspection."""
-        workload_config = self.environment.config.load(self.config_label)
-
-        return {
-            "workload": {
-                "deployment": {
-                    "namespace": workload_config.get(
-                        [
-                            self.config_base,
-                            KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_NAMESPACE,
-                        ],
-                        default=KUBERNETES_YAML_WORKLOAD_CONFIG_DEFAULT_NAMESPACE,
-                    ),
-                    "yaml": workload_config.get(
-                        [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_YAML],
-                        default="None",
-                    ),
-                    "file": workload_config.get(
-                        [self.config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_FILE],
-                        default="None",
-                    ),
-                },
-                "required_fixtures": {
-                    "kubernetes": {
-                        "plugin_type": METTA_PLUGIN_TYPE_CLIENT,
-                        "plugin_id": "metta_kubernetes",
-                    }
-                },
-            }
-        }
-
-
-# @TODO create a remove method as well.
-# pylint: disable=too-few-public-methods
-class KubernetesYamlWorkloadInstance(WorkloadInstanceBase):
-    """Instance of the k8s yaml workload, used to manage a particular run.
-
-    Parameters:
-    -----------
-    client (kubeapi_client) : metta kubernetes kubeapi_client object
-
-    namespace (str) : string namespace to use for all craeted resources
-
-    data (Dict[str, Any]) : laoded yaml content to be passed to the kubeapi client
-
-    OR
-
-    file (str) : file path to a file containing the yaml.
-
-    """
-
-    def __init__(
-        self,
-        client: KubernetesApiClientPlugin,
-        namespace: str,
-        data: Dict[str, Any],
-        file: str,
-    ):
-        """Comfigure new workload instance."""
-        self.client = client
-        self.namespace = namespace
-        self.data = data
-        self.file = file
-
-        self.k8s_objects: List[object] = []
 
     def apply(self):
         """Use the passed yaml to create k8s resources.
@@ -195,11 +165,9 @@ class KubernetesYamlWorkloadInstance(WorkloadInstanceBase):
                     )
 
         else:
-            with open("./temp.yaml", "w") as temp_file:
-                temp_file.write(yaml.safe_dump(self.data))
             self.k8s_objects.append(
                 self.client.utils_create_from_dict(
-                    data=self.data, namespace=self.namespace
+                    data=self.resource_yaml, namespace=self.namespace
                 )
             )
 

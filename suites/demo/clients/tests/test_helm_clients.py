@@ -1,83 +1,70 @@
 """
 
-Test that helm workloads work
+Test that some clients work.
+
+Here test the kube helm workload.
 
 """
 import logging
 
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+import pytest
 
-from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 from mirantis.testing.metta_kubernetes.helm_workload import Status
 
-logger = logging.getLogger("test_helm")
+logger = logging.getLogger("test_clients.helm")
 
 DEFAULT_K8S_NAMESPACE = "default"
 
 
-def test_kubernetes_helm_workload(environment_up):
+@pytest.fixture(scope="module")
+def metrics_workload(environment_up):
+    """Get the helm metrics workload from fixtures/yml."""
+    # we have a docker run workload fixture called "metrics-helm-workload"
+    plugin = environment_up.fixtures.get_plugin(instance_id="metrics-helm-workload")
+
+    logger.info("Starting helm instance")
+    plugin.prepare(environment_up.fixtures)
+    plugin.apply(wait=True)
+
+    yield plugin
+
+    plugin.destroy()
+
+
+def test_kubernetes_helm_workload(metrics_workload, kubeapi_client):
     """Test that we can get a helm workload to run."""
-
-    metrics_helm_workload = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="metrics-helm-workload"
-    )
-    """ workload plugin we will use to run helm """
-
-    kubectl_client = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-        plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
-    )
-    """ kubeapi client plugin """
-
-    apps_v1 = kubectl_client.get_api("AppsV1Api")
+    apps_v1 = kubeapi_client.get_api("AppsV1Api")
     """ kubernetes client api we will use to detect the helm release in k8s """
 
-    logger.info("Building the helm workload instance from the environment")
-    instance = metrics_helm_workload.create_instance(environment_up.fixtures)
-
     # use some instance overrides
-    # instance.name = f"{instance.name}-{0}""
-    instance.namespace = DEFAULT_K8S_NAMESPACE
+    metrics_workload.namespace = DEFAULT_K8S_NAMESPACE
 
-    try:
-        instance_list = instance.list()
-        logger.info("Helm releases before start: %s", instance_list)
+    info = metrics_workload.info(deep=False)
 
-        logger.info("Starting helm instance")
-        instance.apply(wait=True)
+    instance_list = metrics_workload.list()
+    logger.info("Helm releases : %s", instance_list)
 
-        nsd = apps_v1.list_namespaced_deployment(namespace=DEFAULT_K8S_NAMESPACE)
-        logger.info(
-            "Namespace (%s) deployments: %s",
-            DEFAULT_K8S_NAMESPACE,
-            {item.metadata.name: item.status for item in nsd.items},
-        )
+    nsd = apps_v1.list_namespaced_deployment(namespace=DEFAULT_K8S_NAMESPACE)
+    logger.info(
+        "Namespace (%s) deployments: %s",
+        DEFAULT_K8S_NAMESPACE,
+        {item.metadata.name: item.status for item in nsd.items},
+    )
 
-        instance_list = instance.list(all=True)
-        logger.info("Helm release list before status: %s", instance_list)
+    helm_release_name = info["release"]["name"]
+    deployment_name = f"{helm_release_name}-metrics-server"
 
-        deployment = apps_v1.read_namespaced_deployment(
-            f"{instance.name}-metrics-server", instance.namespace
-        )
-        logger.info(
-            "Looks like the helm deployment: %s", deployment.metadata.annotations
-        )
+    deployment = apps_v1.read_namespaced_deployment(
+        deployment_name,
+        metrics_workload.namespace,
+    )
+    logger.info("Looks like the helm deployment: %s", deployment.metadata.annotations)
 
-        logger.info("Running helm instance tests")
-        instance.test()
+    logger.info("Running helm instance tests")
+    metrics_workload.test()
 
-        logger.info("Checking helm instance status")
-        status = instance.status()
-        assert status.name == instance.name
-        assert status.status == Status.DEPLOYED
-        logger.info("--> Status: %s", status.description)
-
-    # pylint: disable=broad-except
-    except Exception as err:
-        logger.error("helm operations failed: %s", err)
-        raise err
-
-    finally:
-        logger.info("Stopping the helm release instance")
-        instance.destroy()
+    logger.info("Checking helm instance status")
+    status = metrics_workload.status()
+    assert status.name == helm_release_name
+    assert status.status == Status.DEPLOYED
+    logger.info("--> Status: %s", status.description)

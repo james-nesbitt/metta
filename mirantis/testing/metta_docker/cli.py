@@ -10,14 +10,13 @@ from typing import Dict, Any
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .client import METTA_PLUGIN_ID_DOCKER_CLIENT
 
 logger = logging.getLogger("metta.cli.docker")
 
-METTA_PLUGIN_ID_DOCKER_CLI = "metta_docker"
+METTA_PLUGIN_ID_DOCKER_CLI = "metta_docker_cli"
 """ metta plugin_id for the launchpad cli plugin """
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
@@ -28,15 +27,14 @@ class DockerCliPlugin(CliBase):
     def fire(self) -> Dict[str, Any]:
         """Return command groups for Docker plugins."""
         if (
-            self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+            self._environment.fixtures.get(
                 plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
                 exception_if_missing=False,
             )
             is not None
         ):
 
-            return {"contrib": {"docker": DockerGroup(self.environment)}}
+            return {"contrib": {"docker": DockerGroup(self._environment)}}
 
         return {}
 
@@ -52,35 +50,21 @@ class DockerGroup:
         """Pick a matching client."""
         if instance_id:
             return self._environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
                 plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
                 instance_id=instance_id,
             )
 
         # Get the highest priority workload
         return self._environment.fixtures.get(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT,
             plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
         )
 
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
     def info(self, workload: str = "", deep: bool = False):
         """Get info about a client plugin."""
         fixture = self._select_client(instance_id=workload)
-
-        collect_info = {
-            "fixture": {
-                "plugin_type": fixture.plugin_type,
-                "plugin_id": fixture.plugin_id,
-                "instance_id": fixture.instance_id,
-                "priority": fixture.priority,
-            }
-        }
-
-        if deep:
-            if hasattr(fixture.plugin, "info"):
-                collect_info.update(fixture.plugin.info())
-
-        return cli_output(collect_info)
+        return cli_output(fixture.info())
 
     # 'all' is effectively a passthrough variable
     # pylint: disable=redefined-builtin

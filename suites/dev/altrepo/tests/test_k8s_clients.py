@@ -6,8 +6,8 @@ Test that some clients work
 
 import logging
 
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
 logger = logging.getLogger("test_clients")
@@ -23,7 +23,7 @@ def test_launchpad_kubectl_client(environment_up):
 
     logger.info("Getting K8s client")
     kubectl_client = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
     )
 
@@ -38,7 +38,7 @@ def test_kubernetes_deployment_workload(environment_up):
     """test that we can get a k8s deployment workload to run"""
 
     sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
         instance_id="sanity_kubernetes_deployment",
     )
     """ workload plugin """

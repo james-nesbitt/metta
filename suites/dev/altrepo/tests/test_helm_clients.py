@@ -6,8 +6,8 @@ Test that helm workloads work.
 
 import logging
 
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 from mirantis.testing.metta_kubernetes.helm_workload import Status
 
@@ -20,12 +20,13 @@ def test_kubernetes_helm_workload(environment_up):
     """test that we can get a helm workload to run"""
 
     metrics_helm_workload = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="metrics-helm-workload"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
+        instance_id="metrics-helm-workload",
     )
     """ workload plugin we will use to run helm """
 
     kubectl_client = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
     )
 

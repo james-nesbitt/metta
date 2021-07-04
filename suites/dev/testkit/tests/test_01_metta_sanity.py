@@ -15,8 +15,8 @@ sanity markers.
 """
 import logging
 
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 
 # import for asserting provisioner plugin ids and classes
 from mirantis.testing.metta_common import METTA_PLUGIN_ID_PROVISIONER_COMBO
@@ -49,7 +49,7 @@ def test_provisioners(environment):
     # to compare metadata, and the plugin to make sure it is what we expect.
 
     combo_fixture = environment.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="combo"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER, instance_id="combo"
     )
     combo = combo_fixture.plugin
     """ the combo provisioner is a special provisioner aggregator """
@@ -61,13 +61,13 @@ def test_provisioners(environment):
     # Also test that the combo provisioner is the default one
     assert (
         environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_PROVISIONER
+            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
         ).instance_id
         == "combo"
     )
 
     launchpad_fixture = environment.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="launchpad"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER, instance_id="launchpad"
     )
     launchpad = launchpad_fixture.plugin
 
@@ -76,7 +76,7 @@ def test_provisioners(environment):
     assert isinstance(launchpad, LaunchpadProvisionerPlugin)
 
     ansible_fixture = environment.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="ansible"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER, instance_id="ansible"
     )
     ansible = ansible_fixture.plugin
 
@@ -85,7 +85,7 @@ def test_provisioners(environment):
     assert isinstance(ansible, AnsibleProvisionerPlugin)
 
     terraform_fixture = environment.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="terraform"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER, instance_id="terraform"
     )
     terraform = terraform_fixture.plugin
 
@@ -103,7 +103,8 @@ def test_workload(environment):
     # see in `metta config get fixtures`. Then we confirm their plugin types.
 
     sanity_docker_run_fixture = environment.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="sanity_docker_run"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
+        instance_id="sanity_docker_run",
     )
     sanity_docker_run = sanity_docker_run_fixture.plugin
 

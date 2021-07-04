@@ -11,13 +11,15 @@ from typing import Any
 
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
-from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
+from mirantis.testing.metta.healthcheck import METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
+from mirantis.testing.metta_cli.base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
-from .kubeapi_client import KubernetesApiClientPlugin, METTA_PLUGIN_ID_KUBERNETES_CLIENT
-from .kubeapi_healthcheck import KubeApiHealthCheckPlugin
+from .kubeapi_client import (
+    KubernetesApiClientPlugin,
+    METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+)
 from .deployment_workload import (
     KubernetesDeploymentWorkloadPlugin,
     METTA_PLUGIN_ID_KUBERNETES_DEPLOYMENT_WORKLOAD,
@@ -40,31 +42,26 @@ from .cli import KubernetesCliPlugin, METTA_PLUGIN_ID_KUBERNETES_CLI
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT
+    plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+    interfaces=[
+        METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
+        METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
+        METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+    ],
 )
 def metta_plugin_factory_client_kubernetes(
     environment: Environment, instance_id: str = "", kube_config_file: str = ""
 ) -> KubernetesApiClientPlugin:
-    """Create an metta kubernetes client plugin."""
+    """Create a metta kubernetes client plugin."""
     return KubernetesApiClientPlugin(environment, instance_id, kube_config_file)
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
-    plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
-)
-def metta_kubernetes_factory_healthcheck_k8s(
-    environment: Environment,
-    instance_id: str,
-    kubeapi_client: KubernetesApiClientPlugin,
-) -> KubeApiHealthCheckPlugin:
-    """Create an MKE cli plugin."""
-    return KubeApiHealthCheckPlugin(environment, instance_id, kubeapi_client)
-
-
-@Factory(
-    plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
     plugin_id=METTA_PLUGIN_ID_KUBERNETES_DEPLOYMENT_WORKLOAD,
+    interfaces=[
+        METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
+        METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
+    ],
 )
 def metta_plugin_factory_workload_kubernetes_deployment(
     environment: Environment,
@@ -79,8 +76,8 @@ def metta_plugin_factory_workload_kubernetes_deployment(
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
     plugin_id=METTA_PLUGIN_ID_KUBERNETES_YAML_WORKLOAD,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD],
 )
 def metta_plugin_factory_workload_kubernetes_yaml(
     environment: Environment,
@@ -95,8 +92,8 @@ def metta_plugin_factory_workload_kubernetes_yaml(
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
     plugin_id=METTA_PLUGIN_ID_KUBERNETES_HELM_WORKLOAD,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD],
 )
 def metta_plugin_factory_workload_kubernetes_helm(
     environment: Environment,
@@ -110,7 +107,10 @@ def metta_plugin_factory_workload_kubernetes_helm(
     )
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLI)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLI,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
 def metta_terraform_factory_cli_kubernetes(
     environment: Environment, instance_id: str = ""
 ):

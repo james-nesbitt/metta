@@ -12,8 +12,8 @@ import logging
 
 logger = logging.getLogger("metta.provisioner")
 
-METTA_PLUGIN_TYPE_PROVISIONER = "provisioner"
-""" metta plugin type idnetifier for client plugins """
+METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER = "provisioner"
+""" metta plugin interface identifier for client plugins """
 
 METTA_PROVISIONER_CONFIG_PROVISIONERS_LABEL = "provisioners"
 """ A centralized configerus load labe for multiple provisioners """

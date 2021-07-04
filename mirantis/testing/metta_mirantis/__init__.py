@@ -14,9 +14,9 @@ from typing import List, Dict
 
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
-from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
+from mirantis.testing.metta.healthcheck import METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK
+from mirantis.testing.metta_cli.base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
 from .common import add_common_config
 from .presets import add_preset_config
@@ -26,18 +26,24 @@ from .mke_client import (
     METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT,
 )
-from .mke_cli import MKEAPICliPlugin
-from .mke_healthcheck import MKEHealthCheckPlugin
-from .msr_client import MSRAPIClientPlugin, METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
-from .msr_cli import MSRAPICliPlugin
-from .msr_healthcheck import MSRHealthCheckPlugin
+from .mke_cli import MKEAPICliPlugin, METTA_MIRANTIS_CLI_MKE_PLUGIN_ID
+from .msr_client import (
+    MSRAPIClientPlugin,
+    METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+)
+from .msr_cli import MSRAPICliPlugin, METTA_MIRANTIS_CLI_MSR_PLUGIN_ID
 
 # ----- Plugin factories -----
 
 
 # pylint: disable=too-many-arguments
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID
+    plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+    interfaces=[
+        METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
+        METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
+        METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+    ],
 )
 def metta_mirantis_plugin_factory_client_mke(
     environment: Environment,
@@ -61,7 +67,8 @@ def metta_mirantis_plugin_factory_client_mke(
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID
+    plugin_id=METTA_MIRANTIS_CLI_MKE_PLUGIN_ID,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
 )
 def metta_terraform_factory_cli_mke(
     environment: Environment, instance_id: str = ""
@@ -70,20 +77,14 @@ def metta_terraform_factory_cli_mke(
     return MKEAPICliPlugin(environment, instance_id)
 
 
-@Factory(
-    plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
-    plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
-)
-def metta_terraform_factory_healthcheck_mke(
-    environment: Environment, instance_id: str, mke_api: MKEAPIClientPlugin
-) -> MKEHealthCheckPlugin:
-    """Create an MKE cli plugin."""
-    return MKEHealthCheckPlugin(environment, instance_id, mke_api)
-
-
 # pylint: disable=too-many-arguments
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
+    plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+    interfaces=[
+        METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
+        METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
+        METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
+    ],
 )
 def metta_mirantis_plugin_factory_client_msr(
     environment: Environment,
@@ -107,22 +108,12 @@ def metta_mirantis_plugin_factory_client_msr(
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
+    plugin_id=METTA_MIRANTIS_CLI_MSR_PLUGIN_ID,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
 )
 def metta_terraform_factory_cli_msr(environment: Environment, instance_id: str = ""):
     """Create an MSR cli plugin."""
     return MSRAPICliPlugin(environment, instance_id)
-
-
-@Factory(
-    plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
-    plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
-)
-def metta_terraform_factory_healthcheck_msr(
-    environment: Environment, instance_id: str, msr_api: MSRAPIClientPlugin
-) -> MSRHealthCheckPlugin:
-    """Create an MSR cli plugin."""
-    return MSRHealthCheckPlugin(environment, instance_id, msr_api)
 
 
 # ----- METTA bootstraps that we will use on config objects -----

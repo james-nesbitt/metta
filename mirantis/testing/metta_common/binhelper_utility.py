@@ -53,7 +53,7 @@ from mirantis.testing.metta.environment import Environment
 
 logger = logging.getLogger("metta.common.utility:binhelper")
 
-METTA_PLUGIN_ID_UTILITY_BINHELPER = "bin-helper"
+METTA_PLUGIN_ID_UTILITY_BINHELPER = "bin-helper-utility"
 """ metta utility plugin_id for the bin-helper plugin """
 
 BINHELPER_UTILITY_CONFIG_LABEL = "binhelper"
@@ -127,12 +127,12 @@ class DownloadableExecutableUtility:
             plugin instance config.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
-        loaded = self.environment.config.load(label)
+        loaded = self._environment.config.load(label)
         try:
             loaded.get(base, validator=BINHELPER_CONFIG_VALIDATE_TARGET)
         except KeyError as err:

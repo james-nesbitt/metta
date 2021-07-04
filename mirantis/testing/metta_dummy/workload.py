@@ -37,14 +37,16 @@ class DummyWorkloadPlugin:
             should be requested when working on a provisioner
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
+        self.fixtures = Fixtures()
+        """This plugin keeps fixtures."""
         if fixtures is not None:
-            fixtures = environment.add_fixtures_from_dict(plugin_list=fixtures)
-        else:
-            fixtures = Fixtures()
-        self.fixtures: Fixtures = fixtures
-        """ All fixtures added to this dummy plugin. """
+            for child_instance_id, child_instance_dict in fixtures.items():
+                child = environment.add_fixture_from_dict(
+                    instance_id=child_instance_id, plugin_dict=child_instance_dict
+                )
+                self.fixtures.add(child)

@@ -7,7 +7,7 @@ plugins which it proxies for any provisioner operations.
 
 """
 import logging
-from typing import Any
+from typing import Any, List
 
 from configerus.loaded import LOADED_KEY_ROOT
 from configerus.contrib.jsonschema.validate import (
@@ -16,19 +16,20 @@ from configerus.contrib.jsonschema.validate import (
 from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures, Fixture
-from mirantis.testing.metta.plugin import (
-    METTA_PLUGIN_CONFIG_KEY_INSTANCEID,
-    METTA_PLUGIN_CONFIG_KEY_PRIORITY,
+from mirantis.testing.metta.fixtures import (
+    Fixtures,
+    Fixture,
+    METTA_FIXTURE_CONFIG_KEY_PRIORITY,
 )
+from mirantis.testing.metta.plugin import METTA_PLUGIN_CONFIG_KEY_INSTANCEID
 from mirantis.testing.metta.provisioner import (
     ProvisionerBase,
-    METTA_PLUGIN_TYPE_PROVISIONER,
+    METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
 )
 
 logger = logging.getLogger("metta.contrib.provisioner:combo")
 
-METTA_PLUGIN_ID_PROVISIONER_COMBO = "combo"
+METTA_PLUGIN_ID_PROVISIONER_COMBO = "combo_provisioner"
 """ provisioner plugin_id for the combo plugin """
 
 COMBO_PROVISIONER_CONFIG_LABEL = "provisioner"
@@ -98,13 +99,13 @@ class ComboProvisionerPlugin(ProvisionerBase):
         needed pieces for executing terraform commands
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         try:
-            combo_config = self.environment.config.load(label)
+            combo_config = self._environment.config.load(label)
         except KeyError as err:
             raise ValueError(
                 "Combo provisioner could not find any configurations"
@@ -136,8 +137,8 @@ class ComboProvisionerPlugin(ProvisionerBase):
         for backend in backends_list:
             backend_instance_id = backend[METTA_PLUGIN_CONFIG_KEY_INSTANCEID]
             try:
-                fixture = self.environment.fixtures.get(
-                    plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+                fixture = self._environment.fixtures.get(
+                    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
                     instance_id=backend_instance_id,
                 )
             except KeyError as err:
@@ -146,8 +147,8 @@ class ComboProvisionerPlugin(ProvisionerBase):
                     f"correlate with a existing fixture: {backend_instance_id}"
                 ) from err
 
-            if hasattr(backend, METTA_PLUGIN_CONFIG_KEY_PRIORITY):
-                fixture.priority = backend[METTA_PLUGIN_CONFIG_KEY_PRIORITY]
+            if hasattr(backend, METTA_FIXTURE_CONFIG_KEY_PRIORITY):
+                fixture.priority = backend[METTA_FIXTURE_CONFIG_KEY_PRIORITY]
 
             self.backends.add(fixture)
 
@@ -169,24 +170,12 @@ class ComboProvisionerPlugin(ProvisionerBase):
             return reversed(self.backends)
         return self.backends
 
-    def info(self):
+    def info(self, deep: bool = False):
         """Return structured data about self."""
         backends_info = []
         # List backends in high->low priority as this shows the order of apply
-        for fixture in self.backends:
-            backend_info = {
-                "fixture": {
-                    "type": fixture.plugin_type,
-                    "instance_id": fixture.instance_id,
-                    "plugin_id": fixture.plugin_id,
-                }
-            }
-
-            plugin = fixture.plugin
-            if hasattr(plugin, "info"):
-                backend_info.update(plugin.info())
-
-            backends_info.append(backend_info)
+        for backend in self.backends:
+            backends_info.append(backend.info(deep=deep))
 
         return {"backends": backends_info}
 
@@ -227,7 +216,7 @@ class ComboProvisionerPlugin(ProvisionerBase):
     # get_fixtures.
 
     def get_fixtures(
-        self, plugin_type: str = "", instance_id: str = "", plugin_id: str = ""
+        self, instance_id: str = "", plugin_id: str = "", interfaces: List[str] = None
     ) -> Fixtures:
         """Retrieve any matching fixtures from any of the backends."""
         matches = Fixtures()
@@ -236,8 +225,8 @@ class ComboProvisionerPlugin(ProvisionerBase):
             if hasattr(plugin, "fixtures"):
                 matches.merge(
                     plugin.fixtures.filter(
-                        plugin_type=plugin_type,
                         plugin_id=plugin_id,
+                        interfaces=interfaces,
                         instance_id=instance_id,
                     )
                 )
@@ -245,14 +234,16 @@ class ComboProvisionerPlugin(ProvisionerBase):
 
     def get_fixture(
         self,
-        plugin_type: str = "",
-        instance_id: str = "",
         plugin_id: str = "",
+        interfaces: List[str] = None,
+        instance_id: str = "",
         exception_if_missing: bool = True,
     ) -> Fixture:
         """Retrieve the first matching fixture from ordered backends."""
         matches = self.get_fixtures(
-            plugin_type=plugin_type, plugin_id=plugin_id, instance_id=instance_id
+            plugin_id=plugin_id,
+            instance_id=instance_id,
+            interfaces=interfaces,
         )
 
         if len(matches) > 0:
@@ -264,16 +255,15 @@ class ComboProvisionerPlugin(ProvisionerBase):
 
     def get_plugin(
         self,
-        plugin_type: str = "",
         plugin_id: str = "",
+        interfaces: List[str] = None,
         instance_id: str = "",
         exception_if_missing: bool = True,
     ) -> object:
-        """Retrieve one of the passed in fixtures."""
-        logger.info("%s:execute: get_plugin(%s)", self.instance_id, plugin_type)
+        """Retrieve one of the backend fixtures."""
         fixture = self.get_fixture(
-            plugin_type=plugin_type,
             plugin_id=plugin_id,
+            interfaces=interfaces,
             instance_id=instance_id,
             exception_if_missing=exception_if_missing,
         )

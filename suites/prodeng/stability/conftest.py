@@ -5,7 +5,7 @@ PyTest setup for test suite
 Primarily used to define fixtures used for the pytest implementation, which are then consumed by
 the test cases themselved.
 
-We realy heavily on metta discovery which looks for the metta.yml file, and uses that to interpret
+We rely heavily on metta discovery which looks for the metta.yml file, and uses that to interpret
 the config folder to define metta infrastructure.  The same approach is used by the metta cli,
 which makes the cli quite usable in this scope
 
@@ -15,14 +15,8 @@ import logging
 import pytest
 
 from mirantis.testing.metta import discover, get_environment, Environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
 
-from mirantis.testing.metta_launchpad.provisioner import (
-    METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
-)
-from mirantis.testing.metta_terraform.provisioner import (
-    METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
-)
 
 logger = logging.getLogger("pytest-conftest")
 
@@ -52,7 +46,15 @@ def environment(environment_discover) -> Environment:
 
 
 @pytest.fixture(scope="session")
-def environment_up(environment: Environment) -> Environment:
+def provisioner(environment) -> object:
+    """Get the provisioner plugin."""
+    return environment.fixtures.get_plugin(
+        interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
+    )
+
+
+@pytest.fixture(scope="session")
+def environment_up(environment, provisioner) -> Environment:
     """get the environment but start the provisioners before returning
 
     This is preferable to the raw provisioner in cases where you want a running
@@ -62,23 +64,7 @@ def environment_up(environment: Environment) -> Environment:
     You can still use the provsioners to update the resources if the provisioner
     plugins can handle it.
 
-
-    In this function, we know which provisioners we want to use, and we use them
-    in an order which makes sense to use.  We could just use the metta_common
-    combo provisioner, which combines multiple provisioners into one.
-
     """
-
-    launchpad = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
-        plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
-    )
-
-    terraform = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
-        plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
-    )
-
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
     conf = environment.config.load("config")
@@ -91,14 +77,13 @@ def environment_up(environment: Environment) -> Environment:
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
-            terraform.prepare()
+            provisioner.prepare()
         except Exception as err:
             logger.error("Provisioner failed to init: %s", err)
             raise err
         try:
             logger.info("Starting up the testing cluster using the provisioner")
-            terraform.apply()
-            launchpad.apply()
+            provisioner.apply()
         except Exception as err:
             logger.error("Provisioner failed to start: %s", err)
             raise err
@@ -113,8 +98,7 @@ def environment_up(environment: Environment) -> Environment:
             logger.info(
                 "Stopping the test cluster using the provisioner as directed by config"
             )
-            launchpad.destroy()
-            terraform.destroy()
+            provisioner.destroy()
         except Exception as err:
             logger.error("Provisioner failed to stop: %s", err)
             raise err

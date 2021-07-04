@@ -23,8 +23,7 @@ logger = logging.getLogger("test-binhelper")
 CONFIG_DATA = {
     "fixtures": {
         "bin-helper": {
-            "plugin_type": "utility",
-            "plugin_id": "bin-helper",
+            "plugin_id": "bin-helper-utility",
             "from_config": True,
             "path": {
                 "local": "THIS WILL GET SET IN setUpClass",

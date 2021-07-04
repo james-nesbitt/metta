@@ -24,7 +24,8 @@ from configerus.contrib.env import (
     CONFIGERUS_ENV_JSON_ENV_KEY,
 )
 
-from .plugin import METTA_PLUGIN_CONFIG_KEY_PLUGINID, METTA_PLUGIN_CONFIG_KEY_PRIORITY
+from .plugin import METTA_PLUGIN_CONFIG_KEY_PLUGINID
+from .fixtures import METTA_FIXTURE_CONFIG_KEY_PRIORITY
 
 logger = logging.getLogger("metta.discover")
 
@@ -156,7 +157,7 @@ def discover_sources_from_config(
 
         plugin_id = metta_config.get([instance_base, METTA_PLUGIN_CONFIG_KEY_PLUGINID])
         priority = metta_config.get(
-            [instance_base, METTA_PLUGIN_CONFIG_KEY_PRIORITY],
+            [instance_base, METTA_FIXTURE_CONFIG_KEY_PRIORITY],
             default=DEFAULT_SOURCE_CONFIG_PRIORITY,
         )
 

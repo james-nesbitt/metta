@@ -6,20 +6,32 @@ The basis of plugin management is here.  The functionality allows any code to
 register a plugin by decorating a factory function, or to use the factory to
 ask for an instance of a plugin based on type an id.
 
-Plugins have two important pieces of metadata for their type:
+Plugins are uniquely identified using a plugin_id string.  This string is
+a parte of the plugin registration, and is used when asking the Factory to
+create an instance of the plugin.
 
-1. Plugin_type : an arbitrary string label which allows semantic grouping of
-        plugins.  Type is used for loose retrieval, for example "to get all of
-        the CLI plugin types", but is also used for introspection (checking
-        out what we have.)
-2. Plugin_Id : an arbitrary string used to label the specific plugin type.
-        This means that when trying to get an instance of a specific plugin,
-        this value can be used.
+Plugins also have a list of string interfaces associated during registration
+which are used to allow a plugin registration to arbitrarily decide what the
+plugin can do. The interfaces descriptors play no functional role, and do
+not relate to any python structures, but rather is used to allow plugin
+consumers to look for plugins which advertise that they do certain things.
+
+The order of operations for using plugins should be:
+
+1. register the plugin by decorating a function that can build the plugin
+  with the Factory class.  Provide a unique id for the plugin and also
+  provide any describing string interfaces.
+
+2. optionally use some Factory class methods to discover plugin ids.
+
+3. ask the Factory object to create a plugin instance. This returns
+  whatever the decorated factory function returns, wrapper in a small
+  struct container that also contains some metadata about the plugin.
 
 """
 import logging
 import functools
-from typing import Dict, Callable
+from typing import List, Dict, Callable, Any
 
 logger = logging.getLogger("metta.plugin")
 
@@ -29,22 +41,37 @@ METTA_PLUGIN_CONFIG_KEY_PLUGINID = "plugin_id"
 """ configerus .get() key for plugin_id """
 METTA_PLUGIN_CONFIG_KEY_INSTANCEID = "instance_id"
 """ configerus .get() key for plugin_id """
-METTA_PLUGIN_CONFIG_KEY_PLUGINTYPE = "plugin_type"
-""" configerus .get() key for plugin type """
+METTA_PLUGIN_CONFIG_KEY_PLUGININTERFACES = "plugin_interfaces"
+""" configerus .get() key for plugin interfaces """
 METTA_PLUGIN_CONFIG_KEY_ARGUMENTS = "arguments"
 """ configerus .get() key for plugin arguments """
-METTA_PLUGIN_CONFIG_KEY_PRIORITY = "priority"
-""" configerus .get()  assign an instance a priority when it is created. """
-METTA_PLUGIN_CONFIG_KEY_CONFIG = "config"
-""" configerus .get()  as additional config """
-METTA_PLUGIN_CONFIG_KEY_VALIDATORS = "validators"
-""" configerus .get()  to decide what validators to apply to the plugin """
 
 
-METTA_PLUGIN_VALIDATION_JSONSCHEMA = {
-    METTA_PLUGIN_CONFIG_KEY_INSTANCEID: {"plugin_type": "string"}
-}
-""" json schema validation definition for a plugin """
+# object is a struct (better than a Dict)
+# pylint: disable=too-few-public-methods
+class Instance:
+    """An instances of a plugin, with some metadata about it."""
+
+    def __init__(
+        self, plugin_id: str, instance_id: str, interfaces: List[str], plugin: object
+    ):
+        """Create an Instance object."""
+        self.plugin_id = plugin_id
+        self.instance_id = instance_id
+        self.interfaces = interfaces
+        self.plugin = plugin
+
+
+# object is a struct (better than a Dict)
+# pylint: disable=too-few-public-methods
+class PluginInstanceFactory:
+    """Struct for tracking registered plugin factories with metadata."""
+
+    def __init__(self, plugin_id: str, interfaces: List[str], factory_method: Callable):
+        """Create a new PluginFactoryStruct."""
+        self.plugin_id = plugin_id
+        self.interfaces = interfaces
+        self.factory_method = factory_method
 
 
 class Factory:
@@ -62,10 +89,10 @@ class Factory:
 
     """
 
-    registry: Dict[str, Dict[str, Callable]] = {}
-    """ A dict of registered factory functions, grouped by plugin type """
+    _registry: Dict[str, PluginInstanceFactory] = {}
+    """ A dict of registered factory functions."""
 
-    def __init__(self, plugin_type: str, plugin_id: str):
+    def __init__(self, plugin_id: str, interfaces: List[str]):
         """Create a new Factory instance.
 
         This is used in two scenarios:
@@ -75,23 +102,27 @@ class Factory:
 
         Parameters:
         -----------
-        plugin_type (str) : Plugin type label which the factory created
-            pylint W0622 this is used only in this function and it makes for a
-            much more natural decorator syntax
-
         plugin_id (str) : unique identifier for the plugin which this factory
             will create.  This will be used on registration and the matching
             value is used on construction.
 
+        interfaces (List[str]) : List of string identifiers for interfaces
+
+        Raises:
+        -------
+        Plugin IDs must be universally unique.  Attempting to register a
+        plugin with an ID that exists already will raise a KeyError
         """
-        logger.debug("Metta Plugin factory registering `%s:%s`", plugin_type, plugin_id)
-        self.plugin_id: str = plugin_id
-        self.plugin_type: str = plugin_type
+        if plugin_id in self._registry:
+            raise KeyError(
+                f"Plugin registration failed, as there is already a plugin with the name {plugin_id}"
+            )
 
-        if self.plugin_type not in self.registry:
-            self.registry[self.plugin_type] = {}
+        logger.debug("Metta Plugin factory registering `%s`", plugin_id)
+        self._plugin_id: str = plugin_id
+        self._interfaces: List[str] = interfaces
 
-    def __call__(self, func: Callable):
+    def __call__(self, func: Callable) -> PluginInstanceFactory:
         """Wrap the decorator factory wrapping function.
 
         Returns:
@@ -101,53 +132,115 @@ class Factory:
         """
         functools.update_wrapper(self, func)
 
-        def wrapper(environment: object, instance_id: str, *args, **kwargs):
-            logger.debug("plugin factory exec: %s:%s", self.plugin_type, self.plugin_id)
-            plugin = func(
-                environment=environment, instance_id=instance_id, *args, **kwargs
-            )
+        def wrapper(*args, **kwargs):
+            logger.debug("plugin factory exec: %s", self._plugin_id)
+            return func(*args, **kwargs)
 
-            return plugin
-
-        self.registry[self.plugin_type][self.plugin_id] = wrapper
+        self._registry[self._plugin_id] = PluginInstanceFactory(
+            self._plugin_id, self._interfaces, wrapper
+        )
         return wrapper
 
-    def create(self, environment: object, instance_id: str, *args, **kwargs) -> object:
-        """Get an instance of a plugin as created by the decorated.
+    @classmethod
+    def create(
+        cls,
+        plugin_id: str,
+        instance_id: str,
+        *args: List[Any],
+        **kwargs: Dict[str, Any],
+    ) -> Any:
+        """Get an instance of a plugin as created by the decorated factory.
 
         Parameters:
         -----------
-        environment (Environment) : Environment object in which this plugin
-            lives.
+        plugin_id (str) : plugin id of the plugin to be created, which must
+            match a registered plugin id.
 
-        instance_id (str) : instance id for the plugin.  A unique identifier
-            which the plugin can use for naming and introspective
-            identification.
+        akwargs : Arguments passed to the plugin factory as kwargs.
+
+        @NOTE The metta environment object is the most common requestor of
+            plugins, and it will always pass some arguments to every plugin
+            factory, which means that plugins are expected to accept those
+            arguments.
+
+        Returns:
+        --------
+        An instance of the plugin as created by the registered plugin factory.
+
+        Metta core often expects this return to be an object instance of a
+        plugin class, which will implemented interfaces based on the kind of
+        plugin.  This is kind of abstract, but that follows the goals of the
+        plugin management system, which is just hear to register and create
+        plugins for coordinated functionality injection.
 
         """
+        if not (isinstance(plugin_id, str) and isinstance(instance_id, str)):
+            raise ValueError(
+                f"Bad arguments passed for creating a fixture: "
+                f":{plugin_id}:{instance_id}"
+            )
         try:
-            factory = self.registry[self.plugin_type][self.plugin_id]
+            factory = cls._registry[plugin_id]
         except KeyError as err:
             raise NotImplementedError(
-                f"METTA Plugin instance '{self.plugin_type}:{self.plugin_id}' "
-                "has not been registered."
+                f"METTA Plugin factory '{plugin_id}' has not been registered."
             ) from err
         except Exception as err:
             raise Exception(
-                f"Could not create Plugin instance '{self.plugin_type}:{self.plugin_id}' "
-                "due to an unknown error."
+                f"Could not create Plugin instance '{plugin_id}' due to an unknown error."
             ) from err
 
-        return factory(
-            environment=environment, instance_id=instance_id, *args, **kwargs
+        plugin = factory.factory_method(*args, **kwargs)
+        return Instance(
+            plugin_id=plugin_id,
+            instance_id=instance_id,
+            interfaces=factory.interfaces,
+            plugin=plugin,
         )
 
     @classmethod
-    def plugin_types(cls):
-        """Return a generator of types that have been registered."""
-        return cls.registry.keys()
+    def interfaces(cls) -> List[str]:
+        """Return an iterable of types that have been registered.
+
+        Returns:
+        --------
+        A list of string registered plugin ids
+
+        """
+        plugin_interfaces: List[str] = []
+        for factory in cls._registry.values():
+            for factory_interface in factory.interfaces:
+                if factory_interface not in plugin_interfaces:
+                    plugin_interfaces.append(factory_interface)
+        return plugin_interfaces
 
     @classmethod
-    def plugins(cls, plugin_type: str):
-        """Return a generator of registered plugin keys for a passed plugin type registered."""
-        return cls.registry[plugin_type].keys()
+    def plugin_ids(cls, interfaces_filter: List[str] = None) -> List[str]:
+        """Return a generator of matching registered plugins
+
+        Parameters:
+        -----------
+        interfaces_filter (List[str]) : if not empty, then only plugins which
+            have all of the passed interfaces are included in the return.
+
+        Returns:
+        --------
+        A List of plugin ids for all matching plugins (which is all plugins
+        if you passed an empty filter list)
+        """
+        if interfaces_filter is None:
+            interfaces_filter = []
+
+        if len(interfaces_filter) == 0:
+            return list(cls._registry.keys())
+
+        plugin_ids: List[str] = []
+        for factory in cls._registry.values():
+            for interface_filter in interfaces_filter:
+                if interface_filter not in factory.interfaces:
+                    break
+            else:
+                # interfaces do intersect
+                plugin_ids.append(factory.plugin_id)
+
+        return plugin_ids

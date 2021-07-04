@@ -21,7 +21,6 @@ from configerus.validator import ValidationError
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.provisioner import ProvisionerBase
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 from mirantis.testing.metta_mirantis import (
     METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
@@ -32,7 +31,7 @@ from .exec_client import METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID
 
 logger = logging.getLogger("mirantis.testing.metta.provisioner:launchpad")
 
-METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID = "metta_launchpad"
+METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID = "metta_launchpad_provisioner"
 """ Metta plugin_id for the launchpad provisioner plugin """
 
 METTA_LAUNCHPAD_CONFIG_LABEL = "launchpad"
@@ -143,9 +142,9 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         base: Any = LOADED_KEY_ROOT,
     ):
         """Configure a new Launchpad provisioner plugin instance."""
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         self.fixtures = Fixtures()
@@ -158,7 +157,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         self.config_base: str = base
 
         """ load all of the launchpad configuration """
-        launchpad_config_loaded = self.environment.config.load(label)
+        launchpad_config_loaded = self._environment.config.load(label)
 
         # Run confgerus validation on the config using our above defined
         # jsonschema
@@ -239,7 +238,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         plugin = self
         client = self.client
 
-        loaded = self.environment.config.load(self.config_label)
+        loaded = self._environment.config.load(self.config_label)
 
         info = {
             "plugin": {
@@ -269,23 +268,6 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             except Exception:
                 # There are many legitimate cases where this fails
                 pass
-
-            fixtures = {}
-            for fixture in self.fixtures:
-                fixture_info = {
-                    "fixture": {
-                        "plugin_type": fixture.plugin_type,
-                        "plugin_id": fixture.plugin_id,
-                        "instance_id": fixture.instance_id,
-                        "priority": fixture.priority,
-                    }
-                }
-                if hasattr(fixture.plugin, "info"):
-                    plugin_info = fixture.plugin.info()
-                    if isinstance(plugin_info, dict):
-                        fixture_info.update(plugin_info)
-                fixtures[fixture.instance_id] = fixture_info
-            info["fixtures"] = fixtures
 
         user = "admin"
         info["helper"] = {
@@ -342,7 +324,6 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         # is downloaded.
         try:
             mke = self.fixtures.get_plugin(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
             )
             mke.api_get_bundle(force=True)
@@ -357,7 +338,6 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         # tell the MKE client to remove its bundles
         try:
             mke = self.fixtures.get_plugin(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
             )
             mke.rm_bundle()
@@ -380,7 +360,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         """Write the config state to the launchpad file."""
         try:
             # load all of the launchpad configuration, force a reload to get up to date contents
-            launchpad_loaded = self.environment.config.load(
+            launchpad_loaded = self._environment.config.load(
                 self.config_label, force_reload=True
             )
             launchpad_config: Dict[str, Any] = launchpad_loaded.get(
@@ -476,7 +456,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
         """
         # get fresh values for the launchpad config (in case it has changed)
-        launchpad_config = self.environment.config.load(
+        launchpad_config = self._environment.config.load(
             self.config_label, force_reload=reload
         )
 
@@ -509,10 +489,9 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             mke_api_accesspoint = clean_accesspoint(mke_api_accesspoint)
 
             instance_id = (
-                f"{self.instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}-{user}"
+                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}-{user}"
             )
-            fixture = self.environment.add_fixture(
-                METTA_PLUGIN_TYPE_CLIENT,
+            fixture = self._environment.add_fixture(
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
                 instance_id=instance_id,
                 priority=70,
@@ -523,8 +502,9 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
                     "hosts": mke_hosts,
                     "bundle_root": mke_client_bundle_root,
                 },
+                replace_existing=True,
             )
-            self.fixtures.add(fixture)
+            self.fixtures.add(fixture, replace_existing=True)
 
         # MSR Client
         #
@@ -543,10 +523,9 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             msr_api_accesspoint = clean_accesspoint(msr_api_accesspoint)
 
             instance_id = (
-                f"{self.instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}-{user}"
+                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}-{user}"
             )
-            fixture = self.environment.add_fixture(
-                METTA_PLUGIN_TYPE_CLIENT,
+            fixture = self._environment.add_fixture(
                 plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
                 instance_id=instance_id,
                 priority=70,
@@ -556,23 +535,24 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
                     "password": msr_api_password,
                     "hosts": msr_hosts,
                 },
+                replace_existing=True,
             )
-            self.fixtures.add(fixture)
+            self.fixtures.add(fixture, replace_existing=True)
 
         # EXEC CLIENT
         #
         if len(hosts) > 0:
             instance_id = (
-                f"{self.instance_id}-{METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID}-{user}"
+                f"{self._instance_id}-{METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID}-{user}"
             )
-            fixture = self.environment.add_fixture(
-                METTA_PLUGIN_TYPE_CLIENT,
+            fixture = self._environment.add_fixture(
                 plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
                 instance_id=instance_id,
                 priority=69,
                 arguments={"client": self.client},
+                replace_existing=True,
             )
-            self.fixtures.add(fixture)
+            self.fixtures.add(fixture, replace_existing=True)
 
 
 def clean_accesspoint(accesspoint: str) -> str:

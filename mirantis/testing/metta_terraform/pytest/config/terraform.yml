@@ -6,12 +6,6 @@
 # file, and we could have put all of this config there - but leaving here makes
 # it more readable.
 
-# Here we provide useful information about the metta plugin, but this informatio
-# is not actually needed.  The plugin already exists by the time this file is
-# read.  The information is here for reader orientation.
-plugin_type: provisioner
-plugin_id: metta_terraform
-
 # Let's build some values here which can be resued later in the file
 # used for resource naming in various places
 id: metta-demo
@@ -22,11 +16,11 @@ root:
 # Here we set some meta data paths from the terraform plugin.
 # Tell the terraform plugin where to find the tf chart/plan/root-module
 plan:
-    path: "tf_prodeng_plan"
+    path: "terraform"
 
 # Tell the terraform plugin where to put the state file
 state:
-    path: "tf_prodeng_plan/{{id}}.terraform.state"
+    path: "terraform/{{id}}.terraform.state"
 
 # For Terraform variables, the following will be turned into a tfvars.json file
 # which can be used to configure the terraform chart.

@@ -9,10 +9,12 @@ MSR api client and healthcheck cli plugin.
 import requests
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .msr_client import METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID
+
+METTA_MIRANTIS_CLI_MSR_PLUGIN_ID = "mirantis_msr_cli"
+""" Mirantis MSR API CLI plugin id """
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
 # pylint: disable=too-few-public-methods
@@ -24,14 +26,13 @@ class MSRAPICliPlugin(CliBase):
     def fire(self):
         """Return any MSR CLI command groups."""
         if (
-            self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+            self._environment.fixtures.get(
                 plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
                 exception_if_missing=False,
             )
             is not None
         ):
-            return {"contrib": {"msr": MSRAPICliGroup(self.environment)}}
+            return {"contrib": {"msr": MSRAPICliGroup(self._environment)}}
 
         return {}
 
@@ -41,41 +42,25 @@ class MSRAPICliGroup:
 
     def __init__(self, environment: Environment):
         """Create a new MSR CLI command group."""
-        self.environment = environment
+        self._environment = environment
 
     def _select_fixture(self, instance_id: str = ""):
         """Pick a matching fixture in case there are more than one."""
         if instance_id:
-            return self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+            return self._environment.fixtures.get(
                 plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
                 instance_id=instance_id,
             )
 
         # Get the highest priority fixture
-        return self.environment.fixtures.get(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        return self._environment.fixtures.get(
             plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
         )
 
     def info(self, instance_id: str = "", deep: bool = False):
         """Get info about a plugin."""
         fixture = self._select_fixture(instance_id=instance_id)
-
-        info = {
-            "fixture": {
-                "plugin_type": fixture.plugin_type,
-                "plugin_id": fixture.plugin_id,
-                "instance_id": fixture.instance_id,
-                "priority": fixture.priority,
-            }
-        }
-
-        if deep:
-            if hasattr(fixture.plugin, "info"):
-                info.update(fixture.plugin.info(deep))
-
-        return cli_output(info)
+        return cli_output(fixture.info(deep=deep))
 
     def health(self, instance_id: str = ""):
         """Get health for the plugin."""

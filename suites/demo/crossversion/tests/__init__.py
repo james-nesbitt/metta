@@ -11,8 +11,8 @@ import pytest
 from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta import get_environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta_common import METTA_PLUGIN_ID_PROVISIONER_COMBO
 from mirantis.testing.metta_launchpad import METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID
 from mirantis.testing.metta_mirantis.mke_client import (
@@ -56,7 +56,7 @@ class EnvManager:
     def install(self, environment):
         """Bring up all provisioners as needed."""
         combo_provisioner = environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
             plugin_id=METTA_PLUGIN_ID_PROVISIONER_COMBO,
         )
         combo_provisioner.prepare()
@@ -77,7 +77,7 @@ class EnvManager:
         @NOTE we only need launchpad to re-install for an upgrade
         """
         launchpad_provisioner = environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
             plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
         )
 
@@ -93,7 +93,7 @@ class EnvManager:
     def destroy(self, environment):
         """Destroy all created resources."""
         combo_provisioner = environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
             plugin_id=METTA_PLUGIN_ID_PROVISIONER_COMBO,
         )
         combo_provisioner.destroy()
@@ -122,7 +122,7 @@ class TestBase:
         # which mke client plugin instance we receive,  however there is only one
         # in this case.
         return environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
             plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
         )
 
@@ -172,7 +172,7 @@ class TestBase:
         # which mke client plugin instance we receive,  however there is only one
         # in this case.
         return environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
             plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
         )
 

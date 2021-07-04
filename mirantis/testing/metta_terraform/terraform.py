@@ -12,6 +12,7 @@ import json
 import os
 import time
 import subprocess
+import shutil
 from typing import Dict, List
 
 logger = logging.getLogger("metta_terraform:client")
@@ -52,6 +53,11 @@ class TerraformClient:
         self.working_dir = working_dir
         self.state_path = state_path
         self.vars_path = vars_path
+
+        if shutil.which(binary) is None:
+            raise ValueError(
+                f"Terraform binary not found. Terraform commands cannot be called.  Expected binary at path {binary}"
+            )
 
         self.terraform_bin = binary
 

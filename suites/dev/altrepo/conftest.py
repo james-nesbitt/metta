@@ -15,7 +15,7 @@ import logging
 import pytest
 
 from mirantis.testing.metta import discover, get_environment, Environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
 
 from mirantis.testing.metta_launchpad.provisioner import (
     METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
@@ -70,12 +70,12 @@ def environment_up(environment: Environment) -> Environment:
     """
 
     launchpad = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
         plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
     )
 
     terraform = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
         plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
     )
 

@@ -14,7 +14,7 @@ from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta.workload import WorkloadBase, WorkloadInstanceBase
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
@@ -123,7 +123,7 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
             raise ValueError("Invalid litmus chaos config received") from err
 
         kube_client = fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
             plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
         )
 

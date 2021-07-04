@@ -14,7 +14,6 @@ fixtures.yml
 ```
 # cncf :: metta.plugin.workload:
 cncf:
-    plugin_type: workload
     plugin_id: metta_sonobuoy_workload
 
     # build the plugin from this config, by passing this label/base to it
@@ -39,7 +38,7 @@ Now your workload plugin can be accessed and used:
 
 ```
     cncf = environment_up.fixtures.get_plugin(
-        plugin_type='workload', instance_id='cncf')
+        instance_id='cncf')
     """ cncf workload plugin """
 
     instance = cncf.create_instance(environment_up.fixtures)

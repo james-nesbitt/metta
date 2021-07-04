@@ -7,6 +7,10 @@ kubernetes:
   # Pull the kubernetes version from the variables config file
   version: "{{variables:sonobuoy_kubernetes_version}}"
 
+results:
+  # unique path for each retrieve (this path contains a space)
+  path: "{{paths:project}}/results"
+
 plugin:
     plugins:
     - e2e

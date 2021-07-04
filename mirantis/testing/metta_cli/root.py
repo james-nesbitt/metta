@@ -19,7 +19,7 @@ from mirantis.testing.metta import (
 )
 from mirantis.testing.metta.plugin import Factory
 
-from .base import METTA_PLUGIN_TYPE_CLI
+from .base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
 
 logger = logging.getLogger("metta.cli.root")
@@ -85,8 +85,12 @@ class Root:
         object directly, so that Fire can see them.
 
         """
-        for plugin_id in Factory.registry[METTA_PLUGIN_TYPE_CLI]:
-            plugin_dict = {"plugin_type": METTA_PLUGIN_TYPE_CLI, "plugin_id": plugin_id}
+        for plugin_id in Factory.plugin_ids(
+            interfaces_filter=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
+        ):
+            plugin_dict = {
+                "plugin_id": plugin_id,
+            }
 
             fixture = self._environment.add_fixture_from_dict(plugin_dict=plugin_dict)
 
@@ -98,11 +102,13 @@ class Root:
 
             try:
                 commands = plugin.fire()
-            except TypeError as err:
-                raise NotImplementedError(
-                    f"Plugin {plugin.plugin_id} did not properly implement "
-                    f"the fire(fixtures) method"
-                ) from err
+
+            # A failed command load shouldn't kill all commands
+            # pylint: disable=broad-except
+            except Exception as err:
+                logger.warning(
+                    "CLI plugin '%s' failed when adding commands: %s", plugin_id, err
+                )
 
             if not isinstance(commands, dict):
                 raise ValueError(f"Plugin returned invalid commands : {commands}")

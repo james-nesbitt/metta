@@ -11,8 +11,6 @@ import json
 
 import pytest
 
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
 from mirantis.testing.metta_mirantis.mke_client import (
     METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
 )
@@ -42,7 +40,6 @@ def mke(environment):
     """Get the mke client."""
     try:
         return environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT,
             plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
         )
 
@@ -52,10 +49,9 @@ def mke(environment):
 
 @pytest.fixture(scope="package")
 def kubeapi(environment):
-    """Get the kubeapi client."""
+    """Get the kubeapi client and wait for it to be ready."""
     try:
         kubeapi_client = environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT,
             plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
         )
 
@@ -103,49 +99,61 @@ def environment_up_unlocked(environment_up, mke, kubeapi):
 
 
 @pytest.fixture(scope="module")
+def healthpoller(environment_up):
+    """Start the healthpoller."""
+    healthpoller_plugin = environment_up.fixtures.get_plugin(instance_id="healthpoller")
+    """ healthpoller workload defined in fixtures.yml, using fixtures from our environment """
+
+    try:
+        healthpoller_plugin.prepare(environment_up.fixtures)
+        healthpoller_plugin.apply()
+    except Exception as err:
+        raise RuntimeError(
+            "healthpoller_plugin failed to initialize before running test"
+        ) from err
+
+    yield healthpoller_plugin
+
+    healthpoller_plugin.destroy()
+
+
+@pytest.fixture(scope="module")
 def npods(environment_up_unlocked, npods_config):
     """Create helm workload plugin using fixtures from our env."""
     npods_plugin = environment_up_unlocked.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="npods-workload"
+        instance_id="npods-workload"
     )
-    npods_instance = npods_plugin.create_instance(environment_up_unlocked.fixtures)
     """ npods helm workload defined in fixtures.yml, using fixtures from our environment """
 
     try:
-        npods_instance.apply(wait=True)
+        npods_plugin.prepare(environment_up_unlocked.fixtures)
+        npods_plugin.apply(wait=True)
     except Exception as err:
         raise RuntimeError(
             "Npods helm stack failed to initialize before running test"
         ) from err
 
-    yield npods_instance
+    yield npods_plugin
 
-    npods_instance.destroy()
-    return npods_instance
+    npods_plugin.destroy()
 
 
 @pytest.fixture(scope="package")
-def loki(environment_up_unlocked, npods_config):
+def loki(environment_up, npods_config):
     """Create monitoring helm workload plugin using fixtures from our env."""
-    loki_plugin = environment_up_unlocked.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="loki-workload"
-    )
-    loki_instance = loki_plugin.create_instance(environment_up_unlocked.fixtures)
+    loki_plugin = environment_up.fixtures.get_plugin(instance_id="loki-workload")
     """ loki helm workload defined in fixtures.yml, using fixtures from our environment """
 
     try:
-        if npods_config.get("monitoring.enable", default=True):
-            # start the loki monitoring cluster
-            logger.info("Starting loki monitoring stack")
-            loki_instance.apply(wait=True)
-        else:
-            logger.debug(
-                "Not starting the loki monitoring stack (because config said don't)"
-            )
+        logger.info("Starting loki monitoring stack")
+        loki_plugin.prepare(environment_up.fixtures)
+        loki_plugin.apply(wait=True)
 
     # pylint: disable=broad-except
     except BaseException:
         # this is not a blocking failure
         logger.error("Loki monitoring stack failed to start")
 
-    return loki_instance
+    return loki_plugin
+
+    # we don't yield as typically you want this stack to stay in place after the run.

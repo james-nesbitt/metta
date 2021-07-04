@@ -12,8 +12,8 @@ import logging
 
 logger = logging.getLogger("metta.client")
 
-METTA_PLUGIN_TYPE_CLIENT = "client"
-""" metta plugin type idnetifier for client plugins """
+METTA_PLUGIN_INTERFACE_ROLE_CLIENT = "client"
+""" metta plugin interface identifier for client plugins """
 
 METTA_CLIENT_CONFIG_CLIENTS_LABEL = "clients"
 """ A centralized configerus label for multiple clients """

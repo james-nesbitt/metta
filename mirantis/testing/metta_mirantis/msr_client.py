@@ -19,12 +19,12 @@ import requests
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
+from mirantis.testing.metta.healthcheck import Health, HealthStatus
 
 logger = logging.getLogger("metta.contrib.metta_mirantis.client.msrapi")
 
 
-METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID = "metta_mirantis_client_msr"
+METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID = "mirantis_msr_client"
 """ Mirantis MSR APIP Client plugin id """
 
 
@@ -78,9 +78,9 @@ class MSRAPIClientPlugin:
             endpoint is specified.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists."""
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance."""
 
         self.accesspoint = accesspoint
@@ -114,9 +114,6 @@ class MSRAPIClientPlugin:
         self.fixtures = Fixtures()
         """fixtures created by this plugin."""
 
-        self.healthchecks()
-        """Add healthcheck plugins for this instance."""
-
     def host_count(self):
         """Return integer host count for MSR cluster."""
         return len(self.hosts)
@@ -138,21 +135,19 @@ class MSRAPIClientPlugin:
 
         return info
 
-    def healthchecks(self) -> Fixtures:
-        """Create and return healthcheck plugins for this client instance."""
-        healthcheck_fixtures = Fixtures()
+    def health(self) -> Health:
+        """Determine the health of the MSR instance."""
+        msr_health = Health(source=self._instance_id, status=HealthStatus.UNKNOWN)
 
-        kubeapi_healthcheck = self.environment.add_fixture(
-            plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
-            plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
-            instance_id=f"{self.instance_id}-healthcheck",
-            priority=70,
-            arguments={"msr_api": self},
-        )
-        healthcheck_fixtures.add(kubeapi_healthcheck)
-        self.fixtures.add(kubeapi_healthcheck)
+        for _health_health_function in [
+            self._health_node_health,
+            self._health_msr_replica_health,
+            self._health_msr_alerts,
+        ]:
+            _health_health = _health_health_function()
+            msr_health.merge(_health_health)
 
-        return healthcheck_fixtures
+        return msr_health
 
     def api_ping(self, node: int = None) -> bool:
         """Check the API ping response."""
@@ -296,3 +291,50 @@ class MSRAPIClientPlugin:
             return node_dict["winrm"]["address"]
 
         raise ValueError(f"No node address could be found for the node {node}")
+
+    def _health_node_health(self):
+        """Test node health."""
+        health = Health(source=self._instance_id)
+
+        for node_index in range(self.host_count()):
+            node_health = self.api_health(node=node_index)
+            if node_health["Healthy"]:
+                health.info(f"MSR: Node [{node_index}] is healthy")
+            else:
+                health.error(node_health["Error"])
+
+        return health
+
+    def _health_msr_replica_health(self):
+        """Test that we can access node information."""
+        health = Health(source=self._instance_id)
+
+        status = self.api_status()
+        replica_health = status["replica_health"]
+
+        if replica_health is None:
+            health.warning(
+                "MSR: cluster reports a null replica health. This occurs for MSR on K8s."
+            )
+        else:
+            for replica_id, replica_health in status["replica_health"].items():
+                if not MSRReplicaHealth.OK.match(replica_health):
+                    health.error(
+                        f"MSR: Replica [{replica_id}] is not READY : {replica_health}"
+                    )
+
+        return health
+
+    def _health_msr_alerts(self):
+        """Confirm that we can get alerts."""
+        health = Health(source=self._instance_id)
+
+        alerts = self.api_alerts()
+
+        for alert in alerts:
+            health.warning(
+                f"MSR: alert: {alert['id']} {alert['class']}: {alert['message']}"
+                f" {alert['url'] if hasattr(alert, 'url') else ''}"
+            )
+
+        return health

@@ -10,7 +10,7 @@ import logging
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.healthcheck import (
-    METTA_PLUGIN_TYPE_HEALTHCHECK,
+    METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
     HealthStatus,
     HealthMessage,
 )
@@ -27,7 +27,7 @@ class HealthcheckCliPlugin(CliBase):
 
     def fire(self):
         """Return a dict of commands."""
-        return {"healthcheck": HealthcheckGroup(self.environment)}
+        return {"healthcheck": HealthcheckGroup(self._environment)}
 
 
 class HealthcheckGroup:
@@ -35,14 +35,14 @@ class HealthcheckGroup:
 
     def __init__(self, environment: Environment):
         """Create CLI command group."""
-        self.environment = environment
+        self._environment = environment
 
     def list(self, raw: bool = False):
         """List all healthchecks."""
         healthcheck_list = [
             fixture.plugin.instance_id
-            for fixture in self.environment.fixtures.filter(
-                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK
+            for fixture in self._environment.fixtures.filter(
+                interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
             )
         ]
 
@@ -53,12 +53,13 @@ class HealthcheckGroup:
     def health(self, instance_id: str = ""):
         """Output health status of healtchecks."""
         if instance_id:
-            healthchecks = self.environment.fixtures.filter(
-                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK, instance_id=instance_id
+            healthchecks = self._environment.fixtures.filter(
+                interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK],
+                instance_id=instance_id,
             )
         else:
-            healthchecks = self.environment.fixtures.filter(
-                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK
+            healthchecks = self._environment.fixtures.filter(
+                interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
             )
 
         health_info = {}
@@ -99,8 +100,11 @@ class HealthcheckGroup:
     def _select_healthcheck(self, instance_id: str = ""):
         """Pick a matching healthcheck."""
         if instance_id:
-            return self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK, instance_id=instance_id
+            return self._environment.fixtures.get(
+                interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK],
+                instance_id=instance_id,
             )
         # Get the highest priority healthcheck
-        return self.environment.fixtures.get(plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK)
+        return self._environment.fixtures.get(
+            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
+        )

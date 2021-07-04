@@ -8,19 +8,20 @@ As a workload, using a kube_api client, manage helm charts
 from typing import Any, List, Dict
 import logging
 import subprocess
+import shutil
 from enum import Enum
 
 import yaml
 
+from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.workload import WorkloadBase
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 
 from .kubeapi_client import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
 logger = logging.getLogger("metta.contrib.kubernetes.workload.helm")
 
-METTA_PLUGIN_ID_KUBERNETES_HELM_WORKLOAD = "metta_kubernetes_helm"
+METTA_PLUGIN_ID_KUBERNETES_HELM_WORKLOAD = "metta_kubernetes_helm_workload"
 """ workload plugin_id for the metta_kubernetes helm plugin """
 
 
@@ -55,15 +56,57 @@ KUBERNETES_HELM_WORKLOAD_DEFAULT_WORKINGDIR = "."
 """ default helm working dir for subprocess """
 
 
-class KubernetesHelmWorkloadPlugin(WorkloadBase):
+class Status(Enum):
+    """A Helm Status enum."""
+
+    DEPLOYED = "deployed"
+    """ Helm Release has been deployed """
+
+
+# This is effectively a struct for interpreting the release status information
+# pylint: disable=too-few-public-methods, too-many-instance-attributes
+class HelmReleaseStatus:
+    """Interpreted helm release status.
+
+    Used to formalize the response object from a status request
+
+    """
+
+    def __init__(self, status_reponse: dict):
+        """Interpret status from a status response."""
+        self.name = status_reponse["name"]
+        self.version = status_reponse["version"]
+        self.namespace = status_reponse["namespace"]
+
+        # self.first_deployed = datetime.strptime(status_reponse['info']['first_deployed'],
+        #                                         '%Y-%m-%dT%H:%M:%S.%fZ')
+        # self.last_deployed = datetime.strptime(status_reponse['info']['last_deployed'],
+        #                                         '%Y-%m-%dT%H:%M:%S.%fZ')
+
+        self.deleted = status_reponse["info"]["deleted"]
+        self.description = status_reponse["info"]["description"]
+        self.status = Status(status_reponse["info"]["status"])
+        self.notes = status_reponse["info"]["notes"]
+
+        self.config = status_reponse["config"]
+
+        self.manifest = status_reponse["manifest"]
+
+
+# pylint: disable=too-many-instance-attributes
+class KubernetesHelmWorkloadPlugin:
     """Kubernetes workload class."""
 
+    # this is what we need for this purpose
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         environment,
         instance_id,
         label: str = KUBERNETES_HELM_WORKLOAD_CONFIG_LABEL,
         base: Any = KUBERNETES_HELM_WORKLOAD_CONFIG_BASE,
+        helm_bin: str = KUBERNETES_HELM_WORKLOAD_DEFAULT_BIN,
+        work_dir: str = KUBERNETES_HELM_WORKLOAD_DEFAULT_WORKINGDIR,
     ):
         """Run the super constructor but also set class properties.
 
@@ -74,20 +117,91 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
 
         Parameters:
         -----------
-        config_file (str): String path to the kubernetes config file to use
+        file (str) : path to where we should put values yaml file
+
+        bin (str) : helm executable path
+        dir (dir) : working dir to be used with subprocess
 
         """
-        self.environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
-        self.config_label = label
+        self._config_label: str = label
         """ configerus load label that should contain all of the config """
-        self.config_base = base
+        self._config_base: str = base
         """ configerus get key that should contain all tf config """
 
-    def create_instance(self, fixtures: Fixtures):
+        self._kubeconfig: str = ""
+        """Path to a kubeconfig file to be used by helm (see .prepare())."""
+
+        workload_config = self._environment.config.load(self._config_label)
+
+        self.namespace: str = workload_config.get(
+            [self._config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_NAMESPACE],
+            default=KUBERNETES_HELM_WORKLOAD_DEFAULT_NAMESPACE,
+        )
+        """String k8s namespace to constrain created resources."""
+
+        self._chart: str = workload_config.get(
+            [self._config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART]
+        )
+        """Helm chart to use for the release."""
+
+        self.set: Dict[str, str] = workload_config.get(
+            [self._config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESSET],
+            default={},
+        )
+        """Dict of --set values."""
+        self.values: Dict[str, Any] = workload_config.get(
+            [self._config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_VALUES],
+            default={},
+        )
+        """Nested Dict of values to be written to a values file."""
+        self._file: str = workload_config.get(
+            [self._config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_PATH],
+            default=KUBERNETES_HELM_WORKLOAD_CONFIG_DEFAULT_VALUESFILE_PATH,
+        )
+        """String path to use for the values file."""
+
+        self._repos: Dict[str, str] = workload_config.get(
+            [self._config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS], default={}
+        )
+        """Helm repos to be added."""
+
+        self._working_dir: str = work_dir
+        """Path to the helm chart, which is used as a python subprocess chdir."""
+
+        if shutil.which(helm_bin) is None:
+            raise ValueError(
+                f"Helm binary not found. Helm commands cannot be called.  Expected binary at path {helm_bin}"
+            )
+
+        self._bin: str = helm_bin
+        """Path to the helm binary."""
+
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
+        """Return dict data about this plugin for introspection."""
+        return {
+            "release": {
+                "name": self._instance_id,
+                "repos": self._repos,
+                "chart": self._chart,
+                "set": self.set,
+                "values": self.values,
+            },
+            "required_fixtures": {
+                "kubernetes": {
+                    "interface": METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
+                    "plugin_id": METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+                },
+            },
+        }
+
+    def prepare(self, fixtures: Fixtures = None):
         """Create a workload instance from a set of fixtures.
 
         Parameters:
@@ -96,9 +210,11 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
             retrieve a kubernetes client plugin.
 
         """
+        if fixtures is None:
+            fixtures = self._environment.fixtures
+
         try:
             client = fixtures.get_plugin(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
                 plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
             )
         except KeyError as err:
@@ -107,155 +223,7 @@ class KubernetesHelmWorkloadPlugin(WorkloadBase):
                 f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
             ) from err
 
-        workload_config = self.environment.config.load(self.config_label)
-
-        kubeconfig = client.config_file
-
-        namespace = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_NAMESPACE],
-            default=KUBERNETES_HELM_WORKLOAD_DEFAULT_NAMESPACE,
-        )
-
-        chart = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART]
-        )
-
-        values_set = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESSET],
-            default={},
-        )
-        values = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_VALUES],
-            default={},
-        )
-        file = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_PATH],
-            default=KUBERNETES_HELM_WORKLOAD_CONFIG_DEFAULT_VALUESFILE_PATH,
-        )
-
-        repos = workload_config.get(
-            [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS], default={}
-        )
-
-        return KubernetesHelmV3WorkloadInstance(
-            kubeconfig=kubeconfig,
-            namespace=namespace,
-            name=self.instance_id,
-            repos=repos,
-            chart=chart,
-            values_set=values_set,
-            values=values,
-            file=file,
-        )
-
-    def info(self):
-        """Return dict data about this plugin for introspection."""
-        workload_config = self.environment.config.load(self.config_label)
-
-        try:
-            kubeclient = self.environment.fixtures.get_plugin(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
-            )
-        except KeyError:
-            # we will just work around a missing kube api plugin
-            kubeclient = None
-
-        return {
-            "workload": {
-                "deployment": {
-                    "repos": workload_config.get(
-                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_REPOS],
-                        default="",
-                    ),
-                    "chart": workload_config.get(
-                        [self.config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_CHART],
-                        default="",
-                    ),
-                    "set": workload_config.get(
-                        [
-                            self.config_base,
-                            KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESSET,
-                        ],
-                        default={},
-                    ),
-                    "values": workload_config.get(
-                        [
-                            self.config_base,
-                            KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_VALUESFILE_VALUES,
-                        ],
-                        default={},
-                    ),
-                },
-                "required_fixtures": {
-                    "kubernetes": {
-                        "plugin_type": METTA_PLUGIN_TYPE_CLIENT,
-                        "plugin_id": "metta_kubernetes",
-                        "kube_client": kubeclient.info()
-                        if hasattr(kubeclient, "info")
-                        else None,
-                    }
-                },
-            }
-        }
-
-
-# This is how many vars it takes to program helm
-# pylint: disable=too-many-instance-attributes
-class KubernetesHelmV3WorkloadInstance:
-    """A workload instance, which is a single active helm chart.
-
-    A workload plugin can create many instances.
-
-    """
-
-    # pylint: disable=too-many-arguments
-    def __init__(
-        self,
-        kubeconfig,
-        namespace,
-        name,
-        repos,
-        chart,
-        values_set: Dict[str, str] = None,
-        values: Dict[str, Any] = None,
-        helm_bin: str = KUBERNETES_HELM_WORKLOAD_DEFAULT_BIN,
-        file: str = KUBERNETES_HELM_WORKLOAD_CONFIG_DEFAULT_VALUESFILE_PATH,
-        work_dir: str = KUBERNETES_HELM_WORKLOAD_DEFAULT_WORKINGDIR,
-    ):
-        """Set initial instance state.
-
-        Parameters:
-        -----------
-        kubeconfig (str) : Path to the kubeinfo file
-
-        repos (dict[str, str]) : name->path for repos to add
-
-        chart (str) : local or http(s) path to a chart
-
-        value_set (dict[str, str]) : simple helm chart values that can be set using
-           the --set options on the command line
-
-        values (dict[str, Any]) : complex helm chart value data that needs to
-            be put into a file
-        file (str) : path to where we should put values yaml file
-
-        bin (str) : helm executable path
-        dir (dir) : working dir to be used with subprocess
-
-        """
-        self.kubeconfig = kubeconfig
-        self.name = name
-        self.namespace = namespace
-        self.repos = repos
-        self.chart = chart
-
-        self.set = values_set if values_set is not None else {}
-        self.values = values if values is not None else {}
-        self.file = file
-
-        self.bin = helm_bin
-        self.working_dir = work_dir
+        self._kubeconfig = client.config_file
 
     def apply(self, wait: bool = True, debug: bool = False):
         """Apply the helm chart.
@@ -263,6 +231,8 @@ class KubernetesHelmV3WorkloadInstance:
         To make the helm apply method reusable, we always run an upgrade with
         the --install flag, which w orks for both the first install, and any
         upgrades run after install
+
+        You need to run the prepare() method before this one.
 
         Parameters:
         -----------
@@ -272,11 +242,11 @@ class KubernetesHelmV3WorkloadInstance:
         debug (bool) : ask the helm client for verbose output
 
         """
-        for repo_name, repo_url in self.repos.items():
+        for repo_name, repo_url in self._repos.items():
             self._run(cmd=["repo", "add", repo_name, repo_url])
 
         cmd = ["upgrade"]
-        cmd += [self.name, self.chart]
+        cmd += [self._instance_id, self._chart]
 
         cmd += ["--install", "--create-namespace"]
 
@@ -294,10 +264,10 @@ class KubernetesHelmV3WorkloadInstance:
 
         if len(self.values):
             # turn the values into a file, and add it to the command
-            with open(self.file, "w") as val_file:
+            with open(self._file, "w") as val_file:
                 yaml.dump(self.values, val_file)
 
-            cmd += ["--values", self.file]
+            cmd += ["--values", self._file]
 
         try:
             self._run(cmd=cmd)
@@ -343,7 +313,7 @@ class KubernetesHelmV3WorkloadInstance:
         debug (bool) : ask the helm client for verbose output
 
         """
-        cmd = ["uninstall", self.name]
+        cmd = ["uninstall", self._instance_id]
 
         if debug:
             cmd += ["--debug"]
@@ -356,14 +326,15 @@ class KubernetesHelmV3WorkloadInstance:
         This runs the helm client test command.
 
         """
-        self._run(cmd=["test", self.name])
+        self._run(cmd=["test", self._instance_id])
 
-    def status(self):
+    def status(self) -> HelmReleaseStatus:
         """Get status of the installed helm release."""
         return HelmReleaseStatus(
             yaml.safe_load(
                 self._run(
-                    cmd=["status", self.name, "--output", "yaml"], return_output=True
+                    cmd=["status", self._instance_id, "--output", "yaml"],
+                    return_output=True,
                 )
             )
         )
@@ -371,8 +342,8 @@ class KubernetesHelmV3WorkloadInstance:
     def _run(self, cmd: List[str], return_output: bool = False):
         """Run a helm v3 command."""
         cmd = [
-            self.bin,
-            f"--kubeconfig={self.kubeconfig}",
+            self._bin,
+            f"--kubeconfig={self._kubeconfig}",
             f"--namespace={self.namespace}",
         ] + cmd
 
@@ -384,7 +355,7 @@ class KubernetesHelmV3WorkloadInstance:
             )
             exec = subprocess.run(
                 cmd,
-                cwd=self.working_dir,
+                cwd=self._working_dir,
                 shell=False,
                 check=True,
                 stdout=subprocess.PIPE,
@@ -393,43 +364,6 @@ class KubernetesHelmV3WorkloadInstance:
             return exec.stdout.decode("utf-8")
         else:
             logger.debug("running launchpad command: %s", " ".join(cmd))
-            exec = subprocess.run(cmd, cwd=self.working_dir, check=True, text=True)
+            exec = subprocess.run(cmd, cwd=self._working_dir, check=True, text=True)
             exec.check_returncode()
             return exec
-
-
-class Status(Enum):
-    """A Helm Status enum."""
-
-    DEPLOYED = "deployed"
-    """ Helm Release has been deployed """
-
-
-# This is effectively a struct for interpreting the release status information
-# pylint: disable=too-few-public-methods
-class HelmReleaseStatus:
-    """Interpreted helm release status.
-
-    Used to formalize the response object from a status request
-
-    """
-
-    def __init__(self, status_reponse: dict):
-        """Interpret status from a status response."""
-        self.name = status_reponse["name"]
-        self.version = status_reponse["version"]
-        self.namespace = status_reponse["namespace"]
-
-        # self.first_deployed = datetime.strptime(status_reponse['info']['first_deployed'],
-        #                                         '%Y-%m-%dT%H:%M:%S.%fZ')
-        # self.last_deployed = datetime.strptime(status_reponse['info']['last_deployed'],
-        #                                         '%Y-%m-%dT%H:%M:%S.%fZ')
-
-        self.deleted = status_reponse["info"]["deleted"]
-        self.description = status_reponse["info"]["description"]
-        self.status = Status(status_reponse["info"]["status"])
-        self.notes = status_reponse["info"]["notes"]
-
-        self.config = status_reponse["config"]
-
-        self.manifest = status_reponse["manifest"]

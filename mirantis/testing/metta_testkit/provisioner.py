@@ -22,7 +22,7 @@ from configerus.validator import ValidationError
 
 from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.provisioner import ProvisionerBase
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta_mirantis import (
     METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
@@ -135,9 +135,9 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         base (str) : config base for loaded config for plugin configuration.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         self.fixtures = Fixtures()
@@ -149,7 +149,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         """ configerus load label that should contain all of the config """
         self.config_base = base
 
-        testkit_config = self.environment.config.load(
+        testkit_config = self._environment.config.load(
             self.config_label, force_reload=True
         )
         """ load the plugin configuration so we can retrieve options """
@@ -160,7 +160,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         """ hat will testkit call the system """
 
         try:
-            testkit_config = self.environment.config.load(self.config_label)
+            testkit_config = self._environment.config.load(self.config_label)
             """ loaded plugin configuration label """
         except KeyError as err:
             raise ValueError(
@@ -196,7 +196,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         """Get info about a provisioner plugin."""
         plugin = self
         client = self.testkit
-        testkit_config = self.environment.config.load(self.config_label)
+        testkit_config = self._environment.config.load(self.config_label)
 
         info = {
             "plugin": {
@@ -215,7 +215,6 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         }
 
         if deep:
-
             hosts: List[Dict[str, Any]] = []
             try:
                 for node in self.testkit.machine_ls(self.system_name):
@@ -223,26 +222,6 @@ class TestkitProvisionerPlugin(ProvisionerBase):
             except CalledProcessError:
                 pass
             info["hosts"] = hosts
-
-            fixtures = {}
-            try:
-                for fixture in self.fixtures:
-                    fixture_info = {
-                        "fixture": {
-                            "plugin_type": fixture.plugin_type,
-                            "plugin_id": fixture.plugin_id,
-                            "instance_id": fixture.instance_id,
-                            "priority": fixture.priority,
-                        }
-                    }
-                    if hasattr(fixture.plugin, "info"):
-                        plugin_info = fixture.plugin.info()
-                        if isinstance(plugin_info, dict):
-                            fixture_info.update(plugin_info)
-                    fixtures[fixture.instance_id] = plugin_info
-            except CalledProcessError:
-                pass
-            info["fixtures"] = fixtures
 
         return info
 
@@ -259,7 +238,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         """Create the testkit yaml file and run testkit to create a cluster."""
         self._write_config_file()
 
-        testkit_config = self.environment.config.load(
+        testkit_config = self._environment.config.load(
             self.config_label, force_reload=True
         )
         """ load the plugin configuration so we can retrieve options """
@@ -284,7 +263,6 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         # is downloaded.
         try:
             mke = self.fixtures.get_plugin(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
             )
             mke.api_get_bundle(force=True)
@@ -318,7 +296,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         if not os.access(self.config_file, os.R_OK):
             return
 
-        testkit_config = self.environment.config.load(
+        testkit_config = self._environment.config.load(
             self.config_label, force_reload=True
         )
         """ load the plugin configuration so we can retrieve options """
@@ -359,11 +337,11 @@ class TestkitProvisionerPlugin(ProvisionerBase):
             )
 
             instance_id = (
-                f"{self.instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}"
+                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}"
                 f"-{mke_api_username}"
             )
-            fixture = self.environment.add_fixture(
-                METTA_PLUGIN_TYPE_CLIENT,
+            fixture = self._environment.add_fixture(
+                METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
                 instance_id=instance_id,
                 priority=70,
@@ -393,11 +371,11 @@ class TestkitProvisionerPlugin(ProvisionerBase):
             )
 
             instance_id = (
-                f"{self.instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}"
+                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}"
                 f"-{msr_api_username}"
             )
-            fixture = self.environment.add_fixture(
-                METTA_PLUGIN_TYPE_CLIENT,
+            fixture = self._environment.add_fixture(
+                METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
                 plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
                 instance_id=instance_id,
                 priority=70,
@@ -416,7 +394,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         """Write the config file for testkit."""
         try:
             # load all of the testkit configuration, force a reload to get up to date contents
-            testkit_config = self.environment.config.load(
+            testkit_config = self._environment.config.load(
                 self.config_label, force_reload=True
             )
             config = testkit_config.get(

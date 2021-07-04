@@ -37,9 +37,9 @@ class TextOutputPlugin:
         An AssertionError is raised if you didn't pass in a Dict.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         self.set_text(text)
@@ -62,6 +62,8 @@ class TextOutputPlugin:
         """
         return self.text
 
-    def info(self):
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
         """Return dict data about this plugin for introspection."""
         return {"output": {"text": self.text}}

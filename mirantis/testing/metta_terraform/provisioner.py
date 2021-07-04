@@ -24,7 +24,7 @@ from mirantis.testing.metta.fixtures import (
     METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
 )
 from mirantis.testing.metta.provisioner import ProvisionerBase
-from mirantis.testing.metta.output import METTA_PLUGIN_TYPE_OUTPUT
+from mirantis.testing.metta.output import METTA_PLUGIN_INTERFACE_ROLE_OUTPUT
 from mirantis.testing.metta_common import (
     METTA_PLUGIN_ID_OUTPUT_DICT,
     METTA_PLUGIN_ID_OUTPUT_TEXT,
@@ -34,7 +34,7 @@ from .terraform import TerraformClient
 
 logger = logging.getLogger("metta_terraform:provisioner")
 
-METTA_TERRAFORM_PROVISIONER_PLUGIN_ID = "metta_terraform"
+METTA_TERRAFORM_PROVISIONER_PLUGIN_ID = "metta_terraform_provisioner"
 """ Terraform provisioner plugin id """
 
 TERRAFORM_PROVISIONER_CONFIG_LABEL = "terraform"
@@ -132,9 +132,9 @@ class TerraformProvisionerPlugin(ProvisionerBase):
         needed pieces for executing terraform commands
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         logger.info("Preparing Terraform setting")
@@ -144,7 +144,7 @@ class TerraformProvisionerPlugin(ProvisionerBase):
         self.terraform_config_base = base
         """ configerus get key that should contain all tf config """
 
-        terraform_config = self.environment.config.load(self.terraform_config_label)
+        terraform_config = self._environment.config.load(self.terraform_config_label)
         """ get a configerus LoadedConfig for the terraform label """
 
         # Run confgerus validation on the config using our above defined
@@ -156,7 +156,7 @@ class TerraformProvisionerPlugin(ProvisionerBase):
         except ValidationError as err:
             raise ValueError("Terraform config failed validation") from err
 
-        self.fixtures = self.environment.add_fixtures_from_config(
+        self.fixtures = self._environment.add_fixtures_from_config(
             label=self.terraform_config_label,
             base=[self.terraform_config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL],
         )
@@ -226,10 +226,12 @@ class TerraformProvisionerPlugin(ProvisionerBase):
         # if the cluster is already provisioned then we can get outputs from it
         try:
             self._get_outputs_from_tf()
-        except subprocess.CalledProcessError:
+        except (FileNotFoundError, subprocess.CalledProcessError):
             pass
 
-    def info(self):
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
         """Get info about a provisioner plugin.
 
         Returns:
@@ -252,23 +254,6 @@ class TerraformProvisionerPlugin(ProvisionerBase):
             "vars_path": client.vars_path,
             "terraform_bin": client.terraform_bin,
         }
-
-        fixtures = {}
-        for fixture in self.fixtures:
-            fixture_info = {
-                "fixture": {
-                    "plugin_type": fixture.plugin_type,
-                    "plugin_id": fixture.plugin_id,
-                    "instance_id": fixture.instance_id,
-                    "priority": fixture.priority,
-                }
-            }
-            if hasattr(fixture.plugin, "info"):
-                plugin_info = fixture.plugin.info()
-                if isinstance(plugin_info, dict):
-                    fixture_info.update(plugin_info)
-            fixtures[fixture.instance_id] = plugin_info
-        info["fixtures"] = fixtures
 
         # build a list of helpful terraform command strings to allow users to directly run
         # terraform as we would, with the metta vars/state/working dir
@@ -296,7 +281,7 @@ class TerraformProvisionerPlugin(ProvisionerBase):
 
     def prepare(self):
         """Run terraform init."""
-        logger.info("Running Terraform INIT")
+        logger.info("Running Terraform INIT : %s", self.working_dir)
         self.tf_client.init()
 
     def check(self):
@@ -368,26 +353,24 @@ class TerraformProvisionerPlugin(ProvisionerBase):
 
             # see if we already have an output plugin for this name
             fixture = self.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_OUTPUT,
+                interfaces=[METTA_PLUGIN_INTERFACE_ROLE_OUTPUT],
                 instance_id=output_key,
                 exception_if_missing=False,
             )
             if not fixture:
                 # we only know how to create 2 kinds of outputs
                 if output_type == "object":
-                    fixture = self.environment.add_fixture(
-                        plugin_type=METTA_PLUGIN_TYPE_OUTPUT,
+                    fixture = self._environment.add_fixture(
                         plugin_id=METTA_PLUGIN_ID_OUTPUT_DICT,
                         instance_id=output_key,
-                        priority=self.environment.plugin_priority(delta=5),
+                        priority=self._environment.plugin_priority(delta=5),
                         arguments={"data": output_value},
                     )
                 else:
-                    fixture = self.environment.add_fixture(
-                        plugin_type=METTA_PLUGIN_TYPE_OUTPUT,
+                    fixture = self._environment.add_fixture(
                         plugin_id=METTA_PLUGIN_ID_OUTPUT_TEXT,
                         instance_id=output_key,
-                        priority=self.environment.plugin_priority(delta=5),
+                        priority=self._environment.plugin_priority(delta=5),
                         arguments={"text": str(output_value)},
                     )
 

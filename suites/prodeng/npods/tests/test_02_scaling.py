@@ -59,9 +59,7 @@ def _create_scale_and_test_function(scale):
     """
 
     # pylint: disable=too-many-arguments, unused-argument
-    def _scale_and_test(
-        environment_up_unlocked, mke, kubeapi, loki, npods, npods_config
-    ):
+    def _scale_and_test(healthpoller, loki, npods, npods_config):
         """Scale up the workloads and test stability."""
 
         # pylint: disable=global-statement
@@ -111,10 +109,7 @@ def _create_scale_and_test_function(scale):
 
         try:
             stability_test(
-                environment=environment_up_unlocked,
-                mke=mke,
-                kubeapi=kubeapi,
-                npods_config=npods_config,
+                healthpoller=healthpoller,
                 logger=logger.getChild(name),
                 duration=duration,
                 period=period,
@@ -132,9 +127,7 @@ def _create_scale_down_and_test_function():
     """Create a function that will test scaling down the deployments"""
 
     # pylint: disable=too-many-arguments, unused-argument
-    def scale_down_and_test(
-        environment_up_unlocked, mke, kubeapi, loki, npods, npods_config
-    ):
+    def scale_down_and_test(healthpoller, loki, npods, npods_config):
         """Scale down and test stability"""
 
         name = "reset"
@@ -173,10 +166,7 @@ def _create_scale_down_and_test_function():
 
         try:
             stability_test(
-                environment=environment_up_unlocked,
-                mke=mke,
-                kubeapi=kubeapi,
-                npods_config=npods_config,
+                healthpoller=healthpoller,
                 logger=logger.getChild(name),
                 duration=duration,
                 period=period,

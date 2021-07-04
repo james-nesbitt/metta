@@ -9,10 +9,10 @@ from typing import Any
 
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
-from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
+from mirantis.testing.metta_cli.base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
-from .sonobuoy import (
+from .sonobuoy_workload import (
     SonobuoyWorkloadPlugin,
     METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
     SONOBUOY_WORKLOAD_CONFIG_LABEL,
@@ -22,7 +22,11 @@ from .cli import SonobuoyCliPlugin, METTA_PLUGIN_ID_SONOBUOY_CLI
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD
+    plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+    interfaces=[
+        METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
+        METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+    ],
 )
 def metta_plugin_factory_workload_sonobuoy(
     environment: Environment,
@@ -34,7 +38,10 @@ def metta_plugin_factory_workload_sonobuoy(
     return SonobuoyWorkloadPlugin(environment, instance_id, label=label, base=base)
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_SONOBUOY_CLI)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_SONOBUOY_CLI,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
 def metta_plugin_factory_cli_sonobuoy(environment: Environment, instance_id: str = ""):
     """Create an sonobuoy cli plugin."""
     return SonobuoyCliPlugin(environment, instance_id)

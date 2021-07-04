@@ -1,7 +1,6 @@
 
 # cncf :: metta.plugin.workload:
 cncf:
-    plugin_type: workload
     plugin_id: metta_sonobuoy_workload
 
     # build the plugin from config, by passing a label/base to it

@@ -7,7 +7,7 @@ Test that teh MKE client works
 import logging
 
 
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta_mirantis.mke_client import (
     MKENodeState,
     METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
@@ -27,7 +27,7 @@ def test_launchpad_mke_client_id(environment_up):
     # which mke client plugin instance we receive,  however there is only one
     # in this case.
     mke_client = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     )
 
@@ -40,7 +40,7 @@ def test_launchpad_mke_nodes(environment_up):
     """did we get a good mke client"""
 
     mke_client = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     )
 
@@ -56,7 +56,7 @@ def test_launchpad_mke_swarminfo(environment_up):
     """did we get a good mke client"""
 
     mke_client = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     )
 

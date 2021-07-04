@@ -11,7 +11,7 @@ import logging
 from configerus.config import Config
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.output import METTA_PLUGIN_TYPE_OUTPUT
+from mirantis.testing.metta.output import METTA_PLUGIN_INTERFACE_ROLE_OUTPUT
 from mirantis.testing.metta_common.dict_output import DictOutputPlugin
 from mirantis.testing.metta_common.text_output import TextOutputPlugin
 
@@ -32,12 +32,12 @@ class ConfigFormatOutputPlugin:
     def __init__(self, config: Config, instance_id: str):
         """Create configerus format plugin."""
         self.config = config
-        self.instance_id = instance_id
+        self._instance_id = instance_id
 
         self.pattern = re.compile(OUTPUT_FORMAT_MATCH_PATTERN)
         """ Regex patter for identifying an output replacement """
 
-        self.environment: Environment = None
+        self._environment: Environment = None
         """ environment which contains the outputs. Must be added """
 
     def set_environemnt(self, environment: Environment):
@@ -46,7 +46,7 @@ class ConfigFormatOutputPlugin:
         @NOTE this is obligatory
 
         """
-        self.environment = environment
+        self._environment = environment
 
     # this method is a part of an itnerface. default label is not used by us but it will be passed
     # pylint: disable=unused-argument
@@ -71,8 +71,8 @@ class ConfigFormatOutputPlugin:
         output = match.group("output")
 
         try:
-            output_plugin = self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_OUTPUT, instance_id=output
+            output_plugin = self._environment.fixtures.get(
+                interfaces=[METTA_PLUGIN_INTERFACE_ROLE_OUTPUT], instance_id=output
             ).plugin
 
             if isinstance(output_plugin, DictOutputPlugin):

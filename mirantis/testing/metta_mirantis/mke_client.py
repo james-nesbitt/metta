@@ -24,15 +24,14 @@ import requests
 import toml
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
+from mirantis.testing.metta.healthcheck import Health, HealthStatus
 from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
 logger = logging.getLogger("metta.contrib.metta_mirantis.client.mkeapi")
 
-METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID = "metta_mirantis_client_mke"
+METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID = "mirantis_mke_client"
 """ Mirantis MKE API Client plugin id """
 
 METTA_MIRANTIS_MKE_BUNDLE_PATH_DEFAULT = "."
@@ -103,9 +102,9 @@ class MKEAPIClientPlugin:
             bundle will be put into a subfolder based on the username.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         self.accesspoint = accesspoint
@@ -115,7 +114,7 @@ class MKEAPIClientPlugin:
         self.hosts = hosts
         """ List of hostos """
 
-        self.bundle_root = bundle_root
+        self._bundle_root = bundle_root
         """ String path which should be used as a root path for storing client
            bundles """
 
@@ -136,9 +135,6 @@ class MKEAPIClientPlugin:
 
         self.fixtures = Fixtures()
         """ This plugin keeps fixtures """
-
-        self.healthchecks()
-        """Generate any healthcheck plugins for this insance."""
 
         # If we can ping one of the hosts then let's try to retrieve a client
         # bundle.  If we can get a client bundle, then we can add docker
@@ -161,7 +157,7 @@ class MKEAPIClientPlugin:
                 "accesspoint": self.accesspoint,
                 "username": self.username,
             },
-            "bundle_root": self.bundle_root,
+            "bundle_root": self._bundle_root,
             "hosts": self.hosts,
         }
 
@@ -172,21 +168,19 @@ class MKEAPIClientPlugin:
 
         return info
 
-    def healthchecks(self) -> Fixtures:
-        """Create and return healthcheck plugins for this client instance."""
-        healthcheck_fixtures = Fixtures()
+    def health(self) -> Health:
+        """Determine the health of the MKE instance."""
+        mke_health = Health(source=self._instance_id, status=HealthStatus.UNKNOWN)
 
-        kubeapi_healthcheck = self.environment.add_fixture(
-            plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
-            plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
-            instance_id=f"{self.instance_id}-healthcheck",
-            priority=70,
-            arguments={"mke_api": self},
-        )
-        healthcheck_fixtures.add(kubeapi_healthcheck)
-        self.fixtures.add(kubeapi_healthcheck)
+        for test_health_function in [
+            self._health_self_mke_api_id,
+            self._health_mke_nodes,
+            self._health_mke_swarminfo,
+        ]:
+            test_health = test_health_function()
+            mke_health.merge(test_health)
 
-        return healthcheck_fixtures
+        return mke_health
 
     def auth_header(self) -> Dict:
         """Retrieve the auth headers so you can do your own thing."""
@@ -395,16 +389,16 @@ class MKEAPIClientPlugin:
 
         kube_config = os.path.join(bundle_info["path"], "kube.yml")
         if os.path.exists(kube_config):
-            instance_id = f"{self.instance_id}-{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
-            fixture = self.environment.add_fixture(
-                METTA_PLUGIN_TYPE_CLIENT,
+            instance_id = f"{self._instance_id}-{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
+            fixture = self._environment.add_fixture(
                 plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
                 instance_id=instance_id,
                 priority=70,
                 arguments={"kube_config_file": kube_config},
+                replace_existing=True,
             )
             # use the parent UCCTFixturesPlugin methods for adding fixtures
-            self.fixtures.add(fixture)
+            self.fixtures.add(fixture, replace_existing=True)
 
         # DOCKER CLIENT
         #
@@ -421,9 +415,8 @@ class MKEAPIClientPlugin:
             )
             raise err
 
-        instance_id = f"{self.instance_id}-{METTA_PLUGIN_ID_DOCKER_CLIENT}"
-        fixture = self.environment.add_fixture(
-            METTA_PLUGIN_TYPE_CLIENT,
+        instance_id = f"{self._instance_id}-{METTA_PLUGIN_ID_DOCKER_CLIENT}"
+        fixture = self._environment.add_fixture(
             plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
             instance_id=instance_id,
             priority=70,
@@ -432,9 +425,10 @@ class MKEAPIClientPlugin:
                 "cert_path": cert_path,
                 "version": METTA_MIRANTIS_MKE_DOCKER_VERSION_DEFAULT,
             },
+            replace_existing=True,
         )
         # use the parent UCCTFixturesPlugin methods for adding fixtures
-        self.fixtures.add(fixture)
+        self.fixtures.add(fixture, replace_existing=True)
 
     def rm_bundle(self):
         """Remove any downloaded client bundles."""
@@ -450,7 +444,7 @@ class MKEAPIClientPlugin:
 
     def _bundle_user_path(self):
         """Build a string path to where the user client bundle should be put."""
-        return f"{self.bundle_root}.{self.username}"
+        return f"{self._bundle_root}.{self.username}"
 
     def _auth_headers(self):
         """Get an auth token."""
@@ -501,3 +495,60 @@ class MKEAPIClientPlugin:
             return node_dict["winrm"]["address"]
 
         raise ValueError(f"No node address could be found for the node {node}")
+
+    def _health_self_mke_api_id(self):
+        """Did we get a good mke client."""
+        health = Health(source=self._instance_id)
+
+        info = self.api_info()
+
+        health.info(f"MKE: Cluster ID: {info['ID']}")
+
+        no_warnings = True
+        if hasattr(info, "Warnings"):
+            for warning in info["Warnings"]:
+                health.warning(f"Warning : {warning}")
+                no_warnings = False
+
+        if no_warnings:
+            health.info("MKE: reports no warnings.")
+
+        return health
+
+    def _health_mke_nodes(self):
+        """Confirm that we get a good mke client."""
+        health = Health(source=self._instance_id)
+
+        nodes = self.api_nodes()
+
+        all_healthy = True
+        for node in nodes:
+            if not MKENodeState.READY.match(node["Status"]["State"]):
+                health.warning(
+                    f"MKE: NODE {node['ID']} was not in a READY state: {node['Status']}"
+                )
+                all_healthy = False
+
+        if all_healthy:
+            health.info("MKE: reports all nodes are healthy.")
+
+        return health
+
+    def _health_mke_swarminfo(self):
+        """Confirm that we get a good mke client."""
+        health = Health(source=self._instance_id)
+
+        info = self.api_info()
+
+        swarm_healthy = True
+        if "Swarm" in info:
+            swarm_info = info["Swarm"]
+
+            if swarm_info["Nodes"] == 0:
+                health.error("MKE: reports no nodes in the cluster")
+                swarm_healthy = False
+
+        if swarm_healthy:
+            health.info("MKE: reports swarm nodes are healthy.")
+
+        return health

@@ -8,11 +8,10 @@ Fixtures usable in the before upgrade state.
 import pytest
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 
 from mirantis.testing.metta_kubernetes.deployment_workload import (
     KubernetesDeploymentWorkloadPlugin,
-    KubernetesDeploymentWorkloadInstance,
 )
 
 # impossible to chain pytest fixtures without using the same names
@@ -27,14 +26,16 @@ def stability_workload(
 ) -> KubernetesDeploymentWorkloadPlugin:
     """Get the stability kubernetes deployment workload."""
     return environment_before_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="stability_deployment"
+        interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD],
+        instance_id="stability_deployment",
     )
 
 
 @pytest.fixture(scope="module")
-def stability_workload_instance(
+def stability_workload_up(
     environment_before_up: Environment,
     stability_workload: KubernetesDeploymentWorkloadPlugin,
-) -> KubernetesDeploymentWorkloadInstance:
+) -> KubernetesDeploymentWorkloadPlugin:
     """Get a workload instance from the stability workload plugin."""
-    return stability_workload.create_instance(environment_before_up.fixtures)
+    stability_workload.prepare(environment_before_up.fixtures)
+    return stability_workload

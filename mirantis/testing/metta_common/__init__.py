@@ -14,10 +14,10 @@ from configerus.plugin import FormatFactory
 
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
-from mirantis.testing.metta.output import METTA_PLUGIN_TYPE_OUTPUT
-from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
+from mirantis.testing.metta.output import METTA_PLUGIN_INTERFACE_ROLE_OUTPUT
+from mirantis.testing.metta_cli.base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
 from .common_config import add_common_config
 from .dict_output import DictOutputPlugin, METTA_PLUGIN_ID_OUTPUT_DICT
@@ -30,7 +30,7 @@ from .combo_provisioner import (
 from .healthpoll_workload import (
     HealthPollWorkload,
     METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
-    WORKLOAD_HEALTHPOLL_CONFIG_LABEL,
+    HEALTHPOLL_CONFIG_LABEL,
 )
 from .binhelper_utility import (
     DownloadableExecutableUtility,
@@ -40,11 +40,14 @@ from .binhelper_utility import (
 from .config_format_output import ConfigFormatOutputPlugin, PLUGIN_ID_FORMAT_OUTPUT
 from .user_cli import UserCliPlugin, METTA_PLUGIN_ID_CLI_USER
 
-METTA_PLUGIN_TYPE_UTILITY = "utility"
+METTA_PLUGIN_INTERFACE_ROLE_UTILITY = "utility"
 """ metta pluging_type for utility plugins """
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_OUTPUT, plugin_id=METTA_PLUGIN_ID_OUTPUT_DICT)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_OUTPUT_DICT,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_OUTPUT],
+)
 def metta_plugin_factory_output_dict(
     environment: Environment,
     instance_id: str = "",
@@ -55,7 +58,10 @@ def metta_plugin_factory_output_dict(
     return DictOutputPlugin(environment, instance_id, data, validator)
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_OUTPUT, plugin_id=METTA_PLUGIN_ID_OUTPUT_TEXT)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_OUTPUT_TEXT,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_OUTPUT],
+)
 def metta_plugin_factory_output_text(
     environment: Environment, instance_id: str = "", text: str = ""
 ):
@@ -64,8 +70,8 @@ def metta_plugin_factory_output_text(
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
     plugin_id=METTA_PLUGIN_ID_PROVISIONER_COMBO,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
 )
 def metta_plugin_factory_provisioner_combo(
     environment: Environment,
@@ -78,7 +84,8 @@ def metta_plugin_factory_provisioner_combo(
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_UTILITY, plugin_id=METTA_PLUGIN_ID_UTILITY_BINHELPER
+    plugin_id=METTA_PLUGIN_ID_UTILITY_BINHELPER,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_UTILITY],
 )
 def metta_plugin_factory_utility_binhelper(
     environment: Environment,
@@ -93,13 +100,13 @@ def metta_plugin_factory_utility_binhelper(
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
     plugin_id=METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD],
 )
 def metta_plugin_factory_workload_healthpoll(
     environment: Environment,
     instance_id: str = "",
-    label: str = COMBO_PROVISIONER_CONFIG_LABEL,
+    label: str = HEALTHPOLL_CONFIG_LABEL,
     base: Any = LOADED_KEY_ROOT,
 ):
     """Create an metta health polling workload plugin."""
@@ -118,7 +125,9 @@ def plugin_factory_format_output(config: Config, instance_id: str = ""):
 # ----- metta user cli plugin -----
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_CLI_USER)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_CLI_USER, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
+)
 def metta_plugin_factory_user_config(environment: Environment, instance_id: str = ""):
     """Create a user cli plugin."""
     return UserCliPlugin(environment, instance_id)

@@ -10,8 +10,8 @@ from typing import Any
 
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
-from mirantis.testing.metta_cli.base import METTA_PLUGIN_TYPE_CLI
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
+from mirantis.testing.metta_cli.base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
 from .provisioner import (
     TestkitProvisionerPlugin,
@@ -23,8 +23,11 @@ from .cli import TestkitCliPlugin, METTA_PLUGIN_ID_TESTKIT_CLI
 
 
 @Factory(
-    plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
     plugin_id=METTA_PLUGIN_ID_TESTKIT_PROVISIONER,
+    interfaces=[
+        METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
+        METTA_PLUGIN_ID_TESTKIT_PROVISIONER,
+    ],
 )
 def metta_plugin_factory_provisioner_testkit(
     environment: Environment,
@@ -36,7 +39,10 @@ def metta_plugin_factory_provisioner_testkit(
     return TestkitProvisionerPlugin(environment, instance_id, label=label, base=base)
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_TESTKIT_CLI)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_TESTKIT_CLI,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
 def metta_plugin_factory_cli_testkit(environment: Environment, instance_id: str = ""):
     """Create an litmuschaos cli plugin."""
     return TestkitCliPlugin(environment, instance_id)
@@ -53,7 +59,6 @@ def bootstrap(environment):
 
     Parameters:
     -----------
-    env (Environment) : an environment which should have validation config added
-        to.
+    env (Environment) : an environment
 
     """

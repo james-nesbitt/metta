@@ -8,11 +8,11 @@ examining launchpad config and more.
 """
 
 import logging
+from typing import List
 
 import yaml
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .provisioner import (
@@ -22,7 +22,7 @@ from .provisioner import (
 
 logger = logging.getLogger("metta.cli.launchpad")
 
-METTA_LAUNCHPAD_CLI_PLUGIN_ID = "metta_launchpad"
+METTA_LAUNCHPAD_CLI_PLUGIN_ID = "metta_launchpad_cli"
 """ metta plugin_id for the launchpad cli plugin """
 
 
@@ -34,15 +34,14 @@ class LaunchpadCliPlugin(CliBase):
     def fire(self):
         """Return CLI command group."""
         if (
-            self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+            self._environment.fixtures.get(
                 plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
                 exception_if_missing=False,
             )
             is not None
         ):
 
-            return {"contrib": {"launchpad": LaunchpadGroup(self.environment)}}
+            return {"contrib": {"launchpad": LaunchpadGroup(self._environment)}}
 
         return {}
 
@@ -52,40 +51,25 @@ class LaunchpadGroup:
 
     def __init__(self, environment: Environment):
         """Create launchpad command list object."""
-        self.environment = environment
+        self._environment = environment
 
     def _select_provisioner(self, instance_id: str = "") -> LaunchpadProvisionerPlugin:
         """Pick a matching provisioner."""
         if instance_id:
-            return self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
-                plugin_id="metta_launchpad",
+            return self._environment.fixtures.get(
+                plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
                 instance_id=instance_id,
             )
 
         # Get the highest priority provisioner
-        return self.environment.fixtures.get(
-            plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, plugin_id="metta_launchpad"
+        return self._environment.fixtures.get(
+            plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID
         )
 
     def info(self, provisioner: str = "", deep: bool = False):
         """Get info about a provisioner plugin."""
         fixture = self._select_provisioner(instance_id=provisioner)
-
-        provisioner_info = {
-            "fixture": {
-                "plugin_type": fixture.plugin_type,
-                "plugin_id": fixture.plugin_id,
-                "instance_id": fixture.instance_id,
-                "priority": fixture.priority,
-            }
-        }
-
-        if deep:
-            if hasattr(fixture.plugin, "info"):
-                provisioner_info.update(fixture.plugin.info(True))
-
-        return cli_output(provisioner_info)
+        return cli_output(fixture.info(deep=deep))
 
     def hosts(self, provisioner: str = "", deep: bool = False):
         """List the hosts in the cluster/"""
@@ -164,25 +148,23 @@ class LaunchpadGroup:
     def fixtures(
         self,
         provisioner: str = "",
-        type: str = "",
         plugin_id: str = "",
+        interfaces: List[str] = None,
         instance_id: str = "",
     ):
         """List all outputs."""
         provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        if not hasattr(provisioner_plugin, "get_fixtures"):
-            raise ValueError("This provisioner does not keep fixtures.")
 
         fixture_list = [
             {
-                "type": fixture.plugin_type,
                 "plugin_id": fixture.plugin_id,
+                "interfaces": fixture.interfaces,
                 "instance_id": fixture.instance_id,
                 "priority": fixture.priority,
             }
-            for fixture in provisioner_plugin.get_fixtures(
-                type=type, plugin_id=plugin_id, instance_id=instance_id
-            ).to_list()
+            for fixture in provisioner_plugin.fixtures.filter(
+                interfaces=interfaces, plugin_id=plugin_id, instance_id=instance_id
+            )
         ]
 
         return cli_output(fixture_list)

@@ -9,10 +9,14 @@ period of time.
 import logging
 import time
 
-from mirantis.testing.metta.healthcheck import Health
+from mirantis.testing.metta.healthcheck import HealthStatus
 
 
 logger = logging.getLogger("test-longevity")
+
+
+# unused argument is their to force dependency hierarchy
+# pylint: disable=unused-argument
 
 
 def test_01_infra_up(environment_up):
@@ -20,18 +24,19 @@ def test_01_infra_up(environment_up):
     logger.info("Environment started successfully.")
 
 
-def test_02_workloads_apply(workload_instances_up):
+def test_02_workloads_apply(workloads_up):
     """Ensure that we can apply workloads to the cluster."""
     logger.info("Cluster workloads applied and running.")
 
 
-def test_03_longevity_wait(healthpoll_instance):
+def test_03_longevity_wait(healthpoller):
     """Start the longevity stability poll."""
-    for i in range(0, 4):
+    logger.info("Starting longevity monitoring of health polling.")
+    for i in range(0, 40):
         time.sleep(1800)
 
-        health = healthpoll_instance.health_aggregate()
-        poll_count = healthpoll_instance.poll_count
+        health = healthpoller.health()
+        poll_count = healthpoller.poll_count()
 
         logger.info(
             "HealthCheck %s [%s polls completed] Status: %s",
@@ -42,9 +47,4 @@ def test_03_longevity_wait(healthpoll_instance):
         for message in health.messages:
             logger.info(message)
 
-
-def _health_output(health: Health):
-    """Log the health status."""
-    logger.info("Status: %s", health.status)
-    for message in health.messages:
-        logger.info(message)
+        assert health.status.is_better_than(HealthStatus.ERROR), "Health was not good."

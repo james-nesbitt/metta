@@ -11,7 +11,7 @@ import pytest
 from mirantis.testing.metta.environment import Environment
 
 from mirantis.testing.metta_kubernetes.deployment_workload import (
-    KubernetesDeploymentWorkloadInstance,
+    KubernetesDeploymentWorkloadPlugin,
 )
 
 logger = logging.getLogger("test_start")
@@ -26,7 +26,7 @@ def test_before_up(environment_before_up: Environment):
 
 @pytest.mark.order(1)
 def test_kubernetes_deployment_workload(
-    stability_workload_instance: KubernetesDeploymentWorkloadInstance,
+    stability_workload_up: KubernetesDeploymentWorkloadPlugin,
 ):
     """test that we can get a k8s workload to run"""
     logger.info(
@@ -34,10 +34,10 @@ def test_kubernetes_deployment_workload(
         "confirm it is running after an upgrade."
     )
 
-    deployment = stability_workload_instance.apply()
+    deployment = stability_workload_up.apply()
     assert deployment is not None
     logger.info("BEFORE: sanity workload deployed: %s}", deployment)
 
     metadata = deployment.metadata
-    assert stability_workload_instance.name == metadata.name
-    assert stability_workload_instance.namespace == metadata.namespace
+    assert stability_workload_up.name == metadata.name
+    assert stability_workload_up.namespace == metadata.namespace

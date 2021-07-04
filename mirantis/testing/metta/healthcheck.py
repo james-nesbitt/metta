@@ -18,8 +18,8 @@ import time
 from typing import List
 
 
-METTA_PLUGIN_TYPE_HEALTHCHECK = "healthcheck"
-""" metta plugin type identifier for healthcheck plugins """
+METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK = "healthcheck"
+""" metta plugin interface identifier for healthcheck plugins """
 
 METTA_HEALTHCHECK_CONFIG_HEALTHCHECKS_LABEL = "healthchecks"
 """ A centralized configerus load label for multiple healthchecks """
@@ -52,6 +52,10 @@ class HealthStatus(Enum):
     # Significant health concerns exist.
     CRITICAL = 10
 
+    def is_better_than(self, than: "HealthStatus"):
+        """Return boolean if the passed status is worse."""
+        return self.value < than.value
+
 
 def worse_health_status(
     first: "HealthStatus", second: "HealthStatus"
@@ -67,15 +71,16 @@ def worse_health_status(
 class HealthMessage:
     """A message status combination."""
 
-    def __init__(self, status: HealthStatus, message: str):
+    def __init__(self, source: str, status: HealthStatus, message: str):
         """Create a new message with status value."""
         self.time = time.perf_counter()
+        self.source = source
         self.status = status
         self.message = message
 
     def __str__(self) -> str:
         """Convert message instance to string."""
-        return f"[{int(self.time)}] {self.status} : {self.message}"
+        return f"[{int(self.time)}] {self.source}: {self.status} => {self.message}"
 
 
 class Health:
@@ -86,25 +91,27 @@ class Health:
 
     """
 
-    def __init__(self, status: HealthStatus = HealthStatus.UNKNOWN):
+    def __init__(self, source: str = '', status: HealthStatus = HealthStatus.UNKNOWN):
         """Health constructor."""
+        self.source: str = source
+        """Source producer identity of this health object."""
         self.status: HealthStatus = status
         """Health status for this health object."""
         self.messages: List[HealthMessage] = []
 
     def merge(self, target: "Health"):
         """Combine another HealtStatus into the current one."""
-        self.status_bump(target.status)
+        self.status = worse_health_status(self.status, target.status)
         self.messages.extend(target.messages)
         self.messages.sort(key=lambda x: x.time)
 
-    # Health messages
+    # Health message recording
 
     def new_message(self, status: HealthStatus, message: str):
         """Add a message of status INFO."""
-        health_message = HealthMessage(status=status, message=message)
+        health_message = HealthMessage(source=self.source, status=status, message=message)
         self.messages.append(health_message)
-        self.status_bump(status=status)
+        self.status = worse_health_status(self.status, status)
 
     def info(self, message: str):
         """Add a message of status HEALTHY."""
@@ -121,9 +128,3 @@ class Health:
     def critical(self, message: str):
         """Add a message of status ERROR."""
         self.new_message(status=HealthStatus.CRITICAL, message=message)
-
-    # Health status interaction
-
-    def status_bump(self, status: HealthStatus):
-        """Set status if the passed status is worse than the current status."""
-        self.status = worse_health_status(self.status, status)

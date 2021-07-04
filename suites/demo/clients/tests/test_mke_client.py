@@ -1,45 +1,43 @@
 """
 
-Test that teh MKE client works
+Test that some clients work.
+
+Here test the mke client.
 
 """
-
 import logging
 
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+import pytest
+
 from mirantis.testing.metta_mirantis.mke_client import (
     MKENodeState,
     METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
 )
 
-logger = logging.getLogger("test_mke")
+logger = logging.getLogger("test_clients.mkeapi")
 
 
-def test_launchpad_mke_client_id(environment_up):
-    """did we get a good mke client"""
-
+@pytest.fixture(scope="module")
+def mke_client(environment_up):
+    """Get the mke_api client."""
     # get the mke client.
-    # We could get this from the launchpad provisioner if we were worried about
+    # We could get this directly from the provisioner if we were worried about
     # which mke client plugin instance we receive,  however there is only one
     # in this case.
-    mke_client = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+    return environment_up.fixtures.get_plugin(
         plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     )
 
+
+def test_launchpad_mke_client_id(mke_client):
+    """did we get a good mke client"""
     info = mke_client.api_info()
     logger.info("MKE Cluster ID: %s", info["ID"])
     logger.info("--> Warnings : %s", info["Warnings"])
 
 
-def test_launchpad_mke_nodes(environment_up):
+def test_launchpad_mke_nodes(mke_client):
     """Confirm that we get a good mke client."""
-
-    mke_client = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-        plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
-    )
-
     nodes = mke_client.api_nodes()
 
     for node in nodes:
@@ -48,16 +46,9 @@ def test_launchpad_mke_nodes(environment_up):
         ), f"MKE NODE {node['ID']} was not in a READY state: {node['Status']}"
 
 
-def test_launchpad_mke_swarminfo(environment_up):
+def test_launchpad_mke_swarminfo(mke_client):
     """Confirm that we get a good mke client."""
-
-    mke_client = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-        plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
-    )
-
     info = mke_client.api_info()
-
     if "Swarm" in info:
         swarm_info = info["Swarm"]
 

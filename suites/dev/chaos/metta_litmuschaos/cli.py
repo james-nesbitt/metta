@@ -8,7 +8,7 @@ Provides functionality to manually run and inspect litmus chaos jobs
 import logging
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .litmuschaos_workload import METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD
@@ -28,7 +28,7 @@ class LitmusChaosCliPlugin(CliBase):
         """Return a dict of commands for litmuschaos workloads."""
         if (
             self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
+                plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
                 plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
                 exception_if_missing=False,
             )
@@ -51,14 +51,14 @@ class LitmusChaosGroup:
         try:
             if instance_id:
                 return self.environment.fixtures.get(
-                    plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
+                    plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
                     plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
                     instance_id=instance_id,
                 )
 
             # Get the highest priority provisioner
             return self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_WORKLOAD,
+                plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
                 plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
             )
 

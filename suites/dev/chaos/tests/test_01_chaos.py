@@ -9,7 +9,7 @@ import logging
 import pytest
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 
 logger = logging.getLogger("run chaos tests")
 
@@ -32,7 +32,7 @@ def myapp_running(environment_up: Environment):
     )
 
     sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="myapp_deployment"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD, instance_id="myapp_deployment"
     )
     instance = sanity_kubernetes_deployment.create_instance(environment_up.fixtures)
     deployment = instance.apply()
@@ -64,7 +64,8 @@ def litmuschaos_installed(environment_up: Environment):
     logger.info("Preparing Litmus Chaos workload.")
 
     litmuchchaos_run = environment_up.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="chaos_litmuschaos"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
+        instance_id="chaos_litmuschaos",
     )
     instance = litmuchchaos_run.create_instance(environment_up.fixtures)
     instance.prepare()

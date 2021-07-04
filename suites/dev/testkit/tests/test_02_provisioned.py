@@ -25,9 +25,9 @@ Here we:
 """
 import logging
 
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.workload import METTA_PLUGIN_TYPE_WORKLOAD
+from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
+from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 
 from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
@@ -56,7 +56,7 @@ def test_01_environment_prepare(environment):
     """
 
     provisioner = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
     )
     """ Combo provisioner wrapper for terraform/ansible/launchpad """
 
@@ -90,7 +90,7 @@ def test_02_environment_up(environment):
     """
 
     provisioner = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
     )
     """ Combo provisioner wrapper for terraform/ansible/launchpad """
 
@@ -117,7 +117,7 @@ def test_03_terraform_sanity(environment):
     """test that the terraform provisioner is happy, and that it has our expected outputs"""
 
     environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="launchpad"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER, instance_id="launchpad"
     )
 
 
@@ -125,7 +125,7 @@ def test_04_launchpad_sanity(environment):
     """test that the launchpad provisioner is happy, and that it produces our expected clients"""
 
     environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id="launchpad"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER, instance_id="launchpad"
     )
 
 
@@ -134,18 +134,19 @@ def test_05_expected_clients(environment):
 
     logger.info("Getting docker client")
     environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
+        plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
     )
 
     logger.info("Getting exec client")
     environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
     )
 
     logger.info("Getting K8s client")
     environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
     )
 
@@ -155,7 +156,8 @@ def test_06_docker_run_workload(environment, benchmark):
 
     # we have a docker run workload fixture called "sanity_docker_run"
     sanity_docker_run = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_WORKLOAD, instance_id="sanity_docker_run"
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
+        instance_id="sanity_docker_run",
     )
     """ workload plugin """
 
@@ -180,7 +182,7 @@ def test_07_mke_api_info(environment):
     # which mke client plugin instance we receive,  however there is only one
     # in this case.
     mke_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     )
 
@@ -193,7 +195,7 @@ def test_08_mke_nodes_health(environment):
     """did we get a good mke client"""
 
     mke_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     )
 
@@ -209,7 +211,7 @@ def test_09_mke_swarminfo_health(environment):
     """did we get a good mke client"""
 
     mke_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     )
 
@@ -229,7 +231,7 @@ def test_10_msr_client(environment):
     # which mke client plugin instance we receive,  however there is only one
     # in this case.
     environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
     )
 
@@ -237,7 +239,7 @@ def test_10_msr_client(environment):
 def test_11_msr_root_health(environment):
     """test the the node specific ping and health checks don't fail"""
     msr_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
     )
 
@@ -252,7 +254,7 @@ def test_12_msr_replica_health(environment):
     """test that we can access node information"""
 
     msr_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
     )
 
@@ -267,7 +269,7 @@ def test_13_msr_alerts(environment):
     """check that we can get alerts"""
 
     msr_client = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
     )
 
@@ -288,7 +290,7 @@ def test_14_environment_down(environment):
     """tear down the environment"""
 
     provisioner = environment.fixtures.get_plugin(
-        plugin_type=METTA_PLUGIN_TYPE_PROVISIONER
+        plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
     )
     """ Combo provisioner wrapper for terraform/ansible/launchpad """
 

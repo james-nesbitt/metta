@@ -7,10 +7,10 @@ Mainly provides functionality for interacting with the testkit provisioner.
 """
 import logging
 
-
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
 from mirantis.testing.metta_cli.base import CliBase, cli_output
+
+from .provisioner import METTA_PLUGIN_ID_TESTKIT_PROVISIONER
 
 logger = logging.getLogger("metta.cli.testkit")
 
@@ -26,14 +26,13 @@ class TestkitCliPlugin(CliBase):
     def fire(self):
         """Return a dict of commands."""
         if (
-            self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
-                plugin_id=METTA_PLUGIN_ID_TESTKIT_CLI,
+            self._environment.fixtures.get(
+                plugin_id=METTA_PLUGIN_ID_TESTKIT_PROVISIONER,
                 exception_if_missing=False,
             )
             is not None
         ):
-            return {"contrib": {"testkit": TestkitGroup(self.environment)}}
+            return {"contrib": {"testkit": TestkitGroup(self._environment)}}
 
         return {}
 
@@ -43,41 +42,25 @@ class TestkitGroup:
 
     def __init__(self, environment: Environment):
         """Inject environment."""
-        self.environment = environment
+        self._environment = environment
 
     def _select_provisioner(self, instance_id: str = ""):
         """Pick a matching provisioner."""
         if instance_id:
-            return self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+            return self._environment.fixtures.get(
                 plugin_id=METTA_PLUGIN_ID_TESTKIT_CLI,
                 instance_id=instance_id,
             )
 
         # Get the highest priority provisioner
-        return self.environment.fixtures.get(
-            plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
+        return self._environment.fixtures.get(
             plugin_id=METTA_PLUGIN_ID_TESTKIT_CLI,
         )
 
     def info(self, provisioner: str = "", deep: bool = False):
         """Get info about a provisioner plugin."""
         fixture = self._select_provisioner(instance_id=provisioner)
-
-        info = {
-            "fixture": {
-                "plugin_type": fixture.plugin_type,
-                "plugin_id": fixture.plugin_id,
-                "instance_id": fixture.instance_id,
-                "priority": fixture.priority,
-            }
-        }
-
-        if deep:
-            if hasattr(fixture.plugin, "info"):
-                info.update(fixture.plugin.info(True))
-
-        return cli_output(info)
+        return cli_output(fixture.info(deep=deep))
 
     def prepare(self, provisioner: str = ""):
         """Run the provisioner prepare : which for testkit currently does nothing."""

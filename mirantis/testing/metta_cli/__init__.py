@@ -9,7 +9,7 @@ import logging
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
 
-from .base import METTA_PLUGIN_TYPE_CLI
+from .base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 from .config import ConfigCliPlugin
 from .environment import EnvironmentCliPlugin
 from .fixtures import FixturesCliPlugin
@@ -19,21 +19,26 @@ from .provisioner import ProvisionerCliPlugin
 logger = logging.getLogger("metta.cli")
 
 
-METTA_PLUGIN_ID_CLI_CONFIG = "config"
+METTA_PLUGIN_ID_CLI_CONFIG = "config_cli"
 """ cli plugin_id for the config plugin """
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_CLI_CONFIG)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_CLI_CONFIG, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
+)
 def metta_plugin_factory_cli_config(environment: Environment, instance_id: str = ""):
     """Create a config cli plugin."""
     return ConfigCliPlugin(environment, instance_id)
 
 
-METTA_PLUGIN_ID_CLI_ENVIRONMENT = "environment"
+METTA_PLUGIN_ID_CLI_ENVIRONMENT = "environment_cli"
 """ cli plugin_id for the environment plugin """
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_CLI_ENVIRONMENT)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_CLI_ENVIRONMENT,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
 def metta_plugin_factory_cli_environment(
     environment: Environment, instance_id: str = ""
 ):
@@ -41,21 +46,26 @@ def metta_plugin_factory_cli_environment(
     return EnvironmentCliPlugin(environment, instance_id)
 
 
-METTA_PLUGIN_ID_CLI_FIXTURES = "fixtures"
+METTA_PLUGIN_ID_CLI_FIXTURES = "fixtures_cli"
 """ cli plugin_id for the fixtures plugin """
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_CLI_FIXTURES)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_CLI_FIXTURES, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
+)
 def metta_plugin_factory_cli_fixtures(environment: Environment, instance_id: str = ""):
     """Create a fixtures cli plugin."""
     return FixturesCliPlugin(environment, instance_id)
 
 
-METTA_PLUGIN_ID_CLI_HEALTHCHECK = "healthchecks"
+METTA_PLUGIN_ID_CLI_HEALTHCHECK = "healthchecks_cli"
 """ cli plugin_id for the healthchecks plugin """
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_CLI_HEALTHCHECK)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_CLI_HEALTHCHECK,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
 def metta_plugin_factory_cli_healthchecks(
     environment: Environment, instance_id: str = ""
 ):
@@ -63,11 +73,14 @@ def metta_plugin_factory_cli_healthchecks(
     return HealthcheckCliPlugin(environment, instance_id)
 
 
-METTA_PLUGIN_ID_CLI_PROVISIONER = "provisioner"
+METTA_PLUGIN_ID_CLI_PROVISIONER = "provisioner_cli"
 """ cli plugin_id for the provisioner plugin """
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLI, plugin_id=METTA_PLUGIN_ID_CLI_PROVISIONER)
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_CLI_PROVISIONER,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
 def metta_plugin_factory_provisioner_config(
     environment: Environment, instance_id: str = ""
 ):

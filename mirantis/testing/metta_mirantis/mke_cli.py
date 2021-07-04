@@ -10,10 +10,12 @@ plugins as well.
 import requests
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .mke_client import METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID
+
+METTA_MIRANTIS_CLI_MKE_PLUGIN_ID = "mirantis_mke_cli"
+""" Mirantis MKE API CLI plugin id """
 
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
@@ -27,16 +29,15 @@ class MKEAPICliPlugin(CliBase):
         """Return a dict of commands for MKE API Clients."""
         if (
             len(
-                self.environment.fixtures.filter(
-                    plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                    plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+                self._environment.fixtures.filter(
+                    plugin_id=METTA_MIRANTIS_CLI_MKE_PLUGIN_ID,
                     exception_if_missing=False,
                 )
             )
             > 0
         ):
 
-            return {"contrib": {"mke": MKEAPICliGroup(self.environment)}}
+            return {"contrib": {"mke": MKEAPICliGroup(self._environment)}}
 
         return {}
 
@@ -46,55 +47,42 @@ class MKEAPICliGroup:
 
     def __init__(self, environment: Environment):
         """Create new cli group object."""
-        self.environment = environment
+        self._environment = environment
 
     def _select_fixture(self, instance_id: str = ""):
         """Pick a matching fixture in case there are more than one."""
         if instance_id:
-            return self.environment.fixtures.get(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+            return self._environment.fixtures.get(
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
                 instance_id=instance_id,
             )
 
         # Get the highest priority fixture
-        return self.environment.fixtures.get(
-            plugin_type=METTA_PLUGIN_TYPE_CLIENT,
+        return self._environment.fixtures.get(
             plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
         )
 
-    def info(self, instance_id: str = "", deep: bool = False):
+    def info(self, instance_id: str = "", deep: bool = False, children: bool = True):
         """Get info about a plugin."""
         fixture = self._select_fixture(instance_id=instance_id)
-        plugin = fixture.plugin
+        return cli_output(fixture.info(deep=deep, children=children))
 
-        info = {
-            "fixture": {
-                "plugin_type": fixture.plugin_type,
-                "plugin_id": fixture.plugin_id,
-                "instance_id": fixture.instance_id,
-                "priority": fixture.priority,
-            }
-        }
-
-        info.update(plugin.info(deep))
-
-        return cli_output(info)
+    def children(self, instance_id: str = "", deep: bool = False):
+        """Get info about a plugin."""
+        fixture = self._select_fixture(instance_id=instance_id)
+        return cli_output(fixture.plugin.fixtures.info(deep=deep))
 
     def health(self, instance_id: str = ""):
         """Get health for the plugin."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
 
-        health_info = {}
-        for health_fixture in plugin.healthchecks():
-            health_plugin = health_fixture.plugin
-            health_plugin_results = health_plugin.health()
-            health_info[health_plugin.instance_id] = {
-                "instance_id": health_plugin.instance_id,
-                "status": health_plugin_results.status,
-                "messages": health_plugin_results.messages,
-            }
+        health = plugin.health()
+        health_info = {
+            "instance_id": fixture.instance_id,
+            "status": health.status,
+            "messages": health.messages,
+        }
 
         return cli_output(health_info)
 

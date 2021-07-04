@@ -16,7 +16,7 @@ from .launchpad import LaunchpadClient
 logger = logging.getLogger("metta.contrib.kubernetes.client")
 
 
-METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID = "metta_launchpad_exec"
+METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID = "metta_launchpad_exec_client"
 """ metta plugin ID for the metta exec client plugin """
 
 
@@ -34,9 +34,9 @@ class LaunchpadExecClientPlugin:
             exec commands
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         self.client = client
