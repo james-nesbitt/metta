@@ -10,16 +10,16 @@ kind of plugin.
 
 import logging
 
-logger = logging.getLogger('metta.client')
+logger = logging.getLogger("metta.client")
 
-METTA_PLUGIN_TYPE_CLIENT = 'client'
-""" metta plugin type idnetifier for client plugins """
+METTA_PLUGIN_INTERFACE_ROLE_CLIENT = "client"
+""" metta plugin interface identifier for client plugins """
 
-METTA_CLIENT_CONFIG_CLIENTS_LABEL = 'clients'
+METTA_CLIENT_CONFIG_CLIENTS_LABEL = "clients"
 """ A centralized configerus label for multiple clients """
-METTA_CLIENT_CONFIG_CLIENT_LABEL = 'client'
+METTA_CLIENT_CONFIG_CLIENT_LABEL = "client"
 """ A centralized configerus label for a client """
-METTA_CLIENT_CONFIG_CLIENTS_KEY = 'clients'
+METTA_CLIENT_CONFIG_CLIENTS_KEY = "clients"
 """ A centralized configerus key for multiple clients """
-METTA_CLIENT_CONFIG_CLIENT_KEY = 'client'
+METTA_CLIENT_CONFIG_CLIENT_KEY = "client"
 """ A centralized configerus key for one client """

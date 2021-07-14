@@ -1,0 +1,27 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "msr.fullname" . }}-scanningstore-server
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "msr.fullname" . }}-scanningstore-server-cert
+  # Bitnami PostgreSQL doesn't support automatic live cert rotation. Issue a
+  # cert with a longer validity period than usual so that it does not become a
+  # frequent issue.
+  duration: 8760h # 365 days
+  renewBefore: 24h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  usages:
+  - server auth
+  - client auth # needed for probes
+  commonName: postgres # admin username; needed for probes
+  dnsNames:
+  - {{ include "msr.scanningstore.svc" . }}
+  issuerRef:
+    name: {{ include "msr.fullname" . }}-scanningstore-ca
+    kind: Issuer
+    group: cert-manager.io

@@ -8,34 +8,39 @@ definition from configuration.
 """
 
 import logging
-from typing import Any
+from typing import Any, Dict
 
 import kubernetes
 
+from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
-from mirantis.testing.metta.workload import WorkloadBase, WorkloadInstanceBase
+from mirantis.testing.metta.healthcheck import Health, HealthStatus
 
-from .kubeapi_client import METTA_PLUGIN_ID_KUBERNETES_CLIENT
+from .kubeapi_client import KubernetesApiClientPlugin, METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
-logger = logging.getLogger('metta.contrib.kubernetes.workload.deployment')
+logger = logging.getLogger("metta.contrib.kubernetes.workload.deployment")
 
-KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_LABEL = 'kubernetes'
-KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_BASE = 'workload.deployment'
+METTA_PLUGIN_ID_KUBERNETES_DEPLOYMENT_WORKLOAD = "metta_kubernetes_deployment_workload"
+""" workload plugin_id for the metta_kubernetes deployment plugin """
+
+KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_LABEL = "kubernetes"
+KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_BASE = "workload.deployment"
 
 KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_NAMESPACE = "namespace"
 KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY = "body"
 
-METTA_PLUGIN_ID_KUBERNETES_DEPLOYMENT_WORKLOAD = 'metta_kubernetes_deployment'
-""" workload plugin_id for the metta_kubernetes deployment plugin """
 
-
-class KubernetesDeploymentWorkloadPlugin(WorkloadBase):
+# pylint: disable=too-many-instance-attributes
+class KubernetesDeploymentWorkloadPlugin:
     """Metta workload plugin for Kubernetes workload."""
 
-    def __init__(self, environment, instance_id,
-                 label: str = KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_LABEL,
-                 base: Any = KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_BASE):
+    def __init__(
+        self,
+        environment: Environment,
+        instance_id: str,
+        label: str = KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_LABEL,
+        base: Any = KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_BASE,
+    ):
         """Run the super constructor but also set class properties.
 
         This implements the args part of the client interface.
@@ -49,18 +54,89 @@ class KubernetesDeploymentWorkloadPlugin(WorkloadBase):
         config_file (str): String path to the kubernetes config file to use
 
         """
-        self.environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
-        self.config_label = label
+        self._config_label: str = label
         """ configerus load label that should contain all of the config """
-        self.config_base = base
+        self._config_base: str = base
         """ configerus get key that should contain all tf config """
 
-    def create_instance(self, fixtures: Fixtures):
-        """Create a workload instance from a set of fixtures.
+        workload_config = self._environment.config.load(self._config_label)
+
+        self.name: str = workload_config.get(
+            [
+                self._config_base,
+                KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY,
+                "metadata.name",
+            ],
+            default="not-declared",
+        )
+        """Kubernetes deployment name string."""
+        self.namespace: str = workload_config.get(
+            [self._config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_NAMESPACE]
+        )
+        """Kubernetes namespace to use for the deployment."""
+        self.body: Dict[str, Any] = workload_config.get(
+            [self._config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY]
+        )
+        """Kubernetes deployment definition dict."""
+
+        self._kubeapi_client: KubernetesApiClientPlugin = None
+        """KubeAPI client for connecting to kubernetes."""
+
+        self.deployment: object = None
+        """KubeAPI get deployment result."""
+
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
+        """Return dict data about this plugin for introspection."""
+        workload_config = self._environment.config.load(self._config_label)
+
+        if self._kubeapi_client is None:
+            # let's take a stab at finding a client for declarative cases
+            try:
+                kubeclient = self._environment.fixtures.get_plugin(
+                    plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+                )
+                kubeclient_info = kubeclient.info()
+            except KeyError:
+                # we will just work around a missing kube api plugin
+                kubeclient_info = None
+        else:
+            kubeclient_info = self._kubeapi_client.info()
+
+        return {
+            "workload": {
+                "deployment": {
+                    "namespace": workload_config.get(
+                        [
+                            self._config_base,
+                            KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_NAMESPACE,
+                        ]
+                    ),
+                    "body": workload_config.get(
+                        [
+                            self._config_base,
+                            KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY,
+                        ]
+                    ),
+                },
+                "required_fixtures": {
+                    "kubernetes": {
+                        "plugin_id": METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+                        "kube_client": kubeclient_info,
+                    }
+                },
+            }
+        }
+
+    def prepare(self, fixtures: Fixtures = None):
+        """Find the kubeapi client from a set of fixtures and retrieve config
+        for running the workload.
 
         Parameters:
         ----------
@@ -68,102 +144,86 @@ class KubernetesDeploymentWorkloadPlugin(WorkloadBase):
             retrieve a kubernetes client plugin.
 
         """
+        if fixtures is None:
+            fixtures = self._environment.fixtures
+
         try:
-            client = fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_CLIENT,
-                                         plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
+            self._kubeapi_client: KubernetesApiClientPlugin = fixtures.get_plugin(
+                plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT
+            )
         except KeyError as err:
-            raise NotImplementedError("Workload could not find the needed client: "
-                                      f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}") from err
-
-        workload_config = self.environment.config.load(self.config_label)
-
-        name = workload_config.get([self.config_base,
-                                    KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY,
-                                    'metadata.name'],
-                                   default='not-declared')
-        namespace = workload_config.get(
-            [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_NAMESPACE])
-        body = workload_config.get(
-            [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY])
-
-        return KubernetesDeploymentWorkloadInstance(
-            client, namespace, name, body)
-
-    def info(self):
-        """Return dict data about this plugin for introspection."""
-        workload_config = self.environment.config.load(self.config_label)
-
-        try:
-            kubeclient = self.environment.fixtures.get_plugin(
-                plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
-        except KeyError:
-            # we will just work around a missing kube api plugin
-            kubeclient = None
-
-        return {
-            'workload': {
-                'deployment': {
-                    'namespace': workload_config.get(
-                        [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_NAMESPACE]),
-                    'body': workload_config.get(
-                        [self.config_base, KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_KEY_BODY])
-                },
-                'required_fixtures': {
-                    'kubernetes': {
-                        'plugin_type': METTA_PLUGIN_TYPE_CLIENT,
-                        'plugin_id': 'metta_kubernetes',
-                        'kube_client': kubeclient.info() if hasattr(kubeclient, 'info') else None
-                    }
-                }
-            }
-        }
-
-
-class KubernetesDeploymentWorkloadInstance(WorkloadInstanceBase):
-    """Workload plugin instance, for managing individual deployment runs."""
-
-    def __init__(self, client, namespace, name, body):
-        """Set initial workload instance state."""
-        self.client = client
-        self.namespace = namespace
-        self.name = name
-        self.body = body
-
-        self.deployment = None
-
-        self.read()
-
-    def read(self):
-        """Retrieve the deployment job."""
-        if self.deployment is None:
-            apps_v1 = self.client.get_api('AppsV1Api')
-
-            try:
-                self.deployment = apps_v1.read_namespaced_deployment(
-                    self.name, self.namespace)
-            except kubernetes.client.rest.ApiException:
-                self.deployment = None
-
-        return self.deployment
+            raise NotImplementedError(
+                "Workload could not find the needed client: "
+                f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
+            ) from err
 
     def apply(self):
         """Run the workload."""
-        apps_v1 = self.client.get_api('AppsV1Api')
-        self.deployment = apps_v1.create_namespaced_deployment(
-            body=self.body, namespace=self.namespace)
-
-        return self.deployment
+        apps_v1 = self._kubeapi_client.get_api("AppsV1Api")
+        return apps_v1.create_namespaced_deployment(
+            body=self.body, namespace=self.namespace
+        )
 
     def destroy(self):
         """Destroy any created resources."""
         body = kubernetes.client.V1DeleteOptions(
-            propagation_policy='Foreground',
-            grace_period_seconds=5)
+            propagation_policy="Foreground", grace_period_seconds=5
+        )
 
-        apps_v1 = self.client.get_api('AppsV1Api')
+        apps_v1 = self._kubeapi_client.get_api("AppsV1Api")
         status = apps_v1.delete_namespaced_deployment(
-            name=self.name, namespace=self.namespace, body=body)
-
-        self.deployment = None
+            name=self.name, namespace=self.namespace, body=body
+        )
 
         return status
+
+    def read(self):
+        """Retrieve the deployment job."""
+        apps_v1 = self._kubeapi_client.get_api("AppsV1Api")
+
+        try:
+            return apps_v1.read_namespaced_deployment(self.name, self.namespace)
+        except kubernetes.client.rest.ApiException:
+            return None
+
+    # INTERFACE: healthcheck
+    def health(self) -> Health:
+        """Determine the health of the K8s deployment."""
+        dep_health = Health(source=self._instance_id, status=HealthStatus.UNKNOWN)
+
+        for test_health_function in [self._health_deployment_status]:
+            test_health = test_health_function()
+            dep_health.merge(test_health)
+
+        return dep_health
+
+    def _health_deployment_status(self):
+        """Check if kubernetes thinks the deployment is healthy."""
+        health = Health(source=self._instance_id)
+
+        apps_v1 = self._kubeapi_client.get_api("AppsV1Api")
+
+        try:
+            deployment = apps_v1.read_namespaced_deployment(self.name, self.namespace)
+
+            status = deployment.status
+
+            if status is None:
+                health.error(
+                    f"Deployment: [{self.namespace}/{self.name}] retrieved no status"
+                )
+            else:
+                for condition in status.conditions:
+                    if condition.status == "True":
+                        health.info(
+                            f"Deployment: [{self.namespace}/{self.name}] {condition.type} -> {condition.message}"
+                        )
+                    else:
+                        health.error(
+                            f"Deployment: [{self.namespace}/{self.name}] {condition.type} -> {condition.message}"
+                        )
+
+        except kubernetes.client.rest.ApiException as err:
+            health.error(f"K8S REST API exception occured: {err}")
+
+        return health

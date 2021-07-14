@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "msr.fullname" . }}-notary-signer
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+    app.kubernetes.io/component: notary-signer
+spec:
+  replicas: {{ .Values.notarySigner.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "msr.commonSelectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: notary-signer
+  template:
+    metadata:
+      labels:
+        {{- include "msr.labels" . | nindent 8 }}
+        app.kubernetes.io/component: notary-signer
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: default
+      containers:
+        - name: notary-signer
+          securityContext: {}
+          image: "{{ include "msr.imageRef" (list $ "notarySigner") }}"
+          imagePullPolicy: {{ .Values.notarySigner.image.pullPolicy }}
+          ports:
+            - name: grpc
+              containerPort: 7899
+          env:
+            - name: NOTARY_SIGNER_DEFAULT_ALIAS
+              value: timestamp_1
+            - name: NOTARY_SIGNER_STORAGE_DB_URL
+              value: {{ include "msr.fullname" . }}-rethinkdb-proxy
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+          # TODO:  See if we can get health probe working.  notary-server has an endpoint
+          #        for this, but notary-signer looks more involved (GRPC client).
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+      volumes:
+        - name: certs
+          projected:
+            sources:
+            - secret:
+                name: {{ include "msr.fullname" . }}-notary-signer-cert
+                items:
+                - key: tls.key
+                  path: notary-signer/tls.key
+                - key: tls.crt
+                  path: notary-signer/tls.crt
+            - secret:
+                name: {{ include "msr.fullname" . }}-notary-signer-client-ca-cert
+                items:
+                - key: tls.crt
+                  path: notary-signer-client/ca.crt
+            - secret:
+                name: {{ include "msr.fullname" . }}-rethinkdb-driver-client-cert-0
+                items:
+                - key: tls.key
+                  path: rethink-client/tls.key
+                - key: tls.crt
+                  path: rethink-client/tls.crt
+            - secret:
+                name: {{ include "msr.fullname" . }}-rethinkdb-driver-ca-cert
+                items:
+                - key: tls.crt
+                  path: rethink/ca.crt

@@ -7,36 +7,39 @@ plugins which it proxies for any provisioner operations.
 
 """
 import logging
-from typing import Any
+from typing import Any, List
 
 from configerus.loaded import LOADED_KEY_ROOT
-from configerus.contrib.jsonschema.validate import PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL
+from configerus.contrib.jsonschema.validate import (
+    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL,
+)
 from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures, Fixture
-from mirantis.testing.metta.plugin import (METTA_PLUGIN_CONFIG_KEY_INSTANCEID,
-                                           METTA_PLUGIN_CONFIG_KEY_PRIORITY)
-from mirantis.testing.metta.provisioner import ProvisionerBase, METTA_PLUGIN_TYPE_PROVISIONER
+from mirantis.testing.metta.fixtures import (
+    Fixtures,
+    Fixture,
+    METTA_FIXTURE_CONFIG_KEY_PRIORITY,
+)
+from mirantis.testing.metta.plugin import METTA_PLUGIN_CONFIG_KEY_INSTANCEID
+from mirantis.testing.metta.provisioner import (
+    ProvisionerBase,
+    METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
+)
 
-logger = logging.getLogger('metta.contrib.provisioner:combo')
+logger = logging.getLogger("metta.contrib.provisioner:combo")
 
-METTA_PLUGIN_ID_PROVISIONER_COMBO = 'combo'
+METTA_PLUGIN_ID_PROVISIONER_COMBO = "combo_provisioner"
 """ provisioner plugin_id for the combo plugin """
 
-COMBO_PROVISIONER_CONFIG_LABEL = 'provisioner'
+COMBO_PROVISIONER_CONFIG_LABEL = "provisioner"
 """ Configerus label for loading config to set up this provisioner plugin """
-COMBO_PROVISIONER_CONFIG_BACKENDS_KEY = 'backends'
+COMBO_PROVISIONER_CONFIG_BACKENDS_KEY = "backends"
 """ Config key for backends list """
 
 COMBO_PROVISIONER_VALIDATE_JSONSCHEMA = {
-    'type': 'object',
-    'properties': {
-        'backends': {
-            'type': 'array',
-            "items": {"$ref": "#/$defs/backend"}
-        }
-    },
+    "type": "object",
+    "properties": {"backends": {"type": "array", "items": {"$ref": "#/$defs/backend"}}},
     "$defs": {
         "backend": {
             "type": "object",
@@ -45,17 +48,17 @@ COMBO_PROVISIONER_VALIDATE_JSONSCHEMA = {
                 "instance_id": {
                     "type": "string",
                     "description": "Backend provisioner instance_id. A provisioner instance with "
-                                   "this id  must exist in the environment."
+                    "this id  must exist in the environment.",
                 },
                 "priority": {
                     "type": "boolean",
                     "description": "Backend provisioner priority in the combo list.  If not "
-                                   "provided then The provisioner's priority will be used."
-                }
-            }
+                    "provided then The provisioner's priority will be used.",
+                },
+            },
         }
     },
-    'required': ['backends']
+    "required": ["backends"],
 }
 """ Validation jsonschema for terraform config contents """
 COMBO_PROVISIONER_VALIDATE_TARGET = {
@@ -83,23 +86,30 @@ class ComboProvisionerPlugin(ProvisionerBase):
 
     """
 
-    def __init__(self, environment: Environment, instance_id: str,
-                 label: str = COMBO_PROVISIONER_CONFIG_LABEL, base: Any = LOADED_KEY_ROOT):
+    def __init__(
+        self,
+        environment: Environment,
+        instance_id: str,
+        label: str = COMBO_PROVISIONER_CONFIG_LABEL,
+        base: Any = LOADED_KEY_ROOT,
+    ):
         """Run the super constructor but also set class properties.
 
         Interpret provided config and configure the object with all of the
         needed pieces for executing terraform commands
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         try:
-            combo_config = self.environment.config.load(label)
+            combo_config = self._environment.config.load(label)
         except KeyError as err:
-            raise ValueError("Combo provisioner could not find any configurations") from err
+            raise ValueError(
+                "Combo provisioner could not find any configurations"
+            ) from err
 
         # Run confgerus validation on the config using our above defined jsonschema
         try:
@@ -108,12 +118,18 @@ class ComboProvisionerPlugin(ProvisionerBase):
             raise ValueError("Combo provisioner config failed validation") from err
 
         try:
-            backends_list = combo_config.get([base, COMBO_PROVISIONER_CONFIG_BACKENDS_KEY])
+            backends_list = combo_config.get(
+                [base, COMBO_PROVISIONER_CONFIG_BACKENDS_KEY]
+            )
             if not isinstance(backends_list, list):
-                raise ValueError("Combo provisioner could not understand the backend list."
-                                 " A list was expected.")
+                raise ValueError(
+                    "Combo provisioner could not understand the backend list."
+                    " A list was expected."
+                )
         except KeyError as err:
-            raise ValueError("Combo provisioner received no backend list from config.") from err
+            raise ValueError(
+                "Combo provisioner received no backend list from config."
+            ) from err
 
         # for each of our string instance_ids we add the backend in order by finding if from the
         # environment and adding it to our UCCTFixturesPlugin fixtures list.
@@ -121,15 +137,18 @@ class ComboProvisionerPlugin(ProvisionerBase):
         for backend in backends_list:
             backend_instance_id = backend[METTA_PLUGIN_CONFIG_KEY_INSTANCEID]
             try:
-                fixture = self.environment.fixtures.get(
-                    plugin_type=METTA_PLUGIN_TYPE_PROVISIONER, instance_id=backend_instance_id)
+                fixture = self._environment.fixtures.get(
+                    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
+                    instance_id=backend_instance_id,
+                )
             except KeyError as err:
                 raise ValueError(
                     "Combo provisioner was given a backend provisioner key that it could not "
-                    f"correlate with a existing fixture: {backend_instance_id}") from err
+                    f"correlate with a existing fixture: {backend_instance_id}"
+                ) from err
 
-            if hasattr(backend, METTA_PLUGIN_CONFIG_KEY_PRIORITY):
-                fixture.priority = backend[METTA_PLUGIN_CONFIG_KEY_PRIORITY]
+            if hasattr(backend, METTA_FIXTURE_CONFIG_KEY_PRIORITY):
+                fixture.priority = backend[METTA_FIXTURE_CONFIG_KEY_PRIORITY]
 
             self.backends.add(fixture)
 
@@ -151,45 +170,39 @@ class ComboProvisionerPlugin(ProvisionerBase):
             return reversed(self.backends)
         return self.backends
 
-    def info(self):
+    def info(self, deep: bool = False):
         """Return structured data about self."""
         backends_info = []
         # List backends in high->low priority as this shows the order of apply
-        for fixture in self.backends:
-            backend_info = {
-                'fixture': {
-                    'type': fixture.plugin_type,
-                    'instance_id': fixture.instance_id,
-                    'plugin_id': fixture.plugin_id
-                }
-            }
+        for backend in self.backends:
+            backends_info.append(backend.info(deep=deep))
 
-            plugin = fixture.plugin
-            if hasattr(plugin, 'info'):
-                backend_info.update(plugin.info())
-
-            backends_info.append(backend_info)
-
-        return {
-            'backends': backends_info
-        }
+        return {"backends": backends_info}
 
     def prepare(self):
         """Prepare the provisioner to apply resources."""
         for backend_fixture in self._get_backend_iter():
-            logger.info("--> running backend prepare: [High->Low] %s", backend_fixture.instance_id)
+            logger.info(
+                "--> running backend prepare: [High->Low] %s",
+                backend_fixture.instance_id,
+            )
             backend_fixture.plugin.prepare()
 
     def apply(self):
         """Bring a cluster to the configured state."""
         for backend_fixture in self._get_backend_iter():
-            logger.info("--> running backend apply: [High->Low] %s", backend_fixture.instance_id)
+            logger.info(
+                "--> running backend apply: [High->Low] %s", backend_fixture.instance_id
+            )
             backend_fixture.plugin.apply()
 
     def destroy(self):
         """Remove all resources created for the cluster."""
         for backend_fixture in self._get_backend_iter(low_to_high=True):
-            logger.info("--> running backend destroy: [Low->High] %s", backend_fixture.instance_id)
+            logger.info(
+                "--> running backend destroy: [Low->High] %s",
+                backend_fixture.instance_id,
+            )
             backend_fixture.plugin.destroy()
 
     # --- Fixture management
@@ -202,22 +215,36 @@ class ComboProvisionerPlugin(ProvisionerBase):
     # backend retrievals of get_fixtures() so that it doesn't run the parent
     # get_fixtures.
 
-    def get_fixtures(self, plugin_type: str = '', instance_id: str = '',
-                     plugin_id: str = '') -> Fixtures:
+    def get_fixtures(
+        self, instance_id: str = "", plugin_id: str = "", interfaces: List[str] = None
+    ) -> Fixtures:
         """Retrieve any matching fixtures from any of the backends."""
         matches = Fixtures()
         for backend_fixture in self._get_backend_iter():
             plugin = backend_fixture.plugin
-            if hasattr(plugin, 'fixtures'):
-                matches.merge(plugin.fixtures.filter(plugin_type=plugin_type, plugin_id=plugin_id,
-                                                     instance_id=instance_id))
+            if hasattr(plugin, "fixtures"):
+                matches.merge(
+                    plugin.fixtures.filter(
+                        plugin_id=plugin_id,
+                        interfaces=interfaces,
+                        instance_id=instance_id,
+                    )
+                )
         return matches
 
-    def get_fixture(self, plugin_type: str = '', instance_id: str = '',
-                    plugin_id: str = '', exception_if_missing: bool = True) -> Fixture:
+    def get_fixture(
+        self,
+        plugin_id: str = "",
+        interfaces: List[str] = None,
+        instance_id: str = "",
+        exception_if_missing: bool = True,
+    ) -> Fixture:
         """Retrieve the first matching fixture from ordered backends."""
-        matches = self.get_fixtures(plugin_type=plugin_type, plugin_id=plugin_id,
-                                    instance_id=instance_id)
+        matches = self.get_fixtures(
+            plugin_id=plugin_id,
+            instance_id=instance_id,
+            interfaces=interfaces,
+        )
 
         if len(matches) > 0:
             return matches.get()
@@ -226,13 +253,20 @@ class ComboProvisionerPlugin(ProvisionerBase):
             raise KeyError("No matching fixture was found")
         return None
 
-    def get_plugin(self, plugin_type: str = '', plugin_id: str = '', instance_id: str = '',
-                   exception_if_missing: bool = True) -> object:
-        """Retrieve one of the passed in fixtures."""
-        logger.info("%s:execute: get_plugin(%s)", self.instance_id, plugin_type)
-        fixture = self.get_fixture(plugin_type=plugin_type, plugin_id=plugin_id,
-                                   instance_id=instance_id,
-                                   exception_if_missing=exception_if_missing)
+    def get_plugin(
+        self,
+        plugin_id: str = "",
+        interfaces: List[str] = None,
+        instance_id: str = "",
+        exception_if_missing: bool = True,
+    ) -> object:
+        """Retrieve one of the backend fixtures."""
+        fixture = self.get_fixture(
+            plugin_id=plugin_id,
+            interfaces=interfaces,
+            instance_id=instance_id,
+            exception_if_missing=exception_if_missing,
+        )
 
         if fixture is not None:
             return fixture.plugin

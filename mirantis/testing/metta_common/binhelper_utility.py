@@ -44,65 +44,61 @@ import platform
 import requests
 
 from configerus.loaded import LOADED_KEY_ROOT
-from configerus.contrib.jsonschema.validate import PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL
+from configerus.contrib.jsonschema.validate import (
+    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL,
+)
 from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
 
-logger = logging.getLogger('metta.common.utility:binhelper')
+logger = logging.getLogger("metta.common.utility:binhelper")
 
-METTA_PLUGIN_ID_UTILITY_BINHELPER = 'bin-helper'
+METTA_PLUGIN_ID_UTILITY_BINHELPER = "bin-helper-utility"
 """ metta utility plugin_id for the bin-helper plugin """
 
-BINHELPER_UTILITY_CONFIG_LABEL = 'binhelper'
+BINHELPER_UTILITY_CONFIG_LABEL = "binhelper"
 """ Config label used by default to load binhelper configuration """
 
-BINHELPER_UTILITY_CONFIG_BASE_LOCALPATH = 'path.local'
+BINHELPER_UTILITY_CONFIG_BASE_LOCALPATH = "path.local"
 """ config base for what the local bin path should be """
-BINHELPER_UTILITY_CONFIG_BASE_ADDTOPATH = 'path.add_to_path'
+BINHELPER_UTILITY_CONFIG_BASE_ADDTOPATH = "path.add_to_path"
 """ config base for if we need to modify the env PATH and add the path """
-BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS = 'platforms'
+BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS = "platforms"
 """ config base for list of platform bins to load on construction """
 
-BINHELPER_UTILITY_CONFIG_BASE_BIN_URL = 'url'
+BINHELPER_UTILITY_CONFIG_BASE_BIN_URL = "url"
 """ config base inside bin for bin url for downloading """
-BINHELPER_UTILITY_CONFIG_BASE_BIN_VERSION = 'version'
+BINHELPER_UTILITY_CONFIG_BASE_BIN_VERSION = "version"
 """ config base inside bin for bin version """
-BINHELPER_UTILITY_CONFIG_BASE_BIN_COPYPATHS = 'copy'
+BINHELPER_UTILITY_CONFIG_BASE_BIN_COPYPATHS = "copy"
 """ config base inside bin for a map of bins name->path-inpackage """
 
 BINHELPER_CONFIG_JSONSCHEMA = {
-    'type': 'object',
-    'path': {
-        'type': 'object',
-        'properties': {
-            'local': {'type': 'string'},
-            'add_to_environ': {'type': 'bool'}
-        },
-        'required': ['path']
+    "type": "object",
+    "path": {
+        "type": "object",
+        "properties": {"local": {"type": "string"}, "add_to_environ": {"type": "bool"}},
+        "required": ["path"],
     },
-    'platforms': {
-        '$ref': '#/definitions/platform'
-    },
-    'definitions': {
-        'bin': {
-            'type': 'object',
-            'properties': {
-                'url': {'type': 'string'},
-                'version': {'type': 'string'},
-                'copy': {'type': 'object'}
+    "platforms": {"$ref": "#/definitions/platform"},
+    "definitions": {
+        "bin": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string"},
+                "version": {"type": "string"},
+                "copy": {"type": "object"},
             },
-            'required': ['url']
+            "required": ["url"],
         },
-        'platform': {
-            '$ref': '#/definitions/bin'
-        },
+        "platform": {"$ref": "#/definitions/bin"},
     },
-    'required': ['path', 'platforms']
+    "required": ["path", "platforms"],
 }
 """ JSONSCHEMA for the binhelper config """
 BINHELPER_CONFIG_VALIDATE_TARGET = {
-    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: BINHELPER_CONFIG_JSONSCHEMA}
+    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: BINHELPER_CONFIG_JSONSCHEMA
+}
 """ configerus validate target for binhelper config """
 
 
@@ -111,8 +107,13 @@ BINHELPER_CONFIG_VALIDATE_TARGET = {
 class DownloadableExecutableUtility:
     """A helper to help you download executables."""
 
-    def __init__(self, environment: Environment, instance_id: str,
-                 label: str = BINHELPER_UTILITY_CONFIG_LABEL, base: str = LOADED_KEY_ROOT):
+    def __init__(
+        self,
+        environment: Environment,
+        instance_id: str,
+        label: str = BINHELPER_UTILITY_CONFIG_LABEL,
+        base: str = LOADED_KEY_ROOT,
+    ):
         """Perform initial plugin configuration.
 
         Parameters:
@@ -126,12 +127,12 @@ class DownloadableExecutableUtility:
             plugin instance config.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
-        loaded = self.environment.config.load(label)
+        loaded = self._environment.config.load(label)
         try:
             loaded.get(base, validator=BINHELPER_CONFIG_VALIDATE_TARGET)
         except KeyError as err:
@@ -139,39 +140,44 @@ class DownloadableExecutableUtility:
         except ValidationError as err:
             raise ValueError("Bin-Helper received invalid configuration") from err
 
-        self.local_path = loaded.get(
-            [base, BINHELPER_UTILITY_CONFIG_BASE_LOCALPATH])
+        self.local_path = loaded.get([base, BINHELPER_UTILITY_CONFIG_BASE_LOCALPATH])
 
-        add_to_path = loaded.get([base,
-                                  BINHELPER_UTILITY_CONFIG_BASE_ADDTOPATH])
+        add_to_path = loaded.get([base, BINHELPER_UTILITY_CONFIG_BASE_ADDTOPATH])
         if add_to_path:
             os.environ["PATH"] += os.pathsep + os.path.realpath(self.local_path)
 
-        platforms = loaded.get([base,
-                                BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS])
+        platforms = loaded.get([base, BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS])
         current_platform = f"{platform.system()}-{platform.machine()}"
 
         if current_platform not in platforms:
-            logger.warning("BinHelper doesn't have configuration for your platform '%s', so it "
-                           "won't download any bins.", current_platform)
+            logger.warning(
+                "BinHelper doesn't have configuration for your platform '%s', so it "
+                "won't download any bins.",
+                current_platform,
+            )
             return
 
         bins = platforms[current_platform]
         for bin_id in list(bins.keys()):
-            url = loaded.get([base,
-                              BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
-                              current_platform,
-                              bin_id,
-                              BINHELPER_UTILITY_CONFIG_BASE_BIN_URL])
-            copypaths = loaded.get([base,
-                                    BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
-                                    current_platform,
-                                    bin_id,
-                                    BINHELPER_UTILITY_CONFIG_BASE_BIN_COPYPATHS])
-            self.get_bin(
-                name=bin_id,
-                url=url,
-                copypaths=copypaths)
+            url = loaded.get(
+                [
+                    base,
+                    BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
+                    current_platform,
+                    bin_id,
+                    BINHELPER_UTILITY_CONFIG_BASE_BIN_URL,
+                ]
+            )
+            copypaths = loaded.get(
+                [
+                    base,
+                    BINHELPER_UTILITY_CONFIG_BASE_PLATFORMS,
+                    current_platform,
+                    bin_id,
+                    BINHELPER_UTILITY_CONFIG_BASE_BIN_COPYPATHS,
+                ]
+            )
+            self.get_bin(name=bin_id, url=url, copypaths=copypaths)
 
     def get_bin(self, name: str, url: str, copypaths: Dict[str, str] = None):
         """Get a remote bin package, and put any bin contents into a bin path.
@@ -190,9 +196,9 @@ class DownloadableExecutableUtility:
 
                 # try to decide on a name for the download
                 file_name = None
-                content_disposition = res.headers.get('content-disposition')
+                content_disposition = res.headers.get("content-disposition")
                 if content_disposition is not None:
-                    file_name_matches = re.findall('filename=(.+)', content_disposition)
+                    file_name_matches = re.findall("filename=(.+)", content_disposition)
                     if file_name_matches:
                         file_name = file_name_matches[0]
                 if file_name is None:
@@ -201,7 +207,7 @@ class DownloadableExecutableUtility:
 
                 # write the file into our local path
                 local_file = os.path.join(self.local_path, file_name)
-                with open(local_file, 'wb') as fil:
+                with open(local_file, "wb") as fil:
                     fil.write(res.content)
 
             # downloaded url is a tarfile.  Copy only the files out of the tarfile

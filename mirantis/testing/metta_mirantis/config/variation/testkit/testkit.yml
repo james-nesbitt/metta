@@ -10,6 +10,10 @@ mke:
   password: "{{vairables:admin_password?orcaorcaorca}}"
   client_bundle_root: "{{variables:files_path}}/{{variables:files_prefix}}.mke.bundles"
 
+msr:
+  username: "{{variables:admin_user?admin}}"
+  password: "{{vairables:admin_password?orcaorcaorca}}"
+
 options:
   # Options to pass to the client on create runs
   create:
@@ -17,7 +21,7 @@ options:
     ucp: true
     dtr: true
     # dry-run: true
-    args: "--admin-username={{mke.username}} --admin-password={{mke.password}}"
+    # args: ""
 
 # Config to put into testkit
 config:
@@ -32,7 +36,7 @@ config:
   expiry: "{{variables:expire_duration}}"
 
   aws_region: "{{variables:aws_region}}"
-  aws_keyname: "{{variables:resource_prefix}}-testkit"
+  aws_keyname: "{{variables:resource_prefix}}"
   # aws_spot_price: ""
   # aws_purchase_type: "spot"
   aws_instance_type: "{{variables:manager_type}}"
@@ -46,12 +50,14 @@ config:
   # raw config at this time.
   managers: "{{variables:manager_count}}"
   specs:
+    # Managers
   - platform: "{{variables:platform}}"
     ssh_user: "{{variables:ssh_user}}"
     count: "{{variables:manager_count}}"
     is_windows: False
     arch: "x86_64"
     instanceType: "{{variables:manager_type}}"
+    # Workers
   - platform: "{{variables:platform}}"
     ssh_user: "{{variables:ssh_user}}"
     count: "{{variables:worker_count}}"
@@ -81,7 +87,7 @@ config:
   ucp:
     org: "{{variables:mke_image_repo}}"
     tag: "{{variables:mke_version}}"
-    args: ""
+    args: "--admin-username={{mke.username}} --admin-password={{mke.password}}"
 
   dtr:
     org: "{{variables:msr_image_repo}}"

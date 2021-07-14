@@ -17,24 +17,26 @@ from configerus.plugin import Type as ConfigerusType
 from configerus.config import Config
 from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH, CONFIGERUS_PATH_KEY
 from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT, CONFIGERUS_DICT_DATA_KEY
-from configerus.contrib.env import (PLUGIN_ID_SOURCE_ENV_SPECIFIC, CONFIGERUS_ENV_SPECIFIC_BASE_KEY,
-                                    PLUGIN_ID_SOURCE_ENV_JSON, CONFIGERUS_ENV_JSON_ENV_KEY)
+from configerus.contrib.env import (
+    PLUGIN_ID_SOURCE_ENV_SPECIFIC,
+    CONFIGERUS_ENV_SPECIFIC_BASE_KEY,
+    PLUGIN_ID_SOURCE_ENV_JSON,
+    CONFIGERUS_ENV_JSON_ENV_KEY,
+)
 
-from .plugin import METTA_PLUGIN_CONFIG_KEY_PLUGINID, METTA_PLUGIN_CONFIG_KEY_PRIORITY
+from .plugin import METTA_PLUGIN_CONFIG_KEY_PLUGINID
+from .fixtures import METTA_FIXTURE_CONFIG_KEY_PRIORITY
 
-logger = logging.getLogger('metta.discover')
+logger = logging.getLogger("metta.discover")
 
-METTA_CONFIG_LABEL = 'metta'
+METTA_CONFIG_LABEL = "metta"
 """ this config label is used as a default for discovery from config """
-METTA_CONFIG_SOURCES_KEY = 'config.sources'
+METTA_CONFIG_SOURCES_KEY = "config.sources"
 """ This config key is used to find additional config sources to add """
-METTA_CONFIG_IMPORTS_KEY = 'imports'
+METTA_CONFIG_IMPORTS_KEY = "imports"
 """ This config key is used to find modules to import """
 
-METTA_ROOT_FILES = [
-    'metta.yml',
-    'metta.json'
-]
+METTA_ROOT_FILES = ["metta.yml", "metta.json"]
 """ The presence of any of these files could be used to mark a conf source """
 
 DEFAULT_SOURCE_PRIORITY = 40
@@ -43,22 +45,15 @@ DEFAULT_SOURCE_CONFIG_PRIORITY = 70
 """ Default priority for configerus sources found in config """
 
 DEFAULT_ENVIRONMENT_ROOT_CONFIG_IF_NO_ROOT_IS_FOUND = {
-    'metta': {
-        'project': {
-            'name': 'none'
-        }
-    },
-    'environments': {
-        'missing': {
-
-        }
-    }
+    "metta": {"project": {"name": "none"}},
+    "environments": {"missing": {}},
 }
 """ If no root is found then this config is passed back as a config source """
 
 
-def discover_project_root(config: Config, start_path: str,
-                          marker_files: List[str] = None):
+def discover_project_root(
+    config: Config, start_path: str, marker_files: List[str] = None
+):
     """Find a project root path.
 
     We start looking in the start_path for certain marker files, and if we
@@ -109,8 +104,11 @@ def discover_project_root(config: Config, start_path: str,
                 config.add_source(
                     plugin_id=PLUGIN_ID_SOURCE_PATH,
                     instance_id=instance_id,
-                    priority=priority).set_path(check_path)
-                logger.info("Added project path as config: %s => %s", check_path, instance_id)
+                    priority=priority,
+                ).set_path(check_path)
+                logger.info(
+                    "Added project path as config: %s => %s", check_path, instance_id
+                )
 
                 depth += 1
                 break
@@ -124,16 +122,20 @@ def discover_project_root(config: Config, start_path: str,
         instance_id = "environment_none"
         logger.warning("No project config found, creating a dummy: %s", instance_id)
         source = config.add_source(
-            instance_id='notfound',
+            instance_id="notfound",
             plugin_id=PLUGIN_ID_SOURCE_DICT,
-            priority=config.default_priority())
+            priority=config.default_priority(),
+        )
         source.set_data(DEFAULT_ENVIRONMENT_ROOT_CONFIG_IF_NO_ROOT_IS_FOUND)
 
     return config
 
 
 def discover_sources_from_config(
-        config: Config, label: str = METTA_CONFIG_LABEL, base: str = METTA_CONFIG_SOURCES_KEY):
+    config: Config,
+    label: str = METTA_CONFIG_LABEL,
+    base: str = METTA_CONFIG_SOURCES_KEY,
+):
     """Discover more config sources by loading and processing config.
 
     Run this is you want to add config sources to a config object as defined
@@ -154,41 +156,42 @@ def discover_sources_from_config(
         instance_base = [base, instance_id]
 
         plugin_id = metta_config.get([instance_base, METTA_PLUGIN_CONFIG_KEY_PLUGINID])
-        priority = metta_config.get([instance_base,
-                                     METTA_PLUGIN_CONFIG_KEY_PRIORITY],
-                                    default=DEFAULT_SOURCE_CONFIG_PRIORITY)
+        priority = metta_config.get(
+            [instance_base, METTA_FIXTURE_CONFIG_KEY_PRIORITY],
+            default=DEFAULT_SOURCE_CONFIG_PRIORITY,
+        )
 
         logger.info("Adding metta sourced config plugin: %s:%s", plugin_id, instance_id)
         plugin = config.add_source(
-            plugin_id=plugin_id,
-            instance_id=instance_id,
-            priority=priority)
+            plugin_id=plugin_id, instance_id=instance_id, priority=priority
+        )
 
         if plugin_id == PLUGIN_ID_SOURCE_PATH:
-            source_path = metta_config.get(
-                [instance_base, CONFIGERUS_PATH_KEY])
+            source_path = metta_config.get([instance_base, CONFIGERUS_PATH_KEY])
             plugin.set_path(path=source_path)
         elif plugin_id == PLUGIN_ID_SOURCE_DICT:
-            source_data = metta_config.get(
-                [instance_base, CONFIGERUS_DICT_DATA_KEY])
+            source_data = metta_config.get([instance_base, CONFIGERUS_DICT_DATA_KEY])
             plugin.set_data(data=source_data)
         elif plugin_id == PLUGIN_ID_SOURCE_ENV_SPECIFIC:
             source_base = metta_config.get(
-                [instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY])
+                [instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY]
+            )
             plugin.set_base(base=source_base)
         elif plugin_id == PLUGIN_ID_SOURCE_ENV_JSON:
-            source_env = metta_config.get(
-                [instance_base, CONFIGERUS_ENV_JSON_ENV_KEY])
+            source_env = metta_config.get([instance_base, CONFIGERUS_ENV_JSON_ENV_KEY])
             plugin.set_env(env=source_env)
-        elif hasattr(plugin, 'set_data'):
-            data = metta_config.get([instance_base, 'data'])
+        elif hasattr(plugin, "set_data"):
+            data = metta_config.get([instance_base, "data"])
             plugin.set_data(data=data)
         else:
             logger.warning("had no way of configuring new source plugin.")
 
 
-def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
-                     base: str = METTA_CONFIG_IMPORTS_KEY):
+def discover_imports(
+    config: Config,
+    label: str = METTA_CONFIG_LABEL,
+    base: str = METTA_CONFIG_IMPORTS_KEY,
+):
     """Look in config for module imports.
 
     Use this if you want to dynamically import some modules defined in config.
@@ -219,7 +222,9 @@ def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
                 logger.warning(
                     "Metta discovery importer cannot import a package (folder) using a"
                     "name other than the folder name: %s != %s",
-                    module_path_basename, import_name)
+                    module_path_basename,
+                    import_name,
+                )
             if module_path_dir not in sys.path:
                 sys.path.append(module_path_dir)
             importlib.import_module(module_path_basename)
@@ -233,4 +238,5 @@ def discover_imports(config: Config, label: str = METTA_CONFIG_LABEL,
 
         else:
             raise ValueError(
-                f"Could not import requested metta import {import_name} : {module_path}")
+                f"Could not import requested metta import {import_name} : {module_path}"
+            )

@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "msr.fullname" . }}-nginx
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.nginx.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "msr.nginxSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "msr.nginxSelectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: default
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext: {}
+          image: "{{ include "msr.imageRef" (list $ "nginx") }}"
+          imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+            - name: https
+              containerPort: 443
+              protocol: TCP
+          env:
+            - name: MSR_CANONICAL_HTTPS_PORT
+              value: "{{ .Values.service.externalHTTPSPort }}"
+            - name: MSR_WEB_TLS_CERT_FILE
+              value: /secrets/tls/cert.pem
+            - name: MSR_WEB_TLS_KEY_FILE
+              value: /secrets/tls/key.pem
+            - name: MSR_BACKEND_CA_FILE
+              value: /secrets/backend/ca.crt
+            - name: MSR_API_URL
+              value: "https://{{ include "msr.fullname" . }}-api"
+            - name: MSR_API_CLIENT_CERT_FILE
+              value: /secrets/tls-client/cert.pem
+            - name: MSR_API_CLIENT_KEY_FILE
+              value: /secrets/tls-client/key.pem
+            - name: MSR_GARANT_URL
+              value: "https://{{ include "msr.fullname" . }}-garant"
+            - name: MSR_GARANT_CLIENT_CERT_FILE
+              value: /secrets/tls-client/cert.pem
+            - name: MSR_GARANT_CLIENT_KEY_FILE
+              value: /secrets/tls-client/key.pem
+            - name: MSR_NOTARY_URL
+              value: {{ include "msr.fullname" . }}-notary
+            - name: MSR_NOTARY_CLIENT_CERT_FILE
+              value: /secrets/notary-client/cert.pem
+            - name: MSR_NOTARY_CLIENT_KEY_FILE
+              value: /secrets/notary-client/key.pem
+            - name: MSR_REGISTRY_URL
+              value: "https://{{ include "msr.fullname" . }}-registry"
+            - name: MSR_REGISTRY_CLIENT_CERT_FILE
+              value: /secrets/tls-client/cert.pem
+            - name: MSR_REGISTRY_CLIENT_KEY_FILE
+              value: /secrets/tls-client/key.pem
+          volumeMounts:
+            - name: secrets
+              mountPath: /secrets
+          livenessProbe:
+            httpGet:
+              path: /nginx_status
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /nginx_status
+              port: http
+      volumes:
+        - name: secrets
+          projected:
+            sources:
+            - secret:
+                name: {{ tpl .Values.nginx.tlsCertSecret . }}
+                items:
+                - key: tls.key
+                  path: tls/key.pem
+                - key: tls.crt
+                  path: tls/cert.pem
+            - secret:
+                name: "{{ include "msr.fullname" . }}-nginx-client-cert"
+                items:
+                  - key: tls.key
+                    path: tls-client/key.pem
+                  - key: tls.crt
+                    path: tls-client/cert.pem
+            - secret:
+                name: "{{ include "msr.fullname" . }}-backend-server-ca-cert"
+                items:
+                  - key: ca.crt
+                    path: backend/ca.crt
+            - secret:
+                name: "{{ include "msr.fullname" . }}-nginx-to-notary-cert"
+                items:
+                  - key: tls.crt
+                    path: notary-client/cert.pem
+                  - key: tls.key
+                    path: notary-client/key.pem

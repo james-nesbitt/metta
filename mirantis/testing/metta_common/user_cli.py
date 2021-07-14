@@ -7,20 +7,19 @@ Examine and declare user configuration for Metta
 """
 import logging
 import os
-import json
 
 import appdirs
 import yaml
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta_cli.base import CliBase
+from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .common_config import METTA_COMMON_APP_NAME
 
-logger = logging.getLogger('metta.cli.user')
+logger = logging.getLogger("metta.cli.user")
 
 
-METTA_PLUGIN_ID_CLI_USER = 'user'
+METTA_PLUGIN_ID_CLI_USER = "user"
 """ cli plugin_id for the user plugin """
 
 
@@ -31,12 +30,10 @@ class UserCliPlugin(CliBase):
 
     def fire(self):
         """Return a dict of commands."""
-        return {
-            'user': UserGroup(self.environment)
-        }
+        return {"user": UserGroup(self._environment)}
 
 
-class UserGroup():
+class UserGroup:
     """Commands relating to the current user.
 
     These commands can be used to manage the user/system settings for defining functionality that
@@ -48,20 +45,22 @@ class UserGroup():
         """Add environment to command group."""
         self._environment = environment
 
-    def info(self):
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
         """Output any user related information."""
-        user_config = self._environment.config.load('user')
+        user_config = self._environment.config.load("user")
         user_config_dir = _user_path()
 
         info = {
-            'config': user_config.get(default={}),
-            'system': {
-                'path': user_config_dir,
-                'exists': os.path.isdir(user_config_dir)
-            }
+            "config": user_config.get(default={}),
+            "system": {
+                "path": user_config_dir,
+                "exists": os.path.isdir(user_config_dir),
+            },
         }
 
-        return json.dumps(info, indent=2)
+        return cli_output(info)
 
     # pylint: disable=no-self-use
     def init(self):
@@ -69,7 +68,8 @@ class UserGroup():
         user_config_dir = _user_path()
         if _user_path_exists():
             raise RuntimeError(
-                f"User has already been initialized on this system: {user_config_dir}")
+                f"User has already been initialized on this system: {user_config_dir}"
+            )
 
         os.mkdir(user_config_dir)
 
@@ -78,20 +78,21 @@ class UserGroup():
         """Set the user id for the user on the system."""
         if not _user_path_exists():
             raise RuntimeError(
-                "No user configuration has been initialized on this system.  Run `init` first")
+                "No user configuration has been initialized on this system.  Run `init` first"
+            )
 
         user_config_dir = _user_path()
 
-        config_path_user = os.path.join(user_config_dir, 'user.yml')
+        config_path_user = os.path.join(user_config_dir, "user.yml")
         try:
-            with open(config_path_user, 'r') as user_config_file:
+            with open(config_path_user, "r") as user_config_file:
                 user_config = yaml.load(user_config_file)
         except FileNotFoundError:
             user_config = {}
 
-        user_config['id'] = uid
+        user_config["id"] = uid
 
-        with open(config_path_user, 'w') as user_config_file:
+        with open(config_path_user, "w") as user_config_file:
             yaml.dump(user_config, user_config_file)
 
 

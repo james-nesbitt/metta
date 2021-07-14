@@ -13,9 +13,9 @@ from typing import Dict
 
 from configerus.loaded import Loaded, LOADED_KEY_ROOT
 
-logger = logging.getLogger('metta.contrib.common.output.dict')
+logger = logging.getLogger("metta.contrib.common.output.dict")
 
-METTA_PLUGIN_ID_OUTPUT_DICT = 'dict'
+METTA_PLUGIN_ID_OUTPUT_DICT = "dict"
 """ output plugin_id for the dict plugin """
 
 
@@ -27,8 +27,9 @@ class DictOutputPlugin:
 
     """
 
-    def __init__(self, environment, instance_id,
-                 data: Dict = None, validator: str = ''):
+    def __init__(
+        self, environment, instance_id, data: Dict = None, validator: str = ""
+    ):
         """Run the super constructor but also set class properties.
 
         Here we treat the data dict as a configerus.loaded.Loaded instance,
@@ -52,9 +53,9 @@ class DictOutputPlugin:
         An AssertionError is raised if you didn't pass in a Dict.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         if data is None:
@@ -62,20 +63,19 @@ class DictOutputPlugin:
 
         self.set_data(data, validator)
 
-    def set_data(self, data: Dict, validator: str = ''):
+    def set_data(self, data: Dict, validator: str = ""):
         """Re-set the data for the output."""
         assert isinstance(data, dict), f"Expected Dict of data, got {data}"
 
         if validator:
-            self.environment.config.validate(data, validator)
+            self._environment.config.validate(data, validator)
 
-        mock_instance_id = f"dict-output-{self.instance_id}"
+        mock_instance_id = f"dict-output-{self._instance_id}"
         self.loaded = Loaded(
-            data=data,
-            parent=self.environment.config,
-            instance_id=mock_instance_id)
+            data=data, parent=self._environment.config, instance_id=mock_instance_id
+        )
 
-    def get_output(self, key: str = LOADED_KEY_ROOT, validator: str = ''):
+    def get_output(self, key: str = LOADED_KEY_ROOT, validator: str = ""):
         """Retrieve an output.
 
         Because we treated that data as a high-priority configerus source with
@@ -109,10 +109,8 @@ class DictOutputPlugin:
         """
         return self.loaded.get(key, validator=validator)
 
-    def info(self):
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
         """Return dict data about this plugin for introspection."""
-        return {
-            'output': {
-                'data': self.loaded.data
-            }
-        }
+        return {"output": {"data": self.loaded.data}}

@@ -36,16 +36,16 @@ METTA_COMMON_PROJECT_CONFIG_SUBPATH = "config"
 """ convention for configuration path as a subfolder of the cwd path """
 
 MARKER_FILES = {
-    'metta.py',
-    'mettac.py',
-    'conftest.py',
-    'pytest.ini',
+    "metta.py",
+    "mettac.py",
+    "conftest.py",
+    "pytest.ini",
 }
 """ Files which mark the root of a project """
 
 
 def add_common_config(environment: Environment):
-    """ Add some common configuration sources
+    """Add some common configuration sources
 
     The following could be added:
 
@@ -72,43 +72,43 @@ def add_common_config(environment: Environment):
     # a user config path (like ~/.config/metta) may contain config
     user_conf_path = appdirs.user_config_dir(METTA_COMMON_APP_NAME)
     if not environment.config.has_source(
-            METTA_COMMON_CONFIG_USER_INSTANCE_ID) and os.path.isdir(user_conf_path):
+        METTA_COMMON_CONFIG_USER_INSTANCE_ID
+    ) and os.path.isdir(user_conf_path):
         environment.config.add_source(
             CONFIGERUS_SOURCE_PATH,
             METTA_COMMON_CONFIG_USER_INSTANCE_ID,
-            METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS).set_path(user_conf_path)
+            METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS,
+        ).set_path(user_conf_path)
 
     # Add some dymanic values for config
     environment.config.add_source(
         CONFIGERUS_SOURCE_DICT,
         METTA_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID,
-        priority=METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS
-    ).set_data({
-        "user": {
-            "id": getpass.getuser()  # override user id with a host value
-        },
-        'environment': {
-            'name': environment.name
-        },
-        "global": {
-            "datetime": datetime.now(),  # use a single datetime across all checks
-        },
-        environment.config.paths_label(): {  # special config label for file paths, usually just "paths"
-            # you can use "paths:project" in config to substitute this path
-            "project": project_root_path
-        },
-        'platform': {
-            'machine': platform.machine(),
-            'system': platform.system(),
-            'processor': platform.processor(),
-            'version': platform.version(),
-            'uname': platform.uname()
+        priority=METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS,
+    ).set_data(
+        {
+            "user": {"id": getpass.getuser()},  # override user id with a host value
+            "environment": {"name": environment.name},
+            "global": {
+                "datetime": datetime.now(),  # use a single datetime across all checks
+            },
+            environment.config.paths_label(): {  # special config label for file paths, usually just "paths"
+                # you can use "paths:project" in config to substitute this path
+                "project": project_root_path
+            },
+            "platform": {
+                "machine": platform.machine(),
+                "system": platform.system(),
+                "processor": platform.processor(),
+                "version": platform.version(),
+                "uname": platform.uname(),
+            },
         }
-    })
+    )
 
 
 def find_project_root_path():
-    """ try to find a project root path
+    """try to find a project root path
 
     We start looking in the cwd for certain marker files, and if we don't find
     any then we check the parent, recursively.
@@ -121,7 +121,7 @@ def find_project_root_path():
     # Try to add a path from cwd and up that contains a mettac.py file
     check_path = DIR
     while check_path:
-        if check_path == '/':
+        if check_path == "/":
             return DIR
 
         for marker_file in MARKER_FILES:

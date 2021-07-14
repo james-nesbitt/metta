@@ -1,0 +1,42 @@
+# NPods test suite configuration
+#
+# Configuration from this file is used only in the test suite for npods, where
+# values are used to configure how the tests run.
+#
+
+# Control cluster monitoring
+monitoring:
+  # enable the loki helm chart
+  enable: true
+
+workload:
+  # default/template values for the npods helm workload yaml
+  scale:
+    name: 'npods-workload-default'
+    replicas: 100
+    image: 'msr.ci.mirantis.com/jnesbitt/n-pods-app:0.18'
+    sleep: '10ms'
+    cpu: '300'
+    ram: '8192'
+    threads: 100
+
+  stability:
+    name: 'npods-workload-default'
+    replicas: 100
+    image: 'msr.ci.mirantis.com/jnesbitt/n-pods-app:0.18'
+    sleep: '10ms'
+    cpu: '300'
+    ram: '8192'
+    threads: 100
+
+
+tests:
+  # Control the scaling test
+  scale:
+    duration: 600
+    period: 60
+
+  # Configure the stability test
+  stability:
+    duration: 3600
+    period: 60

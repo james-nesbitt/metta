@@ -1,0 +1,74 @@
+{{/*
+  Certificates for MSR to authenticate API requests to eNZi as an "eNZi Service."
+*/}}
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "msr.fullname" . }}-enzi-service-ca
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "msr.fullname" . }}-enzi-service-ca-cert
+  duration: 87600h # 10 years (this cert is registered with eNZi and cert rotation requires manual intervention)
+  renewBefore: 24h
+  commonName: "MSR eNZi Service Client CA"
+  isCA: true
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  usages:
+  - digital signature
+  - key encipherment
+  - cert sign
+  - client auth
+  issuerRef:
+    name: {{ include "msr.fullname" . }}-selfsigned-issuer
+    kind: Issuer
+    group: cert-manager.io
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "msr.fullname" . }}-enzi-service-ca
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: {{ include "msr.fullname" . }}-enzi-service-ca-cert
+
+---
+
+{{/*
+  Shared client certificate for all MSR pods. While each deployment could be
+  issued its own certificate, it would add complexiy without any appreciable
+  increase in security as all the pods in each deployment would still share a
+  certificate. Issuing a short-lived certificate to each pod would be an
+  improvement, which could be done with the experimental cert-manager CSI
+  driver. But that is an experiment for another day.
+  https://cert-manager.io/docs/usage/csi/#enabling-mtls-of-pods-using-the-cert-manager-csi-driver
+*/}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "msr.fullname" . }}-enzi-client
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "msr.fullname" . }}-enzi-client-cert
+  commonName: "MSR eNZi Service Client"
+  duration: 4380h
+  renewBefore: 24h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  usages:
+    - digital signature
+    - key encipherment
+    - client auth
+  issuerRef:
+    name: {{ include "msr.fullname" . }}-enzi-service-ca
+    kind: Issuer
+    group: cert-manager.io

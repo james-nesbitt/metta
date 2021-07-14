@@ -1,8 +1,7 @@
 
 # terraform :: metta.plugin.provisioner:
 terraform:
-    plugin_type: provisioner
-    plugin_id: metta_terraform
+    plugin_id: metta_terraform_provisioner
 
     # Terraform will configure itself from the ./terraform.yml file
     # This is actually its default but this demonstrates that we have
@@ -13,7 +12,6 @@ terraform:
 
 # ansible :: metta.plugin.provisioner:
 # ansible:
-#     plugin_type: provisioner
 #     plugin_id: metta_ansible
 #
 #     # The ansible plugin is setup to pull config from a label/base pair, but
@@ -26,8 +24,7 @@ terraform:
 
 # launchpad :: metta.plugin.provisioner:
 launchpad:
-    plugin_type: provisioner
-    plugin_id: metta_launchpad
+    plugin_id: metta_launchpad_provisioner
 
     # Pass these values to the provisioner constructor.  The launchpad
     # constructor accepts override for "where to get config".  The values
@@ -41,8 +38,7 @@ launchpad:
 # @NOTE you want this plugin to be a higher priority than the others
 #   so that a get_plugins(provisioner) retrieves this one first.
 combo:
-    plugin_type: provisioner
-    plugin_id: combo
+    plugin_id: combo_provisioner
     priority: 95
 
     # tell the plugin to load config from "here"
@@ -51,5 +47,4 @@ combo:
     backends:
     # Ordered list of instance filters
     - instance_id: terraform
-    # - instance_id: ansible
     - instance_id: launchpad

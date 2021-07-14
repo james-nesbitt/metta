@@ -8,14 +8,15 @@ import os
 
 from docker import DockerClient
 
-logger = logging.getLogger('metta.contrib.docker.client.dockerpy')
+logger = logging.getLogger("metta.contrib.docker.client.dockerpy")
 
-METTA_PLUGIN_ID_DOCKER_CLIENT = 'metta_docker'
+METTA_PLUGIN_ID_DOCKER_CLIENT = "metta_docker_client"
 """ client plugin_id for the metta dummy plugin """
 
 
 # this interface is common for all Metta plugins, but CLI plugins underuse it
-# pylint: disable=too-few-public-methods
+# Also we work around the parent constructor.
+# pylint: disable=too-few-public-methods, super-init-not-called
 class DockerPyClientPlugin(DockerClient):
     """Metta Client plugin for docker using the docker-py library.
 
@@ -26,8 +27,16 @@ class DockerPyClientPlugin(DockerClient):
 
     # This is really what it takes to configure both the plugin and the client
     # pylint: disable=too-many-arguments
-    def __init__(self, environment, instance_id, host: str, cert_path: str, tls_verify: bool = True,
-                 compose_tls_version: str = 'TLSv1_2', version: str = 'auto'):
+    def __init__(
+        self,
+        environment,
+        instance_id,
+        host: str,
+        cert_path: str,
+        tls_verify: bool = True,
+        compose_tls_version: str = "TLSv1_2",
+        version: str = "auto",
+    ):
         """Set class properties.
 
         In order to decorate this existing class as a DockerClient, without
@@ -60,36 +69,39 @@ class DockerPyClientPlugin(DockerClient):
             the Docker client use for docker compose.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         logger.debug("Configuring docker client with args for host: %s", host)
 
         self.host = host
         self.cert_path = cert_path
-        self.tls_verify = '1' if tls_verify else '0'
+        self.tls_verify = "1" if tls_verify else "0"
         self.compose_tls_version = compose_tls_version
 
         env = os.environ.copy()
-        env['DOCKER_HOST'] = self.host
-        env['DOCKER_CERT_PATH'] = self.cert_path
-        env['DOCKER_TLS_VERIFY'] = self.tls_verify
-        env['COMPOSE_TLS_VERSION'] = self.compose_tls_version
+        env["DOCKER_HOST"] = self.host
+        env["DOCKER_CERT_PATH"] = self.cert_path
+        env["DOCKER_TLS_VERIFY"] = self.tls_verify
+        env["COMPOSE_TLS_VERSION"] = self.compose_tls_version
 
         # Build a client in the classical way, but we just take it's api and
         # throw the client away
         throwaway = DockerClient.from_env(environment=env, version=version)
         self.api = throwaway.api
 
-    def info(self):
+    # deep argument is an info() standard across plugins, also we are replacing
+    # the parent method.
+    # pylint: disable=unused-argument, arguments-differ
+    def info(self, deep: bool = False):
         """Return dict data about this plugin for introspection."""
         return {
-            'docker': {
-                'host': self.host,
-                'cert_path': self.cert_path,
-                'tls_verify': self.tls_verify,
-                'compose_tls_version': self.compose_tls_version
+            "docker": {
+                "host": self.host,
+                "cert_path": self.cert_path,
+                "tls_verify": self.tls_verify,
+                "compose_tls_version": self.compose_tls_version,
             }
         }

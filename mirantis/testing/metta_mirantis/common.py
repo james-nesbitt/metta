@@ -23,10 +23,12 @@ METTA_MIRANTIS_COMMON_NAME = "metta-mirantis"
 METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS = 35
 """ Config source priority for added common config """
 METTA_MIRANTIS_PATH = pkg_resources.resource_filename(
-    "mirantis.testing.metta_mirantis", "")
+    "mirantis.testing.metta_mirantis", ""
+)
 """ Path to the metta mirantis project root """
 METTA_MIRANTIS_CONFIG_PATH = pkg_resources.resource_filename(
-    'mirantis.testing.metta_mirantis', "config")
+    "mirantis.testing.metta_mirantis", "config"
+)
 """ Path to the metta mirantis config preset configurations """
 
 
@@ -51,7 +53,8 @@ def add_common_config(environment: Environment):
         source = environment.config.add_source(
             CONFIGERUS_SOURCE_PATH,
             metta_mirantis_config_instance_id,
-            priority=METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS)
+            priority=METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS,
+        )
         source.set_path(METTA_MIRANTIS_CONFIG_PATH)
 
     # Add a "{path:metta_mirantis}" config value so that paths to this module
@@ -61,11 +64,14 @@ def add_common_config(environment: Environment):
     metta_mirantis_paths_instance_id = f"{METTA_MIRANTIS_COMMON_NAME}-paths"
     if not environment.config.has_source(metta_mirantis_paths_instance_id):
         source = environment.config.add_source(
-            CONFIGERUS_SOURCE_DICT, metta_mirantis_paths_instance_id,
-            priority=METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS)
+            CONFIGERUS_SOURCE_DICT,
+            metta_mirantis_paths_instance_id,
+            priority=METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS,
+        )
         source.set_data(
             {
                 environment.config.paths_label(): {
                     METTA_MIRANTIS_COMMON_NAME: METTA_MIRANTIS_PATH
                 }
-            })
+            }
+        )

@@ -86,5 +86,6 @@ config:
         # metta_launchpad will convert this dict to a list
         installFlags:
           ucp-insecure-tls: true
+          dtr-external-url: "{{output::msr_lb?special:None}}"
         replicaIDs: "{{variables:msr_replicaids?sequential}}"
         version: "{{variables:msr_version}}"

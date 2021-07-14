@@ -14,19 +14,20 @@ import time
 from typing import Dict, Any, List
 
 import kubernetes
-import kubernetes.client.models as models
+from kubernetes.client import models
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
+from mirantis.testing.metta.healthcheck import Health, HealthStatus
 
-logger = logging.getLogger('metta.contrib.kubernetes.client.kubeapi')
+logger = logging.getLogger("metta.contrib.kubernetes.client.kubeapi")
 
-METTA_PLUGIN_ID_KUBERNETES_CLIENT = 'metta_kubernetes'
+METTA_PLUGIN_ID_KUBERNETES_CLIENT = "metta_kubernetes_kubeapi_client"
 """ client plugin_id for the metta kubernetes client plugin """
 
+
 KUBEAPI_CLIENT_INTERPRET_Z_REGEX = re.compile(
-    r'^\[(?P<symbol>[+-])\](?P<name>\S+)\s{1}(?P<ok>\w+)$')
+    r"^\[(?P<symbol>[+-])\](?P<name>\S+)\s{1}(?P<ok>\w+)$"
+)
 
 
 class KubernetesApiClientPlugin:
@@ -89,14 +90,15 @@ class KubernetesApiClientPlugin:
 
     """
 
-    def __init__(self, environment: Environment, instance_id: str,
-                 kube_config_file: str = ''):
+    def __init__(
+        self, environment: Environment, instance_id: str, kube_config_file: str = ""
+    ):
         """Run the super constructor but also set class properties.
 
         This implements the args part of the client interface.
 
         Here we expect to receive a path to a KUBECONFIG file with a context set
-        and we create a Kubernetes client for use.  After that this can provide
+        and we create a Kubernetes client for replace_existing=Trueuse.  After that this can provide
         Core api clients as per the kubernetes SDK
 
         Parameters:
@@ -104,56 +106,52 @@ class KubernetesApiClientPlugin:
         config_file (str): String path to the kubernetes config file to use
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         logger.debug("Creating Kuberentes client from config file")
-        self.api_client = kubernetes.config.new_client_from_config(
-            config_file=kube_config_file)
+        self._api_client = kubernetes.config.new_client_from_config(
+            config_file=kube_config_file
+        )
         """ Kubernetes api client """
 
         self.config_file = kube_config_file
         """ Kube config file, in case you need to steal it. """
 
-        self.healthchecks()
-        """Add some healthcheck plugins for this instance."""
-
-    def info(self) -> Dict[str, Any]:
+    def info(self, deep: bool = False) -> Dict[str, Any]:
         """Return dict data about this plugin for introspection."""
-        info = {
-            'kubernetes': {
-                'config_file': self.config_file
-            }
-        }
+        info = {"kubernetes": {"config_file": self.config_file}}
 
-        try:
-            info['nodes'] = self.nodes()
-
-        # pylint: disable=broad-except
-        except Exception:
-            # Still continue to run
-            pass
+        if deep:
+            try:
+                info["nodes"] = self.nodes()
+            # pylint: disable=broad-except
+            except Exception:
+                # Still continue to run
+                pass
 
         return info
 
     def get_api(self, api: str):
         """Get an kubernetes API."""
         if hasattr(kubernetes.client, api):
-            return getattr(kubernetes.client, api)(self.api_client)
+            return getattr(kubernetes.client, api)(self._api_client)
 
         raise KeyError(f"Unknown API requested: {api}")
 
     def utils_create_from_yaml(self, yaml_file: str, **kwargs):
         """Run a kube apply from a yaml file."""
         return kubernetes.utils.create_from_yaml(
-            k8s_client=self.api_client, yaml_file=yaml_file, **kwargs)
+            k8s_client=self._api_client, yaml_file=yaml_file, **kwargs
+        )
 
     def utils_create_from_dict(self, data: Dict, **kwargs):
         """Run a kube apply from dict of K8S yaml."""
         return kubernetes.utils.create_from_dict(
-            k8s_client=self.api_client, data=data, **kwargs)
+            k8s_client=self._api_client, data=data, **kwargs
+        )
 
     def nodes(self) -> List[models.v1_node.V1Node]:
         """Return V1Node list.
@@ -165,23 +163,9 @@ class KubernetesApiClientPlugin:
         You can get node status from node.status.
 
         """
-        node_items = self.get_api('CoreV1Api').list_node().items
+        node_items = self.get_api("CoreV1Api").list_node().items
 
         return node_items
-
-    def healthchecks(self) -> Fixtures:
-        """Create and return healthcheck plugins for this client instance."""
-        healthcheck_fixtures = Fixtures()
-
-        kubeapi_healthcheck = self.environment.add_fixture(
-            plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
-            plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
-            instance_id=f"{self.instance_id}-healhtcheck",
-            priority=70,
-            arguments={'kubeapi_client': self})
-        healthcheck_fixtures.add(kubeapi_healthcheck)
-
-        return healthcheck_fixtures
 
     def kubelet_ready_wait(self, timeout: int = 30, period: int = 1):
         """Wait until all nodes' kubelets are ready.
@@ -198,10 +182,12 @@ class KubernetesApiClientPlugin:
         while timeout > 0:
             try:
                 for node in self.nodes():
-                    kubelet_condition = node_status_condition(node, 'KubeletReady')
+                    kubelet_condition = node_status_condition(node, "KubeletReady")
 
-                    if not kubelet_condition.status == 'True':
-                        raise RuntimeError(f"Node kubelet is not ready: {node.metadata.name}")
+                    if not kubelet_condition.status == "True":
+                        raise RuntimeError(
+                            f"Node kubelet is not ready: {node.metadata.name}"
+                        )
                 return True
 
             except RuntimeError as this_err:
@@ -211,7 +197,7 @@ class KubernetesApiClientPlugin:
                 timeout = timeout - period
                 continue
 
-        raise RuntimeError('Timed out waiting for kubernetes to become ready') from err
+        raise RuntimeError("Timed out waiting for kubernetes to become ready") from err
 
     def readyz_wait(self, timeout: int = 30, period: int = 1):
         """Wait until kubernetes is ready before returning."""
@@ -226,7 +212,7 @@ class KubernetesApiClientPlugin:
                 timeout = timeout - period
                 continue
 
-        raise RuntimeError('Timed out waiting for kubernetes to become ready') from err
+        raise RuntimeError("Timed out waiting for kubernetes to become ready") from err
 
     def readyz(self):
         """Check the general readyz endpoint.
@@ -240,7 +226,7 @@ class KubernetesApiClientPlugin:
         Will raise an exception is kubernetes isn't avaialble
 
         """
-        return self._interpret_z_response('/readyz')
+        return self._interpret_z_response("/readyz")
 
     def livez(self):
         """Check the general livez endpoint.
@@ -254,10 +240,11 @@ class KubernetesApiClientPlugin:
         Will raise an exception is kubernetes isn't avaialble
 
         """
-        return self._interpret_z_response('/livez')
+        return self._interpret_z_response("/livez")
 
-    def _interpret_z_response(self, endpoint: str, method: str = 'GET',
-                              params: Dict[str, str] = None) -> Dict[str, Dict[str, str]]:
+    def _interpret_z_response(
+        self, endpoint: str, method: str = "GET", params: Dict[str, str] = None
+    ) -> Dict[str, Dict[str, str]]:
         """Interpret that readyz/livez response format into a dict.
 
         because both livez and readyz return similar a machine un-friendly response, we use this
@@ -265,19 +252,20 @@ class KubernetesApiClientPlugin:
 
         """
         # this will produce an exception if K8s is not ready
-        response = self.api_client.call_api(
+        response = self._api_client.call_api(
             method=method,
             resource_path=endpoint,
             query_params=params if params is not None else {},
-            _preload_content=False)[0]
+            _preload_content=False,
+        )[0]
 
         interpreted = {}
-        for line in response.read().decode("utf-8") .split('\n'):
+        for line in response.read().decode("utf-8").split("\n"):
             match = KUBEAPI_CLIENT_INTERPRET_Z_REGEX.fullmatch(line)
             if match:
-                interpreted[match.group('name')] = {
-                    'symbol': match.group('symbol'),
-                    'ok': match.group('ok')
+                interpreted[match.group("name")] = {
+                    "symbol": match.group("symbol"),
+                    "ok": match.group("ok"),
                 }
 
         return interpreted
@@ -288,9 +276,92 @@ class KubernetesApiClientPlugin:
         """Get a kubernetes watch instance."""
         return kubernetes.watch.Watch()
 
+    # healthcheck interfaces
 
-def node_status_condition(node: models.v1_node.V1Node, cond_reason: str,
-                          cond_type: str = "Ready") -> models.v1_node_condition.V1NodeCondition:
+    def health(self) -> Health:
+        """Determine the health of the K8s instance."""
+        k8s_health = Health(source=self._instance_id, status=HealthStatus.UNKNOWN)
+
+        for test_health_function in [
+            self._health_k8s_readyz,
+            self._health_k8s_node_health,
+            self._health_k8s_allpod_health,
+        ]:
+            test_health = test_health_function()
+            k8s_health.merge(test_health)
+
+        return k8s_health
+
+    def _health_k8s_readyz(self):
+        """Check if kubernetes thinks the pod is healthy."""
+        health = Health(source=self._instance_id)
+
+        core_v1_api = self.get_api("CoreV1Api")
+
+        unhealthy_pod_count = 0
+        for pod in core_v1_api.list_pod_for_all_namespaces().items:
+            if pod.status.phase == "Failed":
+                logger.error(
+                    "KubeAPI: Kubernetes reports a pod failed: %s", pod.metadata.name
+                )
+                unhealthy_pod_count += 1
+        if unhealthy_pod_count == 0:
+            health.info("KubeAPI: readyz reports ready")
+        elif unhealthy_pod_count < 2:
+            health.warning("KubeAPI: Kubernetes Reports some pods are failed")
+        else:
+            health.error(
+                "KubeAPI: Kubernetes Reports cluster is unhealthy (pod health)"
+            )
+
+        return health
+
+    def _health_k8s_node_health(self):
+        """Check if kubernetes thinks the nodes are healthy."""
+        health = Health(source=self._instance_id)
+
+        no_issues = True
+        for node in self.nodes():
+            kubelet_condition = node_status_condition(node, "KubeletReady")
+            if not kubelet_condition.status == "True":
+                health.error(
+                    f"KubeAPI: Node kubelet is not ready: {node.metadata.name}"
+                )
+                no_issues = False
+
+        if no_issues:
+            health.info("KubeAPI: all nodes report healthy.")
+
+        return health
+
+    def _health_k8s_allpod_health(self):
+        """Check if kubernetes thinks all the pods are healthy."""
+        health = Health(source=self._instance_id)
+
+        core_v1_api = self.get_api("CoreV1Api")
+
+        unhealthy_pod_count = 0
+        for pod in core_v1_api.list_pod_for_all_namespaces().items:
+            if pod.status.phase == "Failed":
+                logger.error(
+                    "KubeAPI: Kubernetes reports a pod failed: %s", pod.metadata.name
+                )
+                unhealthy_pod_count += 1
+        if unhealthy_pod_count == 0:
+            health.info("KubeAPI: all pods report as healthy")
+        elif unhealthy_pod_count < 2:
+            health.warning("KubeAPI: some pods report as failed")
+        else:
+            health.error(
+                "KubeAPI: Kubernetes Reports cluster is unhealthy (pod health)"
+            )
+
+        return health
+
+
+def node_status_condition(
+    node: models.v1_node.V1Node, cond_reason: str, cond_type: str = "Ready"
+) -> models.v1_node_condition.V1NodeCondition:
     """Retrieve a status condition of matching reason from a node."""
     status: models.v1_node_status.V1NodeStatus = node.status
 

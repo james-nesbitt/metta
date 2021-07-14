@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "msr.fullname" . }}-registry
+  labels:
+    {{- include "msr.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.registry.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "msr.commonSelectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: registry
+  template:
+    metadata:
+      labels:
+        {{- include "msr.labels" . | nindent 8 }}
+        app.kubernetes.io/component: registry
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/registry/registry-config.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
+      containers:
+        - name: registry
+          securityContext: {}
+          image: "{{ include "msr.imageRef" (list $ "registry") }}"
+          imagePullPolicy: {{ .Values.registry.image.pullPolicy }}
+          ports:
+            - name: https
+              containerPort: 443
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/dtr
+            - name: certs
+              mountPath: /certs
+          {{- if eq .Values.registry.storage.backend "persistentVolume" }}
+            - name: storage
+              mountPath: /storage
+          {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "msr.fullname" . }}-registry-config
+        - name: certs
+          projected:
+            sources:
+              - secret:
+                  name: {{ include "msr.fullname" . }}-registry-server-cert
+                  items:
+                    - key: tls.key
+                      path: registry/tls.key
+                    - key: tls.crt
+                      path: registry/tls.crt
+              - secret:
+                  name: {{ include "msr.fullname" . }}-nginx-client-ca-cert
+                  items:
+                    - key: ca.crt
+                      path: registry-client/ca.crt
+              - secret:
+                  name: {{ include "msr.fullname" . }}-auth-signing-cert
+                  items:
+                    - key: ca.crt
+                      path: signing/ca.crt
+              - secret:
+                  name: {{ include "msr.fullname" . }}-rethinkdb-driver-client-cert-0
+                  items:
+                    - key: tls.crt
+                      path: rethinkdb-client/tls.crt
+                    - key: tls.key
+                      path: rethinkdb-client/tls.key
+              - secret:
+                  name: {{ include "msr.fullname" . }}-rethinkdb-driver-ca-cert
+                  items:
+                    - key: ca.crt
+                      path: rethinkdb/ca.crt
+              - secret:
+                  name: {{ include "msr.fullname" . }}-enzi-client-cert
+                  items:
+                    - key: tls.crt
+                      path: enziservice-client/tls.crt
+                    - key: tls.key
+                      path: enziservice-client/tls.key
+        {{- if eq .Values.registry.storage.backend "persistentVolume" }}
+        - name: storage
+          persistentVolumeClaim:
+            claimName: {{ .Values.registry.storage.persistentVolume.existingClaim | default (include "msr.fullname" .) }}
+        {{- end }}

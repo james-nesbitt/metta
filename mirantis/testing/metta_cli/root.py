@@ -11,13 +11,18 @@ types are defined as an enum in this package, and so the base class is here too.
 """
 import logging
 
-from mirantis.testing.metta import environment_names, get_environment, discover, new_environment
+from mirantis.testing.metta import (
+    environment_names,
+    get_environment,
+    discover,
+    new_environment,
+)
 from mirantis.testing.metta.plugin import Factory
 
-from .base import METTA_PLUGIN_TYPE_CLI
+from .base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
 
-logger = logging.getLogger('metta.cli.root')
+logger = logging.getLogger("metta.cli.root")
 
 
 # This gets used to collect public properties dynamically.
@@ -32,7 +37,7 @@ class Root:
 
     """
 
-    def __init__(self, environment: str = '', state: str = ''):
+    def __init__(self, environment: str = "", state: str = ""):
         """Configure initial root object.
 
         Parameters:
@@ -49,12 +54,14 @@ class Root:
         discover()
 
         try:
-            if environment == '':
+            if environment == "":
                 environment = environment_names()[0]
         except (KeyError, IndexError):
-            logger.warning("No environment object has been defined (making one now.) "
-                           "Are you in a project folder?")
-            environment = 'empty'
+            logger.warning(
+                "No environment object has been defined (making one now.) "
+                "Are you in a project folder?"
+            )
+            environment = "empty"
             new_environment(environment)
 
         try:
@@ -63,7 +70,9 @@ class Root:
             if state:
                 self._environment.set_state(state)
         except KeyError as err:
-            raise ValueError(f"Could not load environment '{environment}', not found") from err
+            raise ValueError(
+                f"Could not load environment '{environment}', not found"
+            ) from err
 
         # collect any comands from all discovered cli plugins
         self._collect_commands()
@@ -76,10 +85,11 @@ class Root:
         object directly, so that Fire can see them.
 
         """
-        for plugin_id in Factory.registry[METTA_PLUGIN_TYPE_CLI]:
+        for plugin_id in Factory.plugin_ids(
+            interfaces_filter=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
+        ):
             plugin_dict = {
-                'plugin_type': METTA_PLUGIN_TYPE_CLI,
-                'plugin_id': plugin_id
+                "plugin_id": plugin_id,
             }
 
             fixture = self._environment.add_fixture_from_dict(plugin_dict=plugin_dict)
@@ -87,28 +97,37 @@ class Root:
             logger.info("loading cli plugin: %s", fixture.plugin_id)
             plugin = fixture.plugin
 
-            if not hasattr(plugin, 'fire'):
+            if not hasattr(plugin, "fire"):
                 continue
 
             try:
                 commands = plugin.fire()
-            except TypeError as err:
-                raise NotImplementedError(f"Plugin {plugin.plugin_id} did not properly implement "
-                                          f"the fire(fixtures) method") from err
+
+            # A failed command load shouldn't kill all commands
+            # pylint: disable=broad-except
+            except Exception as err:
+                logger.warning(
+                    "CLI plugin '%s' failed when adding commands: %s", plugin_id, err
+                )
 
             if not isinstance(commands, dict):
                 raise ValueError(f"Plugin returned invalid commands : {commands}")
 
             # Attach any found commands/groups to this object
             for (command_name, command) in commands.items():
-                logger.debug("adding cli plugin command/group: %s->%s",
-                             fixture.plugin_id,
-                             command_name)
+                logger.debug(
+                    "adding cli plugin command/group: %s->%s",
+                    fixture.plugin_id,
+                    command_name,
+                )
 
                 # if the command name already exists and is a dict then
                 # maybe we should merge them
-                if hasattr(self, command_name) and isinstance(
-                        getattr(self, command_name), dict) and isinstance(command, dict):
+                if (
+                    hasattr(self, command_name)
+                    and isinstance(getattr(self, command_name), dict)
+                    and isinstance(command, dict)
+                ):
                     getattr(self, command_name).update(command)
                     continue
 

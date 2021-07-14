@@ -19,19 +19,19 @@ import requests
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_TYPE_HEALTHCHECK
+from mirantis.testing.metta.healthcheck import Health, HealthStatus
 
-logger = logging.getLogger('metta.contrib.metta_mirantis.client.msrapi')
+logger = logging.getLogger("metta.contrib.metta_mirantis.client.msrapi")
 
 
-METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID = 'metta_mirantis_client_msr'
+METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID = "mirantis_msr_client"
 """ Mirantis MSR APIP Client plugin id """
 
 
 class MSRReplicaHealth(Enum):
     """MSR replica health values (in the cluster status API response)."""
 
-    OK = 'OK'
+    OK = "OK"
 
     def match(self, compare: str) -> bool:
         """Allow for string comparisons."""
@@ -44,8 +44,17 @@ class MSRAPIClientPlugin:
     """Client for API Connections to MSR."""
 
     # pylint: disable=too-many-arguments"
-    def __init__(self, environment: Environment, instance_id: str, accesspoint: str,
-                 username: str, password: str, hosts: List[Dict], api_version: str = 'v0'):
+    def __init__(
+        self,
+        environment: Environment,
+        instance_id: str,
+        accesspoint: str,
+        username: str,
+        password: str,
+        hosts: List[Dict],
+        api_version: str = "v0",
+        protocol: str = "https",
+    ):
         """Create new MSR Client API plugin.
 
         Parameters:
@@ -69,9 +78,9 @@ class MSRAPIClientPlugin:
             endpoint is specified.
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists."""
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance."""
 
         self.accesspoint = accesspoint
@@ -80,6 +89,9 @@ class MSRAPIClientPlugin:
 
         self.hosts = hosts if hosts else []
         """ List of hosts """
+
+        self.protocol = protocol
+        """What procotol should be used with the endpoint (http/https.)"""
 
         if not self.accesspoint:
             # use the first host as an accesspoint if none was delivered
@@ -93,16 +105,14 @@ class MSRAPIClientPlugin:
         if not self.verify:
             # pylint: disable=no-member
             requests.packages.urllib3.disable_warnings(
-                requests.packages.urllib3.exceptions.InsecureRequestWarning)
+                requests.packages.urllib3.exceptions.InsecureRequestWarning
+            )
 
         self.auth_token = None
         """ hold the bearer auth token if created by ._auth_headers() """
 
         self.fixtures = Fixtures()
         """fixtures created by this plugin."""
-
-        self.healthchecks()
-        """Add healthcheck plugins for this instance."""
 
     def host_count(self):
         """Return integer host count for MSR cluster."""
@@ -111,38 +121,37 @@ class MSRAPIClientPlugin:
     def info(self, deep: bool = False):
         """Return information about the plugin."""
         info = {
-            'api': {
-                'accesspoint': self.accesspoint,
-                'username': self.username,
+            "api": {
+                "accesspoint": self.accesspoint,
+                "username": self.username,
             },
-            'hosts': self.hosts
+            "hosts": self.hosts,
         }
 
         if deep:
-            info['version'] = self.api_version()
-            info['features'] = self.api_features()
-            info['status'] = self.api_status()
+            info["version"] = self.api_version()
+            info["features"] = self.api_features()
+            info["status"] = self.api_status()
 
         return info
 
-    def healthchecks(self) -> Fixtures:
-        """Create and return healthcheck plugins for this client instance."""
-        healthcheck_fixtures = Fixtures()
+    def health(self) -> Health:
+        """Determine the health of the MSR instance."""
+        msr_health = Health(source=self._instance_id, status=HealthStatus.UNKNOWN)
 
-        kubeapi_healthcheck = self.environment.add_fixture(
-            plugin_type=METTA_PLUGIN_TYPE_HEALTHCHECK,
-            plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
-            instance_id=f"{self.instance_id}-healthcheck",
-            priority=70,
-            arguments={'msr_api': self})
-        healthcheck_fixtures.add(kubeapi_healthcheck)
-        self.fixtures.add(kubeapi_healthcheck)
+        for _health_health_function in [
+            self._health_node_health,
+            self._health_msr_replica_health,
+            self._health_msr_alerts,
+        ]:
+            _health_health = _health_health_function()
+            msr_health.merge(_health_health)
 
-        return healthcheck_fixtures
+        return msr_health
 
     def api_ping(self, node: int = None) -> bool:
         """Check the API ping response."""
-        endpoint = self._accesspoint_url('_ping', root_api=True, node=node)
+        endpoint = self._accesspoint_url("_ping", root_api=True, node=node)
 
         with requests.get(endpoint, verify=self.verify) as response:
             response.raise_for_status()
@@ -150,9 +159,11 @@ class MSRAPIClientPlugin:
 
     def api_health(self, node: int = None):
         """Check the API ping response."""
-        endpoint = self._accesspoint_url('health', root_api=True, node=node)
+        endpoint = self._accesspoint_url("health", root_api=True, node=node)
 
-        with requests.get(endpoint, auth=self._api_auth(), verify=self.verify) as response:
+        with requests.get(
+            endpoint, auth=self._api_auth(), verify=self.verify
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
@@ -164,41 +175,55 @@ class MSRAPIClientPlugin:
         parsed string contents of the response
 
         """
-        endpoint = self._accesspoint_url(
-            'nginx_status', root_api=True, node=node)
+        endpoint = self._accesspoint_url("nginx_status", root_api=True, node=node)
 
-        with requests.get(endpoint, auth=self._api_auth(),
-                          headers={'content-type': 'application/json'},
-                          verify=self.verify) as response:
+        with requests.get(
+            endpoint,
+            auth=self._api_auth(),
+            headers={"content-type": "application/json"},
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             # @TODO should we parse this?
             return response.content.decode("utf-8")
 
     def api_version(self) -> Dict:
         """Retrieve version."""
-        with requests.get(self._accesspoint_url('admin/version'), auth=self._api_auth(),
-                          verify=self.verify) as response:
+        with requests.get(
+            self._accesspoint_url("admin/version"),
+            auth=self._api_auth(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_status(self) -> Dict:
         """Retrieve status from the api."""
-        with requests.get(self._accesspoint_url('meta/cluster_status'), auth=self._api_auth(),
-                          verify=self.verify) as response:
+        with requests.get(
+            self._accesspoint_url("meta/cluster_status"),
+            auth=self._api_auth(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_features(self) -> Dict:
         """Retrieve features list from the api."""
-        with requests.get(self._accesspoint_url('meta/features'), auth=self._api_auth(),
-                          verify=self.verify) as response:
+        with requests.get(
+            self._accesspoint_url("meta/features"),
+            auth=self._api_auth(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
     def api_alerts(self) -> Dict:
         """Retrieve alerts list from the api."""
-        with requests.get(self._accesspoint_url('meta/alerts'), auth=self._api_auth(),
-                          verify=self.verify) as response:
+        with requests.get(
+            self._accesspoint_url("meta/alerts"),
+            auth=self._api_auth(),
+            verify=self.verify,
+        ) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
@@ -206,8 +231,9 @@ class MSRAPIClientPlugin:
         """Get the requests auth handler."""
         return requests.auth.HTTPBasicAuth(self.username, self.password)
 
-    def _accesspoint_url(self, endpoint: str = '',
-                         root_api: bool = False, node: int = None) -> str:
+    def _accesspoint_url(
+        self, endpoint: str = "", root_api: bool = False, node: int = None
+    ) -> str:
         """Convert an endpoint into a full URL for an API Call.
 
         Pass in a sub-url endpoint and this will convert it into a full URL.
@@ -238,9 +264,9 @@ class MSRAPIClientPlugin:
             target = self._node_address(node)
 
         if root_api:
-            return f"https://{target}/{endpoint}"
+            return f"{self.protocol}://{target}/{endpoint}"
 
-        return f"https://{target}/api/{self.version}/{endpoint}"
+        return f"{self.protocol}://{target}/api/{self.version}/{endpoint}"
 
     def _node_address(self, node: int = 0) -> str:
         """Get the ip address from the node for the node index.
@@ -257,11 +283,58 @@ class MSRAPIClientPlugin:
 
         """
         node_dict = self.hosts[node]
-        if 'address' in node_dict:
-            return node_dict['address']
-        if 'ssh' in node_dict:
-            return node_dict['ssh']['address']
-        if 'winrm' in node_dict:
-            return node_dict['winrm']['address']
+        if "address" in node_dict:
+            return node_dict["address"]
+        if "ssh" in node_dict:
+            return node_dict["ssh"]["address"]
+        if "winrm" in node_dict:
+            return node_dict["winrm"]["address"]
 
         raise ValueError(f"No node address could be found for the node {node}")
+
+    def _health_node_health(self):
+        """Test node health."""
+        health = Health(source=self._instance_id)
+
+        for node_index in range(self.host_count()):
+            node_health = self.api_health(node=node_index)
+            if node_health["Healthy"]:
+                health.info(f"MSR: Node [{node_index}] is healthy")
+            else:
+                health.error(node_health["Error"])
+
+        return health
+
+    def _health_msr_replica_health(self):
+        """Test that we can access node information."""
+        health = Health(source=self._instance_id)
+
+        status = self.api_status()
+        replica_health = status["replica_health"]
+
+        if replica_health is None:
+            health.warning(
+                "MSR: cluster reports a null replica health. This occurs for MSR on K8s."
+            )
+        else:
+            for replica_id, replica_health in status["replica_health"].items():
+                if not MSRReplicaHealth.OK.match(replica_health):
+                    health.error(
+                        f"MSR: Replica [{replica_id}] is not READY : {replica_health}"
+                    )
+
+        return health
+
+    def _health_msr_alerts(self):
+        """Confirm that we can get alerts."""
+        health = Health(source=self._instance_id)
+
+        alerts = self.api_alerts()
+
+        for alert in alerts:
+            health.warning(
+                f"MSR: alert: {alert['id']} {alert['class']}: {alert['message']}"
+                f" {alert['url'] if hasattr(alert, 'url') else ''}"
+            )
+
+        return health

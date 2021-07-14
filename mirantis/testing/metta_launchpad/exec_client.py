@@ -13,18 +13,19 @@ from mirantis.testing.metta.environment import Environment
 
 from .launchpad import LaunchpadClient
 
-logger = logging.getLogger('metta.contrib.kubernetes.client')
+logger = logging.getLogger("metta.contrib.kubernetes.client")
 
 
-METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID = "metta_launchpad_exec"
+METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID = "metta_launchpad_exec_client"
 """ metta plugin ID for the metta exec client plugin """
 
 
 class LaunchpadExecClientPlugin:
     """Client for exec into hosts using launchpad."""
 
-    def __init__(self, environment: Environment,
-                 instance_id: str, client: LaunchpadClient):
+    def __init__(
+        self, environment: Environment, instance_id: str, client: LaunchpadClient
+    ):
         """Create launchpad exec plugin.
 
         Parameters:
@@ -33,9 +34,9 @@ class LaunchpadExecClientPlugin:
             exec commands
 
         """
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
         self.client = client
@@ -46,23 +47,19 @@ class LaunchpadExecClientPlugin:
         config = self.client.describe_config()
 
         if deep:
-            host_list = list(config['spec']['hosts'])
+            host_list = list(config["spec"]["hosts"])
         else:
             host_list = []
-            for host in config['spec']['hosts']:
-                list_host = {
-                    'role': host['role']
-                }
-                if 'ssh' in host:
-                    list_host.update({
-                        'is_windows': False,
-                        'address': host['ssh']['address']
-                    })
-                if 'winrm' in host:
-                    list_host.update({
-                        'is_windows': True,
-                        'address': host['winrm']['address']
-                    })
+            for host in config["spec"]["hosts"]:
+                list_host = {"role": host["role"]}
+                if "ssh" in host:
+                    list_host.update(
+                        {"is_windows": False, "address": host["ssh"]["address"]}
+                    )
+                if "winrm" in host:
+                    list_host.update(
+                        {"is_windows": True, "address": host["winrm"]["address"]}
+                    )
 
                 host_list.append(list_host)
 

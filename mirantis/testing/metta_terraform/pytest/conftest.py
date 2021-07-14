@@ -15,12 +15,13 @@ import logging
 import pytest
 
 from mirantis.testing.metta import discover, get_environment, Environment
-from mirantis.testing.metta.provisioner import METTA_PLUGIN_TYPE_PROVISIONER
 
-from mirantis.testing.metta_terraform.provisioner import (METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
-                                                          TerraformProvisionerPlugin)
+from mirantis.testing.metta_terraform.provisioner import (
+    METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
+    TerraformProvisionerPlugin,
+)
 
-logger = logging.getLogger('pytest-conftest')
+logger = logging.getLogger("pytest-conftest")
 
 """ Define our fixtures """
 
@@ -30,33 +31,34 @@ logger = logging.getLogger('pytest-conftest')
 # pylint: disable=unused-argument
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def environment_discover():
-    """ discover the metta environments """
+    """discover the metta environments"""
     # Tell metta to scan for automatic configuration of itself.
     # It starts my looking in paths upwards for a 'metta.yml' file; if it finds
     # one then it uses that path as a root source of config
     discover()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def environment(environment_discover) -> Environment:
-    """ get the metta environment """
+    """get the metta environment"""
     # we don't use the discover fixture, we just need it to run first
     # we don't pass an environment name, which gives us the default environment
     return get_environment()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def terraform_provisioner(environment) -> TerraformProvisionerPlugin:
-    """ get the metta terraform provisioner plugin """
-    return environment.fixtures.get_plugin(plugin_type=METTA_PLUGIN_TYPE_PROVISIONER,
-                                           plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID)
+    """get the metta terraform provisioner plugin"""
+    return environment.fixtures.get_plugin(
+        plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
+    )
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def environment_up(environment, terraform_provisioner) -> Environment:
-    """ get the environment but start the provisioners before returning
+    """get the environment but start the provisioners before returning
 
     This is preferable to the raw provisioner in cases where you want a running
     cluster so that the cluster startup cost does not get reflected in the
@@ -79,7 +81,8 @@ def environment_up(environment, terraform_provisioner) -> Environment:
 
     if conf.get("alreadyrunning", default=False):
         logger.info(
-            "test infrastructure is aready in place, and does not need to be provisioned.")
+            "test infrastructure is aready in place, and does not need to be provisioned."
+        )
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
@@ -88,8 +91,7 @@ def environment_up(environment, terraform_provisioner) -> Environment:
             logger.error("Provisioner failed to init: %s", err)
             raise err
         try:
-            logger.info(
-                "Starting up the testing cluster using the provisioner")
+            logger.info("Starting up the testing cluster using the provisioner")
             terraform_provisioner.apply()
         except Exception as err:
             logger.error("Provisioner failed to start: %s", err)
@@ -103,7 +105,8 @@ def environment_up(environment, terraform_provisioner) -> Environment:
     else:
         try:
             logger.info(
-                "Stopping the test cluster using the provisioner as directed by config")
+                "Stopping the test cluster using the provisioner as directed by config"
+            )
             terraform_provisioner.destroy()
         except Exception as err:
             logger.error("Provisioner failed to stop: %s", err)

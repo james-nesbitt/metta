@@ -16,10 +16,10 @@ from typing import Any
 
 from mirantis.testing.metta.environment import Environment
 
-logger = logging.getLogger('metta.cli.base')
+logger = logging.getLogger("metta.cli.base")
 
-METTA_PLUGIN_TYPE_CLI = "cli"
-""" Metta plugin_type identifier for CLI plugins """
+METTA_PLUGIN_INTERFACE_ROLE_CLI = "cli"
+""" Metta plugin interface identifier for CLI plugins """
 
 
 # pylint: disable=too-few-public-methods
@@ -33,9 +33,9 @@ class CliBase:
 
     def __init__(self, environment: Environment, instance_id: str):
         """Inject Environment and instance_id into plugin."""
-        self.environment = environment
+        self._environment = environment
         """ Environemnt in which this plugin exists """
-        self.instance_id = instance_id
+        self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
     def fire(self):

@@ -1,0 +1,16 @@
+{{- range $name, $deploy := .Values.jobrunner.deployments }}
+{{- if $deploy.customCapacity }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "msr.fullname" $ }}-jobrunner-{{ $name }}-capacity
+  labels:
+    {{- include "msr.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: jobrunner
+    msr.mirantis.com/deployment: "{{ $name }}"
+data:
+  capacity.json: |
+    {{- toJson $deploy.capacityMap | nindent 4 }}
+{{- end }}
+{{- end }}

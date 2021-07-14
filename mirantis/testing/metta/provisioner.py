@@ -10,18 +10,18 @@ system.
 
 import logging
 
-logger = logging.getLogger('metta.provisioner')
+logger = logging.getLogger("metta.provisioner")
 
-METTA_PLUGIN_TYPE_PROVISIONER = 'provisioner'
-""" metta plugin type idnetifier for client plugins """
+METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER = "provisioner"
+""" metta plugin interface identifier for client plugins """
 
-METTA_PROVISIONER_CONFIG_PROVISIONERS_LABEL = 'provisioners'
+METTA_PROVISIONER_CONFIG_PROVISIONERS_LABEL = "provisioners"
 """ A centralized configerus load labe for multiple provisioners """
-METTA_PROVISIONER_CONFIG_PROVISIONER_LABEL = 'provisioner'
+METTA_PROVISIONER_CONFIG_PROVISIONER_LABEL = "provisioner"
 """ A centralized configerus load label a provisioner """
-METTA_PROVISIONER_CONFIG_PROVISIONERS_KEY = 'provisioners'
+METTA_PROVISIONER_CONFIG_PROVISIONERS_KEY = "provisioners"
 """ A centralized configerus key for multiple provisioners """
-METTA_PROVISIONER_CONFIG_PROVISIONER_KEY = 'provisioner'
+METTA_PROVISIONER_CONFIG_PROVISIONER_KEY = "provisioner"
 """ A centralized configerus key for one provisioner """
 
 
@@ -43,15 +43,12 @@ class ProvisionerBase:
         desired.
 
         """
-        raise NotImplementedError(
-            'This provisioner has not yet implemented prepare')
+        raise NotImplementedError("This provisioner has not yet implemented prepare")
 
     def apply(self):
         """Bring a cluster to the configured state."""
-        raise NotImplementedError(
-            'This provisioner has not yet implemented apply')
+        raise NotImplementedError("This provisioner has not yet implemented apply")
 
     def destroy(self):
         """Remove all resources created for the cluster."""
-        raise NotImplementedError(
-            'This provisioner has not yet implemented destroy')
+        raise NotImplementedError("This provisioner has not yet implemented destroy")

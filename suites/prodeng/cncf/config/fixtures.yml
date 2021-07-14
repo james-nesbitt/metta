@@ -1,0 +1,9 @@
+
+# cncf :: metta.plugin.workload:
+cncf:
+    plugin_id: metta_sonobuoy_workload
+
+    # build the plugin from config, by passing a label/base to it
+    from_config:
+      # Sonobuoy will be told to read config from the sonobuoy.yml files
+      label: sonobuoy

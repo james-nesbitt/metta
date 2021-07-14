@@ -1,0 +1,16 @@
+{{- if .Values.cluster.storageClass.enabled }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  labels:
+    app: "{{ template "rethinkdb.name" . }}-cluster"
+    chart: {{ template "rethinkdb.chart" . }}
+    heritage: {{ .Release.Service | quote }}
+    release: {{ .Release.Name | quote }}
+  name: {{ template "rethinkdb.fullname" . }}
+provisioner: {{ .Values.cluster.storageClass.provisioner }}
+parameters:
+{{- range $key, $value := .Values.cluster.storageClass.parameters }}
+  {{ $key }}: {{ $value }}
+{{- end }}
+{{- end }}
