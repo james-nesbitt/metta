@@ -7,3 +7,14 @@ cncf:
     from_config:
       # Sonobuoy will be told to read config from the sonobuoy.yml files
       label: sonobuoy
+
+
+# Universal health poller for checking stability
+healthpoller:
+    plugin_id: healthpoll_workload
+
+    from_config: true
+
+    poll:
+        # How often should we poll for health
+        period: 10

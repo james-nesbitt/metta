@@ -8,7 +8,7 @@ questions on demand.
 """
 import logging
 import time
-from typing import Dict, Any
+from typing import Dict, Any, List
 import threading
 
 from configerus.loaded import LOADED_KEY_ROOT
@@ -18,6 +18,7 @@ from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.healthcheck import (
     METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
     Health,
+    HealthStatus,
 )
 
 logger = logging.getLogger("metta_common.workload.healthpoller")
@@ -69,13 +70,13 @@ class HealthPollWorkload:
         """Thread for polling in case we want to join it."""
 
         self._health: Dict[str, Health] = {}
-        """Aggregate health per fixture/plugin id."""
+        """Aggregate health per fixture/plugin id. Only ._run() should write to this."""
+
+        self._poll_timings: List[float] = []
+        """A list of timestamps to allow separation of messages across polls."""
 
         self._terminate: bool = False
         """Internal value used to allow an early poll exit."""
-
-        self._poll_count = 0
-        """How many times have we polled health (might be interesting.)"""
 
         self._healthcheck_fixtures: Fixtures = None
         """Fixtures list which should be searched for healthcheck fixtures."""
@@ -111,14 +112,21 @@ class HealthPollWorkload:
 
     def apply(self):
         """Start polling healthchecks and keep a status."""
-        thread = threading.Thread(name=self._instance_id, target=self._run, args=())
-        """Backgroung health poll thread."""
-        thread.daemon = True  # Daemonize thread
-        thread.start()  # Start the execution
-        self._thread = thread
+        if self._thread is None:
+            logger.debug("%s Starting health check polling.", self._instance_id)
+            self._terminate = False
+            self._thread = threading.Thread(
+                name=self._instance_id, target=self._run, args=()
+            )
+            """Backgroung health poll thread."""
+            self._thread.daemon = True  # Daemonize thread
+            self._thread.start()  # Start the execution
+        else:
+            logger.debug("%s Starting health check polling.", self._instance_id)
 
     def destroy(self):
         """Workload instance interface method to stop the workload."""
+        logger.info("Received instructions to terminate polling.")
         self._terminate = True
 
     def join(self):
@@ -127,14 +135,16 @@ class HealthPollWorkload:
 
     def _run(self):
         """Periodic poll all healthcheck plugins for health."""
+
+        self._health[self._instance_id] = Health(source=self._instance_id)
         run_start = time.perf_counter()
         while True:
             if self._terminate:
                 # We have been instructed to stop
-                logger.info("terminating health poll")
+                logger.info("Terminating health poll")
                 break
 
-            poll_start = time.perf_counter() - run_start
+            poll_start = time.perf_counter()
 
             if 0 < self.duration < poll_start:
                 # expire the poll if we were given a positive expiry
@@ -142,15 +152,24 @@ class HealthPollWorkload:
                 logger.info("health poll expired")
                 break
 
-            self._poll_count += 1
-            for plugin_id, plugin_health in self._healthcheck().items():
-                if hasattr(self._health, plugin_id):
+            # Mark the start of a new poll.
+            self._health[self._instance_id].info(
+                f"Polling {self.poll_count()} started, {int(poll_start - run_start)} seconds after start"
+            )
+            # retrieve the health results.
+            check = self._healthcheck()
+
+            for plugin_id, plugin_health in check.items():
+                if plugin_id in self._health:
                     self._health[plugin_id].merge(plugin_health)
                 else:
                     self._health[plugin_id] = plugin_health
 
+            self._poll_timings.append(poll_start)
+
             poll_stop = time.perf_counter() - run_start
             sleep_dur = ((poll_stop // self.period) + 1) * self.period - poll_stop
+
             """Duration in secs to the period for the next poll_start."""
             # we may have passed over a period, so we don't just substract and divide
             time.sleep(sleep_dur)
@@ -158,7 +177,13 @@ class HealthPollWorkload:
         print("ended")
 
     def _healthcheck(self) -> Dict[str, Health]:
-        """Run a single pass healthcheck on all of the fixtures."""
+        """Run a single pass healthcheck on all of the fixtures.
+
+        Returns:
+        --------
+        A dict of health plugins per plugin instance_id
+
+        """
         health_info = {}
         for health_fixture in self._healthcheck_fixtures.filter(
             interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
@@ -169,7 +194,7 @@ class HealthPollWorkload:
             # we turn any exception right into a critical status
             # pylint: disable=broad-except
             except Exception as err:
-                plugin_health = Health()
+                plugin_health = Health(source=health_fixture.instance_id)
                 plugin_health.critical(
                     f"Health plugin exception [{health_fixture.instance_id}]: {err}"
                 )
@@ -179,11 +204,58 @@ class HealthPollWorkload:
 
     def health(self) -> Health:
         """Combine all plugin healths into one Health object."""
-        agg_health = Health()
+        agg_health = Health(source=self._instance_id)
         for health in self._health.values():
             agg_health.merge(health)
+
+        if self._terminate:
+            agg_health.warning("Healthpoll: not actively polling.")
+
         return agg_health
+
+    def health_by_source(self) -> Dict[str, Health]:
+        """Get the various collected health objects as a Dict."""
+        return self._health
+
+    def poll_timing(self, reverse_index: int) -> float:
+        """Get the poll timing for a poll index for use with message timing."""
+        if len(self._poll_timings) < reverse_index:
+            return 0
+        return self._poll_timings[-reverse_index]
 
     def poll_count(self) -> int:
         """Return how many polls have been run."""
-        return self._poll_count
+        return len(self._poll_timings)
+
+
+def health_poller_output_log(
+    healthpoller: HealthPollWorkload,
+    poll_logger,
+    period: int,
+    count: int,
+    exception_on_error: bool = True,
+):
+    """Periodically log a healthpoller plugins health results and logs."""
+    last_message_time = 0
+    for i in range(0, count):
+        time.sleep(period)
+
+        poll_count = healthpoller.poll_count()
+        health = healthpoller.health()
+        messages = list(health.messages(since=last_message_time))
+
+        poll_logger.info(
+            "HealthCheck %s [%s polls completed] Status: %s [from time %s] ::\n%s",
+            i,
+            poll_count,
+            health.status(),
+            int(last_message_time),
+            "\n".join(f"-->{message}" for message in messages),
+        )
+        if len(messages) > 0:
+            last_message_time = messages[-1].time
+
+        if exception_on_error:
+            assert health.status().is_better_than(
+                HealthStatus.ERROR
+            ), "Health was not good"

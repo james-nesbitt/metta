@@ -91,7 +91,7 @@ class FixturesGroup:
         children: bool = True,
         plugin_id: str = "",
         instance_id: str = "",
-        interfaces: List[str] = None,
+        interface: str = "",
         skip_cli_plugins: bool = True,
     ):
         """Return Info for fixtures."""
@@ -99,7 +99,7 @@ class FixturesGroup:
         for fixture in self._filter(
             plugin_id=plugin_id,
             instance_id=instance_id,
-            interfaces=interfaces,
+            interfaces=[interface] if interface else [],
             skip_cli_plugins=skip_cli_plugins,
         ):
             fixture_info_list.append(fixture.info(deep=deep, children=children))

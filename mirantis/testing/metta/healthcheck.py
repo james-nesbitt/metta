@@ -16,7 +16,10 @@ that a wholistic health check can be run.
 from enum import Enum
 import time
 from typing import List
+import logging
 
+
+logger = logging.getLogger("healthcheck")
 
 METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK = "healthcheck"
 """ metta plugin interface identifier for healthcheck plugins """
@@ -43,17 +46,20 @@ class HealthStatus(Enum):
 
     # no health information is availale
     UNKNOWN = -1
+    # just an informational state
+    INFO = 0
     # No health issues have been discovered
-    HEALTHY = 0
+    HEALTHY = 3
     # There are some health warnings but no operational defects.
-    WARNING = 2
+    WARNING = 5
     # Some health errors have been detected
-    ERROR = 5
+    ERROR = 7
     # Significant health concerns exist.
     CRITICAL = 10
 
     def is_better_than(self, than: "HealthStatus"):
         """Return boolean if the passed status is worse."""
+        assert isinstance(than, HealthStatus), f"Poor argument provided: {than}"
         return self.value < than.value
 
 
@@ -61,9 +67,12 @@ def worse_health_status(
     first: "HealthStatus", second: "HealthStatus"
 ) -> "HealthStatus":
     """Return the worst health status between two."""
-    if first.value >= second.value:
-        return first
-    return second
+    assert isinstance(first, HealthStatus), f"Poor argument provided: first {first}"
+    assert isinstance(second, HealthStatus), f"Poor argument provided: second {second}"
+
+    if first.is_better_than(second):
+        return second
+    return first
 
 
 # yes this is a struct
@@ -73,10 +82,10 @@ class HealthMessage:
 
     def __init__(self, source: str, status: HealthStatus, message: str):
         """Create a new message with status value."""
-        self.time = time.perf_counter()
-        self.source = source
-        self.status = status
-        self.message = message
+        self.time: float = time.perf_counter()
+        self.source: str = source
+        self.status: HealthStatus = status
+        self.message: str = message
 
     def __str__(self) -> str:
         """Convert message instance to string."""
@@ -91,29 +100,51 @@ class Health:
 
     """
 
-    def __init__(self, source: str = '', status: HealthStatus = HealthStatus.UNKNOWN):
+    def __init__(self, source: str = "", status: HealthStatus = HealthStatus.UNKNOWN):
         """Health constructor."""
         self.source: str = source
         """Source producer identity of this health object."""
-        self.status: HealthStatus = status
+        self._status: HealthStatus = status
         """Health status for this health object."""
-        self.messages: List[HealthMessage] = []
+        self._messages: List[HealthMessage] = []
 
     def merge(self, target: "Health"):
         """Combine another HealtStatus into the current one."""
-        self.status = worse_health_status(self.status, target.status)
-        self.messages.extend(target.messages)
-        self.messages.sort(key=lambda x: x.time)
+        assert isinstance(target, Health)
+        self._status = worse_health_status(self.status(), target.status())
+        self._messages.extend(target.messages())
+        self._messages.sort(key=lambda x: x.time)
+
+    def status(self) -> HealthStatus:
+        """Return the status."""
+        return self._status
+
+    def messages(self, source: str = "", since: int = 0) -> List[HealthMessage]:
+        """Return filtered health messages."""
+        return (
+            message
+            for message in self._messages
+            if source in [0, message.source] and (since == 0 or message.time > since)
+        )
 
     # Health message recording
 
     def new_message(self, status: HealthStatus, message: str):
         """Add a message of status INFO."""
-        health_message = HealthMessage(source=self.source, status=status, message=message)
-        self.messages.append(health_message)
-        self.status = worse_health_status(self.status, status)
+        self._messages.append(
+            HealthMessage(source=self.source, status=status, message=message)
+        )
+        self._status = worse_health_status(self._status, status)
+
+    def unknown(self, message: str):
+        """Add a message of status HEALTHY."""
+        self.new_message(status=HealthStatus.UNKNOWN, message=message)
 
     def info(self, message: str):
+        """Add a message of status HEALTHY."""
+        self.new_message(status=HealthStatus.INFO, message=message)
+
+    def healthy(self, message: str):
         """Add a message of status HEALTHY."""
         self.new_message(status=HealthStatus.HEALTHY, message=message)
 

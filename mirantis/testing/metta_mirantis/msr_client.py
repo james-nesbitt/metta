@@ -299,7 +299,7 @@ class MSRAPIClientPlugin:
         for node_index in range(self.host_count()):
             node_health = self.api_health(node=node_index)
             if node_health["Healthy"]:
-                health.info(f"MSR: Node [{node_index}] is healthy")
+                health.healthy(f"MSR: Node [{node_index}] is healthy")
             else:
                 health.error(node_health["Error"])
 

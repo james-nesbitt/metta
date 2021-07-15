@@ -32,6 +32,7 @@ from .healthpoll_workload import (
     METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
     HEALTHPOLL_CONFIG_LABEL,
 )
+from .healthpoll_cli import HealthpollCliPlugin, METTA_PLUGIN_ID_CLI_HEALTHPOLL
 from .binhelper_utility import (
     DownloadableExecutableUtility,
     METTA_PLUGIN_ID_UTILITY_BINHELPER,
@@ -111,6 +112,17 @@ def metta_plugin_factory_workload_healthpoll(
 ):
     """Create an metta health polling workload plugin."""
     return HealthPollWorkload(environment, instance_id, label=label, base=base)
+
+
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_CLI_HEALTHPOLL,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
+def metta_plugin_factory_cli_healthpolly(
+    environment: Environment, instance_id: str = ""
+):
+    """Create an healthpoll cli plugin."""
+    return HealthpollCliPlugin(environment, instance_id)
 
 
 # ----- Congiferus formatter for metta output plugins -----

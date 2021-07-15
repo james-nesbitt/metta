@@ -87,8 +87,10 @@ class KubernetesDeploymentWorkloadPlugin:
         self._kubeapi_client: KubernetesApiClientPlugin = None
         """KubeAPI client for connecting to kubernetes."""
 
-        self.deployment: object = None
+        self._deployment: object = None
         """KubeAPI get deployment result."""
+
+        self.read()
 
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
@@ -144,6 +146,9 @@ class KubernetesDeploymentWorkloadPlugin:
             retrieve a kubernetes client plugin.
 
         """
+        if self._deployment is not None:
+            self.destroy()
+
         if fixtures is None:
             fixtures = self._environment.fixtures
 
@@ -160,9 +165,10 @@ class KubernetesDeploymentWorkloadPlugin:
     def apply(self):
         """Run the workload."""
         apps_v1 = self._kubeapi_client.get_api("AppsV1Api")
-        return apps_v1.create_namespaced_deployment(
+        self._deployment = apps_v1.create_namespaced_deployment(
             body=self.body, namespace=self.namespace
         )
+        return self._deployment
 
     def destroy(self):
         """Destroy any created resources."""
@@ -175,14 +181,22 @@ class KubernetesDeploymentWorkloadPlugin:
             name=self.name, namespace=self.namespace, body=body
         )
 
+        self._deployment = None
+
         return status
 
     def read(self):
         """Retrieve the deployment job."""
+        if self._kubeapi_client is None:
+            return None
+
         apps_v1 = self._kubeapi_client.get_api("AppsV1Api")
 
         try:
-            return apps_v1.read_namespaced_deployment(self.name, self.namespace)
+            self._deployment = apps_v1.read_namespaced_deployment(
+                name=self.name, namespace=self.namespace
+            )
+            return self._deployment
         except kubernetes.client.rest.ApiException:
             return None
 
@@ -190,6 +204,10 @@ class KubernetesDeploymentWorkloadPlugin:
     def health(self) -> Health:
         """Determine the health of the K8s deployment."""
         dep_health = Health(source=self._instance_id, status=HealthStatus.UNKNOWN)
+
+        if self._deployment is None:
+            dep_health.info(f"Deployment {self._instance_id} not started.")
+            return dep_health
 
         for test_health_function in [self._health_deployment_status]:
             test_health = test_health_function()
@@ -215,7 +233,7 @@ class KubernetesDeploymentWorkloadPlugin:
             else:
                 for condition in status.conditions:
                     if condition.status == "True":
-                        health.info(
+                        health.healthy(
                             f"Deployment: [{self.namespace}/{self.name}] {condition.type} -> {condition.message}"
                         )
                     else:

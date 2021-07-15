@@ -511,7 +511,7 @@ class MKEAPIClientPlugin:
                 no_warnings = False
 
         if no_warnings:
-            health.info("MKE: reports no warnings.")
+            health.healthy("MKE: reports no warnings.")
 
         return health
 
@@ -530,7 +530,7 @@ class MKEAPIClientPlugin:
                 all_healthy = False
 
         if all_healthy:
-            health.info("MKE: reports all nodes are healthy.")
+            health.healthy("MKE: reports all nodes are healthy.")
 
         return health
 
@@ -549,6 +549,6 @@ class MKEAPIClientPlugin:
                 swarm_healthy = False
 
         if swarm_healthy:
-            health.info("MKE: reports swarm nodes are healthy.")
+            health.healthy("MKE: reports swarm nodes are healthy.")
 
         return health

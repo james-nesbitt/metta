@@ -157,3 +157,15 @@ class SonobuoyGroup:
         # pylint: disable=broad-except
         except Exception as err:
             logger.error("Retrieve failed: %s", err)
+
+    def health(self, instance_id: str = ""):
+        """Retrieve the results from the sonobuoy workload instance."""
+        workload_plugin = self._prepared_plugin(instance_id=instance_id)
+        health = workload_plugin.health()
+
+        return cli_output(
+            {
+                "status": health.status,
+                "messages": health.messages,
+            }
+        )

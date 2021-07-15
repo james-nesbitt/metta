@@ -296,23 +296,10 @@ class KubernetesApiClientPlugin:
         """Check if kubernetes thinks the pod is healthy."""
         health = Health(source=self._instance_id)
 
-        core_v1_api = self.get_api("CoreV1Api")
-
-        unhealthy_pod_count = 0
-        for pod in core_v1_api.list_pod_for_all_namespaces().items:
-            if pod.status.phase == "Failed":
-                logger.error(
-                    "KubeAPI: Kubernetes reports a pod failed: %s", pod.metadata.name
-                )
-                unhealthy_pod_count += 1
-        if unhealthy_pod_count == 0:
-            health.info("KubeAPI: readyz reports ready")
-        elif unhealthy_pod_count < 2:
-            health.warning("KubeAPI: Kubernetes Reports some pods are failed")
+        if self.readyz():
+            health.healthy("KubeAPI: readyz reports ready")
         else:
-            health.error(
-                "KubeAPI: Kubernetes Reports cluster is unhealthy (pod health)"
-            )
+            health.warning("KubeAPI: readyz reports NOT ready.")
 
         return health
 
@@ -330,7 +317,7 @@ class KubernetesApiClientPlugin:
                 no_issues = False
 
         if no_issues:
-            health.info("KubeAPI: all nodes report healthy.")
+            health.healthy("KubeAPI: all nodes report healthy.")
 
         return health
 
@@ -343,12 +330,12 @@ class KubernetesApiClientPlugin:
         unhealthy_pod_count = 0
         for pod in core_v1_api.list_pod_for_all_namespaces().items:
             if pod.status.phase == "Failed":
-                logger.error(
+                health.error(
                     "KubeAPI: Kubernetes reports a pod failed: %s", pod.metadata.name
                 )
                 unhealthy_pod_count += 1
         if unhealthy_pod_count == 0:
-            health.info("KubeAPI: all pods report as healthy")
+            health.healthy("KubeAPI: all pods report as healthy")
         elif unhealthy_pod_count < 2:
             health.warning("KubeAPI: some pods report as failed")
         else:

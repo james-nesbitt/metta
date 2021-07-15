@@ -333,7 +333,7 @@ class KubernetesHelmWorkloadPlugin:
         return HelmReleaseStatus(
             yaml.safe_load(
                 self._run(
-                    cmd=["status", self._instance_id, "--output", "yaml"],
+                    cmd=["status", self._instance_id, "--output=yaml"],
                     return_output=True,
                 )
             )

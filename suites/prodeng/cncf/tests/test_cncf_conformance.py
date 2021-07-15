@@ -83,7 +83,7 @@ def test_wait_cncf_conformance(cncf_workload):
     for plugin_id in status.plugin_list():
         logger.info(
             "%s:: Final status %s:%s",
-            int(time.perf_counter()-start),
+            int(time.perf_counter() - start),
             plugin_id,
             status.plugin(plugin_id),
         )
@@ -99,7 +99,9 @@ def test_retrieve_cncf_conformance(cncf_workload):
         plugin_results = results.plugin(plugin_id)
 
         if plugin_results.status() in [Status.FAILED]:
-            logger.error("Sonobuoy result is marked as failed: %s", plugin_results.status())
+            logger.error(
+                "Sonobuoy result is marked as failed: %s", plugin_results.status()
+            )
             no_errors = False
             for item in plugin_results:
                 logger.error("%s: %s (%s)", plugin_id, item.name, item.meta_file_path())
