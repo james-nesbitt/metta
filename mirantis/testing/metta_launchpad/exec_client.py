@@ -23,9 +23,7 @@ METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID = "metta_launchpad_exec_client"
 class LaunchpadExecClientPlugin:
     """Client for exec into hosts using launchpad."""
 
-    def __init__(
-        self, environment: Environment, instance_id: str, client: LaunchpadClient
-    ):
+    def __init__(self, environment: Environment, instance_id: str, client: LaunchpadClient):
         """Create launchpad exec plugin.
 
         Parameters:
@@ -53,13 +51,9 @@ class LaunchpadExecClientPlugin:
             for host in config["spec"]["hosts"]:
                 list_host = {"role": host["role"]}
                 if "ssh" in host:
-                    list_host.update(
-                        {"is_windows": False, "address": host["ssh"]["address"]}
-                    )
+                    list_host.update({"is_windows": False, "address": host["ssh"]["address"]})
                 if "winrm" in host:
-                    list_host.update(
-                        {"is_windows": True, "address": host["winrm"]["address"]}
-                    )
+                    list_host.update({"is_windows": True, "address": host["winrm"]["address"]})
 
                 host_list.append(list_host)
 

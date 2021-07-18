@@ -7,6 +7,7 @@ Use this to run the sonobuoy implementation
 """
 from typing import Any
 import logging
+import subprocess
 
 from configerus.loaded import LOADED_KEY_ROOT
 from configerus.contrib.jsonschema.validate import (
@@ -16,6 +17,7 @@ from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.healthcheck import Health
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta_kubernetes import (
     METTA_PLUGIN_ID_KUBERNETES_CLIENT,
@@ -24,6 +26,7 @@ from mirantis.testing.metta_kubernetes import (
 
 from .sonobuoy import (
     Sonobuoy,
+    Status,
     SonobuoyStatus,
     SonobuoyResults,
     SONOBUOY_DEFAULT_RESULTS_PATH,
@@ -123,6 +126,13 @@ class SonobuoyWorkloadPlugin:
         self._results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH
         """String path to where to keep the results."""
 
+        # go for early declarative testing to the plugin.
+        try:
+            self.prepare()
+        # pylint: disable=broad-except
+        except Exception:
+            logger.debug("not able to early prepare sonobuoy.")
+
     # the deep argument is a standard for the info hook
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
@@ -143,6 +153,27 @@ class SonobuoyWorkloadPlugin:
                 },
             }
         }
+
+    def health(self) -> Health:
+        """Perform a health check on the workload."""
+        health = Health(source=self._instance_id)
+
+        try:
+            status = self.status()
+
+            if status.status in [Status.POSTPROCESS]:
+                health.info("Sonobuoy: run has finished, but result is not yet avaialble.")
+            elif status.status in [Status.COMPLETE, Status.PASSED]:
+                health.info("Sonobuoy: completed.")
+            elif status.status in [Status.FAILED]:
+                health.error("Sonobuoy: run has produced a failure.")
+            else:  # if status.status() in [Status.PENDING, Status.RUNNING]:
+                health.info("Sonobuoy: Running")
+
+        except (subprocess.CalledProcessError, AttributeError) as err:
+            health.unknown("No status found. Sonobuoy is likely not running: %s", err)
+
+        return health
 
     def prepare(self, fixtures: Fixtures = None):
         """Create a workload instance from a set of fixtures.
@@ -173,12 +204,8 @@ class SonobuoyWorkloadPlugin:
         kubernetes_version = loaded.get(
             [self._config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION], default=""
         )
-        plugins = loaded.get(
-            [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[]
-        )
-        plugin_envs = loaded.get(
-            [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[]
-        )
+        plugins = loaded.get([self._config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[])
+        plugin_envs = loaded.get([self._config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[])
 
         self._results_path: str = loaded.get(
             [self._config_base, SONOBUOY_CONFIG_KEY_RESULTSPATH],

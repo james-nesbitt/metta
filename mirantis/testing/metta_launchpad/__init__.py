@@ -63,9 +63,7 @@ def metta_terraform_factory_cliexec_client_launchpad(
     plugin_id=METTA_LAUNCHPAD_CLI_PLUGIN_ID,
     interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
 )
-def metta_terraform_factory_cli_launchpad(
-    environment: Environment, instance_id: str = ""
-):
+def metta_terraform_factory_cli_launchpad(environment: Environment, instance_id: str = ""):
     """Create an launchpad cli plugin."""
     return LaunchpadCliPlugin(environment, instance_id)
 

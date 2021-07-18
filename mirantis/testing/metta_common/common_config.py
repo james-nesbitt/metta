@@ -71,9 +71,9 @@ def add_common_config(environment: Environment):
 
     # a user config path (like ~/.config/metta) may contain config
     user_conf_path = appdirs.user_config_dir(METTA_COMMON_APP_NAME)
-    if not environment.config.has_source(
-        METTA_COMMON_CONFIG_USER_INSTANCE_ID
-    ) and os.path.isdir(user_conf_path):
+    if not environment.config.has_source(METTA_COMMON_CONFIG_USER_INSTANCE_ID) and os.path.isdir(
+        user_conf_path
+    ):
         environment.config.add_source(
             CONFIGERUS_SOURCE_PATH,
             METTA_COMMON_CONFIG_USER_INSTANCE_ID,
@@ -92,7 +92,7 @@ def add_common_config(environment: Environment):
             "global": {
                 "datetime": datetime.now(),  # use a single datetime across all checks
             },
-            environment.config.paths_label(): {  # special config label for file paths, usually just "paths"
+            environment.config.paths_label(): {  # config label for file paths, usually just "paths"
                 # you can use "paths:project" in config to substitute this path
                 "project": project_root_path
             },

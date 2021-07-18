@@ -101,9 +101,7 @@ class Fixture:
         if not isinstance(other, Fixture):
             return False
 
-        return (
-            self.plugin_id == other.plugin_id and self.instance_id == other.instance_id
-        )
+        return self.plugin_id == other.plugin_id and self.instance_id == other.instance_id
 
     def info(self, deep: bool = False, children: bool = True) -> Dict[str, Any]:
         """Return some dict metadata about the fixture and plugin."""
@@ -349,9 +347,7 @@ class Fixtures:
         found.
 
         """
-        filtered = self.filter(
-            plugin_id=plugin_id, instance_id=instance_id, interfaces=interfaces
-        )
+        filtered = self.filter(plugin_id=plugin_id, instance_id=instance_id, interfaces=interfaces)
 
         if len(filtered) > 0:
             return filtered.to_list()[0]
@@ -470,6 +466,4 @@ class Fixtures:
         A List[Fixture] of the contained fixtures sorted using their priority.
 
         """
-        return sorted(
-            self._fixtures, key=lambda i: 1 / i.priority if i.priority > 0 else 0
-        )
+        return sorted(self._fixtures, key=lambda i: 1 / i.priority if i.priority > 0 else 0)

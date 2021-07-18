@@ -38,8 +38,6 @@ def metta_plugin_factory_workload_litmuschaos(
     plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLI,
     plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_CLI,
 )
-def metta_plugin_factory_cli_litmuschaos(
-    environment: Environment, instance_id: str = ""
-):
+def metta_plugin_factory_cli_litmuschaos(environment: Environment, instance_id: str = ""):
     """create an litmuschaos cli plugin"""
     return LitmusChaosCliPlugin(environment, instance_id)

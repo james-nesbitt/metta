@@ -20,3 +20,9 @@ terraform:
             aws:
                 # Pretty far out of date example AWS TF chart from the launchpad repo
                 v1_2: "{{paths:metta-mirantis}}/terraform/plans/example/aws/1.2"
+
+ansible:
+    playbooks:
+        prodeng:
+            sanity:
+                path: "{{paths:metta-mirantis}}/ansible/playbooks/prodeng/sanity"

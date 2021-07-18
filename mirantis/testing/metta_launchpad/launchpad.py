@@ -99,15 +99,14 @@ class LaunchpadClient:
 
         if shutil.which(binary) is None:
             raise ValueError(
-                f"Launchpad binary not found. Launchpad commands cannot be called.  Expected binary at path {binary}"
+                "Launchpad binary not found. Launchpad commands cannot be called. "
+                f"Expected binary at path {binary}"
             )
 
         self.bin: str = binary
         """ shell execution target for launchpad """
 
-        self.client_bundle_retry_count: int = int(
-            LAUNCHPAD_CLIENT_BUNDLE_RETRY_COUNT_DEFAULT
-        )
+        self.client_bundle_retry_count: int = int(LAUNCHPAD_CLIENT_BUNDLE_RETRY_COUNT_DEFAULT)
         """ how many times to rety a client bundle download """
 
         self.disable_telemetry: bool = disable_telemetry
@@ -173,9 +172,7 @@ class LaunchpadClient:
 
     def register(self, name: str, email: str, company: str):
         """Uninstall using the launchpad client."""
-        return self._run(
-            ["register", "--name", name, "--email", email, "--company", company]
-        )
+        return self._run(["register", "--name", name, "--email", email, "--company", company])
 
     def describe_config(self):
         """Return the launchpad config report as umarshalled yaml."""
@@ -215,9 +212,7 @@ class LaunchpadClient:
                     )
 
             else:
-                raise RuntimeError(
-                    "Numerous attempts to download the client bundle failed."
-                )
+                raise RuntimeError("Numerous attempts to download the client bundle failed.")
 
     def bundle(self, user: str):
         """Interpret the bundle metadata as a dict.
@@ -244,9 +239,7 @@ class LaunchpadClient:
                 data = json.load(json_file)
 
                 # helm complains if this file has loose permissions
-                client_bundle_kubeconfig_file = os.path.join(
-                    client_bundle_path, "kube.yml"
-                )
+                client_bundle_kubeconfig_file = os.path.join(client_bundle_path, "kube.yml")
                 os.chmod(client_bundle_kubeconfig_file, 0o600)
         except FileNotFoundError as err:
             raise ValueError(
@@ -336,16 +329,12 @@ class LaunchpadClient:
             ) from err
 
         if not isinstance(config_data, dict):
-            raise ValueError(
-                f"Launchpad yaml file had unexpected contents: {self.config_file}"
-            )
+            raise ValueError(f"Launchpad yaml file had unexpected contents: {self.config_file}")
 
         try:
             return str(config_data["metadata"]["name"])
         except KeyError as err:
-            raise ValueError(
-                "Launchpad yaml file did not contain a cluster name"
-            ) from err
+            raise ValueError("Launchpad yaml file did not contain a cluster name") from err
 
     def _run(self, args: List[str], return_output=False, debug: bool = False):
         """Run a launchpad command.
@@ -384,9 +373,7 @@ class LaunchpadClient:
         # makes it more readable
         # pylint: disable=no-else-return
         if return_output:
-            logger.debug(
-                "running launchpad command with output capture: %s", " ".join(cmd)
-            )
+            logger.debug("running launchpad command with output capture: %s", " ".join(cmd))
             res = subprocess.run(
                 cmd,
                 cwd=self.working_dir,

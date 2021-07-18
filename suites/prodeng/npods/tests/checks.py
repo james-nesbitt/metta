@@ -6,9 +6,8 @@ Various functions used to determine if a cluster is healthy.
 
 """
 import logging
-import time
 
-from mirantis.testing.metta.healthcheck import HealthStatus
+from mirantis.testing.metta_common.healthpoll_workload import health_poller_output_log
 
 logger = logging.getLogger("npods-test")
 """ test-suite logger """
@@ -34,38 +33,19 @@ def stability_test(healthpoller, logger, period, duration):
     Raises an exception if more than 1 node is unhealthy
 
     """
-    start = time.time()
-    timeout = start + duration
-
-    index = 1
     logger.info(
         "Stability tests: Following health-check polling [period:%s/duration:%s]",
         period,
         duration,
     )
-    # wait for the first period, to allow a system to stabilize before testing
-    time.sleep(period)
-    while time.time() < timeout:
-        cycle_start = time.time()
-        elapsed = int(cycle_start - start)
 
-        health = healthpoller.health()
-        poll_count = healthpoller.poll_count()
+    poll_logger = logger.getChild("healthpoller")
+    """Use a new logger just for the health output."""
 
-        logger.info(
-            "HealthCheck %s [%s elapsed][%s polls completed] Status: %s",
-            index,
-            elapsed,
-            poll_count,
-            health.status,
-        )
-        for message in health.messages:
-            logger.info(message)
-
-        assert health.status.is_better_than(HealthStatus.ERROR), "Health was not good."
-
-        cycle_elapsed = int(time.time() - cycle_start)
-        cycle_remaining = int(period - cycle_elapsed) if period > cycle_elapsed else 0
-
-        time.sleep(cycle_remaining)
-        index += 1
+    # use a common function for logging poller status
+    health_poller_output_log(
+        healthpoller=healthpoller,
+        poll_logger=poll_logger,
+        period=period,
+        count=int(duration / period),
+    )

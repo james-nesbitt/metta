@@ -175,7 +175,8 @@ class KubernetesHelmWorkloadPlugin:
 
         if shutil.which(helm_bin) is None:
             raise ValueError(
-                f"Helm binary not found. Helm commands cannot be called.  Expected binary at path {helm_bin}"
+                "Helm binary not found. Helm commands cannot be called. "
+                f"Expected binary at path {helm_bin}"
             )
 
         self._bin: str = helm_bin
@@ -219,8 +220,7 @@ class KubernetesHelmWorkloadPlugin:
             )
         except KeyError as err:
             raise NotImplementedError(
-                "Workload could not find the needed client: "
-                f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
+                "Workload could not find the needed client: " f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
             ) from err
 
         self._kubeconfig = client.config_file
@@ -333,7 +333,7 @@ class KubernetesHelmWorkloadPlugin:
         return HelmReleaseStatus(
             yaml.safe_load(
                 self._run(
-                    cmd=["status", self._instance_id, "--output", "yaml"],
+                    cmd=["status", self._instance_id, "--output=yaml"],
                     return_output=True,
                 )
             )
@@ -350,9 +350,7 @@ class KubernetesHelmWorkloadPlugin:
         # this syntax makes it easier to read
         # pylint: disable=no-else-return
         if return_output:
-            logger.debug(
-                "running launchpad command with output capture: %s", " ".join(cmd)
-            )
+            logger.debug("running launchpad command with output capture: %s", " ".join(cmd))
             exec = subprocess.run(
                 cmd,
                 cwd=self._working_dir,

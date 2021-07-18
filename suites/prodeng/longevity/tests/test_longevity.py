@@ -7,10 +7,8 @@ period of time.
 
 """
 import logging
-import time
 
-from mirantis.testing.metta.healthcheck import HealthStatus
-
+from mirantis.testing.metta_common.healthpoll_workload import health_poller_output_log
 
 logger = logging.getLogger("test-longevity")
 
@@ -29,22 +27,10 @@ def test_02_workloads_apply(workloads_up):
     logger.info("Cluster workloads applied and running.")
 
 
-def test_03_longevity_wait(healthpoller):
-    """Start the longevity stability poll."""
-    logger.info("Starting longevity monitoring of health polling.")
-    for i in range(0, 40):
-        time.sleep(1800)
+def test_03_longevity_wait(workloads_up, healthpoller):
+    """Ensure that the fixtures get created and that they are health for 2 hours."""
+    poll_logger = logger.getChild("healthpoller")
+    """Use a new logger just for the health output."""
 
-        health = healthpoller.health()
-        poll_count = healthpoller.poll_count()
-
-        logger.info(
-            "HealthCheck %s [%s polls completed] Status: %s",
-            i,
-            poll_count,
-            health.status,
-        )
-        for message in health.messages:
-            logger.info(message)
-
-        assert health.status.is_better_than(HealthStatus.ERROR), "Health was not good."
+    # use a common function for logging poller status
+    health_poller_output_log(healthpoller=healthpoller, poll_logger=poll_logger, period=30, count=4)

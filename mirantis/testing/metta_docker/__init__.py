@@ -67,9 +67,7 @@ def metta_plugin_factory_workload_docker_run(
     return DockerPyRunWorkloadPlugin(environment, instance_id, label=label, base=base)
 
 
-@Factory(
-    plugin_id=METTA_PLUGIN_ID_DOCKER_CLI, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
-)
+@Factory(plugin_id=METTA_PLUGIN_ID_DOCKER_CLI, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI])
 def metta_docker_factory_cli(environment: Environment, instance_id: str = ""):
     """Create a docker cli plugin."""
     return DockerCliPlugin(environment, instance_id)

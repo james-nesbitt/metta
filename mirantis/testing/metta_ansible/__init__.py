@@ -11,6 +11,7 @@ from configerus.loaded import LOADED_KEY_ROOT
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
+from mirantis.testing.metta.healthcheck import METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK
 from mirantis.testing.metta_cli.base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
 from .provisioner import (
@@ -25,6 +26,7 @@ from .cli import AnsibleCliPlugin, METTA_ANSIBLE_CLI_PLUGIN_ID
     plugin_id=METTA_ANSIBLE_PROVISIONER_PLUGIN_ID,
     interfaces=[
         METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
+        METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
         METTA_ANSIBLE_PROVISIONER_PLUGIN_ID,
     ],
 )
@@ -38,9 +40,7 @@ def metta_plugin_factory_provisioner_ansible(
     return AnsibleProvisionerPlugin(environment, instance_id, label, base)
 
 
-@Factory(
-    plugin_id=METTA_ANSIBLE_CLI_PLUGIN_ID, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
-)
+@Factory(plugin_id=METTA_ANSIBLE_CLI_PLUGIN_ID, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI])
 def metta_ansible_factory_cli_ansible(environment: Environment, instance_id: str = ""):
     """create an info cli plugin"""
     return AnsibleCliPlugin(environment, instance_id)

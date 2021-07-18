@@ -1,0 +1,17 @@
+project:
+  name: ansible-pytest
+
+# Also include the following sources of configuration
+config:
+  sources:
+    # include ./config as a config source.  This is where we will put all of our
+    # actual project config, although we could just inline it all here.
+    project-config:
+      plugin_id: path
+      priority: 70
+      path: "{{paths:project}}/config"
+
+# Tell metta to create environments from the ./config/environments.yml file
+environments:
+  from_config:
+    label: environments

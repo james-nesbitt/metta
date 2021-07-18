@@ -62,9 +62,7 @@ def test_provisioners(environment: Environment):
 
     # Also test that the combo provisioner is the default one
     assert (
-        environment.fixtures.get(
-            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
-        ).instance_id
+        environment.fixtures.get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]).instance_id
         == "combo"
     )
 

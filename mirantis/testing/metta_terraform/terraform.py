@@ -56,7 +56,8 @@ class TerraformClient:
 
         if shutil.which(binary) is None:
             raise ValueError(
-                f"Terraform binary not found. Terraform commands cannot be called.  Expected binary at path {binary}"
+                "Terraform binary not found. Terraform commands cannot be called. "
+                f"Expected binary at path {binary}"
             )
 
         self.terraform_bin = binary
@@ -94,9 +95,7 @@ class TerraformClient:
                     time.sleep(5)
                     time_counter += 5
                     if time_counter > time_to_wait:
-                        raise BlockingIOError(
-                            "Timed out when waiting for init lock to go away"
-                        )
+                        raise BlockingIOError("Timed out when waiting for init lock to go away")
             else:
                 os.makedirs(os.path.dirname(os.path.abspath(lockfile)), exist_ok=True)
                 with open(lockfile, "w") as lockfile_object:
@@ -200,9 +199,7 @@ class TerraformClient:
             with open(vars_path, "w") as var_file:
                 json.dump(self.vars, var_file, sort_keys=True, indent=4)
         except Exception as err:
-            raise RuntimeError(
-                f"Could not create terraform vars file: {vars_path}"
-            ) from err
+            raise RuntimeError(f"Could not create terraform vars file: {vars_path}") from err
 
     def _rm_vars_file(self):
         """Remove any created vars file."""
@@ -240,9 +237,7 @@ class TerraformClient:
             res.check_returncode()
             return res
         else:
-            logger.debug(
-                "running terraform command with output capture: %s", " ".join(cmd)
-            )
+            logger.debug("running terraform command with output capture: %s", " ".join(cmd))
             res = subprocess.run(cmd, shell=False, check=True, stdout=subprocess.PIPE)
             res.check_returncode()
             return res.stdout.decode("utf-8")

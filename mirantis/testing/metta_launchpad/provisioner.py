@@ -166,9 +166,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         except ValidationError as err:
             raise ValueError("Launchpad config failed validation.") from err
 
-        working_dir = launchpad_config_loaded.get(
-            [base, METTA_LAUNCHPAD_CLI_WORKING_DIR_KEY]
-        )
+        working_dir = launchpad_config_loaded.get([base, METTA_LAUNCHPAD_CLI_WORKING_DIR_KEY])
         """ if launchpad needs to be run in a certain path, set it with this config """
         if not os.path.isabs(working_dir):
             # did a relative path root get passed in as config?
@@ -187,9 +185,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         if not os.path.isabs(self.config_file):
             # A relative [ath for the config file is expected to be relative to
             # the working dir]
-            self.config_file = os.path.abspath(
-                os.path.join(working_dir, self.config_file)
-            )
+            self.config_file = os.path.abspath(os.path.join(working_dir, self.config_file))
 
         cluster_name_override = launchpad_config_loaded.get(
             [base, METTA_LAUNCHPAD_CLI_CLUSTEROVERRIDE_KEY], default=""
@@ -260,9 +256,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         if deep:
             try:
                 info["config"]["interpreted"] = client.describe_config()
-                info["bundles"] = {
-                    user: client.bundle(user) for user in client.bundle_users()
-                }
+                info["bundles"] = {user: client.bundle(user) for user in client.bundle_users()}
 
             # pylint: disable=broad-except
             except Exception:
@@ -329,9 +323,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             mke.api_get_bundle(force=True)
 
         except KeyError as err:
-            raise RuntimeError(
-                "Launchpad MKE client failed to download client bundle."
-            ) from err
+            raise RuntimeError("Launchpad MKE client failed to download client bundle.") from err
 
     def destroy(self):
         """Ask the client to remove installed resources."""
@@ -343,9 +335,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             mke.rm_bundle()
 
         except KeyError as err:
-            logger.warning(
-                "Launchpad's MKE plugin failed do remove a client bundle: %s", err
-            )
+            logger.warning("Launchpad's MKE plugin failed do remove a client bundle: %s", err)
 
         # now tell the launchpad client to reset
         try:
@@ -360,25 +350,19 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         """Write the config state to the launchpad file."""
         try:
             # load all of the launchpad configuration, force a reload to get up to date contents
-            launchpad_loaded = self._environment.config.load(
-                self.config_label, force_reload=True
-            )
+            launchpad_loaded = self._environment.config.load(self.config_label, force_reload=True)
             launchpad_config: Dict[str, Any] = launchpad_loaded.get(
                 [self.config_base, METTA_LAUNCHPAD_CONFIG_KEY],
                 validator=METTA_LAUNCHPAD_CONFIG_VALIDATE_TARGET,
             )
         except KeyError as err:
-            raise ValueError(
-                "Could not find launchpad configuration from config."
-            ) from err
+            raise ValueError("Could not find launchpad configuration from config.") from err
         except ValidationError as err:
             raise ValueError("Launchpad config failed validation") from err
 
         # Our launchpad config differs slightly from the schema that launchpad
         # consumes, so we need a small conversion
-        launchpad_config = self._convert_launchpad_config_to_file_format(
-            launchpad_config
-        )
+        launchpad_config = self._convert_launchpad_config_to_file_format(launchpad_config)
 
         # write the launchpad output to our yaml file target (after creating
         # the path)
@@ -414,27 +398,19 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
             return items
 
         try:
-            config["spec"]["mke"]["installFlags"] = dtol(
-                config["spec"]["mke"]["installFlags"]
-            )
+            config["spec"]["mke"]["installFlags"] = dtol(config["spec"]["mke"]["installFlags"])
         except KeyError:
             pass
         try:
-            config["spec"]["mke"]["upgradeFlags"] = dtol(
-                config["spec"]["mke"]["upgradeFlags"]
-            )
+            config["spec"]["mke"]["upgradeFlags"] = dtol(config["spec"]["mke"]["upgradeFlags"])
         except KeyError:
             pass
         try:
-            config["spec"]["msr"]["installFlags"] = dtol(
-                config["spec"]["msr"]["installFlags"]
-            )
+            config["spec"]["msr"]["installFlags"] = dtol(config["spec"]["msr"]["installFlags"])
         except KeyError:
             pass
         try:
-            config["spec"]["msr"]["upgradeFlags"] = dtol(
-                config["spec"]["msr"]["upgradeFlags"]
-            )
+            config["spec"]["msr"]["upgradeFlags"] = dtol(config["spec"]["msr"]["upgradeFlags"])
         except KeyError:
             pass
 
@@ -456,9 +432,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
         """
         # get fresh values for the launchpad config (in case it has changed)
-        launchpad_config = self._environment.config.load(
-            self.config_label, force_reload=reload
-        )
+        launchpad_config = self._environment.config.load(self.config_label, force_reload=reload)
 
         # Retrieve a list of hosts, and use that to decide what clients to
         # make.  If we find a host for a client, then we retrieve needed
@@ -488,9 +462,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
             mke_api_accesspoint = clean_accesspoint(mke_api_accesspoint)
 
-            instance_id = (
-                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}-{user}"
-            )
+            instance_id = f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}-{user}"
             fixture = self._environment.add_fixture(
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
                 instance_id=instance_id,
@@ -522,9 +494,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
             msr_api_accesspoint = clean_accesspoint(msr_api_accesspoint)
 
-            instance_id = (
-                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}-{user}"
-            )
+            instance_id = f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}-{user}"
             fixture = self._environment.add_fixture(
                 plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
                 instance_id=instance_id,
@@ -542,9 +512,7 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
         # EXEC CLIENT
         #
         if len(hosts) > 0:
-            instance_id = (
-                f"{self._instance_id}-{METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID}-{user}"
-            )
+            instance_id = f"{self._instance_id}-{METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID}-{user}"
             fixture = self._environment.add_fixture(
                 plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
                 instance_id=instance_id,

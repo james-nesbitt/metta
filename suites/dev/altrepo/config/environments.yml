@@ -1,6 +1,6 @@
 
-# Create an environment called 'clients'
-clients:
+# Create an environment called 'altrepo'
+altrepo:
   bootstraps:
     metta:
     - metta_common

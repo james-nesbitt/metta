@@ -42,14 +42,13 @@ manager_volume_size: 100
 worker_count: 5
 worker_type: t3.2xlarge
 worker_volume_size: 100
+# No need for MSR nor windows wokers on this one
 windows_worker_count: 0
+msr_count: 0
 
 # Override some component versions
 mcr_repo_url: "https://repos.mirantis.com/"
 mcr_channel: stable
 mcr_version: 20.10.5
-mke_image_repo: docker.io/mirantis
-mke_version: 3.4.2
-
-# No need for MSR on this one
-msr_count: 0
+mke_image_repo: docker.io/mirantiseng
+mke_version: 3.4.4-tp2

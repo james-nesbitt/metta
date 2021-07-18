@@ -116,23 +116,17 @@ class BinHelperTest(unittest.TestCase):
 
     def test_config_basics(self):
         """Perform some sanity testing on the shared config object."""
-        logger.info(
-            "Creating environment object, which will try to download all of the bins"
-        )
+        logger.info("Creating environment object, which will try to download all of the bins")
         environment = self._environment()
 
         fixtures_config = environment.config.load("fixtures")
         self.assertEqual(fixtures_config.get("bin-helper.plugin_id"), "bin-helper")
-        self.assertEqual(
-            fixtures_config.get("bin-helper.path.local"), self.temp_bin_dir
-        )
+        self.assertEqual(fixtures_config.get("bin-helper.path.local"), self.temp_bin_dir)
 
         self.assertTrue(self.temp_bin_dir in os.environ["PATH"])
 
         self.assertEqual(len(fixtures_config.get("bin-helper.platforms").keys()), 1)
-        self.assertEqual(
-            len(fixtures_config.get("bin-helper.platforms.Linux-x86_64").keys()), 5
-        )
+        self.assertEqual(len(fixtures_config.get("bin-helper.platforms.Linux-x86_64").keys()), 5)
 
         print(f"Path: {self.temp_bin_dir}")
 

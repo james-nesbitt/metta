@@ -85,9 +85,7 @@ def environment_up(environment: Environment) -> Environment:
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("alreadyrunning", default=False):
-        logger.info(
-            "test infrastructure is aready in place, and does not need to be provisioned."
-        )
+        logger.info("test infrastructure is aready in place, and does not need to be provisioned.")
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
@@ -110,9 +108,7 @@ def environment_up(environment: Environment) -> Environment:
         logger.info("Leaving test infrastructure in place on shutdown")
     else:
         try:
-            logger.info(
-                "Stopping the test cluster using the provisioner as directed by config"
-            )
+            logger.info("Stopping the test cluster using the provisioner as directed by config")
             launchpad.destroy()
             terraform.destroy()
         except Exception as err:

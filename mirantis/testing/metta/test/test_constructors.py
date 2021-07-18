@@ -76,9 +76,7 @@ def test_plugin_workload(environment: Environment, instance_id: str, *args, **kw
 TEST_PLUGIN_ID_CLIENT: str = "test_client"
 
 
-@Factory(
-    plugin_id=TEST_PLUGIN_ID_CLIENT, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLIENT]
-)
+@Factory(plugin_id=TEST_PLUGIN_ID_CLIENT, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLIENT])
 def test_plugin_workload(environment: Environment, instance_id: str, *args, **kwargs):
     """generate a generic plugin which thinks it is a workload plugin."""
     return GenericTestPlugin(
@@ -89,9 +87,7 @@ def test_plugin_workload(environment: Environment, instance_id: str, *args, **kw
 TEST_PLUGIN_ID_WORKLOAD: str = "test_workload"
 
 
-@Factory(
-    plugin_id=TEST_PLUGIN_ID_WORKLOAD, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD]
-)
+@Factory(plugin_id=TEST_PLUGIN_ID_WORKLOAD, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD])
 def test_plugin_workload(environment: Environment, instance_id: str, *args, **kwargs):
     """generate a generic plugin which thinks it is a workload plugin."""
     return GenericTestPlugin(
@@ -292,9 +288,7 @@ class PluginConstruction(unittest.TestCase):
         cl2 = environment.fixtures.get_plugin(instance_id="cl2")
         self.assertEqual(cl2.instance_id, "cl2")
 
-        wls = environment.fixtures.filter(
-            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD]
-        )
+        wls = environment.fixtures.filter(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD])
 
         self.assertEqual(len(wls), 3)
 

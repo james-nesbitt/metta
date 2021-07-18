@@ -9,6 +9,7 @@ from typing import Any
 
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.healthcheck import METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK
 from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 from mirantis.testing.metta_cli.base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 
@@ -26,6 +27,7 @@ from .cli import SonobuoyCliPlugin, METTA_PLUGIN_ID_SONOBUOY_CLI
     interfaces=[
         METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
         METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+        METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
     ],
 )
 def metta_plugin_factory_workload_sonobuoy(

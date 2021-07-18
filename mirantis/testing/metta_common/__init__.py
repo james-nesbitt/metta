@@ -32,6 +32,7 @@ from .healthpoll_workload import (
     METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
     HEALTHPOLL_CONFIG_LABEL,
 )
+from .healthpoll_cli import HealthpollCliPlugin, METTA_PLUGIN_ID_CLI_HEALTHPOLL
 from .binhelper_utility import (
     DownloadableExecutableUtility,
     METTA_PLUGIN_ID_UTILITY_BINHELPER,
@@ -94,9 +95,7 @@ def metta_plugin_factory_utility_binhelper(
     base: Any = LOADED_KEY_ROOT,
 ):
     """Create a bin-helper utility plugin."""
-    return DownloadableExecutableUtility(
-        environment, instance_id, label=label, base=base
-    )
+    return DownloadableExecutableUtility(environment, instance_id, label=label, base=base)
 
 
 @Factory(
@@ -113,6 +112,15 @@ def metta_plugin_factory_workload_healthpoll(
     return HealthPollWorkload(environment, instance_id, label=label, base=base)
 
 
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_CLI_HEALTHPOLL,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
+def metta_plugin_factory_cli_healthpolly(environment: Environment, instance_id: str = ""):
+    """Create an healthpoll cli plugin."""
+    return HealthpollCliPlugin(environment, instance_id)
+
+
 # ----- Congiferus formatter for metta output plugins -----
 
 
@@ -125,9 +133,7 @@ def plugin_factory_format_output(config: Config, instance_id: str = ""):
 # ----- metta user cli plugin -----
 
 
-@Factory(
-    plugin_id=METTA_PLUGIN_ID_CLI_USER, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
-)
+@Factory(plugin_id=METTA_PLUGIN_ID_CLI_USER, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI])
 def metta_plugin_factory_user_config(environment: Environment, instance_id: str = ""):
     """Create a user cli plugin."""
     return UserCliPlugin(environment, instance_id)

@@ -70,10 +70,7 @@ class FixturesGroup:
         # use a protected property just for introspection
         # pylint: disable=protected-access
         for registration in Factory._registry.values():
-            if (
-                skip_cli_plugins
-                and METTA_PLUGIN_INTERFACE_ROLE_CLI in registration.interfaces
-            ):
+            if skip_cli_plugins and METTA_PLUGIN_INTERFACE_ROLE_CLI in registration.interfaces:
                 continue
 
             plugins_info[registration.plugin_id] = {
@@ -91,7 +88,7 @@ class FixturesGroup:
         children: bool = True,
         plugin_id: str = "",
         instance_id: str = "",
-        interfaces: List[str] = None,
+        interface: str = "",
         skip_cli_plugins: bool = True,
     ):
         """Return Info for fixtures."""
@@ -99,7 +96,7 @@ class FixturesGroup:
         for fixture in self._filter(
             plugin_id=plugin_id,
             instance_id=instance_id,
-            interfaces=interfaces,
+            interfaces=[interface] if interface else [],
             skip_cli_plugins=skip_cli_plugins,
         ):
             fixture_info_list.append(fixture.info(deep=deep, children=children))

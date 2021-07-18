@@ -22,9 +22,7 @@ METTA_MIRANTIS_COMMON_NAME = "metta-mirantis"
 """ used for some path building for config sources """
 METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS = 35
 """ Config source priority for added common config """
-METTA_MIRANTIS_PATH = pkg_resources.resource_filename(
-    "mirantis.testing.metta_mirantis", ""
-)
+METTA_MIRANTIS_PATH = pkg_resources.resource_filename("mirantis.testing.metta_mirantis", "")
 """ Path to the metta mirantis project root """
 METTA_MIRANTIS_CONFIG_PATH = pkg_resources.resource_filename(
     "mirantis.testing.metta_mirantis", "config"
@@ -69,9 +67,5 @@ def add_common_config(environment: Environment):
             priority=METTA_MIRANTIS_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS,
         )
         source.set_data(
-            {
-                environment.config.paths_label(): {
-                    METTA_MIRANTIS_COMMON_NAME: METTA_MIRANTIS_PATH
-                }
-            }
+            {environment.config.paths_label(): {METTA_MIRANTIS_COMMON_NAME: METTA_MIRANTIS_PATH}}
         )

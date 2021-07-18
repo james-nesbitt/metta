@@ -20,9 +20,7 @@ import pytest
 def nginx_deployment(environment_up):
     """Get the k8s deployment called nginx-k8s-workload."""
     # check fixtures.yml for 'nginx-k8s-deployment'
-    plugin = environment_up.fixtures.get_plugin(
-        instance_id="nginx-k8s-deployment"
-    )
+    plugin = environment_up.fixtures.get_plugin(instance_id="nginx-k8s-deployment")
 
     plugin.prepare(environment_up.fixtures)
     plugin.apply()
@@ -36,9 +34,7 @@ def nginx_deployment(environment_up):
 def metrics_deployment(environment_up):
     """Get the helm deployment called metrics-helm-workload."""
     # check fixtures.yml for 'metrics-helm-workload'
-    plugin = environment_up.fixtures.get_plugin(
-        instance_id="metrics-helm-workload"
-    )
+    plugin = environment_up.fixtures.get_plugin(instance_id="metrics-helm-workload")
 
     plugin.prepare(environment_up.fixtures)
     plugin.apply()

@@ -7,6 +7,7 @@ their contents.
 
 """
 import logging
+import time
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.healthcheck import (
@@ -72,7 +73,7 @@ class HealthcheckGroup:
             # we turn any exception into a health marker
             # pylint: disable=broad-except
             except Exception as err:
-                health_info[health_plugin.instance_id] = {
+                health_info[health_fixture.instance_id] = {
                     "fixture": {
                         "plugin_id": health_fixture.plugin_id,
                         "instance_id": health_fixture.instance_id,
@@ -80,22 +81,32 @@ class HealthcheckGroup:
                     },
                     "status": HealthStatus.CRITICAL,
                     "messages": [
-                        HealthMessage(status=HealthStatus.CRITICAL, message=str(err))
+                        HealthMessage(
+                            source=health_fixture.instance_id,
+                            status=HealthStatus.CRITICAL,
+                            message=str(err),
+                        )
                     ],
                 }
 
             else:
-                health_info[health_plugin.instance_id] = {
+                health_info[health_fixture.instance_id] = {
                     "fixture": {
                         "plugin_id": health_fixture.plugin_id,
                         "instance_id": health_fixture.instance_id,
                         "priority": health_fixture.priority,
                     },
-                    "status": health_plugin_results.status,
-                    "messages": health_plugin_results.messages,
+                    "status": health_plugin_results.status(),
+                    "messages": list(health_plugin_results.messages()),
                 }
 
         return cli_output(health_info)
+
+    def poll(self, period: int = 10):
+        """Poll health periodically."""
+        while True:
+            print(self.health())
+            time.sleep(period)
 
     def _select_healthcheck(self, instance_id: str = ""):
         """Pick a matching healthcheck."""
@@ -105,6 +116,4 @@ class HealthcheckGroup:
                 instance_id=instance_id,
             )
         # Get the highest priority healthcheck
-        return self._environment.fixtures.get(
-            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
-        )
+        return self._environment.fixtures.get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK])

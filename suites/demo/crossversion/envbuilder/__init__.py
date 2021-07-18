@@ -72,9 +72,7 @@ def build(config: Config, additional_metta_bootstraps: List[str]):
                 default_state = state
 
             state_conf = envconf.get([var_base, "states", state])
-            combined_config = tree_merge(
-                copy.deepcopy(config_common), copy.deepcopy(state_conf)
-            )
+            combined_config = tree_merge(copy.deepcopy(config_common), copy.deepcopy(state_conf))
 
             states[state] = copy.deepcopy(STATE_CONFIG_TEMPLATE)
             states[state]["config"]["sources"]["state_spec"]["data"] = combined_config
@@ -89,9 +87,9 @@ def build(config: Config, additional_metta_bootstraps: List[str]):
         # raise ValueError(f"{variation}: {json.dumps(environments[variation], indent=2)}")
 
     # Add our constructed environments list as a config source
-    config.add_source(
-        plugin_id=PLUGIN_ID_SOURCE_DICT, instance_id="env-builder"
-    ).set_data({"environments": environments})
+    config.add_source(plugin_id=PLUGIN_ID_SOURCE_DICT, instance_id="env-builder").set_data(
+        {"environments": environments}
+    )
 
     metta.new_environments_from_config(
         config=config,

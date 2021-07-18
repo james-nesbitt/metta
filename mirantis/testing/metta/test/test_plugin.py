@@ -75,9 +75,7 @@ class TestPluginCreation(unittest.TestCase):
             return TestPlugin(testcase)
 
         instance_id = "test_plugin_create"
-        instance = Factory.create(
-            plugin_id=plugin_id, instance_id=instance_id, testcase=self
-        )
+        instance = Factory.create(plugin_id=plugin_id, instance_id=instance_id, testcase=self)
 
         self.assertEqual(instance.instance_id, instance_id)
         for plugin_interface in plugin_interfaces:

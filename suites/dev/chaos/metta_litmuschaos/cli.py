@@ -64,8 +64,7 @@ class LitmusChaosGroup:
 
         except KeyError as err:
             raise ValueError(
-                "No usable kubernetes client was found for litmuschaos to "
-                "pull a kubeconfig from"
+                "No usable kubernetes client was found for litmuschaos to " "pull a kubeconfig from"
             ) from err
 
     def _select_instance(self, instance_id: str = ""):

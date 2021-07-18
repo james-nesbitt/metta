@@ -93,7 +93,8 @@ METTA_TESTKIT_PROVISIONER_CONFIG_VALIDATE_JSONSCHEMA = {
 }
 """ Validation jsonschema for provisioner configuration """
 METTA_TESTKIT_PROVISIONER_CONFIG_VALIDATE_TARGET = {
-    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: METTA_TESTKIT_PROVISIONER_CONFIG_VALIDATE_JSONSCHEMA
+    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: \
+        METTA_TESTKIT_PROVISIONER_CONFIG_VALIDATE_JSONSCHEMA
 }
 """ configerus jsonschema validation target for the provisioner plugin """
 
@@ -149,23 +150,17 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         """ configerus load label that should contain all of the config """
         self.config_base = base
 
-        testkit_config = self._environment.config.load(
-            self.config_label, force_reload=True
-        )
+        testkit_config = self._environment.config.load(self.config_label, force_reload=True)
         """ load the plugin configuration so we can retrieve options """
 
-        self.system_name = testkit_config.get(
-            [self.config_base, TESTKIT_CONFIG_KEY_SYSTEMNAME]
-        )
+        self.system_name = testkit_config.get([self.config_base, TESTKIT_CONFIG_KEY_SYSTEMNAME])
         """ hat will testkit call the system """
 
         try:
             testkit_config = self._environment.config.load(self.config_label)
             """ loaded plugin configuration label """
         except KeyError as err:
-            raise ValueError(
-                "Testkit plugin configuration did not have any config"
-            ) from err
+            raise ValueError("Testkit plugin configuration did not have any config") from err
 
         # instances = testkit_config.get([self.config_base, TESTKIT_CONFIG_KEY_INSTANCES])
         # """ what instances to create """
@@ -238,13 +233,9 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         """Create the testkit yaml file and run testkit to create a cluster."""
         self._write_config_file()
 
-        testkit_config = self._environment.config.load(
-            self.config_label, force_reload=True
-        )
+        testkit_config = self._environment.config.load(self.config_label, force_reload=True)
         """ load the plugin configuration so we can retrieve options """
-        opts = testkit_config.get(
-            [self.config_base, TESTKIT_CONFIG_KEY_CREATE_OPTIONS], default={}
-        )
+        opts = testkit_config.get([self.config_base, TESTKIT_CONFIG_KEY_CREATE_OPTIONS], default={})
         """ retrieve testkit client options from config """
         opt_list = []
         for key, value in opts.items():
@@ -269,9 +260,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
             mke.make_bundle_clients()
 
         except KeyError as err:
-            raise RuntimeError(
-                "Launchpad MKE client failed to download client bundle."
-            ) from err
+            raise RuntimeError("Launchpad MKE client failed to download client bundle.") from err
 
     def destroy(self):
         """Destroy any created resources."""
@@ -296,9 +285,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         if not os.access(self.config_file, os.R_OK):
             return
 
-        testkit_config = self._environment.config.load(
-            self.config_label, force_reload=True
-        )
+        testkit_config = self._environment.config.load(self.config_label, force_reload=True)
         """ load the plugin configuration so we can retrieve options """
         testkit_hosts = self.testkit.machine_ls(system_name=self.system_name)
         """ list of all of the testkit hosts. """
@@ -337,8 +324,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
             )
 
             instance_id = (
-                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}"
-                f"-{mke_api_username}"
+                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}" f"-{mke_api_username}"
             )
             fixture = self._environment.add_fixture(
                 METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
@@ -371,8 +357,7 @@ class TestkitProvisionerPlugin(ProvisionerBase):
             )
 
             instance_id = (
-                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}"
-                f"-{msr_api_username}"
+                f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}" f"-{msr_api_username}"
             )
             fixture = self._environment.add_fixture(
                 METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
@@ -394,18 +379,14 @@ class TestkitProvisionerPlugin(ProvisionerBase):
         """Write the config file for testkit."""
         try:
             # load all of the testkit configuration, force a reload to get up to date contents
-            testkit_config = self._environment.config.load(
-                self.config_label, force_reload=True
-            )
+            testkit_config = self._environment.config.load(self.config_label, force_reload=True)
             config = testkit_config.get(
                 [self.config_base, TESTKIT_CONFIG_KEY_CONFIG],
                 validator=METTA_TESTKIT_CONFIG_VALIDATE_TARGET,
             )
             """ config source of launchpad yaml """
         except KeyError as err:
-            raise ValueError(
-                "Could not find launchpad configuration from config."
-            ) from err
+            raise ValueError("Could not find launchpad configuration from config.") from err
         except ValidationError as err:
             raise ValueError("Launchpad config failed validation") from err
 

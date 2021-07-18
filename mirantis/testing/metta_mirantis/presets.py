@@ -121,9 +121,7 @@ def add_preset_config(environment: Environment, priority=METTA_PRESET_DEFAULT_PR
 
         (preset_key, preset_root_path, preset_priority_delta) = preset
         preset_priority = priority + preset_priority_delta
-        preset_value = metta_config.get(
-            [METTA_CONFIG_CONFIG_PRESET_BASE, preset_key], default=""
-        )
+        preset_value = metta_config.get([METTA_CONFIG_CONFIG_PRESET_BASE, preset_key], default="")
 
         if preset_value:
             prefix = METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX
@@ -145,9 +143,7 @@ def add_preset_config(environment: Environment, priority=METTA_PRESET_DEFAULT_PR
                         PLUGIN_ID_SOURCE_PATH, preset_instance_id, preset_priority
                     ).set_path(preset_full_path)
                 else:
-                    raise KeyError(
-                        f"metta doesn't have a preset '{preset_key}:{preset_value}'"
-                    )
+                    raise KeyError(f"metta doesn't have a preset '{preset_key}:{preset_value}'")
 
         else:
             logger.debug("No metta preset selected for %s", preset_key)

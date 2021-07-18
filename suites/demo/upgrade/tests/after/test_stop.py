@@ -34,9 +34,7 @@ def test_kube_workload_still_running(
     stability_workload_up: KubernetesDeploymentWorkloadPlugin,
 ):
     """did we get a good kubectl client"""
-    logger.info(
-        "AFTER: Getting K8s test deployment which was run in the 'before' environment."
-    )
+    logger.info("AFTER: Getting K8s test deployment which was run in the 'before' environment.")
 
     namespace = stability_workload_up.namespace
     name = stability_workload_up.name
@@ -111,9 +109,7 @@ def test_msr_replica_health(msr_client: MSRAPIClientPlugin):
     """test that we can access node information"""
     status = msr_client.api_status()
     for replica_id, replica_health in status["replica_health"].items():
-        assert MSRReplicaHealth.OK.match(
-            replica_health
-        ), f"Replica [{replica_id}] is not READY"
+        assert MSRReplicaHealth.OK.match(replica_health), f"Replica [{replica_id}] is not READY"
 
 
 @pytest.mark.order(2)

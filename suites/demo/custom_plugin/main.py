@@ -17,9 +17,7 @@ def main():
     discover()
 
     env = get_environment()
-    fixture = env.fixtures.get(
-        plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id="my_client"
-    )
+    fixture = env.fixtures.get(plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id="my_client")
     my_client = fixture.plugin
 
     while len(my_client):

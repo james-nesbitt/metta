@@ -44,9 +44,7 @@ def metta_plugin_factory_provisioner_terraform(
     plugin_id=METTA_TERRAFORM_CLI_PLUGIN_ID,
     interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
 )
-def metta_terraform_factory_cli_terraform(
-    environment: Environment, instance_id: str = ""
-):
+def metta_terraform_factory_cli_terraform(environment: Environment, instance_id: str = ""):
     """Create an info cli plugin."""
     return TerraformCliPlugin(environment, instance_id)
 

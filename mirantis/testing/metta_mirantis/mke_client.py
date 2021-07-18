@@ -312,9 +312,7 @@ class MKEAPIClientPlugin:
 
         bundle_dir = self._bundle_user_path()
         """ Path in which we should put the client bundle for this user """
-        bundle_zip_file = os.path.join(
-            bundle_dir, METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME
-        )
+        bundle_zip_file = os.path.join(bundle_dir, METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME)
         """ Path to the zip file we will download """
 
         if (not force) and os.path.isdir(bundle_dir):
@@ -435,9 +433,7 @@ class MKEAPIClientPlugin:
         bundle_dir = self._bundle_user_path()
 
         if not os.path.isdir(bundle_dir):
-            logger.warning(
-                "MKE Client was asked to delete client bundle, but we don't have one."
-            )
+            logger.warning("MKE Client was asked to delete client bundle, but we don't have one.")
             return None
 
         return shutil.rmtree(bundle_dir)
@@ -511,7 +507,7 @@ class MKEAPIClientPlugin:
                 no_warnings = False
 
         if no_warnings:
-            health.info("MKE: reports no warnings.")
+            health.healthy("MKE: reports no warnings.")
 
         return health
 
@@ -524,13 +520,11 @@ class MKEAPIClientPlugin:
         all_healthy = True
         for node in nodes:
             if not MKENodeState.READY.match(node["Status"]["State"]):
-                health.warning(
-                    f"MKE: NODE {node['ID']} was not in a READY state: {node['Status']}"
-                )
+                health.warning(f"MKE: NODE {node['ID']} was not in a READY state: {node['Status']}")
                 all_healthy = False
 
         if all_healthy:
-            health.info("MKE: reports all nodes are healthy.")
+            health.healthy("MKE: reports all nodes are healthy.")
 
         return health
 
@@ -549,6 +543,6 @@ class MKEAPIClientPlugin:
                 swarm_healthy = False
 
         if swarm_healthy:
-            health.info("MKE: reports swarm nodes are healthy.")
+            health.healthy("MKE: reports swarm nodes are healthy.")
 
         return health
