@@ -51,9 +51,7 @@ DEFAULT_ENVIRONMENT_ROOT_CONFIG_IF_NO_ROOT_IS_FOUND = {
 """ If no root is found then this config is passed back as a config source """
 
 
-def discover_project_root(
-    config: Config, start_path: str, marker_files: List[str] = None
-):
+def discover_project_root(config: Config, start_path: str, marker_files: List[str] = None):
     """Find a project root path.
 
     We start looking in the start_path for certain marker files, and if we
@@ -106,9 +104,7 @@ def discover_project_root(
                     instance_id=instance_id,
                     priority=priority,
                 ).set_path(check_path)
-                logger.info(
-                    "Added project path as config: %s => %s", check_path, instance_id
-                )
+                logger.info("Added project path as config: %s => %s", check_path, instance_id)
 
                 depth += 1
                 break
@@ -162,9 +158,7 @@ def discover_sources_from_config(
         )
 
         logger.info("Adding metta sourced config plugin: %s:%s", plugin_id, instance_id)
-        plugin = config.add_source(
-            plugin_id=plugin_id, instance_id=instance_id, priority=priority
-        )
+        plugin = config.add_source(plugin_id=plugin_id, instance_id=instance_id, priority=priority)
 
         if plugin_id == PLUGIN_ID_SOURCE_PATH:
             source_path = metta_config.get([instance_base, CONFIGERUS_PATH_KEY])
@@ -173,9 +167,7 @@ def discover_sources_from_config(
             source_data = metta_config.get([instance_base, CONFIGERUS_DICT_DATA_KEY])
             plugin.set_data(data=source_data)
         elif plugin_id == PLUGIN_ID_SOURCE_ENV_SPECIFIC:
-            source_base = metta_config.get(
-                [instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY]
-            )
+            source_base = metta_config.get([instance_base, CONFIGERUS_ENV_SPECIFIC_BASE_KEY])
             plugin.set_base(base=source_base)
         elif plugin_id == PLUGIN_ID_SOURCE_ENV_JSON:
             source_env = metta_config.get([instance_base, CONFIGERUS_ENV_JSON_ENV_KEY])

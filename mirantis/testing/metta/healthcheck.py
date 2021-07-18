@@ -63,9 +63,7 @@ class HealthStatus(Enum):
         return self.value < than.value
 
 
-def worse_health_status(
-    first: "HealthStatus", second: "HealthStatus"
-) -> "HealthStatus":
+def worse_health_status(first: "HealthStatus", second: "HealthStatus") -> "HealthStatus":
     """Return the worst health status between two."""
     assert isinstance(first, HealthStatus), f"Poor argument provided: first {first}"
     assert isinstance(second, HealthStatus), f"Poor argument provided: second {second}"
@@ -124,16 +122,14 @@ class Health:
         return (
             message
             for message in self._messages
-            if source in [0, message.source] and (since == 0 or message.time > since)
+            if source in ["", message.source] and (since == 0 or message.time > since)
         )
 
     # Health message recording
 
     def new_message(self, status: HealthStatus, message: str):
         """Add a message of status INFO."""
-        self._messages.append(
-            HealthMessage(source=self.source, status=status, message=message)
-        )
+        self._messages.append(HealthMessage(source=self.source, status=status, message=message))
         self._status = worse_health_status(self._status, status)
 
     def unknown(self, message: str):

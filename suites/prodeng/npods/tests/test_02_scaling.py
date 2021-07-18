@@ -95,16 +95,10 @@ def _create_scale_and_test_function(scale):
         total = new_total
 
         duration = int(
-            npods_config.get(
-                "tests.scale.duration", default=STABILITY_TEST_DURATION_DEFAULT
-            )
+            npods_config.get("tests.scale.duration", default=STABILITY_TEST_DURATION_DEFAULT)
         )
         """ how long to run the whole stability test """
-        period = int(
-            npods_config.get(
-                "tests.scale.period", default=STABILITY_TEST_PERIOD_DEFAULT
-            )
-        )
+        period = int(npods_config.get("tests.scale.period", default=STABILITY_TEST_PERIOD_DEFAULT))
         """ how long to wait between each test iteration """
 
         try:
@@ -116,9 +110,7 @@ def _create_scale_and_test_function(scale):
             )
         except Exception as err:
             logger.error("Cluster stability test failed on scaled up cluster %s", name)
-            raise RuntimeError(
-                "Cluster stability test failed on scaled up cluster"
-            ) from err
+            raise RuntimeError("Cluster stability test failed on scaled up cluster") from err
 
     return _scale_and_test
 
@@ -152,16 +144,10 @@ def _create_scale_down_and_test_function():
             raise RuntimeError("Helm could not scale down the npods workloads") from err
 
         duration = int(
-            npods_config.get(
-                "tests.scale.duration", default=STABILITY_TEST_DURATION_DEFAULT
-            )
+            npods_config.get("tests.scale.duration", default=STABILITY_TEST_DURATION_DEFAULT)
         )
         """ how long to run the whole stability test """
-        period = int(
-            npods_config.get(
-                "tests.scale.period", default=STABILITY_TEST_PERIOD_DEFAULT
-            )
-        )
+        period = int(npods_config.get("tests.scale.period", default=STABILITY_TEST_PERIOD_DEFAULT))
         """ how long to wait between each test iteration """
 
         try:
@@ -173,12 +159,8 @@ def _create_scale_down_and_test_function():
             )
 
         except Exception as err:
-            logger.error(
-                "Cluster stability test failed on scaled down cluster %s", name
-            )
-            raise RuntimeError(
-                "Cluster stability test failed on scaled down cluster"
-            ) from err
+            logger.error("Cluster stability test failed on scaled down cluster %s", name)
+            raise RuntimeError("Cluster stability test failed on scaled down cluster") from err
 
     return scale_down_and_test
 

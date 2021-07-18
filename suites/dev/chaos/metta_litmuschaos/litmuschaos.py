@@ -123,9 +123,7 @@ class LitmusChaos:
         self.namespace = namespace
         self.version = version
         self.experiments = (
-            experiments
-            if experiments is not None
-            else LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS
+            experiments if experiments is not None else LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS
         )
 
     def info(self):
@@ -168,9 +166,7 @@ class LitmusChaos:
             resources_yaml = yaml.safe_load_all(res.text)
 
             for resource in resources_yaml:
-                self.kube_client.utils_create_from_dict(
-                    data=resource, namespace=self.namespace
-                )
+                self.kube_client.utils_create_from_dict(data=resource, namespace=self.namespace)
 
         time.sleep(10)
 
@@ -185,9 +181,7 @@ class LitmusChaos:
 
                 resources_yaml = yaml.safe_load_all(res.text)
                 for resource in resources_yaml:
-                    self.kube_client.utils_create_from_dict(
-                        data=resource, namespace=self.namespace
-                    )
+                    self.kube_client.utils_create_from_dict(data=resource, namespace=self.namespace)
 
         # 3. RBAC
         self.kube_client.utils_create_from_yaml(
@@ -226,9 +220,7 @@ class LitmusChaos:
         rbac.delete_cluster_role_binding("litmus")
 
         # Remove the Litmus namespace
-        core.delete_namespace(
-            "litmus", grace_period_seconds=30, propagation_policy="Foreground"
-        )
+        core.delete_namespace("litmus", grace_period_seconds=30, propagation_policy="Foreground")
 
         # Remove the litmus CRDs
         extensions.delete_custom_resource_definition(

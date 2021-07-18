@@ -61,9 +61,7 @@ def test_kubernetes_helm_workload(environment_up):
         deployment = apps_v1.read_namespaced_deployment(
             f"{instance.name}-metrics-server", instance.namespace
         )
-        logger.info(
-            f"Looks like the helm deployment: {deployment.metadata.annotations}"
-        )
+        logger.info(f"Looks like the helm deployment: {deployment.metadata.annotations}")
 
         logger.info("Running helm instance tests")
         instance.test()

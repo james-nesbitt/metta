@@ -62,9 +62,7 @@ class LaunchpadGroup:
             )
 
         # Get the highest priority provisioner
-        return self._environment.fixtures.get(
-            plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID
-        )
+        return self._environment.fixtures.get(plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID)
 
     def info(self, provisioner: str = "", deep: bool = False):
         """Get info about a provisioner plugin."""
@@ -86,13 +84,9 @@ class LaunchpadGroup:
             for host in config["spec"]["hosts"]:
                 list_host = {"role": host["role"]}
                 if "ssh" in host:
-                    list_host.update(
-                        {"is_windows": False, "address": host["ssh"]["address"]}
-                    )
+                    list_host.update({"is_windows": False, "address": host["ssh"]["address"]})
                 if "winrm" in host:
-                    list_host.update(
-                        {"is_windows": True, "address": host["winrm"]["address"]}
-                    )
+                    list_host.update({"is_windows": True, "address": host["winrm"]["address"]})
 
                 host_list.append(list_host)
 
@@ -188,9 +182,7 @@ class LaunchpadGroup:
         # pylint: disable=protected-access
         provisioner_plugin._write_launchpad_file()
 
-    def client_bundle(
-        self, provisioner: str = "", user: str = "admin", reload: bool = False
-    ):
+    def client_bundle(self, provisioner: str = "", user: str = "admin", reload: bool = False):
         """Tell Launchpad to download the client bundle."""
         provisioner_plugin = self._select_provisioner(instance_id=provisioner)
         plugin = provisioner_plugin.plugin

@@ -89,9 +89,7 @@ class HealthPollWorkload:
             "workload": {
                 "configuration": {"period": self.period, "duration": self.duration},
                 "required_fixtures": {
-                    "healthchecks": {
-                        "interfaces": [METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
-                    }
+                    "healthchecks": {"interfaces": [METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]}
                 },
             }
         }
@@ -115,9 +113,7 @@ class HealthPollWorkload:
         if self._thread is None:
             logger.debug("%s Starting health check polling.", self._instance_id)
             self._terminate = False
-            self._thread = threading.Thread(
-                name=self._instance_id, target=self._run, args=()
-            )
+            self._thread = threading.Thread(name=self._instance_id, target=self._run, args=())
             """Backgroung health poll thread."""
             self._thread.daemon = True  # Daemonize thread
             self._thread.start()  # Start the execution
@@ -154,7 +150,8 @@ class HealthPollWorkload:
 
             # Mark the start of a new poll.
             self._health[self._instance_id].info(
-                f"Polling {self.poll_count()} started, {int(poll_start - run_start)} seconds after start"
+                f"Polling {self.poll_count()} started, {int(poll_start - run_start)} "
+                "seconds after start"
             )
             # retrieve the health results.
             check = self._healthcheck()
@@ -256,6 +253,4 @@ def health_poller_output_log(
             last_message_time = messages[-1].time
 
         if exception_on_error:
-            assert health.status().is_better_than(
-                HealthStatus.ERROR
-            ), "Health was not good"
+            assert health.status().is_better_than(HealthStatus.ERROR), "Health was not good"

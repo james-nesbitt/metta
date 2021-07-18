@@ -19,9 +19,7 @@ logger = logging.getLogger("test_clients.launchpad_exec")
 @pytest.fixture(scope="module")
 def launchpad_exec_client(environment_up):
     """Get the launchpad exec plugin."""
-    return environment_up.fixtures.get_plugin(
-        plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID
-    )
+    return environment_up.fixtures.get_plugin(plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID)
 
 
 def test_launchpad_exec_client_hosts(launchpad_exec_client):
@@ -38,6 +36,4 @@ def test_launchpad_exec_client_exec(launchpad_exec_client):
     launchpad_exec_client.exec(host_index=0, cmds=["ls", "-la"])
     launchpad_exec_client.exec(host_index=2, cmds=["ls", "-la"])
     logger.info("Running docker cli with sudo on the first host")
-    launchpad_exec_client.exec(
-        host_index=0, cmds=["sudo", "docker", "container", "ps", "-a"]
-    )
+    launchpad_exec_client.exec(host_index=0, cmds=["sudo", "docker", "container", "ps", "-a"])

@@ -150,9 +150,7 @@ class TerraformProvisionerPlugin(ProvisionerBase):
         # Run confgerus validation on the config using our above defined
         # jsonschema
         try:
-            terraform_config.get(
-                self.terraform_config_base, validator=TERRAFORM_VALIDATE_TARGET
-            )
+            terraform_config.get(self.terraform_config_base, validator=TERRAFORM_VALIDATE_TARGET)
         except ValidationError as err:
             raise ValueError("Terraform config failed validation") from err
 
@@ -175,8 +173,7 @@ class TerraformProvisionerPlugin(ProvisionerBase):
             """ subprocess commands for terraform will be run in this path """
         except Exception as err:
             raise ValueError(
-                "Plugin config did not give us a working/plan path:"
-                f" {terraform_config.data}"
+                "Plugin config did not give us a working/plan path:" f" {terraform_config.data}"
             ) from err
         if not os.path.isabs(self.working_dir):
             if self.root_path:
@@ -185,9 +182,7 @@ class TerraformProvisionerPlugin(ProvisionerBase):
 
         state_path = terraform_config.get(
             [self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_STATE_PATH_KEY],
-            default=os.path.join(
-                self.working_dir, TERRAFORM_PROVISIONER_DEFAULT_STATE_SUBPATH
-            ),
+            default=os.path.join(self.working_dir, TERRAFORM_PROVISIONER_DEFAULT_STATE_SUBPATH),
         )
         """ terraform state path """
         if not os.path.isabs(state_path):
@@ -203,9 +198,7 @@ class TerraformProvisionerPlugin(ProvisionerBase):
 
         vars_path = terraform_config.get(
             [self.terraform_config_base, TERRAFORM_PROVISIONER_CONFIG_VARS_PATH_KEY],
-            default=os.path.join(
-                self.working_dir, TERRAFORM_PROVISIONER_DEFAULT_VARS_FILE
-            ),
+            default=os.path.join(self.working_dir, TERRAFORM_PROVISIONER_DEFAULT_VARS_FILE),
         )
         """ vars file which will be written before running terraform """
         if not os.path.isabs(vars_path):

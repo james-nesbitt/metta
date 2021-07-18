@@ -53,7 +53,8 @@ class TestkitClient:
 
         if shutil.which(binary) is None:
             raise ValueError(
-                f"Testkit binary not found. Testkit commands cannot be called.  Expected binary at path {binary}"
+                "Testkit binary not found. Testkit commands cannot be called. "
+                f"Expected binary at path {binary}"
             )
 
         self.bin = binary
@@ -110,9 +111,7 @@ class TestkitClient:
             res = subprocess.run(cmd, cwd=self.working_dir, text=True, check=True)
             res.check_returncode()
         else:
-            logger.debug(
-                "running testkit command with output capture: %s", " ".join(cmd)
-            )
+            logger.debug("running testkit command with output capture: %s", " ".join(cmd))
             res = subprocess.run(
                 cmd,
                 cwd=self.working_dir,

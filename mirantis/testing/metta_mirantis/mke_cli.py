@@ -30,7 +30,7 @@ class MKEAPICliPlugin(CliBase):
         if (
             len(
                 self._environment.fixtures.filter(
-                    plugin_id=METTA_MIRANTIS_CLI_MKE_PLUGIN_ID,
+                    plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
                     exception_if_missing=False,
                 )
             )

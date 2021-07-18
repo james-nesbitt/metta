@@ -5,7 +5,7 @@
 # version to test against.
 #
 # @NOTE we initially created an environment per version to test against
-# with each environment using a subfolder for MKE/MCR and Kubernetes 
+# with each environment using a subfolder for MKE/MCR and Kubernetes
 # version pinning, but we dropped it because it was getting too slow.
 #
 
@@ -25,11 +25,11 @@ cncf:
 
   config:
     sources:
-      cncf-mke-340:
-        # Include the config/mke_3.4.1 path as a config source for this environment
+      cncf-mke-344:
+        # Include the config/mke_3.4.4 path as a config source for this environment
         plugin_id: path
         priority: 80
-        path: "{{paths:project-config}}/mke_3.4.2"
+        path: "{{paths:project-config}}/mke_3.4.4"
 
       # include Environemnt variables as a source of config if they use the format
       # METTA_LABEL[_STEP]*
@@ -49,4 +49,3 @@ cncf:
     from_config:
       # Load the fixtures from fixtures(.yml) source.
       label: fixtures
-

@@ -8,10 +8,12 @@ Comamnds for itneracting with the ansible plugins, primarily the provisioner
 import logging
 
 from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.healthcheck import Health
 
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .provisioner import METTA_ANSIBLE_PROVISIONER_PLUGIN_ID
+from .ansible_callback import Results
 
 logger = logging.getLogger("metta.cli.ansible")
 
@@ -28,7 +30,7 @@ class AnsibleCliPlugin(CliBase):
         """Return a dict of commands."""
         if (
             self._environment.fixtures.get(
-                plugin_id=[METTA_ANSIBLE_PROVISIONER_PLUGIN_ID],
+                plugin_id=METTA_ANSIBLE_PROVISIONER_PLUGIN_ID,
                 exception_if_missing=False,
             )
             is not None
@@ -55,7 +57,7 @@ class AnsibleGroup:
 
         # Get the highest priority provisioner
         return self._environment.fixtures.get(
-            plugin_id=METTA_ANSIBLE_CLI_PLUGIN_ID,
+            plugin_id=METTA_ANSIBLE_PROVISIONER_PLUGIN_ID,
         )
 
     def info(self, provisioner: str = "", deep: bool = False):
@@ -77,3 +79,52 @@ class AnsibleGroup:
         """Run provisioner destroy."""
         provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
         provisioner_plugin.destroy()
+
+    # pylint: disable=protected-access
+    def setup(self, provisioner: str = ""):
+        """Run provisioner destroy."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        results: Results = provisioner_plugin._ansible.setup()
+        return cli_output(
+            {
+                str(result.host): {
+                    "host": result.host,
+                    "status": result.status,
+                    "result": result.result,
+                }
+                for result in results
+            }
+        )
+
+    # pylint: disable=protected-access
+    def ping(self, provisioner: str = ""):
+        """Run provisioner destroy."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        results: Results = provisioner_plugin._ansible.ping()
+        return cli_output(
+            {
+                str(result.host): {
+                    "host": result.host,
+                    "status": result.status,
+                    "result": result.result,
+                }
+                for result in results
+            }
+        )
+
+    def health(self, provisioner: str = ""):
+        """Run provisioner destroy."""
+        provisioner_fixture = self._select_provisioner(instance_id=provisioner)
+        provisioner_plugin = provisioner_fixture.plugin
+        health: Health = provisioner_plugin.health()
+        return cli_output(
+            {
+                "fixture": {
+                    "plugin_id": provisioner_fixture.plugin_id,
+                    "instance_id": provisioner_fixture.instance_id,
+                    "priority": provisioner_fixture.priority,
+                },
+                "status": health.status(),
+                "messages": list(health._messages),
+            }
+        )

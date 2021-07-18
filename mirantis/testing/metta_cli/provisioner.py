@@ -55,9 +55,7 @@ class ProvisionerGroup:
                 instance_id=instance_id,
             )
         # Get the highest priority provisioner
-        return self._environment.fixtures.get(
-            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
-        )
+        return self._environment.fixtures.get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER])
 
     def info(self, provisioner: str = "", deep: bool = True):
         """Get info about a provisioner plugin."""

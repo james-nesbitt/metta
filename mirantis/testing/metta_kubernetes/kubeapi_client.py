@@ -90,9 +90,7 @@ class KubernetesApiClientPlugin:
 
     """
 
-    def __init__(
-        self, environment: Environment, instance_id: str, kube_config_file: str = ""
-    ):
+    def __init__(self, environment: Environment, instance_id: str, kube_config_file: str = ""):
         """Run the super constructor but also set class properties.
 
         This implements the args part of the client interface.
@@ -112,9 +110,7 @@ class KubernetesApiClientPlugin:
         """ Unique id for this plugin instance """
 
         logger.debug("Creating Kuberentes client from config file")
-        self._api_client = kubernetes.config.new_client_from_config(
-            config_file=kube_config_file
-        )
+        self._api_client = kubernetes.config.new_client_from_config(config_file=kube_config_file)
         """ Kubernetes api client """
 
         self.config_file = kube_config_file
@@ -149,9 +145,7 @@ class KubernetesApiClientPlugin:
 
     def utils_create_from_dict(self, data: Dict, **kwargs):
         """Run a kube apply from dict of K8S yaml."""
-        return kubernetes.utils.create_from_dict(
-            k8s_client=self._api_client, data=data, **kwargs
-        )
+        return kubernetes.utils.create_from_dict(k8s_client=self._api_client, data=data, **kwargs)
 
     def nodes(self) -> List[models.v1_node.V1Node]:
         """Return V1Node list.
@@ -185,13 +179,11 @@ class KubernetesApiClientPlugin:
                     kubelet_condition = node_status_condition(node, "KubeletReady")
 
                     if not kubelet_condition.status == "True":
-                        raise RuntimeError(
-                            f"Node kubelet is not ready: {node.metadata.name}"
-                        )
+                        raise RuntimeError(f"Node kubelet is not ready: {node.metadata.name}")
                 return True
 
             except RuntimeError as this_err:
-                logger.warning("node kubelet not ready: %s", this_err)
+                logger.debug("node kubelet not ready: %s", this_err)
                 err = this_err
                 time.sleep(period)
                 timeout = timeout - period
@@ -292,7 +284,7 @@ class KubernetesApiClientPlugin:
 
         return k8s_health
 
-    def _health_k8s_readyz(self):
+    def _health_k8s_readyz(self) -> Health:
         """Check if kubernetes thinks the pod is healthy."""
         health = Health(source=self._instance_id)
 
@@ -303,7 +295,7 @@ class KubernetesApiClientPlugin:
 
         return health
 
-    def _health_k8s_node_health(self):
+    def _health_k8s_node_health(self) -> Health:
         """Check if kubernetes thinks the nodes are healthy."""
         health = Health(source=self._instance_id)
 
@@ -311,9 +303,7 @@ class KubernetesApiClientPlugin:
         for node in self.nodes():
             kubelet_condition = node_status_condition(node, "KubeletReady")
             if not kubelet_condition.status == "True":
-                health.error(
-                    f"KubeAPI: Node kubelet is not ready: {node.metadata.name}"
-                )
+                health.error(f"KubeAPI: Node kubelet is not ready: {node.metadata.name}")
                 no_issues = False
 
         if no_issues:
@@ -321,7 +311,7 @@ class KubernetesApiClientPlugin:
 
         return health
 
-    def _health_k8s_allpod_health(self):
+    def _health_k8s_allpod_health(self) -> Health:
         """Check if kubernetes thinks all the pods are healthy."""
         health = Health(source=self._instance_id)
 
@@ -330,18 +320,14 @@ class KubernetesApiClientPlugin:
         unhealthy_pod_count = 0
         for pod in core_v1_api.list_pod_for_all_namespaces().items:
             if pod.status.phase == "Failed":
-                health.error(
-                    "KubeAPI: Kubernetes reports a pod failed: %s", pod.metadata.name
-                )
+                health.error("KubeAPI: Kubernetes reports a pod failed: %s", pod.metadata.name)
                 unhealthy_pod_count += 1
         if unhealthy_pod_count == 0:
             health.healthy("KubeAPI: all pods report as healthy")
         elif unhealthy_pod_count < 2:
             health.warning("KubeAPI: some pods report as failed")
         else:
-            health.error(
-                "KubeAPI: Kubernetes Reports cluster is unhealthy (pod health)"
-            )
+            health.error("KubeAPI: Kubernetes Reports cluster is unhealthy (pod health)")
 
         return health
 

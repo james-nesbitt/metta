@@ -91,9 +91,7 @@ def discover(
         additional_metta_bootstraps = DEFAULT_ADDITIONAL_METTA_BOOTSTRAPS
 
     logger.info("Creating project from path %s", path)
-    configerus_bootstraps = (
-        FIXED_CONFIGERUS_BOOSTRAPS + additional_configerus_bootstraps
-    )
+    configerus_bootstraps = FIXED_CONFIGERUS_BOOSTRAPS + additional_configerus_bootstraps
     config = configerus_new_config(bootstraps=configerus_bootstraps)
 
     # Look for project root, and root config (and look in that root config for
@@ -105,14 +103,8 @@ def discover(
 
     if metta_config.has(["environments", "from_config"]):
         environment_config = metta_config.get(["environments", "from_config"])
-        label = (
-            environment_config["label"] if "label" in environment_config else "metta"
-        )
-        base = (
-            environment_config["base"]
-            if "base" in environment_config
-            else LOADED_KEY_ROOT
-        )
+        label = environment_config["label"] if "label" in environment_config else "metta"
+        base = environment_config["base"] if "base" in environment_config else LOADED_KEY_ROOT
         new_environments_from_config(
             config=config,
             additional_metta_bootstraps=additional_metta_bootstraps,
@@ -214,9 +206,7 @@ def new_environment(
         additional_configerus_bootstraps = []
 
     logger.info("Creating single environment from config")
-    configerus_bootstraps = (
-        FIXED_CONFIGERUS_BOOSTRAPS + additional_configerus_bootstraps
-    )
+    configerus_bootstraps = FIXED_CONFIGERUS_BOOSTRAPS + additional_configerus_bootstraps
     config = configerus_new_config(bootstraps=configerus_bootstraps)
 
     metta_bootstraps = FIXED_METTA_BOOTSTRAPS + additional_metta_bootstraps
@@ -362,16 +352,12 @@ def new_environments_from_builder(
     try:
         module = importlib.import_module(module)
     except Exception as err:
-        raise ValueError(
-            f"Env builder could not load suggested python package:{err}"
-        ) from err
+        raise ValueError(f"Env builder could not load suggested python package:{err}") from err
 
     try:
         method = getattr(module, method)
     except Exception as err:
-        raise ValueError(
-            f"Env builder could not execute package method: {err}"
-        ) from err
+        raise ValueError(f"Env builder could not execute package method: {err}") from err
 
     method(config, additional_metta_bootstraps)
 
@@ -393,9 +379,7 @@ def get_environment(name: str = "") -> Environment:
             name = list(all_environments.keys())[0]
         return all_environments[name]
     except KeyError as err:
-        raise KeyError(
-            f"Requested environment has not yet been created: {name}"
-        ) from err
+        raise KeyError(f"Requested environment has not yet been created: {name}") from err
 
 
 def add_environment(name: str, environment: Environment):

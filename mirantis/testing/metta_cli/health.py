@@ -96,8 +96,8 @@ class HealthcheckGroup:
                         "instance_id": health_fixture.instance_id,
                         "priority": health_fixture.priority,
                     },
-                    "status": health_plugin_results.status,
-                    "messages": health_plugin_results.messages,
+                    "status": health_plugin_results.status(),
+                    "messages": list(health_plugin_results.messages()),
                 }
 
         return cli_output(health_info)
@@ -116,6 +116,4 @@ class HealthcheckGroup:
                 instance_id=instance_id,
             )
         # Get the highest priority healthcheck
-        return self._environment.fixtures.get(
-            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
-        )
+        return self._environment.fixtures.get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK])

@@ -70,7 +70,8 @@ class Sonobuoy:
 
         if shutil.which(binary) is None:
             raise ValueError(
-                f"Sonobuoy binary not found. Sonobuoy commands cannot be called.  Expected binary at path {binary}"
+                "Sonobuoy binary not found. Sonobuoy commands cannot be called. "
+                f"Expected binary at path {binary}"
             )
 
         self.bin = binary
@@ -148,18 +149,14 @@ class Sonobuoy:
         self._run(cmd)
         self._delete_k8s_crb()
 
-    def _run(
-        self, cmd: List[str], ignore_errors: bool = True, return_output: bool = False
-    ):
+    def _run(self, cmd: List[str], ignore_errors: bool = True, return_output: bool = False):
         """Run a sonobuoy command."""
         cmd = [self.bin, f"--kubeconfig={self.kubeconfig}"] + cmd
 
         # this else makes it much more readable
         # pylint: disable=no-else-return
         if return_output:
-            logger.debug(
-                "running sonobuoy command with output capture: %s", " ".join(cmd)
-            )
+            logger.debug("running sonobuoy command with output capture: %s", " ".join(cmd))
             res = subprocess.run(cmd, shell=False, check=True, stdout=subprocess.PIPE)
 
             # sonobuoy's uses of subprocess error is overly inclusive for us
@@ -183,9 +180,7 @@ class Sonobuoy:
 
         # if the CRB does not exist then create it.
         try:
-            return rbac_authorization_v1_api.read_cluster_role_binding(
-                name=SONOBUOY_CRB_NAME
-            )
+            return rbac_authorization_v1_api.read_cluster_role_binding(name=SONOBUOY_CRB_NAME)
         except kubernetes.client.exceptions.ApiException:
             logger.debug("Sonobuoy CRB not found. Creating it now.")
             body = kubernetes.client.V1ClusterRoleBinding(
@@ -209,18 +204,14 @@ class Sonobuoy:
             try:
                 return rbac_authorization_v1_api.create_cluster_role_binding(body=body)
             except kubernetes.client.exceptions.ApiException as err:
-                raise RuntimeError(
-                    "Sonobuoy could not create the needed K8s CRB."
-                ) from err
+                raise RuntimeError("Sonobuoy could not create the needed K8s CRB.") from err
 
     def _delete_k8s_crb(self):
         """Remove the cluster role binding that we created."""
         rbac_authorization_v1_api = self._api_client.get_api("RbacAuthorizationV1Api")
 
         try:
-            return rbac_authorization_v1_api.delete_cluster_role_binding(
-                name=SONOBUOY_CRB_NAME
-            )
+            return rbac_authorization_v1_api.delete_cluster_role_binding(name=SONOBUOY_CRB_NAME)
         except kubernetes.client.exceptions.ApiException as err:
             logger.error("Could not delete sonobuoy CRB: %s", err)
             return None
@@ -266,9 +257,7 @@ class SonobuoyResults:
     def __init__(self, tarball: str, folder: str):
         """Interpret tarball contents."""
         logger.debug("un-tarring retrieved results: %s", tarball)
-        res = subprocess.run(
-            ["tar", "-xzf", tarball, "-C", folder], check=True, text=True
-        )
+        res = subprocess.run(["tar", "-xzf", tarball, "-C", folder], check=True, text=True)
         res.check_returncode()
 
         self.results_path = folder
@@ -290,9 +279,7 @@ class SonobuoyResults:
 
     def plugin(self, plugin_id) -> "SonobuoyResultsPlugin":
         """Return the results for a single plugin."""
-        return SonobuoyResultsPlugin(
-            os.path.join(self.results_path, "plugins", plugin_id)
-        )
+        return SonobuoyResultsPlugin(os.path.join(self.results_path, "plugins", plugin_id))
 
 
 class SonobuoyResultsPlugin:

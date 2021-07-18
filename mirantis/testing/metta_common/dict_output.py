@@ -27,9 +27,7 @@ class DictOutputPlugin:
 
     """
 
-    def __init__(
-        self, environment, instance_id, data: Dict = None, validator: str = ""
-    ):
+    def __init__(self, environment, instance_id, data: Dict = None, validator: str = ""):
         """Run the super constructor but also set class properties.
 
         Here we treat the data dict as a configerus.loaded.Loaded instance,

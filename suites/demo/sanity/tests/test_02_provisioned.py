@@ -76,9 +76,7 @@ def test_01_environment_prepare(environment: Environment):
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("alreadyrunning", default=False):
-        logger.info(
-            "test infrastructure is aready in place, and does not need to be provisioned."
-        )
+        logger.info("test infrastructure is aready in place, and does not need to be provisioned.")
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
@@ -109,9 +107,7 @@ def test_02_environment_up(environment: Environment):
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("alreadyrunning", default=False):
-        logger.info(
-            "test infrastructure is aready in place, and does not need to be provisioned."
-        )
+        logger.info("test infrastructure is aready in place, and does not need to be provisioned.")
     else:
         try:
             logger.info("Starting up the testing cluster using the provisioner")
@@ -304,9 +300,7 @@ def test_14_environment_down(environment: Environment):
         logger.info("Leaving test infrastructure in place on shutdown")
     else:
         try:
-            logger.info(
-                "Stopping the test cluster using the provisioner as directed by config"
-            )
+            logger.info("Stopping the test cluster using the provisioner as directed by config")
             provisioner.destroy()
         except Exception as err:
             logger.error("Provisioner failed to stop: %s", err)

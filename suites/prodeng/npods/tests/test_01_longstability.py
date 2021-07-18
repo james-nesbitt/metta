@@ -55,9 +55,7 @@ def test_01_target_stability(healthpoller, loki, npods, npods_config):
         )
     except Exception as err:
         logger.error("Cluster stability test failed on scaled up cluster %s", name)
-        raise RuntimeError(
-            "Cluster stability test failed on scaled up cluster"
-        ) from err
+        raise RuntimeError("Cluster stability test failed on scaled up cluster") from err
 
 
 def test_02_scaledown_stability(healthpoller, loki, npods, npods_config):
@@ -97,6 +95,4 @@ def test_02_scaledown_stability(healthpoller, loki, npods, npods_config):
         )
     except Exception as err:
         logger.error("Cluster stability test failed on scaled down cluster %s", name)
-        raise RuntimeError(
-            "Cluster stability test failed on scaled down cluster"
-        ) from err
+        raise RuntimeError("Cluster stability test failed on scaled down cluster") from err

@@ -4,7 +4,7 @@ platform: ubuntu_20.04
 # Versions to test against.
 mcr_channel: stable
 mcr_version: 20.10.6
-mke_image_repo: docker.io/mirantiseng
+mke_image_repo: docker.io/mirantis
 mke_version: 3.4.3
 
 # What version of Kubernetes should sonobuoy check conformance on.

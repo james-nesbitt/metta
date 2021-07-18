@@ -70,9 +70,7 @@ def metta_plugin_factory_workload_kubernetes_deployment(
     base: Any = KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_BASE,
 ):
     """Create an metta kubernetes spec workload plugin."""
-    return KubernetesDeploymentWorkloadPlugin(
-        environment, instance_id, label=label, base=base
-    )
+    return KubernetesDeploymentWorkloadPlugin(environment, instance_id, label=label, base=base)
 
 
 @Factory(
@@ -86,9 +84,7 @@ def metta_plugin_factory_workload_kubernetes_yaml(
     base: Any = KUBERNETES_YAML_WORKLOAD_CONFIG_BASE,
 ):
     """Create an metta kubernetes spec workload plugin."""
-    return KubernetesYamlWorkloadPlugin(
-        environment, instance_id, label=label, base=base
-    )
+    return KubernetesYamlWorkloadPlugin(environment, instance_id, label=label, base=base)
 
 
 @Factory(
@@ -102,18 +98,14 @@ def metta_plugin_factory_workload_kubernetes_helm(
     base: Any = KUBERNETES_HELM_WORKLOAD_CONFIG_BASE,
 ):
     """Create an metta kubernetes spec workload plugin."""
-    return KubernetesHelmWorkloadPlugin(
-        environment, instance_id, label=label, base=base
-    )
+    return KubernetesHelmWorkloadPlugin(environment, instance_id, label=label, base=base)
 
 
 @Factory(
     plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLI,
     interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
 )
-def metta_terraform_factory_cli_kubernetes(
-    environment: Environment, instance_id: str = ""
-):
+def metta_terraform_factory_cli_kubernetes(environment: Environment, instance_id: str = ""):
     """Create a kubernetes cli plugin."""
     return KubernetesCliPlugin(environment, instance_id)
 

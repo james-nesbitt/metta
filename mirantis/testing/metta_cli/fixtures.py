@@ -70,10 +70,7 @@ class FixturesGroup:
         # use a protected property just for introspection
         # pylint: disable=protected-access
         for registration in Factory._registry.values():
-            if (
-                skip_cli_plugins
-                and METTA_PLUGIN_INTERFACE_ROLE_CLI in registration.interfaces
-            ):
+            if skip_cli_plugins and METTA_PLUGIN_INTERFACE_ROLE_CLI in registration.interfaces:
                 continue
 
             plugins_info[registration.plugin_id] = {

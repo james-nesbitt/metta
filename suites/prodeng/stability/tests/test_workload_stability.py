@@ -18,6 +18,4 @@ def test_01_workloads_up(healthpoller, nginx_deployment, metrics_deployment):
     """Use a new logger just for the health output."""
 
     # use a common function for logging poller status
-    health_poller_output_log(
-        healthpoller=healthpoller, poll_logger=poll_logger, period=30, count=4
-    )
+    health_poller_output_log(healthpoller=healthpoller, poll_logger=poll_logger, period=30, count=4)

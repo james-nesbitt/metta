@@ -64,9 +64,7 @@ class DockerPyRunWorkloadPlugin:
         run_config = self._environment.config.load(self._config_label)
         """Configerus LoadedConfig for the docker run label."""
 
-        self._run_settings = run_config.get(
-            [self._config_base, DOCKER_RUN_WORKLOAD_CONFIG_KEY_RUN]
-        )
+        self._run_settings = run_config.get([self._config_base, DOCKER_RUN_WORKLOAD_CONFIG_KEY_RUN])
         """Arguments for docker run."""
 
         self._docker_client: DockerPyClientPlugin = None

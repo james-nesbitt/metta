@@ -104,9 +104,7 @@ def environment_up(environment) -> Environment:
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("alreadyrunning", default=False):
-        logger.info(
-            "test infrastructure is aready in place, and does not need to be provisioned."
-        )
+        logger.info("test infrastructure is aready in place, and does not need to be provisioned.")
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
@@ -147,9 +145,7 @@ def environment_upgrade(environment):
     """ launchpad provisioner object """
 
     if conf.get("alreadyrunning", default=False):
-        logger.info(
-            "test infrastructure is aready in place, and does not need to be provisioned."
-        )
+        logger.info("test infrastructure is aready in place, and does not need to be provisioned.")
     else:
         try:
             logger.info(
@@ -160,9 +156,7 @@ def environment_upgrade(environment):
             logger.error("Provisioner failed to init: %s", err)
             raise err
         try:
-            logger.info(
-                "Upgrading up the testing cluster using the launchpad provisioner"
-            )
+            logger.info("Upgrading up the testing cluster using the launchpad provisioner")
             launchpad.apply()
         except Exception as err:
             logger.error("Launchpad provisioner failed to apply: %s", err)
@@ -191,9 +185,7 @@ def environment_down(environment):
         logger.info("Leaving test infrastructure in place on shutdown")
     else:
         try:
-            logger.info(
-                "Stopping the test cluster using the provisioner as directed by config"
-            )
+            logger.info("Stopping the test cluster using the provisioner as directed by config")
             launchpad.destroy()
             terraform.destroy()
         except Exception as err:

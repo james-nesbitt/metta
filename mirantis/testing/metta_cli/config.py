@@ -40,9 +40,7 @@ class ConfigGroup:
         """Store environment in object."""
         self._environment = environment
 
-    def plugins(
-        self, plugin_id: str = "", instance_id: str = "", plugin_type: str = ""
-    ):
+    def plugins(self, plugin_id: str = "", instance_id: str = "", plugin_type: str = ""):
         """List configerus plugins."""
         configerus_plugin_list = []
         for instance in self._environment.config.plugins.get_instances(
@@ -115,9 +113,7 @@ class ConfigGroup:
         try:
             if default_label is None:
                 default_label = "you did not specify a default"
-            value = self._environment.config.format(
-                data=data, default_label=default_label
-            )
+            value = self._environment.config.format(data=data, default_label=default_label)
         except Exception as err:
             return f"Error occured in formatting: '{err}'"
 

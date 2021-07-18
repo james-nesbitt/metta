@@ -107,9 +107,7 @@ class ComboProvisionerPlugin(ProvisionerBase):
         try:
             combo_config = self._environment.config.load(label)
         except KeyError as err:
-            raise ValueError(
-                "Combo provisioner could not find any configurations"
-            ) from err
+            raise ValueError("Combo provisioner could not find any configurations") from err
 
         # Run confgerus validation on the config using our above defined jsonschema
         try:
@@ -118,18 +116,14 @@ class ComboProvisionerPlugin(ProvisionerBase):
             raise ValueError("Combo provisioner config failed validation") from err
 
         try:
-            backends_list = combo_config.get(
-                [base, COMBO_PROVISIONER_CONFIG_BACKENDS_KEY]
-            )
+            backends_list = combo_config.get([base, COMBO_PROVISIONER_CONFIG_BACKENDS_KEY])
             if not isinstance(backends_list, list):
                 raise ValueError(
                     "Combo provisioner could not understand the backend list."
                     " A list was expected."
                 )
         except KeyError as err:
-            raise ValueError(
-                "Combo provisioner received no backend list from config."
-            ) from err
+            raise ValueError("Combo provisioner received no backend list from config.") from err
 
         # for each of our string instance_ids we add the backend in order by finding if from the
         # environment and adding it to our UCCTFixturesPlugin fixtures list.
@@ -191,9 +185,7 @@ class ComboProvisionerPlugin(ProvisionerBase):
     def apply(self):
         """Bring a cluster to the configured state."""
         for backend_fixture in self._get_backend_iter():
-            logger.info(
-                "--> running backend apply: [High->Low] %s", backend_fixture.instance_id
-            )
+            logger.info("--> running backend apply: [High->Low] %s", backend_fixture.instance_id)
             backend_fixture.plugin.apply()
 
     def destroy(self):

@@ -62,8 +62,7 @@ class SonobuoyGroup:
 
         except KeyError as err:
             raise ValueError(
-                "No usable kubernetes client was found for sonobuoy"
-                "to pull a kubeconfig from"
+                "No usable kubernetes client was found for sonobuoy" "to pull a kubeconfig from"
             ) from err
 
     def _prepared_plugin(self, instance_id: str = ""):
@@ -91,8 +90,7 @@ class SonobuoyGroup:
             status_info = {
                 "status": status.status,
                 "plugins": {
-                    plugin_id: status.plugin(plugin_id)
-                    for plugin_id in status.plugin_list()
+                    plugin_id: status.plugin(plugin_id) for plugin_id in status.plugin_list()
                 },
             }
 
@@ -125,8 +123,7 @@ class SonobuoyGroup:
                 status_info = {
                     "status": status.status.value,
                     "plugins": {
-                        plugin_id: status.plugin(plugin_id)
-                        for plugin_id in status.plugin_list()
+                        plugin_id: status.plugin(plugin_id) for plugin_id in status.plugin_list()
                     },
                 }
 

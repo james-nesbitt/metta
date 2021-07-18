@@ -48,9 +48,7 @@ def environment(environment_discover) -> Environment:
 @pytest.fixture(scope="session")
 def provisioner(environment) -> object:
     """Get the provisioner plugin."""
-    return environment.fixtures.get_plugin(
-        interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
-    )
+    return environment.fixtures.get_plugin(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER])
 
 
 @pytest.fixture(scope="session")
@@ -71,9 +69,7 @@ def environment_up(environment, provisioner) -> Environment:
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("alreadyrunning", default=False):
-        logger.info(
-            "test infrastructure is aready in place, and does not need to be provisioned."
-        )
+        logger.info("test infrastructure is aready in place, and does not need to be provisioned.")
     else:
         try:
             logger.info("Preparing the testing cluster using the provisioner")
@@ -95,9 +91,7 @@ def environment_up(environment, provisioner) -> Environment:
         logger.info("Leaving test infrastructure in place on shutdown")
     else:
         try:
-            logger.info(
-                "Stopping the test cluster using the provisioner as directed by config"
-            )
+            logger.info("Stopping the test cluster using the provisioner as directed by config")
             provisioner.destroy()
         except Exception as err:
             logger.error("Provisioner failed to stop: %s", err)

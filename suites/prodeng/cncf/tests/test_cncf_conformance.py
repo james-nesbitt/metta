@@ -60,9 +60,7 @@ def test_wait_cncf_conformance(cncf_workload):
         if status is not None:
             still_running_count = 0
             for plugin_id in status.plugin_list():
-                logger.info(
-                    "%s:: Checking %s:%s", int(now), plugin_id, status.plugin(plugin_id)
-                )
+                logger.info("%s:: Checking %s:%s", int(now), plugin_id, status.plugin(plugin_id))
 
                 if status.plugin_status(plugin_id) not in [
                     Status.COMPLETE,
@@ -71,9 +69,7 @@ def test_wait_cncf_conformance(cncf_workload):
                     still_running_count += 1
 
             if still_running_count == 0:
-                logger.info(
-                    "All plugins are marked completed or failed. Ending status poll."
-                )
+                logger.info("All plugins are marked completed or failed. Ending status poll.")
                 break
 
         else:
@@ -99,9 +95,7 @@ def test_retrieve_cncf_conformance(cncf_workload):
         plugin_results = results.plugin(plugin_id)
 
         if plugin_results.status() in [Status.FAILED]:
-            logger.error(
-                "Sonobuoy result is marked as failed: %s", plugin_results.status()
-            )
+            logger.error("Sonobuoy result is marked as failed: %s", plugin_results.status())
             no_errors = False
             for item in plugin_results:
                 logger.error("%s: %s (%s)", plugin_id, item.name, item.meta_file_path())

@@ -126,7 +126,12 @@ class SonobuoyWorkloadPlugin:
         self._results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH
         """String path to where to keep the results."""
 
-        self.prepare()
+        # go for early declarative testing to the plugin.
+        try:
+            self.prepare()
+        # pylint: disable=broad-except
+        except Exception:
+            logger.debug("not able to early prepare sonobuoy.")
 
     # the deep argument is a standard for the info hook
     # pylint: disable=unused-argument
@@ -157,9 +162,7 @@ class SonobuoyWorkloadPlugin:
             status = self.status()
 
             if status.status in [Status.POSTPROCESS]:
-                health.info(
-                    "Sonobuoy: run has finished, but result is not yet avaialble."
-                )
+                health.info("Sonobuoy: run has finished, but result is not yet avaialble.")
             elif status.status in [Status.COMPLETE, Status.PASSED]:
                 health.info("Sonobuoy: completed.")
             elif status.status in [Status.FAILED]:
@@ -201,12 +204,8 @@ class SonobuoyWorkloadPlugin:
         kubernetes_version = loaded.get(
             [self._config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION], default=""
         )
-        plugins = loaded.get(
-            [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[]
-        )
-        plugin_envs = loaded.get(
-            [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[]
-        )
+        plugins = loaded.get([self._config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[])
+        plugin_envs = loaded.get([self._config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[])
 
         self._results_path: str = loaded.get(
             [self._config_base, SONOBUOY_CONFIG_KEY_RESULTSPATH],

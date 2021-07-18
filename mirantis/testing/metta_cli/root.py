@@ -70,9 +70,7 @@ class Root:
             if state:
                 self._environment.set_state(state)
         except KeyError as err:
-            raise ValueError(
-                f"Could not load environment '{environment}', not found"
-            ) from err
+            raise ValueError(f"Could not load environment '{environment}', not found") from err
 
         # collect any comands from all discovered cli plugins
         self._collect_commands()
@@ -85,9 +83,7 @@ class Root:
         object directly, so that Fire can see them.
 
         """
-        for plugin_id in Factory.plugin_ids(
-            interfaces_filter=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
-        ):
+        for plugin_id in Factory.plugin_ids(interfaces_filter=[METTA_PLUGIN_INTERFACE_ROLE_CLI]):
             plugin_dict = {
                 "plugin_id": plugin_id,
             }
@@ -106,9 +102,7 @@ class Root:
             # A failed command load shouldn't kill all commands
             # pylint: disable=broad-except
             except Exception as err:
-                logger.warning(
-                    "CLI plugin '%s' failed when adding commands: %s", plugin_id, err
-                )
+                logger.warning("CLI plugin '%s' failed when adding commands: %s", plugin_id, err)
 
             if not isinstance(commands, dict):
                 raise ValueError(f"Plugin returned invalid commands : {commands}")

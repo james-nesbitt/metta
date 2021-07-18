@@ -136,13 +136,10 @@ class KubernetesYamlWorkloadPlugin:
 
         """
         try:
-            self.client = fixtures.get_plugin(
-                plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT
-            )
+            self.client = fixtures.get_plugin(plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
         except KeyError as err:
             raise NotImplementedError(
-                "Workload could not find the needed client: "
-                f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
+                "Workload could not find the needed client: " f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
             ) from err
 
     def apply(self):
@@ -159,9 +156,7 @@ class KubernetesYamlWorkloadPlugin:
 
                 for resource in resources_yaml:
                     self.k8s_objects.append(
-                        self.client.utils_create_from_dict(
-                            data=resource, namespace=self.namespace
-                        )
+                        self.client.utils_create_from_dict(data=resource, namespace=self.namespace)
                     )
 
         else:

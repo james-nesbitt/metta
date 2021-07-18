@@ -50,9 +50,7 @@ def kubeapi_client(environment):
 @pytest.fixture(scope="package")
 def cncf_workload(environment_up, kubeapi_client):
     """Retrieve the CNCF workload instance."""
-    plugin = environment_up.fixtures.get_plugin(
-        interfaces=[METTA_PLUGIN_ID_SONOBUOY_WORKLOAD]
-    )
+    plugin = environment_up.fixtures.get_plugin(interfaces=[METTA_PLUGIN_ID_SONOBUOY_WORKLOAD])
 
     # start the CNCF conformance run
     logger.info("Starting sonobuoy run")

@@ -69,8 +69,6 @@ class EnvironmentGroup:
     def bootstraps(self, environment: str = ""):
         """List bootstraps that have been applied to the environment."""
         environment_object = self._get_environment(environment)
-        bootstrap_list = list(
-            bootstrap for bootstrap in environment_object.bootstrapped
-        )
+        bootstrap_list = list(bootstrap for bootstrap in environment_object.bootstrapped)
 
         return cli_output(bootstrap_list)

@@ -161,9 +161,7 @@ class MSRAPIClientPlugin:
         """Check the API ping response."""
         endpoint = self._accesspoint_url("health", root_api=True, node=node)
 
-        with requests.get(
-            endpoint, auth=self._api_auth(), verify=self.verify
-        ) as response:
+        with requests.get(endpoint, auth=self._api_auth(), verify=self.verify) as response:
             response.raise_for_status()
             return json.loads(response.content)
 
@@ -231,9 +229,7 @@ class MSRAPIClientPlugin:
         """Get the requests auth handler."""
         return requests.auth.HTTPBasicAuth(self.username, self.password)
 
-    def _accesspoint_url(
-        self, endpoint: str = "", root_api: bool = False, node: int = None
-    ) -> str:
+    def _accesspoint_url(self, endpoint: str = "", root_api: bool = False, node: int = None) -> str:
         """Convert an endpoint into a full URL for an API Call.
 
         Pass in a sub-url endpoint and this will convert it into a full URL.
@@ -319,9 +315,7 @@ class MSRAPIClientPlugin:
         else:
             for replica_id, replica_health in status["replica_health"].items():
                 if not MSRReplicaHealth.OK.match(replica_health):
-                    health.error(
-                        f"MSR: Replica [{replica_id}] is not READY : {replica_health}"
-                    )
+                    health.error(f"MSR: Replica [{replica_id}] is not READY : {replica_health}")
 
         return health
 

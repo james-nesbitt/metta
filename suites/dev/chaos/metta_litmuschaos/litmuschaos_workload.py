@@ -153,9 +153,7 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
 class LitmusChaosWorkloadPluginInstance(WorkloadInstanceBase):
     """Individual instance of the LitmusChaos workload for execution"""
 
-    def __init__(
-        self, kube_client: str, namespace: str, version: str, experiments: List[str]
-    ):
+    def __init__(self, kube_client: str, namespace: str, version: str, experiments: List[str]):
         """Configure the worload instance.
 
         Parameters:

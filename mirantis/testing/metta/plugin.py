@@ -52,9 +52,7 @@ METTA_PLUGIN_CONFIG_KEY_ARGUMENTS = "arguments"
 class Instance:
     """An instances of a plugin, with some metadata about it."""
 
-    def __init__(
-        self, plugin_id: str, instance_id: str, interfaces: List[str], plugin: object
-    ):
+    def __init__(self, plugin_id: str, instance_id: str, interfaces: List[str], plugin: object):
         """Create an Instance object."""
         self.plugin_id = plugin_id
         self.instance_id = instance_id
@@ -115,7 +113,7 @@ class Factory:
         """
         if plugin_id in self._registry:
             raise KeyError(
-                f"Plugin registration failed, as there is already a plugin with the name {plugin_id}"
+                f"Plugin registration failed; there is already a plugin with the name {plugin_id}"
             )
 
         logger.debug("Metta Plugin factory registering `%s`", plugin_id)
@@ -176,8 +174,7 @@ class Factory:
         """
         if not (isinstance(plugin_id, str) and isinstance(instance_id, str)):
             raise ValueError(
-                f"Bad arguments passed for creating a fixture: "
-                f":{plugin_id}:{instance_id}"
+                f"Bad arguments passed for creating a fixture: " f":{plugin_id}:{instance_id}"
             )
         try:
             factory = cls._registry[plugin_id]

@@ -83,9 +83,7 @@ class KubernetesGroup:
             )
 
         # Get the highest priority workload
-        return self._environment.fixtures.get(
-            plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT
-        )
+        return self._environment.fixtures.get(plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
 
     def info(self, workload: str = "", deep: bool = False):
         """Get info about a client plugin."""
@@ -148,9 +146,7 @@ class KubernetesGroup:
             # Thank you kubernetes for the naming pattern
             # pylint: disable=invalid-name
             CoreV1Api = plugin.get_api("CoreV1Api")
-            sc = CoreV1Api.connect_post_namespaced_service_proxy(
-                namespace=namespace, name=service
-            )
+            sc = CoreV1Api.connect_post_namespaced_service_proxy(namespace=namespace, name=service)
 
             return cli_output(sc)
 
@@ -174,9 +170,7 @@ class KubernetesYamlWorkloadGroup:
             )
 
         # Get the highest priority workload
-        return self._environment.fixtures.get(
-            plugin_id=METTA_PLUGIN_ID_KUBERNETES_YAML_WORKLOAD
-        )
+        return self._environment.fixtures.get(plugin_id=METTA_PLUGIN_ID_KUBERNETES_YAML_WORKLOAD)
 
     def info(self, workload: str = "", deep: bool = False):
         """Get info about a yaml workload plugin."""
@@ -220,9 +214,7 @@ class KubernetesHelmWorkloadGroup:
             )
 
         # Get the highest priority workload
-        return self._environment.fixtures.get(
-            plugin_id=METTA_PLUGIN_ID_KUBERNETES_HELM_WORKLOAD
-        )
+        return self._environment.fixtures.get(plugin_id=METTA_PLUGIN_ID_KUBERNETES_HELM_WORKLOAD)
 
     def info(self, workload: str = "", deep: bool = False) -> str:
         """Get info about a helm workload plugin."""

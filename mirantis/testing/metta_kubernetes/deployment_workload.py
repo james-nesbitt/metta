@@ -158,8 +158,7 @@ class KubernetesDeploymentWorkloadPlugin:
             )
         except KeyError as err:
             raise NotImplementedError(
-                "Workload could not find the needed client: "
-                f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
+                "Workload could not find the needed client: " f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
             ) from err
 
     def apply(self):
@@ -227,18 +226,18 @@ class KubernetesDeploymentWorkloadPlugin:
             status = deployment.status
 
             if status is None:
-                health.error(
-                    f"Deployment: [{self.namespace}/{self.name}] retrieved no status"
-                )
+                health.error(f"Deployment: [{self.namespace}/{self.name}] retrieved no status")
             else:
                 for condition in status.conditions:
                     if condition.status == "True":
                         health.healthy(
-                            f"Deployment: [{self.namespace}/{self.name}] {condition.type} -> {condition.message}"
+                            f"Deployment: [{self.namespace}/{self.name}] {condition.type} "
+                            f"-> {condition.message}"
                         )
                     else:
                         health.error(
-                            f"Deployment: [{self.namespace}/{self.name}] {condition.type} -> {condition.message}"
+                            f"Deployment: [{self.namespace}/{self.name}] {condition.type} "
+                            f"-> {condition.message}"
                         )
 
         except kubernetes.client.rest.ApiException as err:

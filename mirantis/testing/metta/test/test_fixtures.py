@@ -117,9 +117,7 @@ class TestFixtures(unittest.TestCase):
             interfaces=["A", "B"],
             plugin=None,
         )
-        fixtures.new(
-            plugin_id="one", instance_id="2", priority=74, interfaces=["A"], plugin=None
-        )
+        fixtures.new(plugin_id="one", instance_id="2", priority=74, interfaces=["A"], plugin=None)
         fixtures.new(
             plugin_id="two",
             instance_id="2",
