@@ -7,6 +7,7 @@ altrepo:
     - metta_docker
     - metta_kubernetes
     - metta_terraform
+    - metta_ansible
     - metta_launchpad
     - metta_common_config
     - metta_mirantis_common

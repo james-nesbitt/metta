@@ -44,7 +44,7 @@ def metrics_deployment(environment_up):
     plugin.destroy()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def healthpoller(environment_up):
     """Retrieve a healthpoller workload.
 
