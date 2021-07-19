@@ -28,7 +28,7 @@ class Result:
         self.kwargs: Dict[str, Any] = kwargs
 
 
-class Results(CallbackBase):
+class ResultsCallback(CallbackBase):
     """A sample callback plugin used for collecting results as they come in."""
 
     def __init__(self, *args, **kwargs):
@@ -89,6 +89,13 @@ class Results(CallbackBase):
         """
         # Iterate across the to_list() set, as it is sorted.
         return reversed(self._results.values())
+
+    ##### ANSIBLE CALLBACK FUNCTIONALITY
+    #
+    # The following methods are called by the ansible queue manager strategy object while the queue
+    # is being processed.  Here we just try to catch information to produce discoverable results
+    # in the object.
+    #
 
     # need to access result _result in order to get info out of it.
     # pylint: disable=protected-access

@@ -13,7 +13,7 @@ from mirantis.testing.metta.healthcheck import Health
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .provisioner import METTA_ANSIBLE_PROVISIONER_PLUGIN_ID
-from .ansible_callback import Results
+from .ansible_callback import ResultsCallback
 
 logger = logging.getLogger("metta.cli.ansible")
 
@@ -82,9 +82,25 @@ class AnsibleGroup:
 
     # pylint: disable=protected-access
     def setup(self, provisioner: str = ""):
-        """Run provisioner destroy."""
+        """Run ansible plugin setup task."""
         provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        results: Results = provisioner_plugin._ansible.setup()
+        results: ResultsCallback = provisioner_plugin._ansible.setup()
+        return cli_output(
+            {
+                str(result.host): {
+                    "host": result.host,
+                    "status": result.status,
+                    "result": result.result,
+                }
+                for result in results
+            }
+        )
+
+    # pylint: disable=protected-access
+    def debug(self, provisioner: str = ""):
+        """Run ansible plugin debug task."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        results: ResultsCallback = provisioner_plugin._ansible.debug()
         return cli_output(
             {
                 str(result.host): {
@@ -98,9 +114,9 @@ class AnsibleGroup:
 
     # pylint: disable=protected-access
     def ping(self, provisioner: str = ""):
-        """Run provisioner destroy."""
+        """Run ansible plugin ping task."""
         provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        results: Results = provisioner_plugin._ansible.ping()
+        results: ResultsCallback = provisioner_plugin._ansible.ping()
         return cli_output(
             {
                 str(result.host): {
