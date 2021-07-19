@@ -94,12 +94,18 @@ class AnsibleProvisionerPlugin(ProvisionerBase):
 
         # In order to allow declarative interaction. Try to make an ansible client
         # for this plugin, but allow it to fail.
-        # try:
         self._update_config()
         self._write_ansible_files()
         self._make_ansible_client()
-        # except Exception:
-        #    logger.debug('Inital ansible plugin build failed : %s', self._instance_id)
+        try:
+            self._update_config()
+            self._write_ansible_files()
+            self._make_ansible_client()
+
+        # no exception in init should block building the object
+        # pylint: disable=broad-except
+        except Exception:
+            logger.debug("Inital ansible plugin build failed : %s", self._instance_id)
 
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
@@ -120,11 +126,11 @@ class AnsibleProvisionerPlugin(ProvisionerBase):
                 ),
                 "inventory": plugin_config.get(
                     [self._config_base, ANSIBLE_PROVISIONER_CONFIG_INVENTORY_KEY],
-                    default={},
+                    default="MISSING",
                 ),
                 "playbooks": plugin_config.get(
                     [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOKS_KEY],
-                    default={},
+                    default="MISSING",
                 ),
             },
             "files": {
@@ -176,7 +182,18 @@ class AnsibleProvisionerPlugin(ProvisionerBase):
         Run an ansible playbook to execute functionality on a running cluster.
 
         """
-        self._ansible.play({})
+        self._update_config()
+        self._write_ansible_files()
+
+        plugin_config = self._environment.config.load(self._config_label)
+        """Loaded configerus config for the plugin. Ready for .get()."""
+
+        playbooks: Dict[str, Any] = plugin_config.get(
+            [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOKS_KEY]
+        )
+
+        for playbook in playbooks:
+            self._ansible.play(playbook)
 
     def destroy(self):
         """remove all resources created for the cluster
@@ -186,6 +203,7 @@ class AnsibleProvisionerPlugin(ProvisionerBase):
         @NOTE his plugin ist still very much a stub, and implements no real functionality.
 
         """
+        self._rm_ansible_files()
 
     def _make_ansible_client(self):
         """Create and assign an ansible client to this plugin."""
@@ -230,6 +248,16 @@ class AnsibleProvisionerPlugin(ProvisionerBase):
             os.makedirs(os.path.dirname(os.path.realpath(self._inventory_path)), exist_ok=True)
             with open(self._inventory_path, "w") as inventory_fileobject:
                 inventory_fileobject.write(self._inventory_contents)
+
+    def _rm_ansible_files(self):
+        """Update config and write the cfg and inventory files."""
+        # first the ansible cfg file
+        if self._ansiblecfg_path and os.path.exists(self._ansiblecfg_path):
+            os.remove(self._ansiblecfg_path)
+
+        # second the inventory file
+        if self._inventory_path and os.path.exists(self._inventory_path):
+            os.remove(self._inventory_path)
 
     def _health_all_ping(self) -> Health:
         """Health check that tries to ping all of the hosts."""

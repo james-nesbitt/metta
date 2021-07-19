@@ -33,8 +33,6 @@ playbooks:
   tasks:
   - action:
       module: debug
-  - action:
-      module: ping
 
 # We could load directly from a playbook yaml file:
 #

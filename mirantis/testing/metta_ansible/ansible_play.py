@@ -14,14 +14,15 @@ import logging
 import ansible.constants as C
 from ansible.config.manager import ConfigManager
 from ansible.executor.task_queue_manager import TaskQueueManager
-from ansible.module_utils.common.collections import ImmutableDict
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.play import Play
+from ansible.plugins.callback import CallbackBase
 from ansible.vars.manager import VariableManager
+from ansible.utils.context_objects import CLIArgs
 from ansible import context
 
-from .ansible_callback import Results
+from .ansible_callback import ResultsCallback
 
 logger = logging.getLogger("ansible")
 
@@ -64,7 +65,17 @@ class AnsiblePlay:
 
         # We should pass these in as args to the constructor
         # WE will likely want to add modules/libraries here.
-        context.CLIARGS = ImmutableDict(connection="smart", verbosity=10)
+        cliargs = {"connection": "smart", "verbosity": 10}
+
+        # things we should add to the cliargs dict:
+        # - module_path=[] : string paths that should provide ansible python modules
+        # - check=False : I don't know what this does.
+        # - diff=False : I think ansible outputs more cached diff stuff
+        # Things we probably don't need:
+        # - become_user=None / become_method=None : sudo kind of stuff.
+        # - forks=10 : how many threads to run
+
+        context.CLIARGS = CLIArgs(cliargs)
 
         # initialize needed objects
         self._loader = DataLoader()
@@ -76,7 +87,7 @@ class AnsiblePlay:
         self._variable_manager = VariableManager(loader=self._loader, inventory=self._inventory)
         """takes care of merging all the different sources to give you unified view of variables"""
 
-    def ping(self, hosts: Any = "all", gather_facts: bool = False) -> Results:
+    def ping(self, hosts: Any = "all", gather_facts: bool = False) -> ResultsCallback:
         """Ping all hosts in the inventory."""
         # create data structure that represents our play, including tasks,
         # this is basically what our YAML loader does internally.
@@ -89,9 +100,34 @@ class AnsiblePlay:
             ],
         )
 
-        return self.play(play)
+        # Instantiate our custom callback for handling results as they come in.
+        # Ansible expects this to be one of its main display outlets
+        results_callback = ResultsCallback()
 
-    def setup(self, hosts: Any = "all", gather_facts: bool = False) -> Results:
+        self.play(play, callback=results_callback)
+        return results_callback
+
+    def debug(self, hosts: Any = "all", gather_facts: bool = False) -> ResultsCallback:
+        """Debug all hosts in the inventory."""
+        # create data structure that represents our play, including tasks,
+        # this is basically what our YAML loader does internally.
+        play = dict(
+            name="Hosts ping",
+            hosts=hosts,
+            gather_facts="yes" if gather_facts else "no",
+            tasks=[
+                dict(action=dict(module="debug")),
+            ],
+        )
+
+        # Instantiate our custom callback for handling results as they come in.
+        # Ansible expects this to be one of its main display outlets
+        results_callback = ResultsCallback()
+
+        self.play(play, callback=results_callback)
+        return results_callback
+
+    def setup(self, hosts: Any = "all", gather_facts: bool = False) -> ResultsCallback:
         """Retrieve setup info from all hosts in the inventory."""
         play = dict(
             name="Hosts setup",
@@ -102,14 +138,33 @@ class AnsiblePlay:
             ],
         )
 
-        return self.play(play)
-
-    def play(self, play: Dict[str, Any]) -> Results:
-        """Run a playbook in a queue defined as a dict."""
         # Instantiate our custom callback for handling results as they come in.
         # Ansible expects this to be one of its main display outlets
-        results = Results()
+        results_callback = ResultsCallback()
 
+        self.play(play, callback=results_callback)
+        return results_callback
+
+    # ansible contants are not all defined before using.
+    # pylint: disable=no-member
+    def play(self, play: Dict[str, Any], callback: CallbackBase = C.DEFAULT_STDOUT_CALLBACK) -> int:
+        """Run a playbook in a queue defined as a dict.
+
+        Parameters:
+        -----------
+        play: dict representation of a yaml playbook file
+        callback: callback option. If you want real data out of the callbacks then pass in an object
+            which can capture the data.
+            You can use this to send a custom object that you intend to use to retrieve results.
+
+            @NOTE this looks like the wrong approach.  We should probably ensure that a custom
+                callback is always included in the callback set and then always return it.
+
+        Returns:
+        --------
+        Integer QueueManager result code
+
+        """
         # keep a single loader instance
         loader = self._loader
 
@@ -122,8 +177,7 @@ class AnsiblePlay:
             variable_manager=self._variable_manager,
             loader=loader,
             passwords=self._passwords,
-            stdout_callback=results,  # Use our custom callback instead of the ``default`` callback
-            # plugin, which prints to stdout
+            stdout_callback=callback,
         )
 
         # Create play object, playbook objects use .load instead of init or new methods,
@@ -132,7 +186,7 @@ class AnsiblePlay:
 
         # Actually run it
         try:
-            tqm.run(
+            results = tqm.run(
                 play_instance
             )  # most interesting data for a play is actually sent to the callback's methods
         finally:
