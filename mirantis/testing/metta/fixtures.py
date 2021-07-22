@@ -63,6 +63,7 @@ class Fixture:
         plugin_id: str,
         instance_id: str,
         interfaces: List[str],
+        labels: Dict[str, str],
         priority: int,
     ):
         """Initialize struct contents.
@@ -82,6 +83,7 @@ class Fixture:
         self.plugin_id = plugin_id
         self.instance_id = instance_id
         self.interfaces = interfaces
+        self.labels = labels
         self.priority = priority
         self.plugin = plugin
 
@@ -110,6 +112,7 @@ class Fixture:
                 "instance_id": self.instance_id,
                 "plugin_id": self.plugin_id,
                 "interfaces": self.interfaces,
+                "labels": self.labels,
                 "priority": self.priority,
             }
         }
@@ -132,13 +135,31 @@ class Fixture:
                 return False
         return True
 
+    def has_labels(self, labels: List[str]) -> bool:
+        """Does this fixture have all of the passed labels."""
+        for required_label in labels:
+            if required_label not in self.labels.keys():
+                return False
+        return True
+
     @classmethod
-    def from_instance(cls, instance: Instance, priority: int) -> "Fixture":
+    def from_instance(
+        cls, instance: Instance, priority: int, labels: Dict[str, str] = None
+    ) -> "Fixture":
         """Convert a plugin instance to a fixture."""
+        # Labels are merged from the plugin instance and the passed in fixture overrides.
+        if labels is None:
+            labels = {}
+        if instance.labels is not None:
+            labels_copy = instance.labels.copy()
+            labels_copy.update(labels)
+            labels = labels_copy
+
         return cls(
             plugin_id=instance.plugin_id,
             instance_id=instance.instance_id,
             interfaces=instance.interfaces,
+            labels=labels,
             priority=priority,
             plugin=instance.plugin,
         )
@@ -251,6 +272,7 @@ class Fixtures:
         plugin_id: str,
         instance_id: str,
         interfaces: List[str],
+        labels: Dict[str, str],
         priority: int,
         replace_existing: bool = False,
     ) -> Fixture:
@@ -268,6 +290,7 @@ class Fixtures:
         plugin_id (str) : registry plugin_id
         instance_id (str) : plugin instance identifier
         interfaces (List[str]) : interface identifiers supported
+        labels: [str, str] : labels for the instance
         priority (int) : plugin priority
 
         """
@@ -277,6 +300,7 @@ class Fixtures:
                 instance_id=instance_id,
                 priority=priority,
                 interfaces=interfaces,
+                labels=labels,
                 plugin=plugin,
             ),
             replace_existing=replace_existing,
@@ -324,6 +348,7 @@ class Fixtures:
         plugin_id: str = "",
         instance_id: str = "",
         interfaces: List[str] = None,
+        labels: List[str] = None,
         exception_if_missing: bool = True,
     ) -> Fixture:
         """Retrieve the first matching fixture object based on filters and priority.
@@ -335,6 +360,7 @@ class Fixtures:
         plugin_id (str) : registry plugin_id
         instance_id (str) : plugin instance identifier
         interfaces (List[str]) : List of interfaces which the fixture must have
+        labels (List[str]) : List of labels which the fixture must have
 
         Returns:
         --------
@@ -347,7 +373,9 @@ class Fixtures:
         found.
 
         """
-        filtered = self.filter(plugin_id=plugin_id, instance_id=instance_id, interfaces=interfaces)
+        filtered = self.filter(
+            plugin_id=plugin_id, instance_id=instance_id, interfaces=interfaces, labels=labels
+        )
 
         if len(filtered) > 0:
             return filtered.to_list()[0]
@@ -355,7 +383,7 @@ class Fixtures:
             raise KeyError(
                 "Could not find any matching fixture instances "
                 f"[plugin_id:{plugin_id}][instance_id:{instance_id}]"
-                f"[interfaces:{interfaces}]"
+                f"[interfaces:{interfaces}][labels:{labels}]"
             )
         # filtered list was empty, and we were not directed to raise an exception for that.
         return None
@@ -365,6 +393,7 @@ class Fixtures:
         plugin_id: str = "",
         instance_id: str = "",
         interfaces: List[str] = None,
+        labels: List[str] = None,
         exception_if_missing: bool = True,
     ) -> object:
         """Retrieve the first matching plugin  based on filters and priority.
@@ -375,6 +404,7 @@ class Fixtures:
 
         plugin_id (str) : registry plugin_id
         interfaces (List[str]) : List of interfaces which the fixture must have
+        labels (List[str]) : List of labels which the fixture must have
         instance_id (str) : plugin instance identifier
 
         Returns:
@@ -392,6 +422,7 @@ class Fixtures:
             plugin_id=plugin_id,
             instance_id=instance_id,
             interfaces=interfaces,
+            labels=labels,
             exception_if_missing=exception_if_missing,
         )
 
@@ -399,11 +430,14 @@ class Fixtures:
             return None
         return fixture.plugin
 
+    # I should try to fix the branch count here
+    # pylint: disable=too-many-branches
     def filter(
         self,
         plugin_id: str = "",
         instance_id: str = "",
         interfaces: List[str] = None,
+        labels: List[str] = None,
         exception_if_missing: bool = False,
     ) -> "Fixtures":
         """Filter the fixture instances.
@@ -414,6 +448,7 @@ class Fixtures:
 
         plugin_id (str) : registry plugin_id
         interfaces (List[str]) : List of interfaces which the fixture must have
+        labels (List[str]) : List of labels which the fixture must have
         instance_id (str) : plugin instance identifier
 
         Returns:
@@ -434,6 +469,17 @@ class Fixtures:
                 intersect = False
                 for required_interface in interfaces:
                     if required_interface not in fixture.interfaces:
+                        break
+                # I feel like there is a "right" way to do this?
+                else:
+                    intersect = True
+                if not intersect:
+                    continue
+
+            if labels:
+                intersect = False
+                for required_label in labels:
+                    if required_label not in fixture.labels:
                         break
                 # I feel like there is a "right" way to do this?
                 else:

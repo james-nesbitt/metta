@@ -41,23 +41,37 @@ METTA_PLUGIN_CONFIG_KEY_PLUGINID = "plugin_id"
 """ configerus .get() key for plugin_id """
 METTA_PLUGIN_CONFIG_KEY_INSTANCEID = "instance_id"
 """ configerus .get() key for plugin_id """
-METTA_PLUGIN_CONFIG_KEY_PLUGININTERFACES = "plugin_interfaces"
+METTA_PLUGIN_CONFIG_KEY_PLUGININTERFACES = "interfaces"
 """ configerus .get() key for plugin interfaces """
+METTA_PLUGIN_CONFIG_KEY_PLUGINLABELS = "plugin_labels"
+""" configerus .get() key for plugin labels """
 METTA_PLUGIN_CONFIG_KEY_ARGUMENTS = "arguments"
 """ configerus .get() key for plugin arguments """
 
 
 # object is a struct (better than a Dict)
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods, too-many-arguments
 class Instance:
     """An instances of a plugin, with some metadata about it."""
 
-    def __init__(self, plugin_id: str, instance_id: str, interfaces: List[str], plugin: object):
+    def __init__(
+        self,
+        plugin_id: str,
+        instance_id: str,
+        interfaces: List[str],
+        labels: Dict[str, str],
+        plugin: object,
+    ):
         """Create an Instance object."""
         self.plugin_id = plugin_id
         self.instance_id = instance_id
         self.interfaces = interfaces
+        self.labels = labels
         self.plugin = plugin
+
+    def __repr__(self) -> str:
+        """String representation of the instance."""
+        return f"Instance({self.plugin_id}, {self.instance_id}, {self.interfaces}, {self.labels})"
 
 
 # object is a struct (better than a Dict)
@@ -65,10 +79,17 @@ class Instance:
 class PluginInstanceFactory:
     """Struct for tracking registered plugin factories with metadata."""
 
-    def __init__(self, plugin_id: str, interfaces: List[str], factory_method: Callable):
+    def __init__(
+        self,
+        plugin_id: str,
+        interfaces: List[str],
+        labels: Dict[str, str],
+        factory_method: Callable,
+    ):
         """Create a new PluginFactoryStruct."""
         self.plugin_id = plugin_id
         self.interfaces = interfaces
+        self.labels = labels
         self.factory_method = factory_method
 
 
@@ -90,7 +111,7 @@ class Factory:
     _registry: Dict[str, PluginInstanceFactory] = {}
     """ A dict of registered factory functions."""
 
-    def __init__(self, plugin_id: str, interfaces: List[str]):
+    def __init__(self, plugin_id: str, interfaces: List[str] = None, labels: Dict[str, str] = None):
         """Create a new Factory instance.
 
         This is used in two scenarios:
@@ -116,9 +137,15 @@ class Factory:
                 f"Plugin registration failed; there is already a plugin with the name {plugin_id}"
             )
 
-        logger.debug("Metta Plugin factory registering `%s`", plugin_id)
         self._plugin_id: str = plugin_id
-        self._interfaces: List[str] = interfaces
+        self._interfaces: List[str] = interfaces if interfaces is not None else []
+        self._labels: Dict[str, str] = labels if labels is not None else {}
+
+        logger.debug("Metta Plugin factory registering `%s`", self)
+
+    def __repr__(self) -> str:
+        """Reproduce string for this object."""
+        return f"Factory({self._plugin_id}, {self._interfaces}, {self._labels})"
 
     def __call__(self, func: Callable) -> PluginInstanceFactory:
         """Wrap the decorator factory wrapping function.
@@ -135,7 +162,7 @@ class Factory:
             return func(*args, **kwargs)
 
         self._registry[self._plugin_id] = PluginInstanceFactory(
-            self._plugin_id, self._interfaces, wrapper
+            self._plugin_id, self._interfaces, self._labels, wrapper
         )
         return wrapper
 
@@ -192,6 +219,7 @@ class Factory:
             plugin_id=plugin_id,
             instance_id=instance_id,
             interfaces=factory.interfaces,
+            labels=factory.labels,
             plugin=plugin,
         )
 

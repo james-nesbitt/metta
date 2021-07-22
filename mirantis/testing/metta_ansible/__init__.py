@@ -39,9 +39,7 @@ from .cli import AnsibleCliPlugin, METTA_ANSIBLE_CLI_PLUGIN_ID
 
 @Factory(
     plugin_id=METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID,
-    interfaces=[
-        METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
-    ],
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
 )
 def metta_plugin_factory_provisioner_ansibleplaybook(
     environment: Environment,

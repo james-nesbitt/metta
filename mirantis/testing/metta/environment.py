@@ -36,6 +36,7 @@ from .plugin import (
     METTA_PLUGIN_CONFIG_KEY_PLUGINID,
     METTA_PLUGIN_CONFIG_KEY_INSTANCEID,
     METTA_PLUGIN_CONFIG_KEY_ARGUMENTS,
+    METTA_PLUGIN_CONFIG_KEY_PLUGINLABELS,
 )
 from .fixtures import (
     Fixture,
@@ -372,7 +373,7 @@ class Environment:
                 )
 
     def _add_config_sources_from_config(self, label: str, base: Union[str, List[Any]]):
-        """Ddd more config sources based on in config settings.
+        """Add more config sources based on in config settings.
 
         Read some config which will tell us where more config can be found.
         This lets us use config to extend config, and is what make metta
@@ -384,6 +385,7 @@ class Environment:
         Parameters:
         -----------
         label (str) : configurus load label.
+
         base (str|List[str]) : configerus get key as a base for retrieving all
             config settings.
 
@@ -497,6 +499,7 @@ class Environment:
         validator: str = "",
         exception_if_missing: bool = False,
         arguments: Dict[str, Any] = None,
+        labels: Dict[str, str] = None,
     ) -> Fixtures:
         """Create plugin fixtures from some config.
 
@@ -525,6 +528,9 @@ class Environment:
         arguments (Dict[str, Any]) : A Dict of named arguments to pass to the
             plugin constructor.  Constructors should be able to work without
             requiring the arguments, but these tend to be pivotal for them.
+
+        labels (Dict[str, str]) : Dictionary of labels which should be added to
+            the created fixture.
 
         Returns:
         --------
@@ -561,6 +567,7 @@ class Environment:
                 label=label,
                 base=[base, instance_id],
                 instance_id=instance_id,
+                labels=labels,
                 validator=validator,
                 arguments=arguments,
             )
@@ -576,6 +583,7 @@ class Environment:
         priority: int = -1,
         validator: str = "",
         arguments: Dict[str, Any] = None,
+        labels: Dict[str, str] = None,
     ) -> Fixture:
         """Create and add a new plugin fixture from some config.
 
@@ -605,6 +613,9 @@ class Environment:
             to pull individual elements.
 
         instance_id (str) : optionally pass an instance_id for the item.
+
+        labels (Dict[str, str]) : Dictionary of labels which should be added to
+            the created fixture.
 
         validator (str) : optionally use a configerus validator on the entire
             .get() for the instance config.
@@ -677,12 +688,14 @@ class Environment:
             priority=priority,
             validator=validator,
             arguments=arguments,
+            labels=labels,
         )
 
     def add_fixture_from_dict(
         self,
         plugin_dict: Dict[str, Any],
         instance_id: str = "",
+        labels: Dict[str, str] = None,
         validator: str = "",
         arguments: Dict[str, Any] = None,
     ) -> Fixture:
@@ -703,6 +716,9 @@ class Environment:
             @see add_fixture_from_dict for more details.
 
         instance_id (str) : optionally pass an instance_id for the item.
+
+        labels (Dict[str, str]) : Dictionary of labels which should be added to
+            the created fixture.
 
         validator (str) : optionally use a configerus validator on the entire
             .get() for the instance config.
@@ -733,6 +749,7 @@ class Environment:
             loaded=mock_config_loaded,
             base=base,
             instance_id=instance_id,
+            labels=labels,
             validator=validator,
             arguments=arguments,
         )
@@ -745,6 +762,7 @@ class Environment:
         base: Union[str, List[Any]] = LOADED_KEY_ROOT,
         instance_id: str = "",
         priority: int = -1,
+        labels: Dict[str, str] = None,
         validator: str = "",
         arguments: Dict[str, Any] = None,
     ) -> Fixture:
@@ -786,6 +804,9 @@ class Environment:
             sub-paths to pull individual elements.
 
         instance_id (str) : optionally pass an instance_id for the item.
+
+        labels (Dict[str, str]) : Dictionary of labels which should be added to
+            the created fixture.
 
         validator (str) : optionally use a configerus validator on the entire
             .get() for the instance config.
@@ -877,12 +898,22 @@ class Environment:
 
             arguments.update(config_arguments)
 
+        config_labels = loaded.get([base, METTA_PLUGIN_CONFIG_KEY_PLUGINLABELS], default={})
+        if len(config_labels) > 0:
+            if labels is None:
+                labels = {}
+            else:
+                labels = labels.copy()
+
+            labels.update(config_labels)
+
         # Use the factory to make the .fixtures.Fixture
         fixture = self.add_fixture(
             plugin_id=plugin_id,
             instance_id=instance_id,
             priority=priority,
             arguments=arguments,
+            labels=labels,
         )
 
         return fixture
@@ -893,26 +924,30 @@ class Environment:
         instance_id: str,
         priority: int,
         arguments: Dict[str, Any] = None,
+        labels: Dict[str, Any] = None,
         replace_existing=False,
     ) -> Fixture:
         """Create a new plugin from parameters.
 
         Parameters:
         -----------
-        config (Config) : configerus.Config passed to each generated plugins.
+        config (Config) : configerus.Config passed to each generated plugins;
 
-        plugin_id (str) : METTA plugin id to tell us what plugin factory to use.
+        plugin_id (str) : METTA plugin id to tell us what plugin factory to use;
 
             @see .plugin.Factory for more details on how plugins are loaded.
 
         instance_id (str) : string instance id that will be passed to the new
-            plugin object.
+            plugin object;
 
         priority (int) : Integer priority 1-100 for comparative prioritization
-            between other plugins.
+            between other plugins;
 
         arguments (Dict[str, Any]) : Keyword Arguments which should be passed to
-            the plugin constructor after environment and instance_id
+            the plugin constructor after environment and instance_id;
+
+        labels (Dict[str, str]) : Keyword/value labels which are to be associated
+            with the plugin/fixture;
 
         replace_existing (bool) : Replace any existing matching fixture.
 
@@ -943,8 +978,9 @@ class Environment:
             )
 
         plugin_instance = Factory.create(plugin_id, instance_id, *[self, instance_id], **arguments)
+
         fixture = self.fixtures.add(
-            fixture=Fixture.from_instance(plugin_instance, priority=priority),
+            fixture=Fixture.from_instance(plugin_instance, priority=priority, labels=labels),
             replace_existing=replace_existing,
         )
         return fixture
