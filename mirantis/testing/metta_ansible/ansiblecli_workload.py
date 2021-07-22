@@ -70,6 +70,18 @@ class AnsibleCliCoreWorkloadPlugin:
         self._ansible_client: AnsibleClientPlugin = None
         """AnsibleClientPlugin which this plugin will use to interact with ansible."""
 
+    def info(self, deep: bool = False):
+        """get info about a provisioner plugin"""
+        return {
+            "config": {
+                "label": self._config_label,
+                "base": self._config_base,
+            },
+            "client-plugin": self._ansible_client.info(deep=deep)
+            if self._ansible_client
+            else "MISSING",
+        }
+
     def prepare(self, fixtures: Fixtures = None):
         """Find the dependent fixtures."""
         if fixtures is None:
@@ -113,6 +125,18 @@ class AnsibleCliPlaybookWorkloadPlugin:
 
         self._ansibleplaybook_client: AnsiblePlaybookClientPlugin = None
         """AnsiblePlaybookClientPlugin which this plugin will use to interact with ansible."""
+
+    def info(self, deep: bool = False):
+        """get info about a provisioner plugin"""
+        return {
+            "config": {
+                "label": self._config_label,
+                "base": self._config_base,
+            },
+            "client-plugin": self._ansibleplaybook_client.info(deep=deep)
+            if self._ansibleplaybook_client
+            else "MISSING",
+        }
 
     def prepare(self, fixtures: Fixtures = None):
         """Find the dependent fixtures."""
