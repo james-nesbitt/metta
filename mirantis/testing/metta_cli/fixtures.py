@@ -35,16 +35,18 @@ class FixturesGroup:
         """Attach environment to object."""
         self._environment = environment
 
+    # pylint: disable=too-many-arguments
     def _filter(
         self,
         plugin_id: str = "",
         instance_id: str = "",
         interfaces: List[str] = None,
+        labels: List[str] = None,
         skip_cli_plugins: bool = True,
     ):
         """Filter fixtures centrally."""
         matches = self._environment.fixtures.filter(
-            plugin_id=plugin_id, instance_id=instance_id, interfaces=interfaces
+            plugin_id=plugin_id, instance_id=instance_id, interfaces=interfaces, labels=labels
         )
         """All matching filtered fixtures."""
 
@@ -63,6 +65,7 @@ class FixturesGroup:
     def plugins(
         self,
         interface: str = "",
+        label: str = "",
         skip_cli_plugins: bool = True,
     ):
         """List registered plugins and interfaces."""
@@ -76,10 +79,13 @@ class FixturesGroup:
 
             if interface and interface not in registration.interfaces:
                 continue
+            if label and label not in registration.labels:
+                continue
 
             plugins_info[registration.plugin_id] = {
                 "plugin_id": registration.plugin_id,
                 "interfaces": registration.interfaces,
+                "labels_from_factory": registration.labels,
             }
 
         return cli_output(plugins_info)
@@ -93,6 +99,7 @@ class FixturesGroup:
         plugin_id: str = "",
         instance_id: str = "",
         interface: str = "",
+        label: str = "",
         skip_cli_plugins: bool = True,
     ):
         """Return Info for fixtures."""
@@ -101,6 +108,7 @@ class FixturesGroup:
             plugin_id=plugin_id,
             instance_id=instance_id,
             interfaces=[interface] if interface else [],
+            labels=[label] if label else [],
             skip_cli_plugins=skip_cli_plugins,
         ):
             fixture_info_list.append(fixture.info(deep=deep, children=children))
