@@ -35,9 +35,7 @@ class AnsiblePlay:
 
     """
 
-    def __init__(
-        self, inventory_path: str, ansiblecfg_path: str = None
-    ):
+    def __init__(self, inventory_path: str, ansiblecfg_path: str = None):
         """Initial configuration of ansible plugin."""
 
         self.inventory_path: str = inventory_path

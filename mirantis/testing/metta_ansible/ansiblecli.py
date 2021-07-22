@@ -168,15 +168,16 @@ class AnsiblePlaybookClient:
             "ansiblecfg_path": self.ansiblecfg_path,
         }
 
-    def run(self, playbooksyml_path: str):
+    def run(self, playbooksyml_path: str, envs: Dict[str, str] = None, return_output: bool = False):
         """Run the ansible playbook install command on a yaml playbook file."""
         args = [playbooksyml_path]
 
-        return self._run(args)
+        return self._run(args=args, envs=envs, return_output=return_output)
 
     def _run(
         self,
         args: List[str],
+        envs: Dict[str, str] = None,
         with_inventory=True,
         with_ansiblecfg=True,
         return_output=False,
@@ -190,6 +191,8 @@ class AnsiblePlaybookClient:
             env["ANSIBLE_CONFIG"] = self.ansiblecfg_path
         if with_inventory:
             cmd += [f"--inventory={self.inventory_path}"]
+        if envs is not None:
+            env.update(envs)
 
         cmd += args
 

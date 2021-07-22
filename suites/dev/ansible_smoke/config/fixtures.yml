@@ -45,3 +45,19 @@ healthpoller:
     poll:
         # How often should we poll for health
         period: 15
+
+ansibledebug:
+  plugin_id: metta_ansible_clicore_ansibleplaybook_workload
+
+  # tell the plugin to load config from "here"
+  from_config: true
+
+  playbook:
+    path: "{{variables:files_path}}/{{variables:files_prefix}}.ansibleping.playbook.yml"
+    contents:
+    - name: Debugs all targets
+      hosts: all
+      tasks:
+        - setup: {}
+        - debug: {}
+        - ping: {}

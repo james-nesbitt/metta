@@ -15,6 +15,7 @@ import yaml
 
 from configerus.loaded import LOADED_KEY_ROOT
 
+from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
 
 from .ansiblecli_client import (
@@ -63,26 +64,19 @@ class AnsiblePlaybookProvisionerPlugin:
 
     def __init__(
         self,
-        environment,
-        instance_id,
+        environment: Environment,
+        instance_id: str,
         label: str = ANSIBLE_PROVISIONER_CONFIG_LABEL,
         base: Any = LOADED_KEY_ROOT,
     ):
-        """Run the super constructor but also set class properties
+        """Keep metta info and plugin config info."""
+        self._environment: Environment = environment
+        self._instance_id: str = instance_id
 
-        Interpret provided config and configure the object with all of the needed
-        pieces for executing ansible commands
-
-        """
-        self._environment = environment
-        self._instance_id = instance_id
-
-        logger.info("Preparing Ansible setting")
-
-        self._config_label = label
+        self._config_label: str = label
         """ configerus load label that should contain all of the config """
-        self._config_base = base
-        """ configerus get key that should contain all tf config """
+        self._config_base: str = base
+        """ configerus get key that should contain all plugin config """
 
         self.fixtures: Fixtures = Fixtures()
         """Fixtures created by this plugin - typically various clients."""

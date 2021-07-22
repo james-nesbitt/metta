@@ -62,6 +62,7 @@ class FixturesGroup:
     # pylint: disable=no-self-use
     def plugins(
         self,
+        interface: str = "",
         skip_cli_plugins: bool = True,
     ):
         """List registered plugins and interfaces."""
@@ -71,6 +72,9 @@ class FixturesGroup:
         # pylint: disable=protected-access
         for registration in Factory._registry.values():
             if skip_cli_plugins and METTA_PLUGIN_INTERFACE_ROLE_CLI in registration.interfaces:
+                continue
+
+            if interface and interface not in registration.interfaces:
                 continue
 
             plugins_info[registration.plugin_id] = {

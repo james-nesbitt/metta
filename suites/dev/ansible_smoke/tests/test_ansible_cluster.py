@@ -18,18 +18,23 @@ def test_001_environment_is_up(environment_up):
     """did we an up environment"""
 
 
-def test_002_health_is_up(healthpoller):
-    """Is the cluster healthy."""
+def test_002_run_playbook(ansibleplaybook_debugworkload):
+    """Can we run a playbook workload."""
+    ansibleplaybook_debugworkload.apply()
+
+
+def test_003_play_with_ansible_client(ansible_client):
+    """Run some of the ansible client methods to make sure that they work."""
+
+    print(cli_output(ansible_client.setup()))
+    print(cli_output(ansible_client.ping()))
+    print(cli_output(ansible_client.debug()))
+
+
+def test_004_health_is_up(healthpoller):
+    """Is the cluster healthy after 60 seconds."""
     poll_logger = logger.getChild("healthpoller")
     """Use a new logger just for the health output."""
 
     # use a common function for logging poller status
     health_poller_output_log(healthpoller=healthpoller, poll_logger=poll_logger, period=60, count=1)
-
-
-def test_003_play_with_ansible(ansible_play):
-    """Run some of the ansible play methods to make sure that they work."""
-
-    print(cli_output(ansible_play.setup()))
-    print(cli_output(ansible_play.ping()))
-    print(cli_output(ansible_play.debug()))
