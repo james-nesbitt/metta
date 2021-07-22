@@ -12,7 +12,6 @@ from typing import Dict, Any
 import logging
 
 import ansible.constants as C
-from ansible.config.manager import ConfigManager
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
@@ -36,32 +35,17 @@ class AnsiblePlay:
 
     """
 
-    def __init__(self, inventory_path: str, ansiblecfg_path: str = None):
+    def __init__(
+        self, inventory_path: str, ansiblecfg_path: str = None
+    ):
         """Initial configuration of ansible plugin."""
 
-        self.ansiblecfg_path: str = ansiblecfg_path
-        """Path to the ansible cfg."""
         self.inventory_path: str = inventory_path
         """Path to the ansible inventory file."""
 
         # We should pass these in.
         self._passwords: Dict[str, str] = {}
         """Passwords that should be passed to the ansible queue exec."""
-
-        # this currently creates some errant logging that I haven't sorted out.
-        #
-        # It is also a bit of a hack.  There is no good way to pass the "config" values to
-        # ansible as they are generated as a module singleton, and process in the constants
-        # module before we can even get interupt.
-        # Here we simply override the singleton, and repeat the processing that was done.
-        if ansiblecfg_path:
-            C.config = ConfigManager(conf_file=self.ansiblecfg_path)
-
-            # Generate constants from config
-            for setting in C.config.data.get_settings():
-                C.set_constant(setting.name, setting.value)
-            for warn in C.config.WARNINGS:
-                logger.warning(warn)
 
         # We should pass these in as args to the constructor
         # WE will likely want to add modules/libraries here.
@@ -77,15 +61,12 @@ class AnsiblePlay:
 
         context.CLIARGS = CLIArgs(cliargs)
 
-        # initialize needed objects
-        self._loader = DataLoader()
-        """Takes care of finding and reading yaml, json and ini files."""
-
-        self._inventory = InventoryManager(loader=self._loader, sources=[self.inventory_path])
-        """Will handle our host/inventories."""
-
-        self._variable_manager = VariableManager(loader=self._loader, inventory=self._inventory)
-        """takes care of merging all the different sources to give you unified view of variables"""
+        if ansiblecfg_path:
+            C.config._config_file = ansiblecfg_path
+            C.config.update_config_data()
+            logger.warning(
+                "NOW OVER HERE: %s", C.config.get_config_value_and_origin("COLLECTIONS_PATHS")
+            )
 
     def ping(self, hosts: Any = "all", gather_facts: bool = False) -> ResultsCallback:
         """Ping all hosts in the inventory."""
@@ -147,7 +128,12 @@ class AnsiblePlay:
 
     # ansible contants are not all defined before using.
     # pylint: disable=no-member
-    def play(self, play: Dict[str, Any], callback: CallbackBase = C.DEFAULT_STDOUT_CALLBACK) -> int:
+    def play(
+        self,
+        play: Dict[str, Any],
+        callback: CallbackBase = C.DEFAULT_STDOUT_CALLBACK,
+        variables: Dict[str, str] = None,
+    ) -> int:
         """Run a playbook in a queue defined as a dict.
 
         Parameters:
@@ -165,16 +151,23 @@ class AnsiblePlay:
         Integer QueueManager result code
 
         """
-        # keep a single loader instance
-        loader = self._loader
+        # initialize needed objects
+        loader = DataLoader()
+        """Takes care of finding and reading yaml, json and ini files."""
+
+        inventory = InventoryManager(loader=loader, sources=[self.inventory_path])
+        """Will handle our host/inventories."""
+
+        variable_manager = VariableManager(loader=loader, inventory=inventory)
+        """takes care of merging all the different sources to give you unified view of variables"""
 
         # instantiate task queue manager, which takes care of forking and setting up all objects to
         # iterate over host list and tasks
         # IMPORTANT: This also adds library dirs paths to the module loader
         # IMPORTANT: and so it must be initialized before calling `Play.load()`.
         tqm = TaskQueueManager(
-            inventory=self._inventory,
-            variable_manager=self._variable_manager,
+            inventory=inventory,
+            variable_manager=variable_manager,
             loader=loader,
             passwords=self._passwords,
             stdout_callback=callback,
@@ -182,7 +175,12 @@ class AnsiblePlay:
 
         # Create play object, playbook objects use .load instead of init or new methods,
         # this will also automatically create the task objects from the info provided in play_source
-        play_instance = Play().load(play, variable_manager=self._variable_manager, loader=loader)
+        play_instance = Play().load(
+            play,
+            variable_manager=variable_manager,
+            loader=loader,
+            vars=variables if variables else {},
+        )
 
         # Actually run it
         try:

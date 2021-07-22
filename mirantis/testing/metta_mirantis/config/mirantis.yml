@@ -22,7 +22,17 @@ terraform:
                 v1_2: "{{paths:metta-mirantis}}/terraform/plans/example/aws/1.2"
 
 ansible:
+    # use this value as an ansible collections path, and all of our collections
+    # will be usable.
+    collectionspath: "{{paths:metta-mirantis}}/ansible"
+    # Mirantis ansible collections
+    collections:
+        # A collection for installing MCR
+        mirantis.mcr:
+            path: "{{ansible.collectionspath}}/ansible_collections/mirantis/mcr"
+    # Mirantis ansible playbooks
     playbooks:
         prodeng:
+            # quick sanity playbook
             sanity:
                 path: "{{paths:metta-mirantis}}/ansible/playbooks/prodeng/sanity"

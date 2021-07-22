@@ -1,0 +1,10 @@
+- name: Host debug
+  hosts: all
+  gather_facts: yes
+  tasks:
+  - action:
+      module: setup
+  - action:
+      module: debug
+  - action:
+      module: ping

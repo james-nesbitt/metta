@@ -1,0 +1,8 @@
+---
+- name: Check if swarm is enabled on worker
+  ansible.builtin.command: docker info --format {% raw %}'{{ .Swarm.LocalNodeState }}'{% endraw %}
+  register: worker_swarm_status
+
+- name: Join node to swarm as worker
+  ansible.builtin.command: "{{ hostvars['manager0']['swarm_join_worker'] }}"
+  when: worker_swarm_status.stdout == 'inactive'

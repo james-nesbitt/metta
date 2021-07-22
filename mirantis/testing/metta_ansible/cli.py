@@ -12,8 +12,8 @@ from mirantis.testing.metta.healthcheck import Health
 
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
-from .provisioner import METTA_ANSIBLE_PROVISIONER_PLUGIN_ID
-from .ansible_callback import ResultsCallback
+from .ansiblecli_provisioner import METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID
+from .ansiblecli_client import METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID
 
 logger = logging.getLogger("metta.cli.ansible")
 
@@ -28,20 +28,31 @@ class AnsibleCliPlugin(CliBase):
 
     def fire(self):
         """Return a dict of commands."""
+
+        commands = {}
+
         if (
             self._environment.fixtures.get(
-                plugin_id=METTA_ANSIBLE_PROVISIONER_PLUGIN_ID,
+                plugin_id=METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID,
                 exception_if_missing=False,
             )
             is not None
         ):
-            return {"contrib": {"ansible": AnsibleGroup(self._environment)}}
+            commands["ansible-provisioner"] = AnsibleCliPlaybookProvisionerGroup(self._environment)
+        if (
+            self._environment.fixtures.get(
+                plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
+                exception_if_missing=False,
+            )
+            is not None
+        ):
+            commands["ansible-client"] = AnsibleCliClientGroup(self._environment)
 
-        return {}
+        return {"contrib": commands}
 
 
-class AnsibleGroup:
-    """Base Fire command group for Ansible commands."""
+class AnsibleCliPlaybookProvisionerGroup:
+    """Commands for interacting with a metta ansible provisioner plugin."""
 
     def __init__(self, environment: Environment):
         """Inject environment into command gorup."""
@@ -51,13 +62,13 @@ class AnsibleGroup:
         """Pick a matching provisioner."""
         if instance_id:
             return self._environment.fixtures.get(
-                plugin_id=[METTA_ANSIBLE_PROVISIONER_PLUGIN_ID],
+                plugin_id=[METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID],
                 instance_id=instance_id,
             )
 
         # Get the highest priority provisioner
         return self._environment.fixtures.get(
-            plugin_id=METTA_ANSIBLE_PROVISIONER_PLUGIN_ID,
+            plugin_id=METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID,
         )
 
     def info(self, provisioner: str = "", deep: bool = False):
@@ -80,67 +91,63 @@ class AnsibleGroup:
         provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
         provisioner_plugin.destroy()
 
-    # pylint: disable=protected-access
-    def setup(self, provisioner: str = ""):
-        """Run ansible plugin setup task."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        results: ResultsCallback = provisioner_plugin._ansible.setup()
-        return cli_output(
-            {
-                str(result.host): {
-                    "host": result.host,
-                    "status": result.status,
-                    "result": result.result,
-                }
-                for result in results
-            }
+
+class AnsibleCliClientGroup:
+    """Commands for interacting with a metta ansible core client plugin."""
+
+    def __init__(self, environment: Environment):
+        """Inject environment into command gorup."""
+        self._environment = environment
+
+    def _select_client(self, instance_id: str = ""):
+        """Pick a matching client."""
+        if instance_id:
+            return self._environment.fixtures.get(
+                plugin_id=[METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID],
+                instance_id=instance_id,
+            )
+
+        # Get the highest priority provisioner
+        return self._environment.fixtures.get(
+            plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
         )
 
-    # pylint: disable=protected-access
-    def debug(self, provisioner: str = ""):
-        """Run ansible plugin debug task."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        results: ResultsCallback = provisioner_plugin._ansible.debug()
-        return cli_output(
-            {
-                str(result.host): {
-                    "host": result.host,
-                    "status": result.status,
-                    "result": result.result,
-                }
-                for result in results
-            }
-        )
+    def info(self, client: str = "", deep: bool = False):
+        """Get info about a client plugin."""
+        fixture = self._select_client(instance_id=client)
+        return cli_output(fixture.info(deep=deep))
 
-    # pylint: disable=protected-access
-    def ping(self, provisioner: str = ""):
-        """Run ansible plugin ping task."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        results: ResultsCallback = provisioner_plugin._ansible.ping()
-        return cli_output(
-            {
-                str(result.host): {
-                    "host": result.host,
-                    "status": result.status,
-                    "result": result.result,
-                }
-                for result in results
-            }
-        )
+    def debug(self, client: str = "", hosts: str = "all"):
+        """Run client plugin debug module."""
+        fixture = self._select_client(instance_id=client)
+        plugin = fixture.plugin
+        return cli_output(plugin.debug(hosts=hosts))
 
-    def health(self, provisioner: str = ""):
+    def setup(self, client: str = "", hosts: str = "all"):
+        """Run client plugin setup module."""
+        fixture = self._select_client(instance_id=client)
+        plugin = fixture.plugin
+        return cli_output(plugin.setup(hosts=hosts))
+
+    def ping(self, client: str = "", hosts: str = "all"):
+        """Run client plugin ping module."""
+        fixture = self._select_client(instance_id=client)
+        plugin = fixture.plugin
+        return cli_output(plugin.ping(hosts=hosts))
+
+    def health(self, client: str = ""):
         """Run provisioner destroy."""
-        provisioner_fixture = self._select_provisioner(instance_id=provisioner)
-        provisioner_plugin = provisioner_fixture.plugin
-        health: Health = provisioner_plugin.health()
+        fixture = self._select_client(instance_id=client)
+        plugin = fixture.plugin
+        health: Health = plugin.health()
         return cli_output(
             {
                 "fixture": {
-                    "plugin_id": provisioner_fixture.plugin_id,
-                    "instance_id": provisioner_fixture.instance_id,
-                    "priority": provisioner_fixture.priority,
+                    "plugin_id": fixture.plugin_id,
+                    "instance_id": fixture.instance_id,
+                    "priority": fixture.priority,
                 },
                 "status": health.status(),
-                "messages": list(health._messages),
+                "messages": list(health.messages()),
             }
         )

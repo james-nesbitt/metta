@@ -1,0 +1,74 @@
+---
+- name: Uninstall old versions
+  ansible.builtin.apt:
+    pkg:
+      - docker
+      - docker-engine
+      - docker-ce
+      - docker-ce-cli
+      - docker.io
+    state: absent
+
+- name: Update APT cache [1/2]
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install useful utils
+  ansible.builtin.apt:
+    pkg:
+      - jq
+
+- name: Install apt-over-HTTPS prereqs
+  ansible.builtin.apt:
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: present
+
+- name: Add MSR GPG key
+  ansible.builtin.apt_key:
+    url: "{{ docker_ee_url }}/{{ ansible_distribution | lower }}/gpg"
+    state: present
+
+- name: Determine major.minor and set fact
+  set_fact:
+    major_minor: "{{ docker_ee_version.split('.') }}"
+
+- name: Get architecture, assign to var
+  ansible.builtin.command: dpkg --print-architecture
+  register: arch
+# - debug:
+#     msg: "deb [arch={{ arch.stdout }}] {{ docker_ee_url }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} {{ mcr_channel }}"
+
+- name: Add MCR repository
+  ansible.builtin.apt_repository:
+    repo: deb [arch={{ arch.stdout }}] {{ docker_ee_url }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} {{ mcr_channel }}
+    state: present
+
+- name: Update APT cache [2/2]
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Get available MCR versions
+  ansible.builtin.command: apt-cache madison docker-ee
+  register: ee_versions
+# - debug:
+#     var: ee_versions
+
+- name: Find a match in the output
+  set_fact:
+    expanded_docker_ee_version: "{{ ee_versions.stdout | regex_search('\\S*' + docker_ee_version + '\\S*') }}"
+- debug:
+    msg: "MCR version selected: {{ expanded_docker_ee_version }}"
+
+- name: Install MCR and containerd
+  ansible.builtin.apt:
+    pkg:
+      - docker-ee={{ expanded_docker_ee_version }}
+      - docker-ee-cli={{ expanded_docker_ee_version }}
+      - containerd.io
+    state: present
+  notify:
+    - Reboot
