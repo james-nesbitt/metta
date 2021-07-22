@@ -5,7 +5,7 @@ Metta client plugins for the ansible cli handlers.
 """
 
 import logging
-from typing import List
+from typing import List, Dict
 
 from mirantis.testing.metta.healthcheck import Health
 
@@ -77,9 +77,14 @@ class AnsibleClientPlugin:
 
         return ansible_health
 
-    def run(self, args: List[str]):
+    def run(
+        self,
+        args: List[str],
+        envs: Dict[str, str] = None,
+        return_output=False,
+    ):
         """Run a set of string ansible arguments."""
-        return self._ansible.run(args)
+        return self._ansible.run(args=args, envs=envs, return_output=return_output)
 
     def debug(self, hosts: str = "all"):
         """Run a set of string ansible arguments."""
@@ -169,6 +174,10 @@ class AnsiblePlaybookClientPlugin:
             "client": self._ansibleplaybook.info(deep=deep) if self._ansibleplaybook else "MISSING",
         }
 
-    def run_file(self, playbooksyml_path: str):
+    def run_file(
+        self, playbooksyml_path: str, envs: Dict[str, str] = None, return_output: bool = False
+    ):
         """Run the ansible playbook install command on a yaml playbook file."""
-        return self._ansibleplaybook.run(playbooksyml_path)
+        return self._ansibleplaybook.run(
+            playbooksyml_path=playbooksyml_path, envs=envs, return_output=return_output
+        )

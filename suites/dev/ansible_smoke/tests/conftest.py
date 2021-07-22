@@ -9,6 +9,9 @@ focuses on fixtures used for the testing scope.
 
 import pytest
 
+from mirantis.testing.metta_ansible.ansiblecli_client import (
+    METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
+)
 
 # impossible to chain pytest fixtures without using the same names
 # pylint: disable=redefined-outer-name
@@ -41,7 +44,7 @@ def healthpoller(environment_up):
 
 
 @pytest.fixture(scope="session")
-def ansible_provisioner(environment_up):
+def ansibleplaybook_provisioner(environment_up):
     """Retrieve the ansible provisioner plugin.
 
     This fixture makes no guarantee about provisioner/cluster state.
@@ -51,19 +54,35 @@ def ansible_provisioner(environment_up):
     An ansible provisioner plugin.
 
     """
-    plugin = environment_up.fixtures.get_plugin(instance_id="ansible")
-
-    return plugin
+    return environment_up.fixtures.get_plugin(instance_id="ansible")
 
 
 @pytest.fixture(scope="session")
-def ansible_play(ansible_provisioner):
-    """Retrieve the ansible play object from the provisioner
+def ansible_client(environment_up):
+    """Retrieve the ansible core client plugin
+
+    This client will be created by the provisioner if all of the required information
+    is available.
 
     Returns:
     --------
-    An ansible play object provisioner plugin.
+    An ansible cli client plugin.
 
     """
-    # pylint: disable=protected-access
-    return ansible_provisioner._ansible
+    return environment_up.fixtures.get_plugin(
+        plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID
+    )
+
+
+@pytest.fixture(scope="session")
+def ansibleplaybook_debugworkload(environment_up):
+    """Retrieve the ansible playbook workload called "ansibledebug"
+
+    Returns:
+    --------
+    An ansible playbook workload plugin.
+
+    """
+    plugin = environment_up.fixtures.get_plugin(instance_id="ansibledebug")
+    plugin.prepare(fixtures=environment_up.fixtures)
+    return plugin
