@@ -6,6 +6,7 @@ Comamnds for itneracting with the ansible plugins, primarily the provisioner
 
 """
 import logging
+from typing import List
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.healthcheck import Health
@@ -13,7 +14,14 @@ from mirantis.testing.metta.healthcheck import Health
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .ansiblecli_provisioner import METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID
-from .ansiblecli_client import METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID
+from .ansiblecli_client import (
+    METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
+    METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKCLIENT_PLUGIN_ID,
+)
+from .ansiblecli_workload import (
+    METTA_ANSIBLE_ANSIBLECLI_COREWORKLOAD_PLUGIN_ID,
+    METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKWORKLOAD_PLUGIN_ID,
+)
 
 logger = logging.getLogger("metta.cli.ansible")
 
@@ -28,7 +36,6 @@ class AnsibleCliPlugin(CliBase):
 
     def fire(self):
         """Return a dict of commands."""
-
         commands = {}
 
         if (
@@ -38,7 +45,8 @@ class AnsibleCliPlugin(CliBase):
             )
             is not None
         ):
-            commands["ansible-provisioner"] = AnsibleCliPlaybookProvisionerGroup(self._environment)
+            commands["provisioner"] = AnsibleCliPlaybookProvisionerGroup(self._environment)
+
         if (
             self._environment.fixtures.get(
                 plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
@@ -46,9 +54,36 @@ class AnsibleCliPlugin(CliBase):
             )
             is not None
         ):
-            commands["ansible-client"] = AnsibleCliClientGroup(self._environment)
+            commands["client"] = AnsibleCliClientGroup(self._environment)
 
-        return {"contrib": commands}
+        if (
+            self._environment.fixtures.get(
+                plugin_id=METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKCLIENT_PLUGIN_ID,
+                exception_if_missing=False,
+            )
+            is not None
+        ):
+            commands["playbook-client"] = AnsibleCliPlaybookClientGroup(self._environment)
+
+        if (
+            self._environment.fixtures.get(
+                plugin_id=METTA_ANSIBLE_ANSIBLECLI_COREWORKLOAD_PLUGIN_ID,
+                exception_if_missing=False,
+            )
+            is not None
+        ):
+            commands["workload"] = AnsibleCliWorkgroupGroup(self._environment)
+
+        if (
+            self._environment.fixtures.get(
+                plugin_id=METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKWORKLOAD_PLUGIN_ID,
+                exception_if_missing=False,
+            )
+            is not None
+        ):
+            commands["playbook-workload"] = AnsibleCliPlaybookWorkgroupGroup(self._environment)
+
+        return {"contrib": {"ansible": commands}} if len(commands) > 0 else {}
 
 
 class AnsibleCliPlaybookProvisionerGroup:
@@ -151,3 +186,101 @@ class AnsibleCliClientGroup:
                 "messages": list(health.messages()),
             }
         )
+
+
+class AnsibleCliPlaybookClientGroup:
+    """Commands for interacting with a metta ansible playbook client plugin."""
+
+    def __init__(self, environment: Environment):
+        """Inject environment into command gorup."""
+        self._environment = environment
+
+    def _select_client(self, instance_id: str = ""):
+        """Pick a matching client."""
+        if instance_id:
+            return self._environment.fixtures.get(
+                plugin_id=[METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID],
+                instance_id=instance_id,
+            )
+
+        # Get the highest priority provisioner
+        return self._environment.fixtures.get(
+            plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
+        )
+
+    def info(self, client: str = "", deep: bool = False):
+        """Get info about a client plugin."""
+        fixture = self._select_client(instance_id=client)
+        return cli_output(fixture.info(deep=deep))
+
+    def run(self, playbook: str, client: str = ""):
+        """Get info about a client plugin."""
+        fixture = self._select_client(instance_id=client)
+        plugin = fixture.plugin
+        return cli_output(plugin.run_file(playbook))
+
+
+class AnsibleCliWorkgroupGroup:
+    """Commands for interacting with a metta ansible workgroup plugin."""
+
+    def __init__(self, environment: Environment):
+        """Inject environment into command gorup."""
+        self._environment = environment
+
+    def _select_workgroup(self, instance_id: str = ""):
+        """Pick a matching workgroup."""
+        if instance_id:
+            return self._environment.fixtures.get(
+                plugin_id=[METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID],
+                instance_id=instance_id,
+            )
+
+        # Get the highest priority provisioner
+        return self._environment.fixtures.get(
+            plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
+        )
+
+    def info(self, workgroup: str = "", deep: bool = False):
+        """Get info about the plugin."""
+        fixture = self._select_workgroup(instance_id=workgroup)
+        return cli_output(fixture.info(deep=deep))
+
+    def apply(self, workgroup: str = ""):
+        """Apply the plygin workload."""
+        fixture = self._select_workgroup(instance_id=workgroup)
+        plugin = fixture.plugin
+        plugin.prepare(self._environment.fixtures)
+        plugin.apply()
+
+
+class AnsibleCliPlaybookWorkgroupGroup:
+    """Commands for interacting with a metta ansible playbook workgroup plugin."""
+
+    def __init__(self, environment: Environment):
+        """Inject environment into command gorup."""
+        self._environment = environment
+
+    def _select_workgroup(self, instance_id: str = ""):
+        """Pick a matching workgroup."""
+        if instance_id:
+            return self._environment.fixtures.get(
+                plugin_id=[METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKWORKLOAD_PLUGIN_ID],
+                instance_id=instance_id,
+            )
+
+        # Get the highest priority provisioner
+        return self._environment.fixtures.get(
+            plugin_id=METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKWORKLOAD_PLUGIN_ID,
+        )
+
+    def info(self, workgroup: str = "", deep: bool = False):
+        """Get info about the plugin."""
+        fixture = self._select_workgroup(instance_id=workgroup)
+        return cli_output(fixture.info(deep=deep))
+
+    def apply(self, workgroup: str = ""):
+        """Apply the plugin workload."""
+        fixture = self._select_workgroup(instance_id=workgroup)
+        plugin = fixture.plugin
+        plugin.prepare(self._environment.fixtures)
+        plugin.apply()

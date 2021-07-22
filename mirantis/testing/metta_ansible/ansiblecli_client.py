@@ -81,7 +81,7 @@ class AnsibleClientPlugin:
         self,
         args: List[str],
         envs: Dict[str, str] = None,
-        return_output=False,
+        return_output: bool = False,
     ):
         """Run a set of string ansible arguments."""
         return self._ansible.run(args=args, envs=envs, return_output=return_output)
