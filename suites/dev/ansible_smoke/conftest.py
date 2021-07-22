@@ -56,15 +56,13 @@ def environment_up(environment: Environment) -> Environment:
     You can still use the provsioners to update the resources if the provisioner
     plugins can handle it.
 
-    In this function, we know which provisioners we want to use, and we use them
-    in an order which makes sense to use.  We could just use the metta_common
-    combo provisioner, which combines multiple provisioners into one.
-
     """
 
     provisioner = environment.fixtures.get_plugin(
         interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
     )
+    # Get the highest priority provisioner plugin configured.
+    # If you want more than one provisioner then use the combo provisioner.
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.

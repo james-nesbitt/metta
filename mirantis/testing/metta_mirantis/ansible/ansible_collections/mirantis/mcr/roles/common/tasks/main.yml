@@ -1,0 +1,24 @@
+---
+- name: Wait up to 600 seconds for target to become reachable
+  wait_for_connection:
+
+# - name: Gather facts
+#   setup:
+
+- name: Prep and install MCR on RHEL/CentOS
+  import_tasks: redhat.yml
+  when: ansible_os_family|lower == 'redhat'
+
+- name: Prep and install MCR on Ubuntu
+  import_tasks: ubuntu.yml
+  when: ansible_distribution|lower == 'ubuntu'
+
+- name: Ensure group "docker" exists
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: Ensure default login ID belongs to "docker" group
+  ansible.builtin.user:
+    name: "{{ ansible_env['SUDO_USER'] }}"
+    groups: docker

@@ -83,7 +83,7 @@ METTA_TESTKIT_CONFIG_VALIDATE_TARGET = {
 }
 """ configerus jsonschema validation target for testkit config file """
 
-METTA_TESTKIT_PROVISIONER_CONFIG_VALIDATE_JSONSCHEMA = {
+METTA_TESTKIT_PROV_CONFIG_VAL_JSONSCHEMA = {
     "type": "object",
     "properties": {
         "opts": {"type": "object"},
@@ -93,7 +93,7 @@ METTA_TESTKIT_PROVISIONER_CONFIG_VALIDATE_JSONSCHEMA = {
 }
 """ Validation jsonschema for provisioner configuration """
 METTA_TESTKIT_PROVISIONER_CONFIG_VALIDATE_TARGET = {
-    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: METTA_TESTKIT_PROVISIONER_CONFIG_VALIDATE_JSONSCHEMA
+    PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL: METTA_TESTKIT_PROV_CONFIG_VAL_JSONSCHEMA
 }
 """ configerus jsonschema validation target for the provisioner plugin """
 

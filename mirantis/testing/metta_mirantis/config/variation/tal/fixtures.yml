@@ -10,15 +10,6 @@ terraform:
         label: terraform
         # base: some.path.in.the.file
 
-# ansible :: metta.plugin.provisioner:
-ansible:
-    plugin_id: metta_ansible_provisioner
-
-    # This directs ansible configuration to come from the ansible.yml file
-    from_config:
-        label: ansible
-
-
 # launchpad :: metta.plugin.provisioner:
 launchpad:
     plugin_id: metta_launchpad_provisioner
@@ -44,5 +35,4 @@ combo:
     backends:
     # Ordered list of instance filters
     - instance_id: terraform
-    - instance_id: ansible
     - instance_id: launchpad

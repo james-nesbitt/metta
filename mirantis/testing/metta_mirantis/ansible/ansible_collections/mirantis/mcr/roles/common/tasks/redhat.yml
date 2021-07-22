@@ -1,0 +1,92 @@
+---
+- name: Uninstall old versions
+  ansible.builtin.yum:
+    name:
+      - docker
+      - docker-client
+      - docker-client-latest
+      - docker-common
+      - docker-latest
+      - docker-latest-logrotate
+      - docker-logrotate
+      - docker-selinux
+      - docker-engine-selinux
+      - docker.engine
+    state: absent
+
+- name: Removed existing repos
+  ansible.builtin.file:
+    path: /etc/yum.repos.d/docker*.repo
+    state: absent
+
+- name: Set mcr_dist var
+  set_fact:
+    mcr_dist: "{{ 'rhel' if ansible_distribution|lower == 'redhat' else ansible_distribution|lower }}"
+
+- name: Create dockerurl file
+  ansible.builtin.copy:
+    content: "{{ docker_ee_url }}/{{ mcr_dist }}"
+    dest: /etc/yum/vars/dockerurl
+
+- name: Create dockerosversion file
+  ansible.builtin.copy:
+    content: "{{ ansible_distribution_major_version }}"
+    dest: /etc/yum/vars/dockerosversion
+
+- name: Install additional prereqs specific to 7.x
+  block:
+    - name: Enable prerequisite repos
+      command: "yum-config-manager --enable {{ item }}"
+      with_items:
+        - rhel-7-server-extras-rpms
+        - rhui-REGION-rhel-server-extras
+        - rhel-7-server-rhui-extras-rpms  # not in the docs but needed for container-selinux
+
+    - name: Install AWS RHUI client
+      ansible.builtin.yum:
+        name: rh-amazon-rhui-client
+        state: present
+
+  when: ansible_distribution_major_version == '7'
+
+- name: Install EPEL release
+  ansible.builtin.yum:
+    name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+    state: present
+
+- name: Install useful utils
+  ansible.builtin.yum:
+    name:
+      - jq
+    state: present
+
+- name: Install MCR prereqs
+  ansible.builtin.yum:
+    name:
+      - yum-utils
+      - iptables
+      # - device-mapper-persistent-data
+      # - lvm2
+    state: present
+
+- name: Add MCR repo
+  ansible.builtin.command: yum-config-manager --add-repo {{ docker_ee_url }}/{{ mcr_dist }}/docker-ee.repo
+
+# - name: ABORT
+#   ansible.builtin.command: /bin/false
+
+- name: Install MCR packages
+  ansible.builtin.yum:
+    name:
+      - docker-ee
+      - docker-ee-cli
+      - containerd.io
+    state: latest
+  notify:
+    - Reboot
+
+- name: Start MCR service, if not started
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: yes

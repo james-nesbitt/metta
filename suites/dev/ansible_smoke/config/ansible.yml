@@ -1,0 +1,62 @@
+# configuration for the ansible provisioner.
+
+# Ansible CFG contents which will be written to a file as toml.
+# This might not be safe, we haven't figured that out yet.
+ansiblecfg:
+  path: "{{variables:files_path}}/{{variables:files_prefix}}.ansible.cfg"
+  contents:
+    ssh_connection:
+      pipelining: true
+      ssh_args: -o ControlMaster=auto -o ControlPersist=30m -o ConnectionAttempts=100 -o UserKnownHostsFile=/dev/null
+    defaults:
+      collections_paths: "{{mirantis:ansible.collectionspath}}"
+      callback_stdout: stdout_callback = dense
+      host_key_checking: false
+      fact_caching: jsonfile
+      fact_caching_connection: "{{variables:files_path}}/{{variables:files_prefix}}.ansible.fact_cache"
+      fact_caching_timeout: 300
+      deprecation_warnings: false
+      inventory_ignore_extension: ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo, .creds
+
+# Anvislbe inventory which will be written to file as flat text.
+inventory:
+  path: "{{variables:files_path}}/{{variables:files_prefix}}.inventory"
+  # here we expect that another process has created an output plugin with the required contents
+  # typically a terraform plugin has created the output based on infrastructure it has created.
+  contents: "{{output::ansible_inventory?special::None}}"
+
+
+# Playbook blocks to run
+#
+# the contents are always written to a file, which provides an auditable source of the last run
+# values.
+playbook:
+  path: "{{variables:files_path}}/{{variables:files_prefix}}.playbook.yml"
+  contents:
+  - name: Install MCR on all targets
+    hosts: all
+    become: yes
+    roles:
+      - mirantis.mcr.common
+
+  - name: Init swarm and add first manager
+    hosts: manager0
+    roles:
+      - mirantis.mcr.leader
+
+  - name: Add additional swarm managers
+    hosts: managers:!manager0
+    roles:
+      - mirantis.mcr.manager
+
+  - name: Add swarm workers
+    hosts: workers:msrs
+    roles:
+      - mirantis.mcr.worker
+
+# OTHER OPTIONS:
+#
+# We could load directly from a playbook yaml file:
+#
+# contents: "{{file::path/to/playbooks.yml}}"
+#
