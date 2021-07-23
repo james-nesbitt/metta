@@ -54,14 +54,6 @@ ansibledebug:
   # tell the plugin to load config from "here"
   from_config: true
 
-  envs:
-    ANSIBLE_NOT_A_REAL_VAR: nothing
-
-  vars:
-    path: "{{variables:files_path}}/{{variables:files_prefix}}.ansibleping.vars.yml"
-    values:
-      test: test
-
   playbook:
     path: "{{variables:files_path}}/{{variables:files_prefix}}.ansibleping.playbook.yml"
     contents:
