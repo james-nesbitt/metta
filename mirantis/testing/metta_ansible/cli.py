@@ -113,7 +113,7 @@ class AnsibleCliPlaybookProvisionerGroup:
     def prepare(self, provisioner: str = ""):
         """Run provisioner prepare."""
         provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner_plugin.prepare()
+        provisioner_plugin.prepare(self._environment.fixtures)
 
     def apply(self, provisioner: str = ""):
         """Run provisioner apply."""
@@ -275,6 +275,7 @@ class AnsibleCliPlaybookWorkgroupGroup:
     def info(self, workgroup: str = "", deep: bool = False):
         """Get info about the plugin."""
         fixture = self._select_workgroup(instance_id=workgroup)
+        fixture.plugin.prepare()
         return cli_output(fixture.info(deep=deep))
 
     def apply(self, workgroup: str = ""):

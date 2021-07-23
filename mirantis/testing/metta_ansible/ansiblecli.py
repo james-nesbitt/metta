@@ -168,31 +168,53 @@ class AnsiblePlaybookClient:
             "ansiblecfg_path": self.ansiblecfg_path,
         }
 
-    def run(self, playbooksyml_path: str, envs: Dict[str, str] = None, return_output: bool = False):
+    def run(
+        self,
+        playbooksyml_path: str,
+        extravars_path: str = "",
+        extravars: Dict[str, str] = None,
+        envs: Dict[str, str] = None,
+        with_inventory=True,
+        with_ansiblecfg=True,
+        return_output=False,
+    ):
         """Run the ansible playbook install command on a yaml playbook file."""
         args = [playbooksyml_path]
 
-        return self._run(args=args, envs=envs, return_output=return_output)
+        return self._run(
+            args=args,
+            extravars_path=extravars_path,
+            extravars=extravars,
+            envs=envs,
+            return_output=return_output,
+        )
 
     def _run(
         self,
         args: List[str],
+        extravars_path: str = "",
+        extravars: Dict[str, str] = None,
         envs: Dict[str, str] = None,
         with_inventory=True,
         with_ansiblecfg=True,
         return_output=False,
     ):
         """Run ansible-playbook CLI command."""
-        env = os.environ.copy()
+        allenvs = os.environ.copy()
 
         cmd = [self.ansibleplaybook_bin]
 
         if with_ansiblecfg:
-            env["ANSIBLE_CONFIG"] = self.ansiblecfg_path
+            allenvs["ANSIBLE_CONFIG"] = self.ansiblecfg_path
+        if extravars_path:
+            cmd += [f"--extra-vars=@{extravars_path}"]
+        if extravars:
+            extravars_string = json.dumps(extravars)
+            cmd += [f"--extra-vars='{extravars_string}'"]
         if with_inventory:
             cmd += [f"--inventory={self.inventory_path}"]
         if envs is not None:
-            env.update(envs)
+            allenvs.update(envs)
 
         cmd += args
 
@@ -200,11 +222,11 @@ class AnsiblePlaybookClient:
         # pylint: disable=no-else-return
         if not return_output:
             logger.debug("running ansible-playbook command: %s", " ".join(cmd))
-            res = subprocess.run(cmd, env=env, check=True, text=True)
+            res = subprocess.run(cmd, env=allenvs, check=True, text=True)
             res.check_returncode()
             return res
         else:
             logger.debug("running ansible-playbook command with output capture: %s", " ".join(cmd))
-            res = subprocess.run(cmd, env=env, shell=False, check=True, stdout=subprocess.PIPE)
+            res = subprocess.run(cmd, env=allenvs, shell=False, check=True, stdout=subprocess.PIPE)
             res.check_returncode()
             return res.stdout.decode("utf-8")

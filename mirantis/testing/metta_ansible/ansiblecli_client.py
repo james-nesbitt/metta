@@ -174,10 +174,20 @@ class AnsiblePlaybookClientPlugin:
             "client": self._ansibleplaybook.info(deep=deep) if self._ansibleplaybook else "MISSING",
         }
 
+    # pylint: disable=too-many-arguments
     def run_file(
-        self, playbooksyml_path: str, envs: Dict[str, str] = None, return_output: bool = False
+        self,
+        playbooksyml_path: str,
+        extravars_path: str = "",
+        extravars: Dict[str, str] = None,
+        envs: Dict[str, str] = None,
+        return_output: bool = False,
     ):
         """Run the ansible playbook install command on a yaml playbook file."""
         return self._ansibleplaybook.run(
-            playbooksyml_path=playbooksyml_path, envs=envs, return_output=return_output
+            playbooksyml_path=playbooksyml_path,
+            extravars_path=extravars_path,
+            extravars=extravars,
+            envs=envs,
+            return_output=return_output,
         )

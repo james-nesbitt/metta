@@ -30,10 +30,17 @@ METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID = "metta_ansiblecliplaybo
 
 ANSIBLE_PROVISIONER_CONFIG_LABEL = "ansible"
 """ config label loading the ansible config """
+
+ANSIBLE_PROVISIONER_CONFIG_ENVS_KEY = "envs"
+"""Configerus key for loading env variables to be used for clients."""
 ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_KEY = "playbook.contents"
 """ config key for the ansible playbook content """
 ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_PATH_KEY = "playbook.path"
 """ config key for the ansible playbook path to write to."""
+ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_VARS_KEY = "vars.values"
+""" config key for the ansible playbook vars."""
+ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_VARS_PATH_KEY = "vars.path"
+""" config key for the ansible playbook vars path to write to."""
 ANSIBLE_PROVISIONER_CONFIG_ANSIBLECFG_KEY = "ansiblecfg.contents"
 """ config key for the ansible cfg contents which will be written to file """
 ANSIBLE_PROVISIONER_CONFIG_ANSIBLECFG_PATH_KEY = "ansiblecfg.path"
@@ -83,6 +90,8 @@ class AnsiblePlaybookProvisionerPlugin:
 
         # In order to allow declarative interaction. Try to make an ansible client
         # for this plugin, but allow it to fail.
+        self._update_config()
+        self._make_clients()
         try:
             self._update_config()
             self._make_clients()
@@ -117,6 +126,14 @@ class AnsiblePlaybookProvisionerPlugin:
                     [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_KEY],
                     default="MISSING",
                 ),
+                "vars": plugin_config.get(
+                    [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_VARS_KEY],
+                    default="NONE",
+                ),
+                "envs": plugin_config.get(
+                    [self._config_base, ANSIBLE_PROVISIONER_CONFIG_ENVS_KEY],
+                    default="NONE",
+                ),
             },
             "files": {
                 "ansiblecfg": plugin_config.get(
@@ -125,10 +142,14 @@ class AnsiblePlaybookProvisionerPlugin:
                 ),
                 "inventory": plugin_config.get(
                     [self._config_base, ANSIBLE_PROVISIONER_CONFIG_INVENTORY_PATH_KEY],
-                    default="NONE",
+                    default="MISSING",
                 ),
                 "playbook": plugin_config.get(
                     [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_PATH_KEY],
+                    default="MISSING",
+                ),
+                "vars": plugin_config.get(
+                    [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_VARS_PATH_KEY],
                     default="NONE",
                 ),
             },
@@ -163,14 +184,24 @@ class AnsiblePlaybookProvisionerPlugin:
             plugin_id=METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKCLIENT_PLUGIN_ID
         )
 
-        plugin_config = self._environment.config.load(self._config_label)
+        plugin_config: Dict[str, Any] = self._environment.config.load(self._config_label)
         """Loaded configerus config for the plugin. Ready for .get()."""
 
-        playbook_path: Dict[str, Any] = plugin_config.get(
+        playbook_path: str = plugin_config.get(
             [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_PATH_KEY]
         )
+        vars_path: str = plugin_config.get(
+            [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_VARS_PATH_KEY],
+            default="",
+        )
+        envs: Dict[str, str] = plugin_config.get(
+            [self._config_base, ANSIBLE_PROVISIONER_CONFIG_ENVS_KEY],
+            default={},
+        )
 
-        playbook_client.run_file(playbook_path)
+        playbook_client.run_file(
+            playbooksyml_path=playbook_path, extravars_path=vars_path, envs=envs
+        )
 
     def destroy(self):
         """remove all resources created for the cluster
@@ -199,7 +230,7 @@ class AnsiblePlaybookProvisionerPlugin:
             [self._config_base, ANSIBLE_PROVISIONER_CONFIG_INVENTORY_KEY]
         )
         playbook_contents: str = plugin_config.get(
-            [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_KEY]
+            [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_KEY], default={}
         )
 
         # Don't create the object unless we think we hae enough config for it
@@ -289,6 +320,22 @@ class AnsiblePlaybookProvisionerPlugin:
         else:
             if playbook_path and os.path.exists(playbook_path):
                 os.remove(playbook_path)
+
+        # the playbook vars file
+        vars_values: str = plugin_config.get(
+            [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_VARS_KEY], default={}
+        )
+        vars_path: str = plugin_config.get(
+            [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_VARS_PATH_KEY],
+            default="",
+        )
+        if vars_values:
+            os.makedirs(os.path.dirname(os.path.realpath(vars_path)), exist_ok=True)
+            with open(vars_path, "w") as vars_fileobject:
+                yaml.safe_dump(vars_values, vars_fileobject)
+        else:
+            if vars_path and os.path.exists(vars_path):
+                os.remove(vars_path)
 
     def _rm_ansible_files(self):
         """Update config and write the cfg and inventory files."""
