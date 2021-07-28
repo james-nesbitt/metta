@@ -69,7 +69,7 @@ def metta_plugin_factory_workload_kubernetes_deployment(
     label: str = KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_LABEL,
     base: Any = KUBERNETES_DEPLOYMENT_WORKLOAD_CONFIG_BASE,
 ):
-    """Create an metta kubernetes spec workload plugin."""
+    """Create a metta kubernetes spec workload plugin."""
     return KubernetesDeploymentWorkloadPlugin(environment, instance_id, label=label, base=base)
 
 
@@ -83,7 +83,7 @@ def metta_plugin_factory_workload_kubernetes_yaml(
     label: str = KUBERNETES_YAML_WORKLOAD_CONFIG_LABEL,
     base: Any = KUBERNETES_YAML_WORKLOAD_CONFIG_BASE,
 ):
-    """Create an metta kubernetes spec workload plugin."""
+    """Create a metta kubernetes spec workload plugin."""
     return KubernetesYamlWorkloadPlugin(environment, instance_id, label=label, base=base)
 
 
@@ -97,7 +97,7 @@ def metta_plugin_factory_workload_kubernetes_helm(
     label: str = KUBERNETES_HELM_WORKLOAD_CONFIG_LABEL,
     base: Any = KUBERNETES_HELM_WORKLOAD_CONFIG_BASE,
 ):
-    """Create an metta kubernetes spec workload plugin."""
+    """Create a metta kubernetes spec workload plugin."""
     return KubernetesHelmWorkloadPlugin(environment, instance_id, label=label, base=base)
 
 

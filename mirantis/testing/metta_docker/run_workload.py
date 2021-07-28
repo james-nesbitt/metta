@@ -54,8 +54,6 @@ class DockerPyRunWorkloadPlugin:
         self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
-        logger.info("Preparing Docker run setting")
-
         self._config_label = label
         """ configerus load label that should contain all of the config """
         self._config_base = base

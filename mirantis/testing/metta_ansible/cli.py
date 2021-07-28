@@ -39,21 +39,12 @@ class AnsibleCliPlugin(CliBase):
 
         if (
             self._environment.fixtures.get(
-                plugin_id=METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID,
-                exception_if_missing=False,
-            )
-            is not None
-        ):
-            commands["provisioner"] = AnsibleCliPlaybookProvisionerGroup(self._environment)
-
-        if (
-            self._environment.fixtures.get(
                 plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
                 exception_if_missing=False,
             )
             is not None
         ):
-            commands["client"] = AnsibleCliClientGroup(self._environment)
+            commands["ansible"] = AnsibleCliClientGroup(self._environment)
 
         if (
             self._environment.fixtures.get(
@@ -62,68 +53,9 @@ class AnsibleCliPlugin(CliBase):
             )
             is not None
         ):
-            commands["playbook-client"] = AnsibleCliPlaybookClientGroup(self._environment)
+            commands["ansible-playbook"] = AnsibleCliPlaybookClientGroup(self._environment)
 
-        if (
-            self._environment.fixtures.get(
-                plugin_id=METTA_ANSIBLE_ANSIBLECLI_COREWORKLOAD_PLUGIN_ID,
-                exception_if_missing=False,
-            )
-            is not None
-        ):
-            commands["workload"] = AnsibleCliWorkgroupGroup(self._environment)
-
-        if (
-            self._environment.fixtures.get(
-                plugin_id=METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKWORKLOAD_PLUGIN_ID,
-                exception_if_missing=False,
-            )
-            is not None
-        ):
-            commands["playbook-workload"] = AnsibleCliPlaybookWorkgroupGroup(self._environment)
-
-        return {"contrib": {"ansible": commands}} if len(commands) > 0 else {}
-
-
-class AnsibleCliPlaybookProvisionerGroup:
-    """Commands for interacting with a metta ansible provisioner plugin."""
-
-    def __init__(self, environment: Environment):
-        """Inject environment into command gorup."""
-        self._environment = environment
-
-    def _select_provisioner(self, instance_id: str = ""):
-        """Pick a matching provisioner."""
-        if instance_id:
-            return self._environment.fixtures.get(
-                plugin_id=[METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID],
-                instance_id=instance_id,
-            )
-
-        # Get the highest priority provisioner
-        return self._environment.fixtures.get(
-            plugin_id=METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID,
-        )
-
-    def info(self, provisioner: str = "", deep: bool = False):
-        """Get info about a provisioner plugin."""
-        fixture = self._select_provisioner(instance_id=provisioner)
-        return cli_output(fixture.info(deep=deep))
-
-    def prepare(self, provisioner: str = ""):
-        """Run provisioner prepare."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner_plugin.prepare(self._environment.fixtures)
-
-    def apply(self, provisioner: str = ""):
-        """Run provisioner apply."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner_plugin.apply()
-
-    def destroy(self, provisioner: str = ""):
-        """Run provisioner destroy."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner_plugin.destroy()
+        return commands
 
 
 class AnsibleCliClientGroup:
@@ -132,6 +64,15 @@ class AnsibleCliClientGroup:
     def __init__(self, environment: Environment):
         """Inject environment into command gorup."""
         self._environment = environment
+
+        if (
+            self._environment.fixtures.get(
+                plugin_id=METTA_ANSIBLE_ANSIBLECLI_COREWORKLOAD_PLUGIN_ID,
+                exception_if_missing=False,
+            )
+            is not None
+        ):
+            self.workload = AnsibleCliWorkgroupGroup(self._environment)
 
     def _select_client(self, instance_id: str = ""):
         """Pick a matching client."""
@@ -194,6 +135,24 @@ class AnsibleCliPlaybookClientGroup:
         """Inject environment into command gorup."""
         self._environment = environment
 
+        if (
+            self._environment.fixtures.get(
+                plugin_id=METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID,
+                exception_if_missing=False,
+            )
+            is not None
+        ):
+            self.provisioner = AnsibleCliPlaybookProvisionerGroup(self._environment)
+
+        if (
+            self._environment.fixtures.get(
+                plugin_id=METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKWORKLOAD_PLUGIN_ID,
+                exception_if_missing=False,
+            )
+            is not None
+        ):
+            self.workload = AnsibleCliPlaybookWorkgroupGroup(self._environment)
+
     def _select_client(self, instance_id: str = ""):
         """Pick a matching client."""
         if instance_id:
@@ -217,6 +176,47 @@ class AnsibleCliPlaybookClientGroup:
         fixture = self._select_client(instance_id=client)
         plugin = fixture.plugin
         return cli_output(plugin.run_file(playbook))
+
+
+class AnsibleCliPlaybookProvisionerGroup:
+    """Commands for interacting with a metta ansible provisioner plugin."""
+
+    def __init__(self, environment: Environment):
+        """Inject environment into command gorup."""
+        self._environment = environment
+
+    def _select_provisioner(self, instance_id: str = ""):
+        """Pick a matching provisioner."""
+        if instance_id:
+            return self._environment.fixtures.get(
+                plugin_id=[METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID],
+                instance_id=instance_id,
+            )
+
+        # Get the highest priority provisioner
+        return self._environment.fixtures.get(
+            plugin_id=METTA_ANSIBLE_ANSIBLECLIPLAYBOOK_PROVISIONER_PLUGIN_ID,
+        )
+
+    def info(self, provisioner: str = "", deep: bool = False):
+        """Get info about a provisioner plugin."""
+        fixture = self._select_provisioner(instance_id=provisioner)
+        return cli_output(fixture.info(deep=deep))
+
+    def prepare(self, provisioner: str = ""):
+        """Run provisioner prepare."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin.prepare(self._environment.fixtures)
+
+    def apply(self, provisioner: str = ""):
+        """Run provisioner apply."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin.apply()
+
+    def destroy(self, provisioner: str = ""):
+        """Run provisioner destroy."""
+        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin.destroy()
 
 
 class AnsibleCliWorkgroupGroup:

@@ -5,14 +5,21 @@ system_name: "{{variables:id}}"
 # put the testkit yml file in the project folder
 config_file: "{{variables:files_path}}/{{variables:files_prefix}}.testkit.yml"
 
-mke:
-  username: "{{variables:admin_user?admin}}"
-  password: "{{vairables:admin_password?orcaorcaorca}}"
-  client_bundle_root: "{{variables:files_path}}/{{variables:files_prefix}}.mke.bundles"
+systems:
+  # Provide configuration for access to systems that Launchpad might create to configure
+  # The generation of children plugins by the Launchpad client plugins.
+  # There should be a way to get this information right out of the client or the
+  # client config, but there isn't.
+  mirantis_mke_client:
+    # MKE Access configuration
+    username: "{{variables:admin_user?admin}}"
+    password: "{{variables:admin_password?orcaorcaorca}}"
+    bundle_root: "{{variables:files_path}}/{{variables:files_prefix}}.mke.bundles"
 
-msr:
-  username: "{{variables:admin_user?admin}}"
-  password: "{{vairables:admin_password?orcaorcaorca}}"
+  mirantis_msr_client:
+    # MSR Access configuration
+    username: "{{variables:admin_user?admin}}"
+    password: "{{variables:admin_password?orcaorcaorca}}"
 
 options:
   # Options to pass to the client on create runs
@@ -36,7 +43,7 @@ config:
   expiry: "{{variables:expire_duration}}"
 
   aws_region: "{{variables:aws_region}}"
-  aws_keyname: "{{variables:resource_prefix}}"
+  aws_keyname: "{{variables:resource_prefix}}2"
   # aws_spot_price: ""
   # aws_purchase_type: "spot"
   aws_instance_type: "{{variables:manager_type}}"
@@ -87,7 +94,7 @@ config:
   ucp:
     org: "{{variables:mke_image_repo}}"
     tag: "{{variables:mke_version}}"
-    args: "--admin-username={{mke.username}} --admin-password={{mke.password}}"
+    args: "--admin-username={{systems.mirantis_mke_client.username}} --admin-password={{systems.mirantis_mke_client.password}}"
 
   dtr:
     org: "{{variables:msr_image_repo}}"

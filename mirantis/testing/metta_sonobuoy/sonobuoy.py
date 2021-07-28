@@ -9,14 +9,13 @@ from typing import Dict, Any, List
 import logging
 import subprocess
 import os
-import json
 import shutil
-from enum import Enum, unique
 
-import yaml
 import kubernetes
 
 from mirantis.testing.metta_kubernetes.kubeapi_client import KubernetesApiClientPlugin
+
+from .results import SonobuoyResults, SonobuoyStatus
 
 logger = logging.getLogger("sonobuoy")
 
@@ -40,13 +39,13 @@ SONOBUOY_CRB_SUBJECTS_SERVICEACCOUNT = "sonobuoy-serviceaccount"
 
 
 # pylint: disable=too-many-instance-attributes
-class Sonobuoy:
+class SonobuoyClient:
     """A sonobuoy handler."""
 
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        api_client: KubernetesApiClientPlugin,
+        kubeclient: KubernetesApiClientPlugin,
         mode: str,
         kubernetes_version: str = "",
         plugins: List[str] = None,
@@ -55,9 +54,9 @@ class Sonobuoy:
         results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH,
     ):
         """Initialize the workload instance."""
-        self._api_client = api_client
-        """Metta api client plugin for kubeconfig and CRB management."""
-        self.kubeconfig = api_client.config_file
+        self._api_client = kubeclient
+        """Kube API metta client, used for a config file and for creating K8s resources."""
+        self.kubeconfig = kubeclient.config_file
         """ metta kube client, which gives us a kubeconfig """
         self.mode = mode
         """ sonobuoy mode, passed to the cli """
@@ -79,6 +78,24 @@ class Sonobuoy:
 
         self.results_path = os.path.realpath(results_path)
         """ path to where to download sonobuoy results """
+
+    # deep is a metta info standard and expected to be here
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False) -> Dict[str, Any]:
+        """return a Dict of info about the client."""
+        return {
+            "config": {
+                "mode": self.mode,
+                "kubeconfig": self.kubeconfig,
+                "kubernetes_version": self.kubernetes_version,
+                "plugins": self.plugins,
+                "plugin_envs": self.plugin_envs,
+                "results_path": self.results_path,
+            },
+            "client": {
+                "sonobuoy_bin_path": self.bin,
+            },
+        }
 
     def run(self, wait: bool = True):
         """Run sonobuoy."""
@@ -215,131 +232,3 @@ class Sonobuoy:
         except kubernetes.client.exceptions.ApiException as err:
             logger.error("Could not delete sonobuoy CRB: %s", err)
             return None
-
-
-class SonobuoyStatus:
-    """A status output from the sonobuoy CLI."""
-
-    def __init__(self, status_json: str):
-        """Build from sonobuoy status results."""
-        status = json.loads(status_json)
-        self.status = Status(status["status"])
-        self.tar_info = status["tar-info"]
-
-        self.plugins = {}
-        for plugin in status["plugins"]:
-            self.plugins[plugin["plugin"]] = plugin
-
-    def plugin_list(self):
-        """Retrieve the list of plugins."""
-        return list(self.plugins.keys())
-
-    def plugin(self, plugin: str):
-        """Retrieve the results for one plugin."""
-        return self.plugins[plugin]
-
-    def plugin_status(self, plugin: str) -> "Status":
-        """Get the status code for a plugin."""
-        status_string = self.plugin(plugin)["status"]
-        return Status(status_string)
-
-    def __str__(self) -> str:
-        """Convert to a string."""
-        status: List[str] = []
-        for plugin_id in self.plugin_list():
-            status.append(f"{plugin_id}:{self.plugin_status(plugin_id)}")
-        return f"[{']['.join(status)}]"
-
-
-class SonobuoyResults:
-    """Results retrieved analyzer."""
-
-    def __init__(self, tarball: str, folder: str):
-        """Interpret tarball contents."""
-        logger.debug("un-tarring retrieved results: %s", tarball)
-        res = subprocess.run(["tar", "-xzf", tarball, "-C", folder], check=True, text=True)
-        res.check_returncode()
-
-        self.results_path = folder
-
-        with open(os.path.join(folder, "meta", "config.json")) as config_json:
-            self.meta_config = json.load(config_json)
-        with open(os.path.join(folder, "meta", "info.json")) as info_json:
-            self.meta_info = json.load(info_json)
-        with open(os.path.join(folder, "meta", "query-time.json")) as qt_json:
-            self.meta_querytime = json.load(qt_json)
-
-        self.plugins = []
-        for plugin_id in self.meta_info["plugins"]:
-            self.plugins.append(plugin_id)
-
-    def plugin_list(self):
-        """Return a string list of plugin ids."""
-        return self.plugins
-
-    def plugin(self, plugin_id) -> "SonobuoyResultsPlugin":
-        """Return the results for a single plugin."""
-        return SonobuoyResultsPlugin(os.path.join(self.results_path, "plugins", plugin_id))
-
-
-class SonobuoyResultsPlugin:
-    """The full results for a plugin."""
-
-    def __init__(self, path: str):
-        """Load results for a plugin results call."""
-        with open(os.path.join(path, "sonobuoy_results.yaml")) as results_yaml:
-            self.summary = yaml.safe_load(results_yaml)
-
-    def name(self) -> str:
-        """Return string name of plugin."""
-        return self.summary["name"]
-
-    def status(self) -> "Status":
-        """Return the status object for the plugin results."""
-        return Status(self.summary["status"])
-
-    def __len__(self):
-        """Count how many items are in the plugin_results."""
-        return len(self.summary["items"])
-
-    def __getitem__(self, instance_id: Any) -> "SonobuoyResultsPluginItem":
-        """Get item details from the plugin results."""
-        return SonobuoyResultsPluginItem(item_dict=self.summary["items"][instance_id])
-
-
-class SonobuoyResultsPluginItem:
-    """An individual item from a sonobuoy results plugin."""
-
-    def __init__(self, item_dict: Dict[str, Any]):
-        """Single plugin result item."""
-        self.name = item_dict["name"]
-        self.status = Status(item_dict["status"])
-        self.meta = item_dict["meta"]
-        self.details = item_dict["details"] if "details" in item_dict else {}
-
-    def meta_file_path(self):
-        """Get the path to the error item file."""
-        return self.meta["file"]
-
-    def meta_file(self):
-        """Get the contents of the file."""
-        with open(self.meta_file_path()) as meta_file:
-            return yaml.safe_load(meta_file)
-
-
-@unique
-class Status(Enum):
-    """Enumerator to plugin states."""
-
-    PENDING = "pending"
-    """ still pending """
-    RUNNING = "running"
-    """ testing is running """
-    FAILED = "failed"
-    """ testing has failed """
-    COMPLETE = "complete"
-    """ testing has completed without failure """
-    PASSED = "passed"
-    """ testing has passed """
-    POSTPROCESS = "post-processing"
-    """ testing has finished and is being processed """

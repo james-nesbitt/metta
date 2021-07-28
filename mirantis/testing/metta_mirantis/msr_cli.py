@@ -6,7 +6,8 @@ MSR api client and healthcheck cli plugin.
 
 """
 
-import requests
+from requests.exceptions import RequestException
+from requests.auth import _basic_auth_str, HTTPBasicAuth
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta_cli.base import CliBase, cli_output
@@ -32,7 +33,7 @@ class MSRAPICliPlugin(CliBase):
             )
             is not None
         ):
-            return {"contrib": {"msr": MSRAPICliGroup(self._environment)}}
+            return {"msr": MSRAPICliGroup(self._environment)}
 
         return {}
 
@@ -67,15 +68,12 @@ class MSRAPICliGroup:
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
 
-        health_info = {}
-        for health_fixture in plugin.healthchecks():
-            health_plugin = health_fixture.plugin
-            health_plugin_results = health_plugin.health()
-            health_info[health_plugin.instance_id] = {
-                "instance_id": health_plugin.instance_id,
-                "status": health_plugin_results.status,
-                "messages": health_plugin_results.messages,
-            }
+        health = plugin.health()
+        health_info = {
+            "instance_id": fixture.instance_id,
+            "status": health.status(),
+            "messages": list(health.messages()),
+        }
 
         return cli_output(health_info)
 
@@ -95,7 +93,7 @@ class MSRAPICliGroup:
                 plugin.api_ping(index)
                 # pylint: disable=protected-access
                 ping[plugin._node_address(index)] = True
-            except requests.exceptions.RequestException:
+            except RequestException:
                 # pylint: disable=protected-access
                 ping[plugin._node_address(index)] = False
 
@@ -137,4 +135,11 @@ class MSRAPICliGroup:
         plugin = fixture.plugin
         # using private method for introspection access
         # pylint: disable=protected-access
-        return cli_output(plugin._api_auth())
+        auth: HTTPBasicAuth = plugin._api_auth()
+        return cli_output(
+            {
+                "username": auth.username,
+                "password": auth.password,
+                "headers": {"Authorization": _basic_auth_str(auth.username, auth.password)},
+            }
+        )

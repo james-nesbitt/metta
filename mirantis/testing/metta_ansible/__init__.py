@@ -47,7 +47,7 @@ def metta_plugin_factory_provisioner_ansibleplaybook(
     label: str = ANSIBLE_PROVISIONER_CONFIG_LABEL,
     base: Any = LOADED_KEY_ROOT,
 ):
-    """create a metta provisioners plugin"""
+    """create a metta provisioner plugin"""
     return AnsiblePlaybookProvisionerPlugin(environment, instance_id, label, base)
 
 

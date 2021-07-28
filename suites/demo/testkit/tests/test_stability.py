@@ -9,11 +9,11 @@ import logging
 from mirantis.testing.metta.healthcheck import HealthStatus
 
 
-logger = logging.getLogger("stability-test")
+logger = logging.getLogger("testkit-stability-test")
 
 
 # pylint: disable=unused-argument
-def test_01_workloads_up(healthpoller, nginx_deployment, metrics_deployment):
+def test_01_workloads_up(workloads_up, healthpoller):
     """Ensure that the fixtures get created."""
     for i in range(1, 10):
         time.sleep(10)
@@ -25,9 +25,9 @@ def test_01_workloads_up(healthpoller, nginx_deployment, metrics_deployment):
             "HealthCheck %s [%s polls completed] Status: %s",
             i,
             poll_count,
-            health.status,
+            health.status(),
         )
-        for message in health.messages:
+        for message in health.messages():
             logger.info(message)
 
-        assert health.status.is_better_than(HealthStatus.ERROR), "Health was not good."
+        assert health.status().is_better_than(HealthStatus.ERROR), "Health was not good."

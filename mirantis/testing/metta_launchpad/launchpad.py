@@ -51,10 +51,7 @@ class LaunchpadClient:
         config_file: str = METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
         working_dir: str = METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT,
         cluster_name_override: str = "",
-        accept_license: bool = False,
-        disable_telemetry: bool = False,
-        disable_upgrade_check: bool = True,
-        debug: bool = False,
+        cli_options: Dict[str, bool] = None,
         binary: str = METTA_LAUNCHPADCLIENT_BIN_PATH,
     ):
         """Initialize LaunchpadClient object.
@@ -77,14 +74,16 @@ class LaunchpadClient:
         accept_license (bool) : passed to the launchpad client to tell it to
             accept the license on first use.
 
-        disable_telemetry (bool) : passed to the launchpad client to tell it to
-            disable telemetry on actions taken.
+        cli_options (Dict[str, bool]) : Dict of boolean cli configuration keys:
 
-        disable_upgrade_check (bool) : passed to the launchpad client to tell
-            it to disable checking to see if a new client version is available.
+            disable_telemetry (bool) : passed to the launchpad client to tell it to
+                disable telemetry on actions taken.
 
-        debug (bool) : passed to the launchpad client to tell it to enable
-            verbose debugging output.
+            disable_upgrade_check (bool) : passed to the launchpad client to tell
+                it to disable checking to see if a new client version is available.
+
+            debug (bool) : passed to the launchpad client to tell it to enable
+                verbose debugging output.
 
         """
         self.config_file: str = config_file
@@ -109,12 +108,47 @@ class LaunchpadClient:
         self.client_bundle_retry_count: int = int(LAUNCHPAD_CLIENT_BUNDLE_RETRY_COUNT_DEFAULT)
         """ how many times to rety a client bundle download """
 
-        self.disable_telemetry: bool = disable_telemetry
-        self.accept_license: bool = accept_license
-        self.disable_upgrade_check: bool = disable_upgrade_check
+        self.cli_options: Dict[str, bool] = cli_options if cli_options is not None else {}
+        """Dict of global cli bool options that the client should include on calls."""
 
-        self.debug: bool = debug
+        self.debug: bool = False
         """ should launchpad be run with verbose output enabled ? """
+
+    def info(self, deep: bool = False) -> Dict[str, Any]:
+        """Get info about a provisioner plugin.
+
+        Returns:
+        --------
+        Dict of introspective information about this plugin_info
+
+        """
+        info = {
+            "client": {
+                "config_file": self.config_file,
+                "working_dir": self.working_dir,
+                "bin": self.bin,
+            },
+            "bundles": list(self.bundle_users()),
+            "config": {},
+        }
+
+        try:
+            with open(self.config_file) as conf_file_obj:
+                info["config"]["contents"] = yaml.safe_load(conf_file_obj)
+        except FileNotFoundError:
+            pass
+
+        if deep:
+            try:
+                info["config"]["interpreted"] = self.describe_config()
+                info["bundles"] = {user: self.bundle(user) for user in self.bundle_users()}
+
+            # pylint: disable=broad-except
+            except Exception:
+                # There are many legitimate cases where this fails
+                pass
+
+        return info
 
     def version(self):
         """Output launchpad client version."""
@@ -151,23 +185,12 @@ class LaunchpadClient:
         args.extend(cmds)
         self._run(args)
 
-    def reset(self, quick: bool = False):
+    def reset(self):
         """Uninstall using the launchpad client."""
         if os.path.isfile(self.config_file):
-            if not quick:
-                try:
-                    self._run(["reset", "--force"])
-                except subprocess.TimeoutExpired:
-                    pass
-
             try:
-                self.rm_client_bundles()
-            except FileNotFoundError:
-                pass
-
-            try:
-                os.remove(self.config_file)
-            except OSError:
+                self._run(["reset", "--force"])
+            except subprocess.TimeoutExpired:
                 pass
 
     def register(self, name: str, email: str, company: str):
@@ -360,11 +383,14 @@ class LaunchpadClient:
 
         if debug or self.debug:
             cmd += ["--debug"]
-        if self.disable_telemetry:
+        if "disable-telemetry" in self.cli_options and self.cli_options["disable-telemetry"]:
             cmd += ["--disable-telemetry"]
-        if self.accept_license:
+        if "accept-license" in self.cli_options and self.cli_options["accept-license"]:
             cmd += ["--accept-license"]
-        if self.disable_upgrade_check:
+        if (
+            "disable-upgrade-check" in self.cli_options
+            and self.cli_options["disable-upgrade-check"]
+        ):
             cmd += ["--disable-upgrade-check"]
 
         if len(args) > 1:

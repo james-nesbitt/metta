@@ -15,6 +15,7 @@ from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 
 from mirantis.testing.metta_common.healthpoll_workload import (
     METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
+    HealthPollWorkload,
 )
 
 logger = logging.getLogger("longevity-conftest")
@@ -53,7 +54,7 @@ def workloads(environment_up) -> Fixtures:
 
 
 @pytest.fixture(scope="module")
-def workloads_up(environment_up, workloads):
+def workloads_up(environment_up, workloads) -> Fixtures:
     """Create and apply instances for all workloads."""
     for workload in workloads:
         plugin = workload.plugin
@@ -74,8 +75,8 @@ def workloads_up(environment_up, workloads):
 
 
 @pytest.fixture(scope="module")
-def healthpoller(environment_up):
-    """Start a running health poll."""
+def healthpoller(environment_up) -> HealthPollWorkload:
+    """Start a running health poll and return it."""
     healthpoll_workload = environment_up.fixtures.get_plugin(
         plugin_id=METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL
     )

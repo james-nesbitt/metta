@@ -95,7 +95,7 @@ def metta_mirantis_plugin_factory_client_msr(
     hosts: List[Dict] = None,
     protocol: str = "https",
 ):
-    """Create a Mirantis MSR API Client."""
+    """Create an MSR API Client."""
     return MSRAPIClientPlugin(
         environment,
         instance_id,

@@ -12,7 +12,7 @@ PluginInstances sets.
 """
 
 import os
-from typing import List
+from typing import List, Callable
 import logging
 import importlib
 
@@ -100,7 +100,6 @@ def discover(
     # Create any environments defined in config
 
     metta_config = config.load("metta")
-
     if metta_config.has(["environments", "from_config"]):
         environment_config = metta_config.get(["environments", "from_config"])
         label = environment_config["label"] if "label" in environment_config else "metta"
@@ -355,7 +354,7 @@ def new_environments_from_builder(
         raise ValueError(f"Env builder could not load suggested python package:{err}") from err
 
     try:
-        method = getattr(module, method)
+        method: Callable = getattr(module, method)
     except Exception as err:
         raise ValueError(f"Env builder could not execute package method: {err}") from err
 

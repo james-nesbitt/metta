@@ -34,7 +34,7 @@ class DockerCliPlugin(CliBase):
             is not None
         ):
 
-            return {"contrib": {"docker": DockerGroup(self._environment)}}
+            return {"docker": DockerGroup(self._environment)}
 
         return {}
 

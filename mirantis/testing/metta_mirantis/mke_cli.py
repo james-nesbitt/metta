@@ -37,13 +37,13 @@ class MKEAPICliPlugin(CliBase):
             > 0
         ):
 
-            return {"contrib": {"mke": MKEAPICliGroup(self._environment)}}
+            return {"mke": MKEAPICliGroup(self._environment)}
 
         return {}
 
 
 class MKEAPICliGroup:
-    """Metta CLI plugin which provides the MKE API Client CLI commands."""
+    """MKE API Client CLI commands."""
 
     def __init__(self, environment: Environment):
         """Create new cli group object."""
@@ -80,8 +80,8 @@ class MKEAPICliGroup:
         health = plugin.health()
         health_info = {
             "instance_id": fixture.instance_id,
-            "status": health.status,
-            "messages": health.messages,
+            "status": health.status(),
+            "messages": list(health.messages()),
         }
 
         return cli_output(health_info)
@@ -156,14 +156,8 @@ class MKEAPICliGroup:
         data[table][key] = value
         return cli_output(plugin.api_ucp_configtoml_put(data))
 
-    def metricsdiscovery(self, instance_id: str = ""):
-        """Get the api metrics-discover."""
-        fixture = self._select_fixture(instance_id=instance_id)
-        plugin = fixture.plugin
-        return cli_output(plugin.api_metrics_discovery())
-
     def metrics(self, instance_id: str = ""):
-        """Get the toml config."""
+        """Get the api metrics-discover."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return cli_output(plugin.api_metrics_discovery())

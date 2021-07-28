@@ -37,13 +37,13 @@ class KubernetesCliPlugin(CliBase):
             )
             is not None
         ):
-            return {"contrib": {"kubernetes": KubernetesGroup(self._environment)}}
+            return {"kubernetes": KubernetesGroup(self._environment)}
 
         return {}
 
 
 class KubernetesGroup:
-    """Base Fire command group for terraform client cli commands."""
+    """Kubernetes API commands."""
 
     def __init__(self, environment: Environment):
         """Add additional command groups for plugins and inject environment."""

@@ -23,4 +23,4 @@ healthpoller:
 
     poll:
         # How often should we poll for health
-        period: 600
+        period: 30

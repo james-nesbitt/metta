@@ -56,11 +56,9 @@ class TestUpgrade(TestBase):
     __test__ = True
 
     def test_health_check_before(self, environment_before):
-        """Run the MKE test cases on the BEFORE state."""
-        self.mke_all(environment_before)
-        self.msr_all(environment_before)
+        """Run health checks on the BEFORE state."""
+        self.health(environment_before)
 
     def test_health_check_after(self, environment_after):
-        """Run the MKE test cases on the AFTER state."""
-        self.mke_all(environment_after)
-        self.msr_all(environment_after)
+        """Run health checks on the AFTER state."""
+        self.health(environment_after)

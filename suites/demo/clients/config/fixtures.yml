@@ -8,7 +8,7 @@ healthpoll:
 
     poll:
         # How often should we poll for health - this is quite frequently
-        period: 10
+        period: 15
 
 # sanity_docker_run :: metta.plugin.workload:
 sanity_docker_run:

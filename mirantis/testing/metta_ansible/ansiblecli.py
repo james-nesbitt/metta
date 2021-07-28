@@ -36,7 +36,7 @@ class AnsibleClient:
     def __init__(
         self,
         inventory_path: str,
-        ansiblecfg_path: str,
+        ansiblecfg_path: str = "",
         ansiblebinary: str = ANSIBLE_CLIENT_DEFAULT_BINARY,
     ):
         """Initialize Ansible client.
@@ -44,9 +44,15 @@ class AnsibleClient:
         Parameters:
         -----------
 
+        inventory_path (str) : string path to the ansible inventory file
+
+        ansiblecfg_path (str)
+
         """
         self.inventory_path = inventory_path
+        """String path to an ansible invetory path."""
         self.ansiblecfg_path = ansiblecfg_path
+        """Optional string path to an ansible cfg file."""
 
         if shutil.which(ansiblebinary) is None:
             raise ValueError(
@@ -55,6 +61,7 @@ class AnsibleClient:
             )
 
         self.ansible_bin = ansiblebinary
+        """Ansible binary executable path to run."""
 
     # deep argument is a part of the info() interface for all plugins
     # pylint: disable=unused-argument
@@ -108,7 +115,7 @@ class AnsibleClient:
 
         cmd = [self.ansible_bin]
 
-        if with_ansiblecfg:
+        if with_ansiblecfg and self.ansiblecfg_path:
             env["ANSIBLE_CONFIG"] = self.ansiblecfg_path
         if with_inventory:
             cmd += [f"--inventory={self.inventory_path}"]
@@ -149,7 +156,9 @@ class AnsiblePlaybookClient:
 
         """
         self.inventory_path = inventory_path
+        """String path to an ansible invetory path."""
         self.ansiblecfg_path = ansiblecfg_path
+        """Optional string path to an ansible cfg file."""
 
         if shutil.which(playbookbinary) is None:
             raise ValueError(
@@ -158,6 +167,7 @@ class AnsiblePlaybookClient:
             )
 
         self.ansibleplaybook_bin = playbookbinary
+        """Ansible-Playbook binary executable path to run."""
 
     # deep argument is a part of the info() interface for all plugins
     # pylint: disable=unused-argument
@@ -204,7 +214,7 @@ class AnsiblePlaybookClient:
 
         cmd = [self.ansibleplaybook_bin]
 
-        if with_ansiblecfg:
+        if with_ansiblecfg and self.ansiblecfg_path:
             allenvs["ANSIBLE_CONFIG"] = self.ansiblecfg_path
         if extravars_path:
             cmd += [f"--extra-vars=@{extravars_path}"]

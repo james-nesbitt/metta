@@ -7,7 +7,7 @@ import logging
 import subprocess
 import json
 import shutil
-from typing import List
+from typing import List, Dict, Any
 
 
 logger = logging.getLogger("metta_testkit:testkit")
@@ -59,6 +59,17 @@ class TestkitClient:
 
         self.bin = binary
         """ path to testkit executable """
+
+    # the deep argument is a standard for the info hook
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False) -> Dict[str, Any]:
+        """Get info about a provisioner plugin."""
+        return {
+            "config_file": self.config_file,
+            "working_dir": self.working_dir,
+            "bin": self.bin,
+            "version": self.version(),
+        }
 
     def version(self):
         """Return testkit client version."""

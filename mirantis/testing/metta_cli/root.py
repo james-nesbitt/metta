@@ -66,7 +66,6 @@ class Root:
 
         try:
             self._environment = get_environment(environment)
-
             if state:
                 self._environment.set_state(state)
         except KeyError as err:

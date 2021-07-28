@@ -36,13 +36,13 @@ class HealthpollCliPlugin(CliBase):
             > 0
         ):
 
-            return {"contrib": {"healthpoll": HealthpollCliGroup(self._environment)}}
+            return {"healthpoll": HealthpollCliGroup(self._environment)}
 
         return {}
 
 
 class HealthpollCliGroup:
-    """Metta CLI plugin which provides the healthPolling workload CLI commands."""
+    """HealthPolling workload CLI commands."""
 
     def __init__(self, environment: Environment):
         """Create new cli group object."""

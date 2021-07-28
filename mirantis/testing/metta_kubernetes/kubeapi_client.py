@@ -276,22 +276,47 @@ class KubernetesApiClientPlugin:
 
         for test_health_function in [
             self._health_k8s_readyz,
+            self._health_k8s_livez,
             self._health_k8s_node_health,
             self._health_k8s_allpod_health,
         ]:
-            test_health = test_health_function()
-            k8s_health.merge(test_health)
-
+            try:
+                test_health = test_health_function()
+            # pylint: disable=broad-except
+            except Exception as err:
+                test_health = Health(source=self._instance_id)
+                test_health.critical(f"{test_health_function} exception: {err}")
+            finally:
+                k8s_health.merge(test_health)
         return k8s_health
 
     def _health_k8s_readyz(self) -> Health:
         """Check if kubernetes thinks the pod is healthy."""
         health = Health(source=self._instance_id)
 
-        if self.readyz():
-            health.healthy("KubeAPI: readyz reports ready")
-        else:
-            health.warning("KubeAPI: readyz reports NOT ready.")
+        try:
+            if self.readyz():
+                health.healthy("KubeAPI: readyz reports ready")
+            else:
+                health.warning("KubeAPI: readyz reports NOT ready.")
+        # pylint: disable=broad-except
+        except Exception as err:
+            health.error(f"Could not retrieve readyz: {err}")
+
+        return health
+
+    def _health_k8s_livez(self) -> Health:
+        """Check if kubernetes thinks the pod is healthy."""
+        health = Health(source=self._instance_id)
+
+        try:
+            if self.livez():
+                health.healthy("KubeAPI: livez reports ready")
+            else:
+                health.warning("KubeAPI: livez reports NOT ready.")
+        # pylint: disable=broad-except
+        except Exception as err:
+            health.error(f"Could not retrieve livez: {err}")
 
         return health
 

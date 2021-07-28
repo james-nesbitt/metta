@@ -228,8 +228,32 @@ class KubernetesDeploymentWorkloadPlugin:
             if status is None:
                 health.error(f"Deployment: [{self.namespace}/{self.name}] retrieved no status")
             else:
+                if status.conditions["Available"] == "True":
+                    condition = status.conditions["Available"]
+                    health.healthy(
+                        f"Deployment: [{self.namespace}/{self.name}] "
+                        "Deployment is available "
+                        f"-> {condition.message}"
+                    )
+                if status.conditions["Progressing"] == "True":
+                    condition = status.conditions["Progressing"]
+                    health.warning(
+                        f"Deployment: [{self.namespace}/{self.name}] "
+                        "Deployment is progressing "
+                        f"-> {condition.message}"
+                    )
+                else:
+                    health.error(
+                        f"Deployment: [{self.namespace}/{self.name}] "
+                        "Deployment is neither progressing nor available "
+                        f"-> {condition.message}"
+                    )
+
                 for condition in status.conditions:
-                    if condition.status == "True":
+                    if condition.type in ["Available", "Progressing"]:
+                        pass
+
+                    elif condition.status == "True":
                         health.healthy(
                             f"Deployment: [{self.namespace}/{self.name}] {condition.type} "
                             f"-> {condition.message}"

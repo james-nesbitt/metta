@@ -96,7 +96,7 @@ def environment_up_unlocked(environment_up, mke, kubeapi):
     return environment_up
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def healthpoller(environment_up):
     """Start the healthpoller."""
     healthpoller_plugin = environment_up.fixtures.get_plugin(instance_id="healthpoller")
@@ -144,7 +144,7 @@ def loki(environment_up_unlocked):
         loki_plugin.apply(wait=True)
 
     # pylint: disable=broad-except
-    except BaseException:
+    except Exception:
         # this is not a blocking failure
         logger.error("Loki monitoring stack failed to initialize before running test")
 

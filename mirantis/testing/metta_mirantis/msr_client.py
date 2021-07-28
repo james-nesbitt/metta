@@ -140,6 +140,7 @@ class MSRAPIClientPlugin:
         msr_health = Health(source=self._instance_id, status=HealthStatus.UNKNOWN)
 
         for _health_health_function in [
+            self._health_api_health,
             self._health_node_health,
             self._health_msr_replica_health,
             self._health_msr_alerts,
@@ -160,7 +161,6 @@ class MSRAPIClientPlugin:
     def api_health(self, node: int = None):
         """Check the API ping response."""
         endpoint = self._accesspoint_url("health", root_api=True, node=node)
-
         with requests.get(endpoint, auth=self._api_auth(), verify=self.verify) as response:
             response.raise_for_status()
             return json.loads(response.content)
@@ -279,14 +279,30 @@ class MSRAPIClientPlugin:
 
         """
         node_dict = self.hosts[node]
+        if "msr_accesspoint" in node_dict:
+            return node_dict["msr_accesspoint"]
         if "address" in node_dict:
             return node_dict["address"]
+        if "public_ip" in node_dict:
+            return node_dict["public_ip"]
         if "ssh" in node_dict:
             return node_dict["ssh"]["address"]
         if "winrm" in node_dict:
             return node_dict["winrm"]["address"]
 
         raise ValueError(f"No node address could be found for the node {node}")
+
+    def _health_api_health(self):
+        """Test API health."""
+        health = Health(source=self._instance_id)
+
+        node_health = self.api_health()
+        if node_health["Healthy"]:
+            health.healthy("MSR: API is healthy")
+        else:
+            health.error(node_health["Error"])
+
+        return health
 
     def _health_node_health(self):
         """Test node health."""

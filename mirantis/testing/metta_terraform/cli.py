@@ -13,6 +13,7 @@ from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .provisioner import METTA_TERRAFORM_PROVISIONER_PLUGIN_ID
+from .client import METTA_TERRAFORM_CLIENT_PLUGIN_ID
 
 logger = logging.getLogger("metta.cli.terraform")
 
@@ -28,9 +29,30 @@ class TerraformCliPlugin(CliBase):
     def fire(self):
         """Return a dict of commands.
 
-        Don't return any commands if there is no provisioner plugin available
+        Don't return any commands if there are no plugind available
 
         """
+        commands: Dict[str, object] = {}
+
+        if (
+            self._environment.fixtures.get(
+                plugin_id=METTA_TERRAFORM_CLIENT_PLUGIN_ID,
+                exception_if_missing=False,
+            )
+            is not None
+        ):
+            commands["terraform"] = TerraformClientGroup(self._environment)
+
+        return commands
+
+
+class TerraformClientGroup:
+    """Terraform client cli commands."""
+
+    def __init__(self, environment: Environment):
+        """Inject environment."""
+        self._environment = environment
+
         if (
             self._environment.fixtures.get(
                 plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
@@ -38,12 +60,58 @@ class TerraformCliPlugin(CliBase):
             )
             is not None
         ):
-            return {"contrib": {"terraform": TerraformGroup(self._environment)}}
+            self.provisioner = TerraformProvisionerGroup(self._environment)
 
-        return {}
+    def _select_client(self, instance_id: str = ""):
+        """Pick a matching terraform provisioner."""
+        if instance_id:
+            return self._environment.fixtures.get(
+                plugin_id=METTA_TERRAFORM_CLIENT_PLUGIN_ID,
+                instance_id=instance_id,
+            )
+
+        # Get the highest priority provisioner
+        return self._environment.fixtures.get(
+            plugin_id=METTA_TERRAFORM_CLIENT_PLUGIN_ID,
+        )
+
+    def info(self, client: str = "", deep: bool = False) -> Dict[str, Any]:
+        """Get info about a client plugin."""
+        fixture = self._select_client(instance_id=client)
+        return cli_output(fixture.info(deep=deep))
+
+    def init(self, client: str = ""):
+        """Run terraform init."""
+        plugin = self._select_client(instance_id=client).plugin
+        plugin.init()
+
+    def plan(self, client: str = ""):
+        """Run client plan."""
+        plugin = self._select_client(instance_id=client).plugin
+        plugin.plan()
+
+    def apply(self, client: str = ""):
+        """Run terraform apply."""
+        plugin = self._select_client(instance_id=client).plugin
+        plugin.apply()
+
+    def check(self, client: str = ""):
+        """Run client check."""
+        plugin = self._select_client(instance_id=client).plugin
+        plugin.check()
+
+    def output(self, client: str = "", name: str = ""):
+        """Retrieve Terraform outputs."""
+        plugin = self._select_client(instance_id=client).plugin
+        return cli_output(plugin.output(name=name))
+
+    def destroy(self, client: str = ""):
+        """Run terraform destroy."""
+        plugin = self._select_client(instance_id=client).plugin
+        plugin.destroy()
 
 
-class TerraformGroup:
+class TerraformProvisionerGroup:
     """Base Fire command group for terraform cli commands."""
 
     def __init__(self, environment: Environment):
@@ -68,37 +136,17 @@ class TerraformGroup:
         fixture = self._select_provisioner(instance_id=provisioner)
         return cli_output(fixture.info(deep=deep))
 
-    def fixtures(self, provisioner: str = ""):
-        """List all fixtures for this provisioner."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        fixture_list = [
-            {
-                "plugin_id": fixture.plugin_id,
-                "instance_id": fixture.instance_id,
-                "interfaces": fixture.interfaces,
-                "priority": fixture.priority,
-            }
-            for fixture in provisioner_plugin.fixtures
-        ]
-
-        cli_output(fixture_list)
-
     def prepare(self, provisioner: str = ""):
         """Run provisioner prepare."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner_plugin.prepare()
+        plugin = self._select_provisioner(instance_id=provisioner).plugin
+        plugin.prepare()
 
     def apply(self, provisioner: str = ""):
         """Run provisioner apply."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner_plugin.apply()
-
-    def check(self, provisioner: str = ""):
-        """Run provisioner check."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner_plugin.check()
+        plugin = self._select_provisioner(instance_id=provisioner).plugin
+        plugin.apply()
 
     def destroy(self, provisioner: str = ""):
         """Run provisioner destroy."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
-        provisioner_plugin.destroy()
+        plugin = self._select_provisioner(instance_id=provisioner).plugin
+        plugin.destroy()

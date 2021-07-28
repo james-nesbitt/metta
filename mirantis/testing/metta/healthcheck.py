@@ -1,6 +1,6 @@
 """
 
-Health check plugins
+Health check plugins.
 
 Plugins which can be used to determine health of a system.
 
@@ -87,7 +87,7 @@ class HealthMessage:
 
     def __str__(self) -> str:
         """Convert message instance to string."""
-        return f"[{int(self.time)}] {self.source}: {self.status} => {self.message}"
+        return f"[{int(self.time)}] {self.status} > {self.source} => {self.message}"
 
 
 class Health:
