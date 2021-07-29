@@ -7,7 +7,7 @@ import time
 import logging
 from subprocess import CalledProcessError
 
-from mirantis.testing.metta_sonobuoy.sonobuoy import Status
+from mirantis.testing.metta_sonobuoy.results import Status
 
 logger = logging.getLogger("cncf conformance")
 
@@ -38,7 +38,7 @@ def test_start_cncf_conformance(cncf_workload):
         logger.warning("Still starting sonobuoy (%s) ... %s", i, status)
 
 
-def test_wait_cncf_conformance(cncf_workload):
+def test_wait_cncf_conformance(cncf_workload, healthpoller):
     """Wait for cncf conformance test suite to finish running."""
     # Every X seconds output some status report to show that it is still
     # working
@@ -51,6 +51,22 @@ def test_wait_cncf_conformance(cncf_workload):
     while now < SONOBUOY_TEST_TIMER_LIMIT:
         time.sleep(SONOBUOY_TEST_TIMER_STEP)
         now = time.perf_counter() - start
+
+        poll_count = healthpoller.poll_count()
+        health = healthpoller.health()
+        messages = list(health.messages(since=now))
+
+        logger.info(
+            "HealthCheck %s [%s polls completed] Status: %s [from time %s] ::"
+            "\n-----------------------------------------------"
+            "\n%s"
+            "\n-----------------------------------------------",
+            1,
+            poll_count,
+            health.status(),
+            0,
+            "\n".join(f"-->{message}" for message in messages),
+        )
 
         try:
             status = cncf_workload.status()

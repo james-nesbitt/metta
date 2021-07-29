@@ -17,8 +17,8 @@
 presets:
     # This will tell metta to include metta_mirantis/config/variation/testkit
     variation: testkit
-    # this will tell metta to include metta_mirantis/config/release/patch/202106
-    release: patch/202106
+    # this will tell metta to include metta_mirantis/config/release/patch/patch/202107-C
+    release: patch/202107-C
     # This will tell metta to include metta_mirantis/config/cluster/poc
     cluster: poc
     # This will tell metta to include metta_mirantis/config/platform/public/ubuntu/20.04

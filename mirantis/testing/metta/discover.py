@@ -90,7 +90,6 @@ def discover_project_root(config: Config, start_path: str, marker_files: List[st
                 # If we found a marker file in a path, then we add that path as
                 # a config source.  If the path contains a ./config then we add
                 # that as well.
-
                 if check_path not in sys.path:
                     sys.path.append(check_path)
 

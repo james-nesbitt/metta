@@ -55,13 +55,12 @@ class EnvManager:
 
     def install(self, environment):
         """Bring up all provisioners as needed."""
-        combo_provisioner = environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
-            plugin_id=METTA_PLUGIN_ID_PROVISIONER_COMBO,
+        provisioner = environment.fixtures.get_plugin(
+            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
         )
-        combo_provisioner.prepare()
+        provisioner.prepare()
         try:
-            combo_provisioner.apply()
+            provisioner.apply()
         # pylint: disable=broad-except
         except Exception as err:
             logger.error(
@@ -73,16 +72,13 @@ class EnvManager:
 
     def upgrade(self, environment):
         """Upgrade the environment to the second state.
-
-        @NOTE we only need launchpad to re-install for an upgrade
         """
-        launchpad_provisioner = environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
-            plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
+        provisioner = environment.fixtures.get_plugin(
+            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
         )
 
         try:
-            launchpad_provisioner.apply()
+            provisioner.apply()
         # pylint: disable=broad-except
         except BaseException:
             logger.error("Provisioner upgrade failed.  Tearing down the resources now")
@@ -92,11 +88,10 @@ class EnvManager:
     # pylint: disable=no-self-use
     def destroy(self, environment):
         """Destroy all created resources."""
-        combo_provisioner = environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
-            plugin_id=METTA_PLUGIN_ID_PROVISIONER_COMBO,
+        provisioner = environment.fixtures.get_plugin(
+            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
         )
-        combo_provisioner.destroy()
+        provisioner.destroy()
 
 
 class TestBase:
@@ -109,112 +104,54 @@ class TestBase:
 
     # ----- MKE TESTS ---------------------------------------------------------
 
-    def mke_all(self, environment):
-        """Run all of the MKE tests."""
-        self.mke_client_id(environment)
-        self.mke_nodes_health(environment)
-        self.mke_swarminfo_health(environment)
+    def health(self, environment):
+        """Run all of the health checks."""
+        for health_fixture in self._health_check_fixtures():
+            health_plugin = health_fixture.plugin
 
-    def _mke_client_from_env(self, environment):
+            try:
+                health_plugin_results = health_plugin.health()
+
+            # we turn any exception into a health marker
+            # pylint: disable=broad-except
+            except Exception as err:
+                health_info[health_fixture.instance_id] = {
+                    "fixture": {
+                        "plugin_id": health_fixture.plugin_id,
+                        "instance_id": health_fixture.instance_id,
+                        "priority": health_fixture.priority,
+                    },
+                    "status": HealthStatus.CRITICAL,
+                    "messages": [
+                        HealthMessage(
+                            source=health_fixture.instance_id,
+                            status=HealthStatus.CRITICAL,
+                            message=str(err),
+                        )
+                    ],
+                }
+
+            else:
+                health_info[health_fixture.instance_id] = {
+                    "fixture": {
+                        "plugin_id": health_fixture.plugin_id,
+                        "instance_id": health_fixture.instance_id,
+                        "priority": health_fixture.priority,
+                    },
+                    "status": health_plugin_results.status(),
+                    "messages": list(health_plugin_results.messages()),
+                }
+
+            assert health.status().is_better_than(HealthStatus.ERROR), "HealthCheck Failed"
+
+
+
+    def _health_check_fixtures(self, environment):
         """Return the mke client from the environment."""
         # get the mke client.
         # We could get this from the launchpad provisioner if we were worried about
         # which mke client plugin instance we receive,  however there is only one
         # in this case.
         return environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
-            plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALCHECK],
         )
-
-    def mke_client_id(self, environment):
-        """Check that we got a good mke client that can connect to the MKE API."""
-        mke_client = self._mke_client_from_env(environment)
-
-        info = mke_client.api_info()
-        logger.info("MKE Cluster ID: %s", info["ID"])
-        logger.info("--> Warnings : %s", info["Warnings"])
-
-    def mke_nodes_health(self, environment):
-        """Check if the mke nodes healthy, do they have a healthy node state."""
-        mke_client = self._mke_client_from_env(environment)
-
-        nodes = mke_client.api_nodes()
-
-        for node in nodes:
-            assert MKENodeState.READY.match(
-                node["Status"]["State"]
-            ), f"MKE NODE {node['ID']} was not in a READY state: {node['Status']}"
-
-    def mke_swarminfo_health(self, environment):
-        """Check if MKE API indicate a nood number of nodes in the swarm (if swarm is used)."""
-        mke_client = self._mke_client_from_env(environment)
-
-        info = mke_client.api_info()
-
-        if "Swarm" in info:
-            swarm_info = info["Swarm"]
-
-            assert swarm_info["Nodes"] > 0, "MKE reports no nodes in the cluster"
-
-    # ----- MSR TESTS ---------------------------------------------------------
-
-    def msr_all(self, environment):
-        """Run all of the MSR tests."""
-        self.msr_client(environment)
-        self.msr_root_health(environment)
-        self.msr_replica_health(environment)
-        self.msr_alerts(environment)
-
-    def _msr_client_from_env(self, environment):
-        """Return the msr client from the environment."""
-        # get the mke client.
-        # We could get this from the launchpad provisioner if we were worried about
-        # which mke client plugin instance we receive,  however there is only one
-        # in this case.
-        return environment.fixtures.get_plugin(
-            plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
-            plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
-        )
-
-    def msr_client(self, environment):
-        """Check that we get a good msr client."""
-        self._msr_client_from_env(environment)
-
-    def msr_root_health(self, environment):
-        """Test the the node specific ping and health checks don't fail."""
-        msr_client = self._msr_client_from_env(environment)
-
-        for i in range(0, msr_client.host_count()):
-            assert msr_client.api_ping(node=i)
-            assert msr_client.api_health(node=i)["Healthy"]
-
-            print(f"{i}: NGINX: {msr_client.api_nginx_status(node=i)}")
-
-    def msr_replica_health(self, environment):
-        """Test that we can access node information."""
-        msr_client = self._msr_client_from_env(environment)
-
-        status = msr_client.api_status()
-        for replica_id, replica_health in status["replica_health"].items():
-            assert MSRReplicaHealth.OK.match(
-                replica_health
-            ), f"Replica [{replica_id}] did is not READY : {replica_health}"
-
-    def msr_alerts(self, environment):
-        """Check that we can get alerts."""
-        msr_client = self._msr_client_from_env(environment)
-
-        # this might produce an exception which would fail the test
-        alerts = msr_client.api_alerts()
-
-        if len(alerts) > 0:
-
-            for alert in alerts:
-                # we don't actually fail the test on alerts, but we do log
-                # then in case they warrant a manual test failure.
-                logger.warning(
-                    "%s: %s [%s]",
-                    alert["id"],
-                    alert["message"],
-                    alert["url"] if "url" in alert else "no-url",
-                )

@@ -13,7 +13,7 @@ import os
 import time
 import subprocess
 import shutil
-from typing import Dict, List
+from typing import List
 
 logger = logging.getLogger("metta_terraform:client")
 
@@ -30,8 +30,7 @@ class TerraformClient:
         self,
         working_dir: str,
         state_path: str,
-        vars_path: str,
-        variables: Dict[str, str],
+        tfvars_path: str,
         binary: str = TERRAFORM_CLIENT_DEFAULT_BINARY,
     ):
         """Initialize Terraform client.
@@ -43,16 +42,12 @@ class TerraformClient:
 
         state_path (str) : path to where the terraform state should be kept
 
-        vars_path (str) : string path to where the vars file should be written.
-
-        variables (Dict[str,str]) : terraform variables dict which will be
-            written to a vars file.
+        tfvars_path (str) : string path to where the vars file should be written.
 
         """
-        self.vars = variables
-        self.working_dir = working_dir
-        self.state_path = state_path
-        self.vars_path = vars_path
+        self._working_dir = working_dir
+        self._state_path = state_path
+        self._tfvars_path = tfvars_path
 
         if shutil.which(binary) is None:
             raise ValueError(
@@ -60,16 +55,7 @@ class TerraformClient:
                 f"Expected binary at path {binary}"
             )
 
-        self.terraform_bin = binary
-
-    def state(self):
-        """Return the terraform state contents."""
-        try:
-            with open(os.path.join(self.working_dir, "terraform.tfstate")) as json_file:
-                return json.load(json_file)
-        except FileNotFoundError:
-            logger.debug("Terraform client found no state file")
-            return None
+        self._terraform_bin = binary
 
     def init(self):
         """Run terraform init.
@@ -83,7 +69,7 @@ class TerraformClient:
         """
         try:
             lockfile = os.path.join(
-                os.path.dirname(self.state_path), ".terraform.metta_mirantis.init.lock"
+                os.path.dirname(self._state_path), ".terraform.metta_mirantis.init.lock"
             )
             if os.path.exists(lockfile):
                 logger.info(
@@ -101,16 +87,28 @@ class TerraformClient:
                 with open(lockfile, "w") as lockfile_object:
                     lockfile_object.write(f"{os.getpid()} is running init")
                 try:
-                    self._run(["init"], with_vars=False, with_state=False)
+                    self._run(["init"], with_tfvars=False, with_state=False)
                 finally:
                     os.remove(lockfile)
         except subprocess.CalledProcessError as err:
             logger.error(
                 "Terraform client failed to run init in %s: %s",
-                self.working_dir,
+                self._working_dir,
                 err.output,
             )
             raise Exception("Terraform client failed to run init") from err
+
+    def plan(self):
+        """Check a terraform plan."""
+        try:
+            self._run(["plan"], with_state=True, with_tfvars=True, return_output=False)
+        except subprocess.CalledProcessError as err:
+            logger.error(
+                "Terraform client failed to run plan in %s: %s",
+                self._working_dir,
+                err.stderr,
+            )
+            raise RuntimeError("Terraform client failed to plan()") from err
 
     def apply(self):
         """Apply a terraform plan."""
@@ -118,46 +116,83 @@ class TerraformClient:
             self._run(
                 ["apply", "-auto-approve"],
                 with_state=True,
-                with_vars=True,
+                with_tfvars=True,
                 return_output=False,
             )
         except subprocess.CalledProcessError as err:
             logger.error(
                 "Terraform client failed to run apply in %s: %s",
-                self.working_dir,
+                self._working_dir,
                 err.stderr,
             )
-            raise RuntimeError("Terraform client failed to run") from err
-
-    def plan(self):
-        """Check a terraform plan."""
-        try:
-            self._run(["plan"], with_state=True, with_vars=True, return_output=False)
-        except subprocess.CalledProcessError as err:
-            logger.error(
-                "Terraform client failed to run plan in %s: %s",
-                self.working_dir,
-                err.stderr,
-            )
-            raise RuntimeError("Terraform client failed to plan") from err
+            raise RuntimeError("Terraform client failed to run apply()") from err
 
     def destroy(self):
-        """Apply a terraform plan."""
+        """Remove resources listed in the state file."""
         try:
             self._run(
                 ["destroy", "-auto-approve", "-lock=false"],
                 with_state=True,
-                with_vars=True,
+                with_tfvars=True,
                 return_output=False,
             )
-            self._rm_vars_file()
         except subprocess.CalledProcessError as err:
             logger.error(
-                "Terraform client failed to run init in %s: %s",
-                self.working_dir,
+                "Terraform client failed to run destroy() in %s: %s",
+                self._working_dir,
                 err.output,
             )
             raise RuntimeError("Terraform client failed to run destroy") from err
+
+    def validate(self):
+        """Validate a terraform plan."""
+        try:
+            self._run(
+                ["validate", "-json"],
+                with_state=True,
+                with_tfvars=True,
+                return_output=False,
+            )
+        except subprocess.CalledProcessError as err:
+            logger.error(
+                "Terraform client failed to run validate() in %s: %s",
+                self._working_dir,
+                err.output,
+            )
+            raise RuntimeError("Terraform client failed to run validate") from err
+
+    def test(self):
+        """Apply a terraform plan."""
+        try:
+            self._run(
+                ["test"],
+                with_state=True,
+                with_tfvars=True,
+                return_output=False,
+            )
+        except subprocess.CalledProcessError as err:
+            logger.error(
+                "Terraform client failed to run test() in %s: %s",
+                self._working_dir,
+                err.output,
+            )
+            raise RuntimeError("Terraform client failed to run test") from err
+
+    def state(self):
+        """Return the terraform state contents."""
+        try:
+            with open(os.path.join(self._working_dir, "terraform.tfstate")) as json_file:
+                return json.load(json_file)
+        except FileNotFoundError:
+            logger.debug("Terraform client found no state file")
+            return None
+        except subprocess.CalledProcessError as err:
+            logger.error(
+                "Terraform client failed to run state() in %s: %s",
+                self._working_dir,
+                err.output,
+            )
+            raise RuntimeError("Terraform client failed to run state()") from err
 
     def output(self, name: str = ""):
         """Retrieve terraform outputs.
@@ -177,54 +212,36 @@ class TerraformClient:
 
         try:
             if name:
-                output = self._run(args, [name], with_vars=False, return_output=True)
+                output = self._run(args, [name], with_tfvars=False, return_output=True)
             else:
-                output = self._run(args, with_vars=False, return_output=True)
+                output = self._run(args, with_tfvars=False, return_output=True)
         except subprocess.CalledProcessError as err:
             logger.error(
                 "Terraform client failed to run init in %s: %s",
-                self.working_dir,
+                self._working_dir,
                 err.output,
             )
             raise RuntimeError("Terraform client failed to retrieve output") from err
 
         return json.loads(output)
 
-    def _make_vars_file(self):
-        """Write the vars file."""
-        vars_path = self.vars_path
-
-        try:
-            os.makedirs(os.path.dirname(os.path.abspath(vars_path)), exist_ok=True)
-            with open(vars_path, "w") as var_file:
-                json.dump(self.vars, var_file, sort_keys=True, indent=4)
-        except Exception as err:
-            raise RuntimeError(f"Could not create terraform vars file: {vars_path}") from err
-
-    def _rm_vars_file(self):
-        """Remove any created vars file."""
-        vars_path = self.vars_path
-        if os.path.isfile(vars_path):
-            os.remove(vars_path)
-
     def _run(
         self,
         args: List[str],
         append_args: List[str] = None,
         with_state=True,
-        with_vars=True,
+        with_tfvars=True,
         return_output=False,
     ):
         """Run terraform CLI command."""
-        cmd = [self.terraform_bin]
-        cmd += [f"-chdir={self.working_dir}"]
+        cmd = [self._terraform_bin]
+        cmd += [f"-chdir={self._working_dir}"]
         cmd += args
 
-        if with_vars:
-            self._make_vars_file()
-            cmd += [f"-var-file={self.vars_path}"]
-        if with_state:
-            cmd += [f"-state={self.state_path}"]
+        if with_tfvars and os.path.isfile(self._tfvars_path):
+            cmd += [f"-var-file={self._tfvars_path}"]
+        if with_state and os.path.isfile(self._state_path):
+            cmd += [f"-state={self._state_path}"]
 
         if append_args is not None:
             cmd += append_args

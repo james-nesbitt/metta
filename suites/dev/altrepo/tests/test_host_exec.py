@@ -8,7 +8,7 @@ import logging
 import json
 
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
-from mirantis.testing.metta_launchpad import METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID
+from mirantis.testing.metta_launchpad.client import METTA_LAUNCHPAD_CLIENT_PLUGIN_ID
 
 logger = logging.getLogger("test_clients")
 
@@ -22,7 +22,7 @@ def test_launchpad_exec_client_hosts(environment_up):
     logger.info("Getting exec client")
     exec_client = environment_up.fixtures.get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
-        plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
+        plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
     )
 
     hosts = exec_client.hosts()
@@ -37,7 +37,7 @@ def test_launchpad_exec_client_exec(environment_up):
     logger.info("Getting exec client")
     exec_client = environment_up.fixtures.get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
-        plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
+        plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
     )
 
     logger.info("Running 'ls -la' on two different hosts")

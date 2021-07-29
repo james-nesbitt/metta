@@ -1,6 +1,6 @@
 
 # Create an environment called 'sanity'
-sanity:
+testkit:
   bootstraps:
     metta:
     - metta_common

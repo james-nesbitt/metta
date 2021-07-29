@@ -162,16 +162,17 @@ class Environment:
         if not self.config_label:
             # this environment does not have a related configuration to program
             # itself with, but it could have had bootstraps.
-            logger.info("New environment created: %s (not from config)", name)
+            #
+            # this was the original mechanisms for defining environments, and
+            # does have usecases left today for simple environment definition,
+            # but any serious environment usage would be much better served by
+            # using the configuration options; it lets you define more config
+            # sources, fixtures, bootstraps etc.
 
+            logger.info("New environment created: %s (not from config)", name)
             self.bootstrap(bootstraps)
-            # this was the original mechanisms for defining environments, and  does have usecases
-            # left today for simple environment definition, but any serious environment usage would
-            # be much better served by using the configuration options; it lets you define more
-            # config sources, fixtures, bootstraps etc.
 
         else:
-
             logger.info("New environment created: %s", name)
 
             # There is a config dict to add to the environment
@@ -252,10 +253,10 @@ class Environment:
         """ common config base for all environment states """
 
         # here we check if there is a state that should come from config.
-        # if the state looks liek a real key then we build a config base for it
-        # for loading config from that path, otherwsie we leave it as None
+        # if the state looks like a real key then we build a config base for it
+        # for loading config from that path, otherwise we leave it as None
         # which is used for testing later in this method.
-        if state in [METTA_ENVIRONMENT_STATE_UNUSED_NAME, state]:
+        if state in [METTA_ENVIRONMENT_STATE_UNUSED_NAME]:
             state_config_base = None
         else:
             state_config_base = [
@@ -976,6 +977,10 @@ class Environment:
                 f"Bad arguments passed for creating a fixture: "
                 f":{plugin_id}:{instance_id} ({priority})"
             )
+
+        if labels is None:
+            labels = {}
+        labels["environment"] = self.name
 
         plugin_instance = Factory.create(plugin_id, instance_id, *[self, instance_id], **arguments)
 

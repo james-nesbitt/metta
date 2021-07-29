@@ -118,7 +118,7 @@ class MKEAPIClientPlugin:
         """ String path which should be used as a root path for storing client
            bundles """
 
-        if self.accesspoint is None:
+        if not self.accesspoint:
             # use the first host as an accesspoint if none was delivered
             self.accesspoint = self._node_address(0)
 
@@ -141,8 +141,9 @@ class MKEAPIClientPlugin:
         # and kubectl_api client clients to the fixtures stack for the env.
         # We will broadly ignore exceptions as we are optimistically hoping
         # that we are even installed at this point.
+        # self.make_fixtures()
         try:
-            self.make_bundle_clients()
+            self.make_fixtures()
         except ValueError as err:
             logger.debug("MKE client was unable to create clients: %s", err)
 
@@ -338,7 +339,7 @@ class MKEAPIClientPlugin:
             os.unlink(bundle_zip_file)
 
         # now we instruct to rebuild the fixture list.
-        self.make_bundle_clients()
+        self.make_fixtures()
 
     def api_read_bundle_meta(self):
         """Parse and return the client bundle metadata."""
@@ -379,7 +380,7 @@ class MKEAPIClientPlugin:
 
         return data
 
-    def make_bundle_clients(self):
+    def make_fixtures(self):
         """Make metta clients from the client bundle."""
         bundle_info = self.api_read_bundle_meta()
 
@@ -393,6 +394,10 @@ class MKEAPIClientPlugin:
                 instance_id=instance_id,
                 priority=70,
                 arguments={"kube_config_file": kube_config},
+                labels={
+                    "parent_plugin_id": METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+                    "parent_instance_id": self._instance_id,
+                },
                 replace_existing=True,
             )
             # use the parent UCCTFixturesPlugin methods for adding fixtures
@@ -422,6 +427,10 @@ class MKEAPIClientPlugin:
                 "host": host,
                 "cert_path": cert_path,
                 "version": METTA_MIRANTIS_MKE_DOCKER_VERSION_DEFAULT,
+            },
+            labels={
+                "parent_plugin_id": METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
+                "parent_instance_id": self._instance_id,
             },
             replace_existing=True,
         )
@@ -483,8 +492,12 @@ class MKEAPIClientPlugin:
     def _node_address(self, node: int = 0):
         """Get the ip address from the node for the node index."""
         node_dict = self.hosts[node]
+        if "mke_accesspoint" in node_dict:
+            return node_dict["mke_accesspoint"]
         if "address" in node_dict:
             return node_dict["address"]
+        if "public_ip" in node_dict:
+            return node_dict["public_ip"]
         if "ssh" in node_dict:
             return node_dict["ssh"]["address"]
         if "winrm" in node_dict:

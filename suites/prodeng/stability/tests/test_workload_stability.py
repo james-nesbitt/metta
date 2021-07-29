@@ -4,8 +4,9 @@ Run a workload stability test.
 
 """
 import logging
+import time
 
-from mirantis.testing.metta_common.healthpoll_workload import health_poller_output_log
+from mirantis.testing.metta.healthcheck import HealthStatus
 
 
 logger = logging.getLogger("stability-test")
@@ -13,9 +14,24 @@ logger = logging.getLogger("stability-test")
 
 # pylint: disable=unused-argument
 def test_01_workloads_up(healthpoller, nginx_deployment, metrics_deployment):
-    """Ensure that the fixtures get created and that they are health for 2 minutes."""
-    poll_logger = logger.getChild("healthpoller")
-    """Use a new logger just for the health output."""
+    """Ensure that the fixtures are healthy after 1 minute."""
 
-    # use a common function for logging poller status
-    health_poller_output_log(healthpoller=healthpoller, poll_logger=poll_logger, period=30, count=4)
+    time.sleep(60)
+
+    poll_count = healthpoller.poll_count()
+    health = healthpoller.health()
+    messages = list(health.messages())
+
+    logger.info(
+        "HealthCheck %s [%s polls completed] Status: %s [from time %s] ::"
+        "\n-----------------------------------------------"
+        "\n%s"
+        "\n-----------------------------------------------",
+        1,
+        poll_count,
+        health.status(),
+        0,
+        "\n".join(f"-->{message}" for message in messages),
+    )
+
+    assert health.status().is_better_than(HealthStatus.ERROR), "Health was not good"

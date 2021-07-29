@@ -59,7 +59,7 @@ class Fixture:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        plugin: object,
+        plugin: Any,
         plugin_id: str,
         instance_id: str,
         interfaces: List[str],
@@ -80,12 +80,12 @@ class Fixture:
             identifiers that the plugin should support.
 
         """
-        self.plugin_id = plugin_id
-        self.instance_id = instance_id
-        self.interfaces = interfaces
-        self.labels = labels
-        self.priority = priority
-        self.plugin = plugin
+        self.plugin_id: str = plugin_id
+        self.instance_id: str = instance_id
+        self.interfaces: List[str] = interfaces
+        self.labels: Dict[str, str] = labels
+        self.priority: int = priority
+        self.plugin: Any = plugin
 
     def __eq__(self, other):
         """Compare to another fixture.
@@ -106,7 +106,29 @@ class Fixture:
         return self.plugin_id == other.plugin_id and self.instance_id == other.instance_id
 
     def info(self, deep: bool = False, children: bool = True) -> Dict[str, Any]:
-        """Return some dict metadata about the fixture and plugin."""
+        """Return some dict metadata about the fixture and plugin.
+
+        Parameters:
+        -----------
+        deep (bool) : whether or not the information provided should go deep
+            into the avaiable sources of data.  Info is intended to be cheap
+            to perform, but there are some scenarios where you want more data
+            despite the cost, or risk for exception.
+        children (bool) : if the fixture has children fixtures, then this
+            flag controls whether or not the children info should also be
+            included.
+
+        Returns:
+        --------
+        Dict[str, Any] or primitives that can be used for introspection of the
+        fixtures.
+
+        Raises:
+        -------
+        Info() should be safe for operation, but if deep=True then there may be
+        a risk of a plugin throwing an exception.
+
+        """
         fixture_info: Dict[str, Any] = {
             "fixture": {
                 "instance_id": self.instance_id,
@@ -465,34 +487,84 @@ class Fixtures:
         """
         filtered = Fixtures()
         for fixture in self._fixtures:
-            if interfaces:
-                intersect = False
-                for required_interface in interfaces:
-                    if required_interface not in fixture.interfaces:
-                        break
-                # I feel like there is a "right" way to do this?
-                else:
-                    intersect = True
-                if not intersect:
-                    continue
+            try:
+                if interfaces:
+                    for required_interface in interfaces:
+                        if required_interface not in fixture.interfaces:
+                            raise DoesNotMatchError("does not contain required interface")
 
-            if labels:
-                intersect = False
-                for required_label in labels:
-                    if required_label not in fixture.labels:
-                        break
-                # I feel like there is a "right" way to do this?
-                else:
-                    intersect = True
-                if not intersect:
-                    continue
+                if labels:
+                    for required_label in labels:
+                        if required_label not in fixture.labels:
+                            raise DoesNotMatchError("does not contain required label")
 
-            if plugin_id and not fixture.plugin_id == plugin_id:
-                continue
-            if instance_id and not fixture.instance_id == instance_id:
-                continue
+                if plugin_id and not fixture.plugin_id == plugin_id:
+                    raise DoesNotMatchError("plugin_id does not match")
+                if instance_id and not fixture.instance_id == instance_id:
+                    raise DoesNotMatchError("instance_id does not match")
 
-            filtered.add(fixture, replace_existing=True)
+                filtered.add(fixture, replace_existing=True)
+
+            except DoesNotMatchError:
+                pass
+
+        if exception_if_missing and len(filtered) == 0:
+            raise KeyError(f"Filter found matches [{plugin_id}][{instance_id}]")
+        return filtered
+
+    # I should try to fix the branch count here
+    # pylint: disable=too-many-branches
+    def filter_out(
+        self,
+        plugin_id: str = "",
+        instance_id: str = "",
+        interfaces: List[str] = None,
+        labels: List[str] = None,
+        exception_if_missing: bool = False,
+    ) -> "Fixtures":
+        """Return the fixtures with fixtures removed.
+
+        Parameters:
+        -----------
+        Filtering parameters:
+
+        plugin_id (str) : registry plugin_id
+        interfaces (List[str]) : List of interfaces which the fixture must have
+        labels (List[str]) : List of labels which the fixture must have
+        instance_id (str) : plugin instance identifier
+
+        Returns:
+        --------
+        A new Fixtures object with only matching Fixture objects.  It could
+        contain all of the items. If no filters were passed in, or it could
+        be empty if no matches were found and the passed exception_is_missing
+        variable is True
+
+        Raises:
+        -------
+        KeyError if exception_if_missing is True and no matching fixture was found
+
+        """
+        filtered = Fixtures()
+        for fixture in self._fixtures:
+            try:
+                if interfaces:
+                    for required_interface in interfaces:
+                        if required_interface not in fixture.interfaces:
+                            raise DoesNotMatchError("does not contain required interface")
+
+                if labels:
+                    for required_label in labels:
+                        if required_label not in fixture.labels:
+                            raise DoesNotMatchError("does not contain required label")
+
+                if plugin_id and not fixture.plugin_id == plugin_id:
+                    raise DoesNotMatchError("plugin_id does not match")
+                if instance_id and not fixture.instance_id == instance_id:
+                    raise DoesNotMatchError("instance_id does not match")
+
+            except DoesNotMatchError:
+                filtered.add(fixture, replace_existing=True)
 
         if exception_if_missing and len(filtered) == 0:
             raise KeyError(f"Filter found matches [{plugin_id}][{instance_id}]")
@@ -513,3 +585,7 @@ class Fixtures:
 
         """
         return sorted(self._fixtures, key=lambda i: 1 / i.priority if i.priority > 0 else 0)
+
+
+class DoesNotMatchError(Exception):
+    """An exception to indicate that a value does not match filter expectations."""

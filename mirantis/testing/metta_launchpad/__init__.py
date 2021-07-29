@@ -8,7 +8,7 @@ that had already been provisioned by other services.
 This module registers the package metta plugins.
 
 """
-from typing import Any
+from typing import Any, Dict
 
 from configerus.loaded import LOADED_KEY_ROOT
 
@@ -24,11 +24,15 @@ from .provisioner import (
     METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
     METTA_LAUNCHPAD_CONFIG_LABEL,
 )
-from .exec_client import (
-    LaunchpadExecClientPlugin,
-    METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
+from .client import METTA_LAUNCHPAD_CLIENT_PLUGIN_ID, LaunchpadClientPlugin
+from .cli import (
+    LaunchpadCliPlugin,
+    METTA_LAUNCHPAD_CLI_PLUGIN_ID,
 )
-from .cli import LaunchpadCliPlugin, METTA_LAUNCHPAD_CLI_PLUGIN_ID
+from .launchpad import (
+    METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
+    METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT,
+)
 
 
 @Factory(
@@ -49,14 +53,27 @@ def metta_plugin_factory_provisioner_launchpad(
 
 
 @Factory(
-    plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
+    plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
     interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLIENT],
 )
-def metta_terraform_factory_cliexec_client_launchpad(
-    environment: Environment, instance_id: str = "", client: LaunchpadClient = None
+# pylint: disable=too-many-arguments
+def metta_terraform_factory_client_launchpad(
+    environment: Environment,
+    instance_id: str = "",
+    config_file: str = METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
+    working_dir: str = METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT,
+    cli_options: Dict[str, Any] = None,
+    systems: Dict[str, Dict[str, str]] = None,
 ):
-    """Create an launchpad exec client plugin."""
-    return LaunchpadExecClientPlugin(environment, instance_id, client)
+    """Create a launchpad client plugin."""
+    return LaunchpadClientPlugin(
+        environment=environment,
+        instance_id=instance_id,
+        config_file=config_file,
+        working_dir=working_dir,
+        cli_options=cli_options,
+        systems=systems,
+    )
 
 
 @Factory(
@@ -64,7 +81,7 @@ def metta_terraform_factory_cliexec_client_launchpad(
     interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
 )
 def metta_terraform_factory_cli_launchpad(environment: Environment, instance_id: str = ""):
-    """Create an launchpad cli plugin."""
+    """Create a launchpad cli plugin."""
     return LaunchpadCliPlugin(environment, instance_id)
 
 

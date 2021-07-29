@@ -232,7 +232,13 @@ def health_poller_output_log(
     count: int,
     exception_on_error: bool = True,
 ):
-    """Periodically log a healthpoller plugins health results and logs."""
+    """Periodically log a healthpoller plugins health results and logs.
+
+    This is a usable function which demonstrates a way to interact with an
+    active HealthPollWorkload plugin, by periodically asking the plugin for
+    updates on health.
+
+    """
     last_message_time = 0
     for i in range(0, count):
         time.sleep(period)

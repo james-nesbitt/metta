@@ -10,6 +10,7 @@ is run, and is constantly polling in the background.
 """
 
 import logging
+import time
 
 import pytest
 
@@ -19,19 +20,24 @@ from mirantis.testing.metta.healthcheck import HealthStatus
 logger = logging.getLogger("test_clients.healthpoll")
 
 
-@pytest.mark.last
 def test_healthcheck_status(healthpoller):
     """Check the healthcheck poller."""
-    health = healthpoller.health()
-    poll_count = healthpoller.poll_count
+    time.sleep(30)
 
+    health = healthpoller.health()
     logger.info(
-        "HealthCheck [%s polls completed] Status: %s",
-        poll_count,
-        health.status,
+        "HealthCheck %s [%s polls completed] Status: %s [from time %s] ::"
+        "\n-----------------------------------------------"
+        "\n%s"
+        "\n-----------------------------------------------",
+        1,
+        healthpoller.poll_count(),
+        health.status(),
+        0,
+        "\n".join(f"-->{message}" for message in list(health.messages())),
     )
-    for message in health.messages:
-        logger.info(message)
+
+    assert health.status().is_better_than(HealthStatus.ERROR), "Health was not good"
 
     # Assert that we have nothing more than a warning
-    assert health.status.is_better_than(HealthStatus.ERROR)
+    assert health.status().is_better_than(HealthStatus.ERROR)

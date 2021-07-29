@@ -2,7 +2,7 @@
 
 Test that some clients work
 
-Test the the launchpad provisioner gave us  good exec plugin.
+Test the the launchpad provisioner gave us a client plugin that can exec on hosts.
 
 """
 
@@ -11,15 +11,15 @@ import json
 
 import pytest
 
-from mirantis.testing.metta_launchpad import METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID
+from mirantis.testing.metta_launchpad.client import METTA_LAUNCHPAD_CLIENT_PLUGIN_ID
 
 logger = logging.getLogger("test_clients.launchpad_exec")
 
 
 @pytest.fixture(scope="module")
 def launchpad_exec_client(environment_up):
-    """Get the launchpad exec plugin."""
-    return environment_up.fixtures.get_plugin(plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID)
+    """Get the launchpad client plugin."""
+    return environment_up.fixtures.get_plugin(plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID)
 
 
 def test_launchpad_exec_client_hosts(launchpad_exec_client):

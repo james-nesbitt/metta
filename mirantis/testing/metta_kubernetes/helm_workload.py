@@ -272,7 +272,7 @@ class KubernetesHelmWorkloadPlugin:
         try:
             self._run(cmd=cmd)
         except Exception as err:
-            raise RuntimeError("Helm failed to install the relese") from err
+            raise RuntimeError("Helm failed to install the release") from err
 
     # -all is the used command flag, so the var name makes sense
     # pylint: disable=redefined-builtin

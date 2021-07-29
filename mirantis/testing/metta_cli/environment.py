@@ -52,7 +52,7 @@ class EnvironmentGroup:
         environment_object = self._get_environment(environment)
         return environment_object.name
 
-    def info(self, environment: str = ""):
+    def info(self, environment: str = "", deep: bool = False):
         """Return info about an environment."""
         environment_object = self._get_environment(environment)
 
@@ -63,6 +63,22 @@ class EnvironmentGroup:
                 "available": environment_object.states,
                 "active": environment_object.state,
             }
+
+        info["config"] = {"sources": []}
+        for instance in self._environment.config.plugins.get_instances():
+            source = {
+                "plugin_id": instance.plugin_id,
+                "instance_id": instance.instance_id,
+                "priority": instance.priority,
+            }
+
+            if deep:
+                if instance.plugin_id == PLUGIN_ID_SOURCE_PATH:
+                    source["path"] = instance.plugin.path
+                if instance.plugin_id == PLUGIN_ID_SOURCE_DICT:
+                    source["data"] = instance.plugin.data
+
+            info["config"]["sources"].append(source)
 
         return cli_output(info)
 

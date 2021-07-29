@@ -14,13 +14,13 @@ definition, and how to pull configuration.
 from typing import Dict, Any
 
 from mirantis.testing.metta.plugin import Factory
-from mirantis.testing.metta.client import METTA_PLUGIN_TYPE_CLIENT
+from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta.environment import Environment
 
 # Register the plugin with metta
 
 
-@Factory(plugin_type=METTA_PLUGIN_TYPE_CLIENT, plugin_id="my_client")
+@Factory(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLIENT], plugin_id="my_client")
 def my_client_plugin_factory(
     environment: Environment, instance_id: str, label: str = "my_client", base: str = ""
 ):

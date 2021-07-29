@@ -34,9 +34,9 @@ state:
 # cli without needing metta.
 
 # Where will the vars be written
-vars_path: "terraform/{{id}}.tfvars.json"
+tfvars_path: "terraform/{{id}}.terraform.tfvars.json"
 # Vars list for terraform
-vars:
+tfvars:
     # description = "Name used to identify resources and passed to launchpad."
     cluster_name: "{{id}}"
 

@@ -1,15 +1,13 @@
 # Longevity test settings
 #
-# Currenlty we only have one test function so 
+# Currenlty we only have one test function so
 # we just have one set of configurations for it.
 #
 # Here define governance that is used in only
 # test_longevity/test_longevity.py
-# 
+#
 
-# Duration in seconds
-# 48h = 172800s
-#  4h =  14400s
-#duration: 14400
-# How frewuently to poll health
-period: 900
+# How frewuently to report on health
+period: 60
+# How many health reports to perform before moving on
+count: 10

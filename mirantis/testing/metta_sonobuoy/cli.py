@@ -11,8 +11,9 @@ import time
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
-from .sonobuoy_workload import METTA_PLUGIN_ID_SONOBUOY_WORKLOAD
-from .sonobuoy import Status
+from .workload import METTA_SONOBUOY_WORKLOAD_PLUGIN_ID
+from .client import METTA_SONOBUOY_CLIENT_PLUGIN_ID
+from .results import Status
 
 logger = logging.getLogger("metta.cli.sonobuoy")
 
@@ -29,35 +30,35 @@ class SonobuoyCliPlugin(CliBase):
         """Return CLI Command group."""
         if (
             self._environment.fixtures.get(
-                plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+                plugin_id=METTA_SONOBUOY_WORKLOAD_PLUGIN_ID,
                 exception_if_missing=False,
             )
             is not None
         ):
-            return {"contrib": {"sonobuoy": SonobuoyGroup(self._environment)}}
+            return {"sonobuoy": SonobuoyClientGroup(self._environment)}
 
         return {}
 
 
-class SonobuoyGroup:
-    """Base Fire command group for sonobuoy cli commands."""
+class SonobuoyClientGroup:
+    """Sonobuoy cli commands."""
 
     def __init__(self, environment: Environment):
         """Inject Environment into command group."""
         self._environment = environment
 
     def _select_fixture(self, instance_id: str = ""):
-        """Pick a matching workload plugin."""
+        """Pick a matching client plugin."""
         try:
             if instance_id:
                 return self._environment.fixtures.get(
-                    plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+                    plugin_id=METTA_SONOBUOY_CLIENT_PLUGIN_ID,
                     instance_id=instance_id,
                 )
 
             # Get the highest priority provisioner
             return self._environment.fixtures.get(
-                plugin_id=METTA_PLUGIN_ID_SONOBUOY_WORKLOAD,
+                plugin_id=METTA_SONOBUOY_CLIENT_PLUGIN_ID,
             )
 
         except KeyError as err:
@@ -65,24 +66,15 @@ class SonobuoyGroup:
                 "No usable kubernetes client was found for sonobuoy" "to pull a kubeconfig from"
             ) from err
 
-    def _prepared_plugin(self, instance_id: str = ""):
-        """Select and prepare a sonobuoy workload plugin."""
-        fixture = self._select_fixture(instance_id=instance_id)
-        plugin = fixture.plugin
-        plugin.prepare(self._environment.fixtures)
-        return plugin
-
     def info(self, instance_id: str = "", deep: bool = False):
         """Get info about a sonobuoy plugin."""
         fixture = self._select_fixture(instance_id=instance_id)
-        fixture.plugin.prepare(self._environment.fixtures)
-
         return cli_output(fixture.info(deep=deep))
 
     def status(self, instance_id: str = ""):
         """Get active sonobuoy status."""
-        instance = self._prepared_plugin(instance_id=instance_id)
-        status = instance.status()
+        client_plugin = self._select_fixture(instance_id=instance_id).plugin
+        status = client_plugin.status()
 
         if status is None:
             status_info = {"status": "None", "plugins": {}}
@@ -99,24 +91,24 @@ class SonobuoyGroup:
     # pylint: disable=protected-access
     def crb(self, instance_id: str = "", remove: bool = False):
         """Create the crb needed to run sonobuoy."""
-        workload_plugin = self._prepared_plugin(instance_id=instance_id)
+        client_plugin = self._select_fixture(instance_id=instance_id).plugin
 
         if remove:
-            workload_plugin._sonobuoy._delete_k8s_crb()
+            client_plugin._sonobuoy._delete_k8s_crb()
         else:
-            workload_plugin._sonobuoy._create_k8s_crb()
+            client_plugin._sonobuoy._create_k8s_crb()
 
     def run(self, instance_id: str = "", wait: bool = False):
-        """Run sonobuoy workload."""
-        workload_plugin = self._prepared_plugin(instance_id=instance_id)
-        workload_plugin.apply(wait=wait)
+        """Run sonobuoy."""
+        client_plugin = self._select_fixture(instance_id=instance_id).plugin
+        client_plugin.apply(wait=wait)
 
     def wait(self, instance_id: str = "", step: int = 5, limit: int = 1000):
         """Wait until no longer running."""
-        workload_plugin = self._prepared_plugin(instance_id=instance_id)
+        client_plugin = self._select_fixture(instance_id=instance_id).plugin
         print("{")
         for i in range(0, limit):
-            status = workload_plugin.status()
+            status = client_plugin.status()
             if status is None:
                 status_info = {"status": "None", "plugins": {}}
             else:
@@ -136,20 +128,20 @@ class SonobuoyGroup:
 
     def destroy(self, instance_id: str = "", wait: bool = False):
         """Remove all sonobuoy infrastructure."""
-        workload_plugin = self._prepared_plugin(instance_id=instance_id)
-        workload_plugin.destroy(wait=wait)
+        client_plugin = self._select_fixture(instance_id=instance_id).plugin
+        client_plugin.destroy(wait=wait)
 
     def logs(self, instance_id: str = "", follow: bool = False):
         """Retrieve sonobuoy logs."""
-        workload_plugin = self._prepared_plugin(instance_id=instance_id)
-        workload_plugin.logs(follow=follow)
+        client_plugin = self._select_fixture(instance_id=instance_id).plugin
+        client_plugin.logs(follow=follow)
 
     def retrieve(self, instance_id: str = ""):
         """Retrieve the results from the sonobuoy workload instance."""
-        workload_plugin = self._prepared_plugin(instance_id=instance_id)
-        try:
-            workload_plugin.retrieve()
+        client_plugin = self._select_fixture(instance_id=instance_id).plugin
 
+        try:
+            client_plugin.retrieve()
         # broad catch to allow message formatting for cli output
         # pylint: disable=broad-except
         except Exception as err:
@@ -157,12 +149,12 @@ class SonobuoyGroup:
 
     def health(self, instance_id: str = ""):
         """Retrieve the results from the sonobuoy workload instance."""
-        workload_plugin = self._prepared_plugin(instance_id=instance_id)
-        health = workload_plugin.health()
+        client_plugin = self._select_fixture(instance_id=instance_id).plugin
+        health = client_plugin.health()
 
         return cli_output(
             {
-                "status": health.status,
-                "messages": health.messages,
+                "status": health.status(),
+                "messages": list(health.messages()),
             }
         )

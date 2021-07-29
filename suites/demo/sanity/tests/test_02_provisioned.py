@@ -40,8 +40,8 @@ from mirantis.testing.metta_kubernetes.kubeapi_client import (
 from mirantis.testing.metta_launchpad.provisioner import (
     METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
 )
-from mirantis.testing.metta_launchpad.exec_client import (
-    METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
+from mirantis.testing.metta_launchpad.client import (
+    METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
 )
 from mirantis.testing.metta_mirantis.msr_client import (
     MSRReplicaHealth,
@@ -127,7 +127,6 @@ def test_03_terraform_sanity(environment: Environment):
 
 def test_04_launchpad_sanity(environment: Environment):
     """test that the launchpad provisioner is happy, and that it produces our expected clients"""
-
     environment.fixtures.get_plugin(
         plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
     )
@@ -139,15 +138,14 @@ def test_05_expected_clients(environment: Environment):
     These should have been built by the launchpad provisioner when it ran.
 
     """
+    logger.info("Getting launchpad client (for execs)")
+    environment.fixtures.get_plugin(
+        plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
+    )
 
     logger.info("Getting docker client")
     environment.fixtures.get_plugin(
         plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
-    )
-
-    logger.info("Getting exec client")
-    environment.fixtures.get_plugin(
-        plugin_id=METTA_LAUNCHPAD_EXEC_CLIENT_PLUGIN_ID,
     )
 
     logger.info("Getting K8s client")
@@ -158,7 +156,6 @@ def test_05_expected_clients(environment: Environment):
 
 def test_06_docker_run_workload(environment, benchmark):
     """test that we can run a docker run workload"""
-
     # we have a docker run workload fixture called "sanity_docker_run"
     sanity_docker_run = environment.fixtures.get_plugin(
         instance_id="sanity_docker_run",
