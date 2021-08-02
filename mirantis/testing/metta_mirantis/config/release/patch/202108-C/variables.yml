@@ -1,0 +1,7 @@
+mcr_repo_url: "https://s3.amazonaws.com/repos-internal.mirantis.com/"
+mcr_channel: test
+mcr_version: 20.10.7-tp1
+mke_image_repo: docker.io/mirantiseng
+mke_version: 3.4.5-tp1
+msr_image_repo: docker.io/mirantiseng
+msr_version: 2.9.4-tp1

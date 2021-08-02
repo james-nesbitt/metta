@@ -7,6 +7,7 @@ import logging
 import subprocess
 import json
 import shutil
+import os
 from typing import List, Dict, Any
 
 
@@ -109,7 +110,7 @@ class TestkitClient:
         """
         cmd = [self.bin]
 
-        if use_config_file:
+        if use_config_file and os.path.isfile(self.config_file):
             cmd += [f"--file={self.config_file}"]
 
         if self.debug:

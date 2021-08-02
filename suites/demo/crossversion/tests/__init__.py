@@ -5,14 +5,18 @@ Cross version testing package
 """
 import logging
 import json
+from typing import Any, Dict
 
 import pytest
 
 from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta import get_environment
+from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
+from mirantis.testing.metta.healthcheck import METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK, Health, HealthStatus
+
 from mirantis.testing.metta_common import METTA_PLUGIN_ID_PROVISIONER_COMBO
 from mirantis.testing.metta_launchpad import METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID
 from mirantis.testing.metta_mirantis.mke_client import (
@@ -71,8 +75,7 @@ class EnvManager:
             pytest.exit("Provisioner failed to install")
 
     def upgrade(self, environment):
-        """Upgrade the environment to the second state.
-        """
+        """Upgrade the environment to the second state."""
         provisioner = environment.fixtures.get_plugin(
             interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
         )
@@ -94,6 +97,8 @@ class EnvManager:
         provisioner.destroy()
 
 
+# This is a base class
+# pylint: disable=too-few-public-methods
 class TestBase:
     """A collection of reusable tests."""
 
@@ -106,7 +111,10 @@ class TestBase:
 
     def health(self, environment):
         """Run all of the health checks."""
-        for health_fixture in self._health_check_fixtures():
+        health_info: Dict[str, Any] = {}
+        """Capture health information for all healthcheck plugins."""
+
+        for health_fixture in self._health_check_fixtures(environment):
             health_plugin = health_fixture.plugin
 
             try:
@@ -115,43 +123,29 @@ class TestBase:
             # we turn any exception into a health marker
             # pylint: disable=broad-except
             except Exception as err:
-                health_info[health_fixture.instance_id] = {
-                    "fixture": {
-                        "plugin_id": health_fixture.plugin_id,
-                        "instance_id": health_fixture.instance_id,
-                        "priority": health_fixture.priority,
-                    },
-                    "status": HealthStatus.CRITICAL,
-                    "messages": [
-                        HealthMessage(
-                            source=health_fixture.instance_id,
-                            status=HealthStatus.CRITICAL,
-                            message=str(err),
-                        )
-                    ],
-                }
+                health_plugin_results = Health(source=health_fixture.instance_id)
+                health_plugin_results.critical(str(err))
 
-            else:
-                health_info[health_fixture.instance_id] = {
-                    "fixture": {
-                        "plugin_id": health_fixture.plugin_id,
-                        "instance_id": health_fixture.instance_id,
-                        "priority": health_fixture.priority,
-                    },
-                    "status": health_plugin_results.status(),
-                    "messages": list(health_plugin_results.messages()),
-                }
+            health_info[health_fixture.instance_id] = {
+                "fixture": {
+                    "plugin_id": health_fixture.plugin_id,
+                    "instance_id": health_fixture.instance_id,
+                    "priority": health_fixture.priority,
+                },
+                "status": health_plugin_results.status(),
+                "messages": list(health_plugin_results.messages()),
+            }
 
-            assert health.status().is_better_than(HealthStatus.ERROR), "HealthCheck Failed"
+            assert health_plugin.status().is_better_than(HealthStatus.ERROR), "HealthCheck Failed"
 
+            return health_info
 
-
-    def _health_check_fixtures(self, environment):
-        """Return the mke client from the environment."""
+    def _health_check_fixtures(self, environment) -> Fixtures:
+        """Return a Fixtures set of healtchcheck plugins."""
         # get the mke client.
         # We could get this from the launchpad provisioner if we were worried about
         # which mke client plugin instance we receive,  however there is only one
         # in this case.
-        return environment.fixtures.get_plugin(
-            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALCHECK],
+        return environment.fixtures.filter(
+            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK],
         )

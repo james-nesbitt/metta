@@ -12,6 +12,7 @@ from typing import Any
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
+from mirantis.testing.metta.healthcheck import METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK
 from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 
 from mirantis.testing.metta_cli import METTA_PLUGIN_INTERFACE_ROLE_CLI
@@ -30,7 +31,11 @@ from .cli import DockerCliPlugin, METTA_PLUGIN_ID_DOCKER_CLI
 # pylint: disable=too-many-arguments
 @Factory(
     plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
-    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLIENT, METTA_PLUGIN_ID_DOCKER_CLIENT],
+    interfaces=[
+        METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
+        METTA_PLUGIN_ID_DOCKER_CLIENT,
+        METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
+    ],
 )
 def metta_plugin_factory_client_dockerpy(
     environment: Environment,

@@ -110,11 +110,21 @@ class TerraformClient:
             )
             raise RuntimeError("Terraform client failed to plan()") from err
 
-    def apply(self):
-        """Apply a terraform plan."""
+    def apply(self, lock: bool = True):
+        """Apply a terraform plan.
+
+        Parameters:
+        -----------
+        lock (bool) : if False then -lock=false is passed to terraform meaning
+            that the state file is ignored.
+
+        """
         try:
+            cmd: List[str] = ["apply", "-auto-approve"]
+            if not lock:
+                cmd.append("-lock=false")
             self._run(
-                ["apply", "-auto-approve"],
+                cmd,
                 with_state=True,
                 with_tfvars=True,
                 return_output=False,
@@ -127,11 +137,21 @@ class TerraformClient:
             )
             raise RuntimeError("Terraform client failed to run apply()") from err
 
-    def destroy(self):
-        """Remove resources listed in the state file."""
+    def destroy(self, lock: bool = True):
+        """Remove resources that should have been created.
+
+        Parameters:
+        -----------
+        lock (bool) : if False then -lock=false is passed to terraform meaning
+            that the state file is ignored.
+
+        """
         try:
+            cmd: List[str] = ["destroy", "-auto-approve"]
+            if not lock:
+                cmd.append("-lock=false")
             self._run(
-                ["destroy", "-auto-approve", "-lock=false"],
+                cmd,
                 with_state=True,
                 with_tfvars=True,
                 return_output=False,
@@ -240,7 +260,7 @@ class TerraformClient:
 
         if with_tfvars and os.path.isfile(self._tfvars_path):
             cmd += [f"-var-file={self._tfvars_path}"]
-        if with_state and os.path.isfile(self._state_path):
+        if with_state:
             cmd += [f"-state={self._state_path}"]
 
         if append_args is not None:

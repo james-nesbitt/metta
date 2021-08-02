@@ -112,7 +112,7 @@ class MKEAPIClientPlugin:
         self.password = password
 
         self.hosts = hosts
-        """ List of hostos """
+        """ List of hosts """
 
         self._bundle_root = bundle_root
         """ String path which should be used as a root path for storing client
@@ -532,8 +532,10 @@ class MKEAPIClientPlugin:
 
         all_healthy = True
         for node in nodes:
-            if not MKENodeState.READY.match(node["Status"]["State"]):
-                health.warning(f"MKE: NODE {node['ID']} was not in a READY state: {node['Status']}")
+            if MKENodeState.READY.match(node["Status"]["State"]):
+                health.healthy(f"MKE: NODE {node['ID']} : {node['Status']['Message']}")
+            else:
+                health.warning(f"MKE: NODE {node['ID']} : {node['Status']['Message']}")
                 all_healthy = False
 
         if all_healthy:
@@ -547,15 +549,20 @@ class MKEAPIClientPlugin:
 
         info = self.api_info()
 
-        swarm_healthy = True
         if "Swarm" in info:
             swarm_info = info["Swarm"]
 
+            # @NOTE there is a lot of info in this Dict, but it isn't clear
+            #    what of that information is actually usefull.
+
+            if swarm_info["Error"] == 0:
+                swarm_error = swarm_info["Error"]
+                health.errorf(f"MKE: reports error {swarm_error}")
             if swarm_info["Nodes"] == 0:
                 health.error("MKE: reports no nodes in the cluster")
-                swarm_healthy = False
 
-        if swarm_healthy:
-            health.healthy("MKE: reports swarm nodes are healthy.")
+        if info["Warnings"]:
+            warnings = info["Warnings"]
+            health.warning(f"MKE: warnings: {warnings}")
 
         return health

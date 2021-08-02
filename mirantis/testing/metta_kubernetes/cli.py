@@ -37,13 +37,13 @@ class KubernetesCliPlugin(CliBase):
             )
             is not None
         ):
-            return {"kubernetes": KubernetesGroup(self._environment)}
+            return {"kubernetes": KubernetesClientGroup(self._environment)}
 
         return {}
 
 
-class KubernetesGroup:
-    """Kubernetes API commands."""
+class KubernetesClientGroup:
+    """Kubernetes client CLI commands."""
 
     def __init__(self, environment: Environment):
         """Add additional command groups for plugins and inject environment."""
@@ -90,62 +90,66 @@ class KubernetesGroup:
         fixture = self._select_client(instance_id=workload)
         return cli_output(fixture.info(deep=deep))
 
-    def nodes(self, workload: str = "", node: int = None):
-        """Get info about a client plugin."""
-        fixture = self._select_client(instance_id=workload)
-        nodes = fixture.plugin.nodes()
+    def health(self, client: str = ""):
+        """Retrieve the health status from the instance."""
+        client_plugin = self._select_client(instance_id=client).plugin
+        health = client_plugin.health()
+        return cli_output(
+            {
+                "status": health.status(),
+                "messages": list(health.messages()),
+            }
+        )
 
+    def nodes(self, client: str = "", node: int = None):
+        """Get info about a client plugin."""
+        client_plugin = self._select_client(instance_id=client).plugin
+        nodes = client_plugin.nodes()
         if node is None:
             return cli_output(list(node.to_dict() for node in nodes))
         return cli_output(nodes[node].to_dict())
 
-    def nodes_status(self, workload: str = "", node: int = None):
+    def nodes_status(self, client: str = "", node: int = None):
         """Get info about a client plugin."""
-        fixture = self._select_client(instance_id=workload)
-        nodes = fixture.plugin.nodes()
-
+        client_plugin = self._select_client(instance_id=client).plugin
+        nodes = client_plugin.nodes()
         if node is None:
             return cli_output(list(node.status.to_dict() for node in nodes))
         return cli_output(nodes[node].status.to_dict())
 
-    def nodes_sysinfo(self, workload: str = "", node: int = None):
+    def nodes_sysinfo(self, client: str = "", node: int = None):
         """Get info about a client plugin."""
-        fixture = self._select_client(instance_id=workload)
-
-        nodes = fixture.plugin.nodes()
-
+        client_plugin = self._select_client(instance_id=client).plugin
+        nodes = client_plugin.nodes()
         if node is None:
             return cli_output(list(node.status.node_info.to_dict() for node in nodes))
         return cli_output(nodes[node].status.node_info.to_dict())
 
-    def readyz(self, workload: str = ""):
+    def readyz(self, client: str = ""):
         """Get kubernetes readiness info from the plugin."""
-        plugin = self._select_client(instance_id=workload).plugin
-
+        client_plugin = self._select_client(instance_id=client).plugin
         try:
-            return cli_output(plugin.readyz())
+            return cli_output(client_plugin.readyz())
 
         except Exception as err:
             raise RuntimeError("Kubernetes is not ready") from err
 
-    def livez(self, workload: str = ""):
+    def livez(self, client: str = ""):
         """Get kubernetes livez info from the plugin."""
-        plugin = self._select_client(instance_id=workload).plugin
-
+        client_plugin = self._select_client(instance_id=client).plugin
         try:
-            return cli_output(plugin.livez())
+            return cli_output(client_plugin.livez())
 
         except Exception as err:
             raise RuntimeError("Kubernetes is not ready") from err
 
-    def connect_service_proxy(self, namespace: str, service: str, workload: str = ""):
+    def connect_service_proxy(self, namespace: str, service: str, client: str = ""):
         """Create a service proxy."""
-        plugin = self._select_client(instance_id=workload).plugin
-
+        client_plugin = self._select_client(instance_id=client).plugin
         try:
             # Thank you kubernetes for the naming pattern
             # pylint: disable=invalid-name
-            CoreV1Api = plugin.get_api("CoreV1Api")
+            CoreV1Api = client_plugin.get_api("CoreV1Api")
             sc = CoreV1Api.connect_post_namespaced_service_proxy(namespace=namespace, name=service)
 
             return cli_output(sc)
@@ -259,6 +263,18 @@ class KubernetesHelmWorkloadGroup:
         }
         return cli_output(status_info)
 
+    def health(self, workload: str = ""):
+        """Retrieve the results from the helm workload instance."""
+        workload_plugin = self._select_fixture(instance_id=workload).plugin
+        health = workload_plugin.health()
+
+        return cli_output(
+            {
+                "status": health.status(),
+                "messages": list(health.messages()),
+            }
+        )
+
 
 class KubernetesDeploymentWorkloadGroup:
     """Base Fire command group for terraform deployment workload plugin cli commands."""
@@ -286,6 +302,18 @@ class KubernetesDeploymentWorkloadGroup:
         fixture.plugin.prepare(self._environment.fixtures)
 
         return cli_output(fixture.info(deep=deep))
+
+    def health(self, workload: str = ""):
+        """Retrieve the results from the deployment workload instance."""
+        workload_plugin = self._select_fixture(instance_id=workload).plugin
+        health = workload_plugin.health()
+
+        return cli_output(
+            {
+                "status": health.status(),
+                "messages": list(health.messages()),
+            }
+        )
 
     def apply(self, workload: str = ""):
         """Run workload apply."""

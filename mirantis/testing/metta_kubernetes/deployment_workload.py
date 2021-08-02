@@ -222,25 +222,33 @@ class KubernetesDeploymentWorkloadPlugin:
 
         try:
             deployment = apps_v1.read_namespaced_deployment(self.name, self.namespace)
-
             status = deployment.status
 
             if status is None:
-                health.error(f"Deployment: [{self.namespace}/{self.name}] retrieved no status")
+                health.error(f"Deployment: [{self.namespace}/{self.name}] retrieved no status.")
+            if status.conditions is None:
+                health.warning(
+                    f"Deployment: [{self.namespace}/{self.name}] retrieved no status conditions."
+                )
             else:
-                if status.conditions["Available"] == "True":
-                    condition = status.conditions["Available"]
+
+                available_condition = next(
+                    condition for condition in status.conditions if condition.type == "Available"
+                )
+                progressing_condition = next(
+                    condition for condition in status.conditions if condition.type == "Progressing"
+                )
+                if available_condition and available_condition.status == "True":
                     health.healthy(
                         f"Deployment: [{self.namespace}/{self.name}] "
                         "Deployment is available "
-                        f"-> {condition.message}"
+                        f"-> {available_condition.message}"
                     )
-                if status.conditions["Progressing"] == "True":
-                    condition = status.conditions["Progressing"]
+                elif progressing_condition and progressing_condition.status == "True":
                     health.warning(
                         f"Deployment: [{self.namespace}/{self.name}] "
                         "Deployment is progressing "
-                        f"-> {condition.message}"
+                        f"-> {progressing_condition.message}"
                     )
                 else:
                     health.error(

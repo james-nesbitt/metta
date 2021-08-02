@@ -2,11 +2,18 @@
 
 Metta Client plugin for a docker client using docker-py.
 
+This class just extends the py-docker core client class, and
+so it may appear quite lean while being full of features.
+
+@see https://docker-py.readthedocs.io/en/stable/client.html
+
 """
 import logging
 import os
 
 from docker import DockerClient
+
+from mirantis.testing.metta.healthcheck import Health, HealthStatus
 
 logger = logging.getLogger("metta.contrib.docker.client.dockerpy")
 
@@ -105,3 +112,57 @@ class DockerPyClientPlugin(DockerClient):
                 "compose_tls_version": self.compose_tls_version,
             }
         }
+
+    def health(self) -> Health:
+        """Determine the health of the K8s instance."""
+        k8s_health = Health(source=self._instance_id, status=HealthStatus.UNKNOWN)
+
+        for test_health_function in [self._health_swarm_nodes]:
+            try:
+                test_health = test_health_function()
+            # pylint: disable=broad-except
+            except Exception as err:
+                test_health = Health(source=self._instance_id)
+                test_health.critical(f"{test_health_function} exception: {err}")
+            finally:
+                k8s_health.merge(test_health)
+        return k8s_health
+
+    def _health_swarm_nodes(self) -> Health:
+        """Check if kubernetes thinks the pod is healthy."""
+        health = Health(source=self._instance_id)
+
+        try:
+            for node in self.nodes.list():
+                attrs = node.attrs
+                description = node.attrs["Description"]["Hostname"]
+                role = node.attrs["Spec"]["Role"]
+
+                errors: int = 0
+
+                if "Status" in attrs:
+                    node_status = node.attrs["Status"]
+                    message = node_status["Message"]
+                    if node_status["State"] != "ready":
+                        health.error(f"{role} {description} : {message}")
+                        errors += 1
+
+                if "ManagerStatus" in attrs:
+                    manager_status = node.attrs["ManagerStatus"]
+                    if manager_status["Reachability"] != "reachable":
+                        health.error(f"{role} {description} : manager is not reachable")
+                        errors += 1
+
+                if node.attrs["Spec"]["Availability"] != "active":
+                    health.warning(f"{role} {description} : is not available")
+                    errors += 1
+
+                if errors == 0:
+                    health.healthy(f"{role} {description} : reports healthy")
+                else:
+                    health.warning(f"{role} {description} : is not health ({errors} issues.)")
+        # pylint: disable=broad-except
+        except Exception as err:
+            health.error(f"Docker could not retrieve node health: {err}")
+
+        return health

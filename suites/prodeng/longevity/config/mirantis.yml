@@ -18,7 +18,7 @@ presets:
     # include metta_mirantis/config/variation/tal
     variation: tal
     # this will tell metta to include metta_mirantis/config/release/patch/202106
-    release: patch/202107-C
+    release: patch/202108-C
     # include metta_mirantis/config/cluster/smallbusiness
     cluster: smallbusiness
     # include metta_mirantis/config/platform/public/ubuntu/20.04

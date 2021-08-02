@@ -111,7 +111,7 @@ class AnsibleCliClientGroup:
         return cli_output(plugin.ping(hosts=hosts))
 
     def health(self, client: str = ""):
-        """Run provisioner destroy."""
+        """Run client healthcheck."""
         fixture = self._select_client(instance_id=client)
         plugin = fixture.plugin
         health: Health = plugin.health()

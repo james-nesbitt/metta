@@ -7,6 +7,9 @@ Various commands that allow introspection of the available environments.
 """
 import logging
 
+from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
+from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
+
 from mirantis.testing.metta import environment_names, get_environment
 from mirantis.testing.metta.environment import Environment
 

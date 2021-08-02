@@ -78,11 +78,16 @@ class TerraformClientPlugin:
         """Run terraform init."""
         self._tf_handler.init()
 
-    def apply(self):
+    def apply(self, lock: bool = True):
         """Apply a terraform plan."""
         self._make_tfvars_file()
-        self._tf_handler.apply()
+        self._tf_handler.apply(lock=lock)
         self.make_fixtures()
+
+    def destroy(self, lock: bool = True):
+        """Apply a terraform plan."""
+        self._tf_handler.destroy(lock=lock)
+        self._rm_tfvars_file()
 
     def test(self):
         """Apply a terraform plan."""
@@ -93,11 +98,6 @@ class TerraformClientPlugin:
         """Check a terraform plan."""
         self._make_tfvars_file()
         return self._tf_handler.plan()
-
-    def destroy(self):
-        """Apply a terraform plan."""
-        self._tf_handler.destroy()
-        self._rm_tfvars_file()
 
     def output(self, name: str = ""):
         """Retrieve terraform outputs.
