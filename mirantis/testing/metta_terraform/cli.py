@@ -90,10 +90,15 @@ class TerraformClientGroup:
         plugin = self._select_client(instance_id=client).plugin
         plugin.plan()
 
-    def apply(self, client: str = ""):
+    def apply(self, client: str = "", nolock: bool = False):
         """Run terraform apply."""
         plugin = self._select_client(instance_id=client).plugin
-        plugin.apply()
+        plugin.apply(lock=(not nolock))
+
+    def destroy(self, client: str = "", nolock: bool = False):
+        """Run terraform destroy."""
+        plugin = self._select_client(instance_id=client).plugin
+        plugin.destroy(lock=(not nolock))
 
     def check(self, client: str = ""):
         """Run client check."""
@@ -104,11 +109,6 @@ class TerraformClientGroup:
         """Retrieve Terraform outputs."""
         plugin = self._select_client(instance_id=client).plugin
         return cli_output(plugin.output(name=name))
-
-    def destroy(self, client: str = ""):
-        """Run terraform destroy."""
-        plugin = self._select_client(instance_id=client).plugin
-        plugin.destroy()
 
 
 class TerraformProvisionerGroup:
@@ -141,12 +141,12 @@ class TerraformProvisionerGroup:
         plugin = self._select_provisioner(instance_id=provisioner).plugin
         plugin.prepare()
 
-    def apply(self, provisioner: str = ""):
+    def apply(self, provisioner: str = "", nolock: bool = False):
         """Run provisioner apply."""
         plugin = self._select_provisioner(instance_id=provisioner).plugin
-        plugin.apply()
+        plugin.apply(lock=(not nolock))
 
-    def destroy(self, provisioner: str = ""):
+    def destroy(self, provisioner: str = "", nolock: bool = False):
         """Run provisioner destroy."""
         plugin = self._select_provisioner(instance_id=provisioner).plugin
-        plugin.destroy()
+        plugin.destroy(lock=(not nolock))

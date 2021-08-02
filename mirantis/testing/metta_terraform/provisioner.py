@@ -184,15 +184,15 @@ class TerraformProvisionerPlugin:
         logger.info("Running Terraform INIT")
         self._get_client_plugin().init()
 
-    def apply(self):
+    def apply(self, lock: bool = True):
         """Create all terraform resources described in the plan."""
         logger.info("Running Terraform APPLY")
-        self._get_client_plugin().apply()
+        self._get_client_plugin().apply(lock=lock)
 
-    def destroy(self):
+    def destroy(self, lock: bool = True):
         """Remove all terraform resources in state."""
         logger.info("Running Terraform DESTROY")
-        self._get_client_plugin().destroy()
+        self._get_client_plugin().destroy(lock=lock)
         # accessing parent property for clearing out existing output fixtures
         # pylint: disable=attribute-defined-outside-init
         self.fixtures = Fixtures()

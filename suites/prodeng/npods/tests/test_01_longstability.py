@@ -15,7 +15,7 @@ logger = logging.getLogger("npods-test-longstability")
 
 
 # pylint: disable=too-many-arguments, unused-argument
-def test_01_target_stability(healthpoller, loki, npods, npods_config):
+def test_01_target_stability(healthpoller, npods, npods_config):
     """Long run of a fixed size stability test"""
     # create a new workload
     workload = npods_config.get("workload.stability").copy()
@@ -58,7 +58,7 @@ def test_01_target_stability(healthpoller, loki, npods, npods_config):
         raise RuntimeError("Cluster stability test failed on scaled up cluster") from err
 
 
-def test_02_scaledown_stability(healthpoller, loki, npods, npods_config):
+def test_02_scaledown_stability(healthpoller, npods, npods_config):
     """Scale down and test stability"""
 
     name = "reset"

@@ -10,6 +10,7 @@ from typing import Dict, Any
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.healthcheck import Health
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .client import METTA_PLUGIN_ID_DOCKER_CLIENT
@@ -34,12 +35,12 @@ class DockerCliPlugin(CliBase):
             is not None
         ):
 
-            return {"docker": DockerGroup(self._environment)}
+            return {"docker": DockerClientGroup(self._environment)}
 
         return {}
 
 
-class DockerGroup:
+class DockerClientGroup:
     """Base Fire command group for terraform client cli commands."""
 
     def __init__(self, environment: Environment):
@@ -63,18 +64,58 @@ class DockerGroup:
     # pylint: disable=unused-argument
     def info(self, workload: str = "", deep: bool = False):
         """Get info about a client plugin."""
-        fixture = self._select_client(instance_id=workload)
-        return cli_output(fixture.info())
+        docker_fixture = self._select_client(instance_id=workload)
+        return cli_output(docker_fixture.info())
+
+    def health(self, client: str = ""):
+        """Run healthcheck."""
+        fixture = self._select_client(instance_id=client)
+        plugin = fixture.plugin
+        health: Health = plugin.health()
+        return cli_output(
+            {
+                "fixture": {
+                    "plugin_id": fixture.plugin_id,
+                    "instance_id": fixture.instance_id,
+                    "priority": fixture.priority,
+                },
+                "status": health.status(),
+                "messages": list(health.messages()),
+            }
+        )
+
+    def swarm_info(self, client: str = ""):
+        """List all containers on the docker client."""
+        docker_client = self._select_client(instance_id=client).plugin
+        return cli_output(
+            {
+                "version": docker_client.swarm.version,
+                "attrs": docker_client.swarm.attrs,
+            }
+        )
+
+    def nodes_list(self, client: str = ""):
+        """List all nodes in the docker swarm."""
+        docker_client = self._select_client(instance_id=client).plugin
+        return cli_output(
+            list(
+                {
+                    "id": node.id,
+                    "short_id": node.short_id,
+                    "version": node.version,
+                    "attrs": node.attrs,
+                }
+                for node in docker_client.nodes.list()
+            )
+        )
 
     # 'all' is effectively a passthrough variable
     # pylint: disable=redefined-builtin
     def container_list(self, client: str = "", all: bool = True):
         """List all containers on the docker client."""
-        fixture = self._select_client(instance_id=client)
-        docker = fixture.plugin
-
+        docker_client = self._select_client(instance_id=client).plugin
         container_info = []
-        for container in docker.containers.list(all=all):
+        for container in docker_client.containers.list(all=all):
             container_info.append(
                 {
                     "name": container.name,
@@ -88,7 +129,5 @@ class DockerGroup:
 
     def run_hello_world(self, client: str = ""):
         """Run the hello-world image."""
-        fixture = self._select_client(instance_id=client)
-        docker = fixture.plugin
-
-        return cli_output(docker.containers.run(image="hello-world", remove=True))
+        docker_client = self._select_client(instance_id=client).plugin
+        return cli_output(docker_client.containers.run(image="hello-world", remove=True))

@@ -8,6 +8,6 @@
 #
 
 # How frewuently to report on health
-period: 60
+period: 3600
 # How many health reports to perform before moving on
-count: 10
+count: 5

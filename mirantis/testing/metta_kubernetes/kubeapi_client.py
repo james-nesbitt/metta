@@ -122,7 +122,7 @@ class KubernetesApiClientPlugin:
 
         if deep:
             try:
-                info["nodes"] = self.nodes()
+                info["nodes"] = list(node.to_dict() for node in self.nodes())
             # pylint: disable=broad-except
             except Exception:
                 # Still continue to run
@@ -218,7 +218,7 @@ class KubernetesApiClientPlugin:
         Will raise an exception is kubernetes isn't avaialble
 
         """
-        return self._interpret_z_response("/readyz")
+        return self._interpret_z_response("/readyz", params={"verbose": "true"})
 
     def livez(self):
         """Check the general livez endpoint.
@@ -229,10 +229,10 @@ class KubernetesApiClientPlugin:
 
         Raises:
         -------
-        Will raise an exception is kubernetes isn't avaialble
+        Will raise an exception is kubernetes isn't available
 
         """
-        return self._interpret_z_response("/livez")
+        return self._interpret_z_response("/livez", params={"verbose": "true"})
 
     def _interpret_z_response(
         self, endpoint: str, method: str = "GET", params: Dict[str, str] = None
@@ -252,7 +252,7 @@ class KubernetesApiClientPlugin:
         )[0]
 
         interpreted = {}
-        for line in response.read().decode("utf-8").split("\n"):
+        for line in response.read(cache_content=False).decode("utf-8").split("\n"):
             match = KUBEAPI_CLIENT_INTERPRET_Z_REGEX.fullmatch(line)
             if match:
                 interpreted[match.group("name")] = {
@@ -278,6 +278,9 @@ class KubernetesApiClientPlugin:
             self._health_k8s_readyz,
             self._health_k8s_livez,
             self._health_k8s_node_health,
+            self._health_k8s_alldeployment_health,
+            self._health_k8s_alldaemonset_health,
+            self._health_k8s_allstatefulset_health,
             self._health_k8s_allpod_health,
         ]:
             try:
@@ -311,9 +314,9 @@ class KubernetesApiClientPlugin:
 
         try:
             if self.livez():
-                health.healthy("KubeAPI: livez reports ready")
+                health.healthy("KubeAPI: livez reports live")
             else:
-                health.warning("KubeAPI: livez reports NOT ready.")
+                health.warning("KubeAPI: livez reports NOT live.")
         # pylint: disable=broad-except
         except Exception as err:
             health.error(f"Could not retrieve livez: {err}")
@@ -324,15 +327,275 @@ class KubernetesApiClientPlugin:
         """Check if kubernetes thinks the nodes are healthy."""
         health = Health(source=self._instance_id)
 
-        no_issues = True
-        for node in self.nodes():
-            kubelet_condition = node_status_condition(node, "KubeletReady")
-            if not kubelet_condition.status == "True":
-                health.error(f"KubeAPI: Node kubelet is not ready: {node.metadata.name}")
+        try:
+            for node in self.nodes():
+                name = node.metadata.name
+                no_issues = True
+
+                condition = next(
+                    (
+                        condition
+                        for condition in node.status.conditions
+                        if condition.type == "Ready"
+                    ),
+                    None,
+                )
+                if condition is not None and condition.status != "True":
+                    health.warning(f"KubeAPI: {name}: {condition.message}")
+                    no_issues = False
+
+                condition = next(
+                    (
+                        condition
+                        for condition in node.status.conditions
+                        if condition.type == "NetworkUnavailable"
+                    ),
+                    None,
+                )
+                if condition is not None and condition.status == "True":
+                    health.warning(f"KubeAPI: {name}: {condition.message}")
+                    no_issues = False
+
+                condition = next(
+                    (
+                        condition
+                        for condition in node.status.conditions
+                        if condition.type == "MemoryPressure"
+                    ),
+                    None,
+                )
+                if condition is not None and condition.status == "True":
+                    health.warning(f"KubeAPI: {name}: {condition.message}")
+                    no_issues = False
+
+                condition = next(
+                    (
+                        condition
+                        for condition in node.status.conditions
+                        if condition.type == "DiskPressure"
+                    ),
+                    None,
+                )
+                if condition is not None and condition.status == "True":
+                    health.warning(f"KubeAPI: {name}: {condition.message}")
+                    no_issues = False
+
+                condition = next(
+                    (
+                        condition
+                        for condition in node.status.conditions
+                        if condition.type == "PIDPressure"
+                    ),
+                    None,
+                )
+                if condition is not None and condition.status == "True":
+                    health.warning(f"KubeAPI: {name}: {condition.message}")
+                    no_issues = False
+
+                if no_issues:
+                    health.healthy(f"KubeAPI: Node {name} reports healthy.")
+                else:
+                    health.error(f"KubeAPI: Node {name} reporting issues.")
+
+        # pylint: disable=broad-except
+        except Exception as err:
+            health.error(f"KubeAPI:Exception occured when check kubelet health: {err}")
+
+        return health
+
+    # pylint: disable=too-many-branches
+    def _health_k8s_alldeployment_health(self) -> Health:
+        """Check if kubernetes thinks all the deployments are healthy."""
+        health = Health(source=self._instance_id)
+
+        apps_v1_api = self.get_api("AppsV1Api")
+
+        unhealthy_dep_count = 0
+        for deployment in apps_v1_api.list_deployment_for_all_namespaces().items:
+            namespace = deployment.metadata.namespace
+            name = deployment.metadata.name
+
+            no_issues = True
+
+            if not deployment.status.conditions:
+                health.unknown(
+                    f"Deployment: [{namespace}/{name}] "
+                    "Deployment does not have any conditions (yet?)"
+                )
+                continue
+
+            available_condition = next(
+                (
+                    condition
+                    for condition in deployment.status.conditions
+                    if condition.type == "Available"
+                ),
+                None,
+            )
+            progressing_condition = next(
+                (
+                    condition
+                    for condition in deployment.status.conditions
+                    if condition.type == "Progressing"
+                ),
+                None,
+            )
+            if available_condition and available_condition.status == "True":
+                pass
+            elif progressing_condition and progressing_condition.status == "True":
+                health.warning(
+                    f"Deployment: [{namespace}/{name}] "
+                    "Deployment is progressing "
+                    f"-> {progressing_condition.message}"
+                )
+                no_issues = False
+            else:
+                health.warning(
+                    f"Deployment: [{namespace}/{name}] "
+                    "Deployment is neither progressing nor available "
+                    f"-> {condition.message}"
+                )
                 no_issues = False
 
-        if no_issues:
-            health.healthy("KubeAPI: all nodes report healthy.")
+            for condition in deployment.status.conditions:
+                if condition.type in ["Available", "Progressing"]:
+                    pass
+
+                elif condition.status != "True":
+                    health.warning(
+                        f"Deployment: [{namespace}/{name}] {condition.type} "
+                        f"-> {condition.message}"
+                    )
+                    no_issues = False
+
+            if no_issues:
+                health.healthy(f"Deployment: [{namespace}/{name}] is healthy")
+            else:
+                health.warning(f"Deployment: [{namespace}/{name}] is not healthy")
+                unhealthy_dep_count += 1
+
+        if unhealthy_dep_count == 0:
+            health.healthy("KubeAPI: all deployments report healthy")
+        elif unhealthy_dep_count < 3:
+            health.warning("KubeAPI: some deployments report condition failures")
+        else:
+            health.error("KubeAPI: Kubernetes Reports cluster is unhealthy (deployment health)")
+
+        return health
+
+    def _health_k8s_alldaemonset_health(self) -> Health:
+        """Check if kubernetes thinks all the daemonsets are healthy."""
+        health = Health(source=self._instance_id)
+
+        apps_v1_api = self.get_api("AppsV1Api")
+
+        unhealthy_dae_count = 0
+        for daemonset in apps_v1_api.list_daemon_set_for_all_namespaces().items:
+            namespace = daemonset.metadata.namespace
+            name = daemonset.metadata.name
+            status = daemonset.status
+
+            if status.collision_count is not None and status.collision_count > 0:
+                health.warning(
+                    f"Daemonset: [{namespace}/{name}] {condition.type} "
+                    "-> Reports some collisions: "
+                    f"{status.collision_count}"
+                )
+                unhealthy_dae_count += 1
+            if status.number_unavailable is not None and status.number_unavailable > 0:
+                health.warning(
+                    f"Daemonset: [{namespace}/{name}] {condition.type} "
+                    "-> Reports some unavailable pods: "
+                    f"{status.number_unavailable}"
+                )
+                unhealthy_dae_count += 1
+            if status.desired_number_scheduled < status.current_number_scheduled:
+                health.warning(
+                    f"Daemonset: [{namespace}/{name}] {condition.type} "
+                    "-> Does not have the desired number scheduled: "
+                    f"{status.desired_number_scheduled} < "
+                    f"{status.current_number_scheduled}"
+                )
+                unhealthy_dae_count += 1
+
+            if status.conditions:
+                for condition in status.conditions:
+                    if condition.status == "True":
+                        health.healthy(
+                            f"Daemonset: [{namespace}/{name}] {condition.type} "
+                            f"-> {condition.message}"
+                        )
+                    else:
+                        health.warning(
+                            f"Daemonset: [{namespace}/{name}] {condition.type} "
+                            f"-> {condition.message}"
+                        )
+                        unhealthy_dae_count += 1
+
+        if unhealthy_dae_count == 0:
+            health.healthy("KubeAPI: all daemonsets report as healthy")
+        elif unhealthy_dae_count < 3:
+            health.warning("KubeAPI: some daemonsets report condition failures")
+        else:
+            health.error("KubeAPI: Kubernetes Reports cluster is unhealthy (daemonset health)")
+
+        return health
+
+    def _health_k8s_allstatefulset_health(self) -> Health:
+        """Check if kubernetes thinks all the statefulsets are healthy."""
+        health = Health(source=self._instance_id)
+
+        apps_v1_api = self.get_api("AppsV1Api")
+
+        unhealthy_count = 0
+        for statefulset in apps_v1_api.list_stateful_set_for_all_namespaces().items:
+            namespace = statefulset.metadata.namespace
+            name = statefulset.metadata.name
+            status = statefulset.status
+
+            if status.collision_count is not None and status.collision_count > 0:
+                health.warning(
+                    f"Statefulset: [{namespace}/{name}] {condition.type} "
+                    "-> Reports some collisions: "
+                    f"{status.collision_count}"
+                )
+                unhealthycount += 1
+            if status.number_unavailable is not None and status.number_unavailable > 0:
+                health.warning(
+                    f"Statefulset: [{namespace}/{name}] {condition.type} "
+                    "-> Reports some unavailable pods: "
+                    f"{status.number_unavailable}"
+                )
+                unhealthy_count += 1
+            if status.desired_number_scheduled < status.current_number_scheduled:
+                health.warning(
+                    f"Statefulset: [{namespace}/{name}] {condition.type} "
+                    "-> Does not have the desired number scheduled: "
+                    f"{status.desired_number_scheduled} < "
+                    f"{status.current_number_scheduled}"
+                )
+                unhealthy_count += 1
+
+            if status.conditions:
+                for condition in status.conditions:
+                    if condition.status == "True":
+                        health.healthy(
+                            f"Statefulset: [{namespace}/{name}] {condition.type} "
+                            f"-> {condition.message}"
+                        )
+                    else:
+                        health.warning(
+                            f"Statefulset: [{namespace}/{name}] {condition.type} "
+                            f"-> {condition.message}"
+                        )
+                        unhealthy_dae_count += 1
+
+        if unhealthy_count == 0:
+            health.healthy("KubeAPI: all statefulsets report as healthy")
+        elif unhealthy_count < 3:
+            health.warning("KubeAPI: some statefulsets report condition failures")
+        else:
+            health.error("KubeAPI: Kubernetes Reports cluster is unhealthy (statefulset health)")
 
         return health
 
@@ -345,7 +608,7 @@ class KubernetesApiClientPlugin:
         unhealthy_pod_count = 0
         for pod in core_v1_api.list_pod_for_all_namespaces().items:
             if pod.status.phase == "Failed":
-                health.error("KubeAPI: Kubernetes reports a pod failed: %s", pod.metadata.name)
+                health.error(f"KubeAPI: pod failed: {pod.metadata.name}")
                 unhealthy_pod_count += 1
         if unhealthy_pod_count == 0:
             health.healthy("KubeAPI: all pods report as healthy")

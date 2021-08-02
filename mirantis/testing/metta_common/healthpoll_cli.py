@@ -79,8 +79,8 @@ class HealthpollCliGroup:
         health_info = {}
         for health_id, health in healths.items():
             health_info[health_id] = {
-                "status": health.status,
-                "message": health.messages,
+                "status": health.status(),
+                "message": list(health.messages(0)),
             }
 
         return cli_output(health_info)

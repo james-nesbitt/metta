@@ -18,8 +18,8 @@ presets:
     # include metta_mirantis/config/variation/tal
     variation: tal
     # this will tell metta to include metta_mirantis/config/release/patch/202107-C
-    release: patch/202107-C
+    release: patch/202108-C
     # include metta_mirantis/config/cluster/poc
     cluster: poc
-    # include metta_mirantis/config/platform/public/ubuntu/20.04
-    platform: public/ubuntu/20.04
+    # include metta_mirantis/config/platform/public/rhel/8.3
+    platform: public/rhel/8.3

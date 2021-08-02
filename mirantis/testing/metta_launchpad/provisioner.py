@@ -183,13 +183,13 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
                     [self._config_base, METTA_LAUNCHPAD_CLI_WORKING_DIR_KEY], default="MISSING"
                 ),
                 "root_path": launchpad_config_loaded.get(
-                    [self._config_base, METTA_LAUNCHPAD_CONFIG_ROOT_PATH_KEY], default="MISSING"
+                    [self._config_base, METTA_LAUNCHPAD_CONFIG_ROOT_PATH_KEY], default="NONE"
                 ),
                 "config_file": launchpad_config_loaded.get(
                     [self._config_base, METTA_LAUNCHPAD_CLI_CONFIG_FILE_KEY], default="MISSING"
                 ),
                 "cli_options": launchpad_config_loaded.get(
-                    [self._config_base, METTA_LAUNCHPAD_CLI_OPTIONS_KEY], default="MISSING"
+                    [self._config_base, METTA_LAUNCHPAD_CLI_OPTIONS_KEY], default="NONE"
                 ),
             },
             "client": self._get_client_plugin().info(deep=deep),
@@ -225,11 +225,23 @@ class LaunchpadProvisionerPlugin(ProvisionerBase):
 
     def destroy(self):
         """Ask the client to remove installed resources."""
-        logger.info("Using launchpad to remove installed products from the backend cluster")
-        self._get_client_plugin().reset()
-        self._rm_launchpad_yml()
+        if self._has_launchpad_yml():
+            logger.info("Using launchpad to remove installed products from the backend cluster")
+            self._get_client_plugin().reset()
+            self._rm_launchpad_yml()
 
     # ----- CLUSTER INTERACTION -----
+
+    def _has_launchpad_yml(self) -> bool:
+        """does the launchpad yml file exist."""
+        plugin_config = self._environment.config.load(self._config_label)
+        """Loaded configerus config for the plugin. Ready for .get()."""
+
+        config_file: str = plugin_config.get(
+            [self._config_base, METTA_LAUNCHPAD_CLI_CONFIG_FILE_KEY],
+            default=METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
+        )
+        return config_file and os.path.exists(config_file)
 
     def _write_launchpad_yml(self):
         """Write config contents to a yaml file for launchpad."""
