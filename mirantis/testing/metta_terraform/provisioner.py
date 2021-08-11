@@ -34,11 +34,11 @@ TERRAFORM_PROVISIONER_CONFIG_CHART_PATH_KEY = "plan.path"
 """ config key for the terraform plan path """
 TERRAFORM_PROVISIONER_CONFIG_STATE_PATH_KEY = "state.path"
 """ config key for the terraform state path """
-TERRAFORM_PROVISIONER_CONFIG_TFVARS_KEY = "tfvars"
+TERRAFORM_PROVISIONER_CONFIG_TFVARS_KEY = "vars"
 """ config key for the terraform vars Dict, which will be written to a file """
-TERRAFORM_PROVISIONER_CONFIG_TFVARS_PATH_KEY = "tfvars_path"
+TERRAFORM_PROVISIONER_CONFIG_TFVARS_PATH_KEY = "vars_path"
 """ config key for the terraform vars file path, where the plugin will write to """
-TERRAFORM_PROVISIONER_DEFAULT_TFVARS_FILE = "metta_terraform.tfvars.json"
+TERRAFORM_PROVISIONER_DEFAULT_TFVARS_FILE = "terraform.tfvars.json"
 """ Default vars file if none was specified """
 TERRAFORM_PROVISIONER_DEFAULT_STATE_SUBPATH = "metta-state"
 """ Default vars file if none was specified """
@@ -134,7 +134,7 @@ class TerraformProvisionerPlugin:
         """Children fixtures, typically just the client plugin."""
 
         # Make the client fixture in the constructor.  The TF client fixture is
-        # quite state safe, and hsould only need to be created once, unlike
+        # quite state safe, and should only need to be created once, unlike
         # other provisioner clients which may be vulnerable to state change.
         self.make_fixtures()
 

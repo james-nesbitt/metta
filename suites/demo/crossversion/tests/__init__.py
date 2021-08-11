@@ -15,7 +15,11 @@ from mirantis.testing.metta import get_environment
 from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK, Health, HealthStatus
+from mirantis.testing.metta_health.healthcheck import (
+    METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
+    Health,
+    HealthStatus,
+)
 
 from mirantis.testing.metta_common import METTA_PLUGIN_ID_PROVISIONER_COMBO
 from mirantis.testing.metta_launchpad import METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID

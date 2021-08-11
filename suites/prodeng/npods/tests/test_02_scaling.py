@@ -22,6 +22,7 @@ abstraction to add test case functions as implmenetations of the
 """
 import logging
 import json
+import time
 
 from .checks import stability_test
 
@@ -59,7 +60,7 @@ def _create_scale_and_test_function(scale):
     """
 
     # pylint: disable=too-many-arguments, unused-argument
-    def _scale_and_test(healthpoller, npods, npods_config):
+    def _scale_and_test(healthpoller_up, npods, npods_config):
         """Scale up the workloads and test stability."""
 
         # pylint: disable=global-statement
@@ -98,15 +99,13 @@ def _create_scale_and_test_function(scale):
             npods_config.get("tests.scale.duration", default=STABILITY_TEST_DURATION_DEFAULT)
         )
         """ how long to run the whole stability test """
-        period = int(npods_config.get("tests.scale.period", default=STABILITY_TEST_PERIOD_DEFAULT))
-        """ how long to wait between each test iteration """
+
+        time.sleep(duration)
 
         try:
             stability_test(
-                healthpoller=healthpoller,
+                healthpoller=healthpoller_up,
                 logger=logger.getChild(name),
-                duration=duration,
-                period=period,
             )
         except Exception as err:
             logger.error("Cluster stability test failed on scaled up cluster %s", name)
@@ -119,7 +118,7 @@ def _create_scale_down_and_test_function():
     """Create a function that will test scaling down the deployments"""
 
     # pylint: disable=too-many-arguments, unused-argument
-    def scale_down_and_test(healthpoller, npods, npods_config):
+    def scale_down_and_test(healthpoller_up, npods, npods_config):
         """Scale down and test stability"""
 
         name = "reset"
@@ -147,15 +146,13 @@ def _create_scale_down_and_test_function():
             npods_config.get("tests.scale.duration", default=STABILITY_TEST_DURATION_DEFAULT)
         )
         """ how long to run the whole stability test """
-        period = int(npods_config.get("tests.scale.period", default=STABILITY_TEST_PERIOD_DEFAULT))
-        """ how long to wait between each test iteration """
+
+        time.sleep(duration)
 
         try:
             stability_test(
-                healthpoller=healthpoller,
+                healthpoller=healthpoller_up,
                 logger=logger.getChild(name),
-                duration=duration,
-                period=period,
             )
 
         except Exception as err:

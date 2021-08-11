@@ -13,7 +13,7 @@ import os
 
 from docker import DockerClient
 
-from mirantis.testing.metta.healthcheck import Health, HealthStatus
+from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
 
 logger = logging.getLogger("metta.contrib.docker.client.dockerpy")
 
@@ -144,25 +144,29 @@ class DockerPyClientPlugin(DockerClient):
                     node_status = node.attrs["Status"]
                     message = node_status["Message"]
                     if node_status["State"] != "ready":
-                        health.error(f"{role} {description} : {message}")
+                        health.error(f"Docker:Node: {role} {description} : {message}")
                         errors += 1
 
                 if "ManagerStatus" in attrs:
                     manager_status = node.attrs["ManagerStatus"]
                     if manager_status["Reachability"] != "reachable":
-                        health.error(f"{role} {description} : manager is not reachable")
+                        health.error(
+                            f"Docker:Node: {role} {description} : manager is not reachable"
+                        )
                         errors += 1
 
                 if node.attrs["Spec"]["Availability"] != "active":
-                    health.warning(f"{role} {description} : is not available")
+                    health.warning(f"Docker:Node: {role} {description} : is not available")
                     errors += 1
 
                 if errors == 0:
-                    health.healthy(f"{role} {description} : reports healthy")
+                    health.healthy(f"Docker:Node: {role} {description} : reports healthy")
                 else:
-                    health.warning(f"{role} {description} : is not health ({errors} issues.)")
+                    health.warning(
+                        f"Docker:Node: {role} {description} : is not health ({errors} issues.)"
+                    )
         # pylint: disable=broad-except
         except Exception as err:
-            health.error(f"Docker could not retrieve node health: {err}")
+            health.error(f"Docker: could not retrieve node health: {err}")
 
         return health

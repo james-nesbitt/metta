@@ -4,6 +4,7 @@ npods:
   bootstraps:
     metta:
     - metta_common
+    - metta_health
     - metta_kubernetes
     - metta_terraform
     - metta_ansible

@@ -15,7 +15,7 @@ that a wholistic health check can be run.
 """
 from enum import Enum
 import time
-from typing import List
+from typing import List, Dict, Any
 import logging
 
 
@@ -32,6 +32,15 @@ METTA_HEALTHCHECK_CONFIG_HEALTHCHECKS_KEY = "healthchecks"
 """ A centralized configerus key for multiple healthchecks """
 METTA_HEALTHCHECK_CONFIG_HEALTHCHECK_KEY = "healthcheck"
 """ A centralized configerus key for one healthcheck """
+
+
+class HealthException(RuntimeError):
+    """A system component has reported a health issue.
+
+    Typically this means that a health check was performed and a HealthStatus
+    of a severity worse than a specified threshold was returned.
+
+    """
 
 
 class HealthStatus(Enum):
@@ -76,18 +85,21 @@ def worse_health_status(first: "HealthStatus", second: "HealthStatus") -> "Healt
 # yes this is a struct
 # pylint: disable=too-few-public-methods
 class HealthMessage:
-    """A message status combination."""
+    """A message status combination struct."""
 
-    def __init__(self, source: str, status: HealthStatus, message: str):
+    def __init__(
+        self, source: str, status: HealthStatus, message: str, properties: Dict[str, Any] = None
+    ):
         """Create a new message with status value."""
         self.time: float = time.perf_counter()
         self.source: str = source
         self.status: HealthStatus = status
         self.message: str = message
+        self.properties: Dict[str, Any] = properties if properties is not None else {}
 
     def __str__(self) -> str:
         """Convert message instance to string."""
-        return f"[{int(self.time)}] {self.status} > {self.source} => {self.message}"
+        return f"[{int(self.time)}] {self.status} => {self.message} [{self.source}]"
 
 
 class Health:
@@ -117,41 +129,55 @@ class Health:
         """Return the status."""
         return self._status
 
-    def messages(self, source: str = "", since: int = 0) -> List[HealthMessage]:
+    def messages(
+        self, source: str = "", since: int = 0, verbosity: HealthStatus = None
+    ) -> List[HealthMessage]:
         """Return filtered health messages."""
+        if isinstance(verbosity, str):
+            if verbosity.lower() in ["warning", "warn", "w"]:
+                verbosity = HealthStatus.WARNING
+            elif verbosity.lower() in ["error", "err", "e"]:
+                verbosity = HealthStatus.ERROR
+            else:
+                verbosity = None
+
         return (
             message
             for message in self._messages
-            if source in ["", message.source] and (since == 0 or message.time > since)
+            if (source in ["", message.source])
+            and (since == 0 or message.time > since)
+            and (verbosity is None or not message.status.is_better_than(verbosity))
         )
 
     # Health message recording
 
-    def new_message(self, status: HealthStatus, message: str):
+    def new_message(self, status: HealthStatus, message: str, properties: Dict[str, Any] = None):
         """Add a message of status INFO."""
-        self._messages.append(HealthMessage(source=self.source, status=status, message=message))
+        self._messages.append(
+            HealthMessage(source=self.source, status=status, message=message, properties=properties)
+        )
         self._status = worse_health_status(self._status, status)
 
-    def unknown(self, message: str):
+    def unknown(self, message: str, properties: Dict[str, Any] = None):
         """Add a message of status HEALTHY."""
-        self.new_message(status=HealthStatus.UNKNOWN, message=message)
+        self.new_message(status=HealthStatus.UNKNOWN, message=message, properties=properties)
 
-    def info(self, message: str):
+    def info(self, message: str, properties: Dict[str, Any] = None):
         """Add a message of status HEALTHY."""
-        self.new_message(status=HealthStatus.INFO, message=message)
+        self.new_message(status=HealthStatus.INFO, message=message, properties=properties)
 
-    def healthy(self, message: str):
+    def healthy(self, message: str, properties: Dict[str, Any] = None):
         """Add a message of status HEALTHY."""
-        self.new_message(status=HealthStatus.HEALTHY, message=message)
+        self.new_message(status=HealthStatus.HEALTHY, message=message, properties=properties)
 
-    def warning(self, message: str):
+    def warning(self, message: str, properties: Dict[str, Any] = None):
         """Add a message of status WARNING."""
-        self.new_message(status=HealthStatus.WARNING, message=message)
+        self.new_message(status=HealthStatus.WARNING, message=message, properties=properties)
 
-    def error(self, message: str):
+    def error(self, message: str, properties: Dict[str, Any] = None):
         """Add a message of status ERROR."""
-        self.new_message(status=HealthStatus.ERROR, message=message)
+        self.new_message(status=HealthStatus.ERROR, message=message, properties=properties)
 
-    def critical(self, message: str):
+    def critical(self, message: str, properties: Dict[str, Any] = None):
         """Add a message of status ERROR."""
-        self.new_message(status=HealthStatus.CRITICAL, message=message)
+        self.new_message(status=HealthStatus.CRITICAL, message=message, properties=properties)

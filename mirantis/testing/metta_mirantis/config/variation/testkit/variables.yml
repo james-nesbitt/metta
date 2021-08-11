@@ -31,6 +31,7 @@ extra_tags:
 # The Linux platform to use for manager/worker/DTR replica nodes
 # Typically overridden in a platform config variables file
 platform_repo: public
+manager_platform: ubuntu_20.04
 platform: ubuntu_20.04
 ssh_user: "docker"
 

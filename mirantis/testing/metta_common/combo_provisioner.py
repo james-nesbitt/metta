@@ -23,7 +23,6 @@ from mirantis.testing.metta.fixtures import (
 )
 from mirantis.testing.metta.plugin import METTA_PLUGIN_CONFIG_KEY_INSTANCEID
 from mirantis.testing.metta.provisioner import (
-    ProvisionerBase,
     METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
 )
 
@@ -66,7 +65,7 @@ COMBO_PROVISIONER_VALIDATE_TARGET = {
 }
 
 
-class ComboProvisionerPlugin(ProvisionerBase):
+class ComboProvisionerPlugin:
     """Combo Provisioner plugin class.
 
     This provisioner plugin is configered with a list of backends, which it

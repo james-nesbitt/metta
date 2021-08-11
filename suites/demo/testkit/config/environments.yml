@@ -4,10 +4,9 @@ testkit:
   bootstraps:
     metta:
     - metta_common
+    - metta_health
     - metta_docker
     - metta_kubernetes
-    # Launchpad module has the MKE/MSR plugins
-    - metta_launchpad
     - metta_testkit
     - metta_common_config
     - metta_mirantis_common

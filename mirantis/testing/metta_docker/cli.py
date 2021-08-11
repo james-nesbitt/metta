@@ -10,7 +10,7 @@ from typing import Dict, Any
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.healthcheck import Health
+from mirantis.testing.metta_health.healthcheck import Health
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .client import METTA_PLUGIN_ID_DOCKER_CLIENT

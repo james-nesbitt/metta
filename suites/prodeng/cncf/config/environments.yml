@@ -14,6 +14,7 @@ cncf:
   bootstraps:
     metta:
     - metta_common
+    - metta_health
     - metta_docker
     - metta_kubernetes
     - metta_terraform
@@ -26,11 +27,12 @@ cncf:
 
   config:
     sources:
-      cncf-mke-344:
-        # Include the config/mke_3.4.4 path as a config source for this environment
+      cncf-mke:
+        # Include the config/X path as a config source for this environment
+        # to include results for a specific MKE version
         plugin_id: path
         priority: 80
-        path: "{{paths:project-config}}/mke_3.4.4"
+        path: "{{paths:project-config}}/mke_3.4.5"
 
       # include Environemnt variables as a source of config if they use the format
       # METTA_LABEL[_STEP]*

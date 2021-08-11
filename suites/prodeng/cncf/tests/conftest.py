@@ -7,7 +7,7 @@ import logging
 
 import pytest
 
-from mirantis.testing.metta_common.healthpoll_workload import (
+from mirantis.testing.metta_health.healthpoll_workload import (
     HealthPollWorkload,
     METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
 )

@@ -4,6 +4,7 @@ clients:
   bootstraps:
     metta:
     - metta_common
+    - metta_health
     - metta_docker
     - metta_kubernetes
     - metta_terraform

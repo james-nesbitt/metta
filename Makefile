@@ -1,4 +1,8 @@
 
+.PHONY: black
+black:
+	python -m black .
+
 .PHONY: lint
 lint:
 	for package in mirantis/testing/*; do \

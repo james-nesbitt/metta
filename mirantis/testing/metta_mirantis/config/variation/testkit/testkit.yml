@@ -58,7 +58,7 @@ config:
   managers: "{{variables:manager_count}}"
   specs:
     # Managers
-  - platform: "{{variables:platform}}"
+  - platform: "{{variables:manager_platform}}"
     ssh_user: "{{variables:ssh_user}}"
     count: "{{variables:manager_count}}"
     is_windows: False

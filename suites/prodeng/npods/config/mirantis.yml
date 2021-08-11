@@ -17,6 +17,9 @@
 presets:
     # This will tell metta to include metta_mirantis/config/variation/tal
     variation: tal
-    # This will tell metta to include metta_mirantis/config/platform/public/ubuntu/20.04
+    # This will tell metta to include metta_mirantis/config/platform/X
     platform: public/ubuntu/20.04
-
+    # This will tell metta to include metta_mirantis/config/release/X
+    release: patch/202108-C
+    # This will tell metta to include metta_mirantis/config/cluster/X
+    cluster: enterprise

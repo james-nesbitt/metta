@@ -10,7 +10,7 @@ from typing import Any, List
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
-from mirantis.testing.metta.healthcheck import METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK
+from mirantis.testing.metta_health.healthcheck import METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK
 from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 from mirantis.testing.metta_cli.base import METTA_PLUGIN_INTERFACE_ROLE_CLI
 

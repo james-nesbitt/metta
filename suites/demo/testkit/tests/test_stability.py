@@ -6,7 +6,7 @@ Run a workload stability test.
 import time
 import logging
 
-from mirantis.testing.metta.healthcheck import HealthStatus
+from mirantis.testing.metta_health.healthcheck import HealthStatus
 
 
 logger = logging.getLogger("testkit-stability-test")

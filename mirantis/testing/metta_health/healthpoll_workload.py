@@ -15,7 +15,8 @@ from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.healthcheck import (
+
+from .healthcheck import (
     METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
     Health,
     HealthStatus,
@@ -131,50 +132,67 @@ class HealthPollWorkload:
 
     def _run(self):
         """Periodic poll all healthcheck plugins for health."""
-
         self._health[self._instance_id] = Health(source=self._instance_id)
         run_start = time.perf_counter()
-        while True:
-            if self._terminate:
-                # We have been instructed to stop
-                logger.info("Terminating health poll")
-                break
 
-            poll_start = time.perf_counter()
+        try:
+            while True:
+                if self._terminate:
+                    # We have been instructed to stop
+                    logger.info("Terminating health poll")
+                    break
 
-            if 0 < self.duration < poll_start:
-                # expire the poll if we were given a positive expiry
-                # and if that many seconds have passed.
-                logger.info("health poll expired")
-                break
+                poll_start = time.perf_counter()
 
-            # Mark the start of a new poll.
-            self._health[self._instance_id].info(
-                f"Polling {self.poll_count()} started, {int(poll_start - run_start)} "
-                "seconds after start"
-            )
-            # retrieve the health results.
-            check = self._healthcheck()
+                if 0 < self.duration < poll_start:
+                    # expire the poll if we were given a positive expiry
+                    # and if that many seconds have passed.
+                    logger.info("health poll expired")
+                    break
 
-            for plugin_id, plugin_health in check.items():
-                if plugin_id in self._health:
-                    self._health[plugin_id].merge(plugin_health)
-                else:
-                    self._health[plugin_id] = plugin_health
+                # Mark the start of a new poll.
+                self._health[self._instance_id].info(
+                    f"Polling {self.poll_count()} started, {int(poll_start - run_start)} "
+                    "seconds after start"
+                )
+                # retrieve the health results.
+                self._healthcheck()
+                # mark another poll complete
+                self._poll_timings.append(poll_start)
 
-            self._poll_timings.append(poll_start)
+                poll_stop = time.perf_counter() - run_start
+                sleep_dur = ((poll_stop // self.period) + 1) * self.period - poll_stop
+                """Duration in secs to the period for the next poll_start."""
+                # we may have passed over a period, so we don't just substract and divide
+                time.sleep(sleep_dur)
 
-            poll_stop = time.perf_counter() - run_start
-            sleep_dur = ((poll_stop // self.period) + 1) * self.period - poll_stop
+        # Outside of the polling loop, shut everything down
 
-            """Duration in secs to the period for the next poll_start."""
-            # we may have passed over a period, so we don't just substract and divide
-            time.sleep(sleep_dur)
+        # pylint: disable=broad-except
+        except Exception as err:
+            self._reset()
+            raise err
 
-        print("ended")
+        self._reset()
+
+    def _reset(self):
+        """Reset the thread of this object."""
+        self._thread: threading.Thread = None
+        """Thread for polling in case we want to join it."""
+
+        self._health: Dict[str, Health] = {}
+        """Aggregate health per fixture/plugin id. Only ._run() should write to this."""
+
+        self._poll_timings: List[float] = []
+        """A list of timestamps to allow separation of messages across polls."""
+
+        self._terminate: bool = False
+        """Internal value used to allow an early poll exit."""
 
     def _healthcheck(self) -> Dict[str, Health]:
         """Run a single pass healthcheck on all of the fixtures.
+
+        @TODO make this block so only 1 run can happen at a time.
 
         Returns:
         --------
@@ -196,6 +214,11 @@ class HealthPollWorkload:
                     f"Health plugin exception [{health_fixture.instance_id}]: {err}"
                 )
 
+            plugin_id = health_fixture.plugin_id
+            if plugin_id in self._health:
+                self._health[plugin_id].merge(plugin_health)
+            else:
+                self._health[plugin_id] = plugin_health
             health_info[health_fixture.instance_id] = plugin_health
         return health_info
 

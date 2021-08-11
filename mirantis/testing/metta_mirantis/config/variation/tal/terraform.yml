@@ -14,9 +14,9 @@ state:
     path: "{{variables:files_path}}/{{variables:files_prefix}}.terraform.state"
 
 # Where will the vars be written
-tfvars_path: "{{variables:files_path}}/{{variables:files_prefix}}.terraform.tfvars.json"
+vars_path: "{{variables:files_path}}/{{variables:files_prefix}}.terraform.tfvars.json"
 # Vars list for terraform
-tfvars:
+vars:
     # description = "Name used to identify resources and passed to launchpad."
     cluster_name: "{{variables:cluster_name}}"
 

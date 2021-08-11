@@ -5,6 +5,7 @@ clients:
     metta:
     - metta_common
     - metta_common_config
+    - metta_health
     - metta_docker
     - metta_kubernetes
     - metta_terraform

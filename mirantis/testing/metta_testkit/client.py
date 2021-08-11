@@ -109,7 +109,7 @@ class TestkitClientPlugin:
         }
         if deep:
             try:
-                info["hosts"] = self.machine_ls()
+                info["hosts"] = self.hosts()
             # pylint: disable=broad-except
             except Exception:
                 pass
@@ -129,13 +129,17 @@ class TestkitClientPlugin:
         mke_plugin.api_get_bundle(force=True)
         mke_plugin.make_fixtures()
 
-    def system_rm(self):
+    def destroy(self):
         """Remove a system from testkit."""
         return self._testkit.system_rm(system_name=self._system_name)
 
-    def machine_ls(self):
+    def hosts(self):
         """List testkit system machines."""
         return self._testkit.machine_ls(system_name=self._system_name)
+
+    def exec(self, host: str, cmd: str):
+        """List testkit system machines."""
+        return self._testkit.machine_ssh(machine=host, cmd=cmd)
 
     def system_ls(self):
         """List all of the systems testkit can see using our config."""

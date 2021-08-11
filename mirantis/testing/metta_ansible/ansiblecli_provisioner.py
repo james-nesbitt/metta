@@ -90,8 +90,6 @@ class AnsiblePlaybookProvisionerPlugin:
 
         # In order to allow declarative interaction. Try to make an ansible client
         # for this plugin, but allow it to fail.
-        self._update_config()
-        self._make_clients()
         try:
             self._update_config()
             self._make_clients()

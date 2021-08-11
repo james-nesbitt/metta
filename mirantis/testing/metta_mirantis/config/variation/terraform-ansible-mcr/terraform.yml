@@ -14,7 +14,7 @@ state:
     path: "{{variables:files_path}}/{{variables:files_prefix}}.terraform.state"
 
 # Where will the vars be written
-vars_path: "{{variables:files_path}}/{{variables:files_prefix}}.tfvars.json"
+vars_path: "{{variables:files_path}}/{{variables:files_prefix}}.terraform.tfvars.json"
 # Vars list for terraform
 vars:
     # description = "Name used to identify resources and passed to launchpad."
@@ -37,7 +37,7 @@ vars:
     aws_region: "{{variables:aws_region}}"
 
     # description = "The CIDR to use when creating the VPC."
-    vpc_cidr: ""{{variables:vpc_cidr}}"
+    vpc_cidr: "{{variables:vpc_cidr}}"
 
     # description = "The number of UCP managers to create."
     manager_count: "{{variables:manager_count}}"

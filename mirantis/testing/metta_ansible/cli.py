@@ -8,7 +8,7 @@ Comamnds for itneracting with the ansible plugins, primarily the provisioner
 import logging
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.healthcheck import Health
+from mirantis.testing.metta_health.healthcheck import Health
 
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 

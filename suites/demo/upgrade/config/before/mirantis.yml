@@ -2,5 +2,5 @@
 presets:
 
     # release preset is set per environment, so we ignore it heres
-    # this will tell metta to include metta_mirantis/config/release/release/2021Q1
-    release: release/2021Q1
+    # this will tell metta to include metta_mirantis/config/release/X
+    release: patch/202107-C

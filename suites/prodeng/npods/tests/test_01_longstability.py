@@ -7,6 +7,7 @@ Test that the MKE cluster remains stable with a steady number of pods for a long
 """
 import logging
 import json
+import time
 
 from .checks import stability_test
 
@@ -15,11 +16,11 @@ logger = logging.getLogger("npods-test-longstability")
 
 
 # pylint: disable=too-many-arguments, unused-argument
-def test_01_target_stability(healthpoller, npods, npods_config):
+def test_01_target_stability(healthpoller_up, npods, npods_config):
     """Long run of a fixed size stability test"""
     # create a new workload
     workload = npods_config.get("workload.stability").copy()
-    workload.update({"replicas": 1500, "threads": 1500})
+    workload.update({"replicas": 750, "threads": 750})
 
     name = "npods-stability"
     workload["name"] = name
@@ -43,22 +44,20 @@ def test_01_target_stability(healthpoller, npods, npods_config):
 
     duration = int(npods_config.get("tests.stability.duration"))
     """ how long to run the whole stability test """
-    period = int(npods_config.get("tests.stability.period"))
-    """ how long to wait between each test iteration """
+
+    time.sleep(duration)
 
     try:
         stability_test(
-            healthpoller=healthpoller,
+            healthpoller=healthpoller_up,
             logger=logger.getChild(name),
-            duration=duration,
-            period=period,
         )
     except Exception as err:
         logger.error("Cluster stability test failed on scaled up cluster %s", name)
         raise RuntimeError("Cluster stability test failed on scaled up cluster") from err
 
 
-def test_02_scaledown_stability(healthpoller, npods, npods_config):
+def test_02_scaledown_stability(healthpoller_up, npods, npods_config):
     """Scale down and test stability"""
 
     name = "reset"
@@ -83,15 +82,13 @@ def test_02_scaledown_stability(healthpoller, npods, npods_config):
 
     duration = int(npods_config.get("tests.scale.duration"))
     """ how long to run the whole stability test """
-    period = int(npods_config.get("tests.scale.period"))
-    """ how long to wait between each test iteration """
+
+    time.sleep(duration)
 
     try:
         stability_test(
-            healthpoller=healthpoller,
+            healthpoller=healthpoller_up,
             logger=logger.getChild(name),
-            duration=duration,
-            period=period,
         )
     except Exception as err:
         logger.error("Cluster stability test failed on scaled down cluster %s", name)

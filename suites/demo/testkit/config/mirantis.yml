@@ -15,11 +15,11 @@
 # sees a big changes.
 #
 presets:
-    # This will tell metta to include metta_mirantis/config/variation/testkit
+    # This will tell metta to include metta_mirantis/config/variation/X
     variation: testkit
-    # this will tell metta to include metta_mirantis/config/release/patch/patch/202107-C
-    release: patch/202107-C
-    # This will tell metta to include metta_mirantis/config/cluster/poc
+    # this will tell metta to include metta_mirantis/config/release/X
+    release: patch/202108-C
+    # This will tell metta to include metta_mirantis/config/cluster/X
     cluster: poc
-    # This will tell metta to include metta_mirantis/config/platform/public/rhel/8.3
-    platform: public/rhel/8.3
+    # This will tell metta to include metta_mirantis/config/platform/X
+    platform: public/windows/2019

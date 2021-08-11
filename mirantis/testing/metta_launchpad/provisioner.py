@@ -21,7 +21,6 @@ from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.provisioner import ProvisionerBase
 
 from .client import (
     METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
@@ -123,7 +122,7 @@ METTA_LAUNCHPAD_CONFIG_VALIDATE_TARGET = {
 
 
 # pylint: disable=too-many-instance-attributes
-class LaunchpadProvisionerPlugin(ProvisionerBase):
+class LaunchpadProvisionerPlugin:
     """Launchpad provisioner class.
 
     Use this to provision a system using Mirantis launchpad

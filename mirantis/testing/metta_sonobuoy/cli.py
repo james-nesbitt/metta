@@ -101,7 +101,7 @@ class SonobuoyClientGroup:
     def run(self, instance_id: str = "", wait: bool = False):
         """Run sonobuoy."""
         client_plugin = self._select_fixture(instance_id=instance_id).plugin
-        client_plugin.apply(wait=wait)
+        client_plugin.run(wait=wait)
 
     def wait(self, instance_id: str = "", step: int = 5, limit: int = 1000):
         """Wait until no longer running."""
@@ -146,6 +146,17 @@ class SonobuoyClientGroup:
         # pylint: disable=broad-except
         except Exception as err:
             logger.error("Retrieve failed: %s", err)
+
+    def version(self, instance_id: str = ""):
+        """Retrieve the sonobuoy version string."""
+        client_plugin = self._select_fixture(instance_id=instance_id).plugin
+        return cli_output(client_plugin.version())
+        # try:
+        #     return cli_output(client_plugin.version())
+        # # broad catch to allow message formatting for cli output
+        # # pylint: disable=broad-except
+        # except Exception as err:
+        #     logger.error("Version Retrieve failed: %s", err)
 
     def health(self, instance_id: str = ""):
         """Retrieve the results from the sonobuoy workload instance."""

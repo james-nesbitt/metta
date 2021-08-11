@@ -64,7 +64,6 @@ def environment(environment_discover) -> Environment:
 #   a before test after an after test, you will receive an environment object
 #   that is in the wrong state.
 
-
 @pytest.fixture(scope="session")
 def environment_before_up(environment) -> Environment:
     """get the metta environment"""

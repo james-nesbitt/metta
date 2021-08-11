@@ -14,7 +14,7 @@ import kubernetes
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.healthcheck import Health, HealthStatus
+from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
 
 from .kubeapi_client import KubernetesApiClientPlugin, METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
@@ -205,7 +205,7 @@ class KubernetesDeploymentWorkloadPlugin:
         dep_health = Health(source=self._instance_id, status=HealthStatus.UNKNOWN)
 
         if self._deployment is None:
-            dep_health.info(f"Deployment {self._instance_id} not started.")
+            dep_health.info(f"Deployment: {self._instance_id} not yet started.")
             return dep_health
 
         for test_health_function in [self._health_deployment_status]:
@@ -273,6 +273,6 @@ class KubernetesDeploymentWorkloadPlugin:
                         )
 
         except kubernetes.client.rest.ApiException as err:
-            health.error(f"K8S REST API exception occured: {err}")
+            health.error(f"Deployment: K8S REST API exception occured: {err}")
 
         return health

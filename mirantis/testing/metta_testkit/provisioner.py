@@ -204,7 +204,7 @@ class TestkitProvisionerPlugin:
     def destroy(self):
         """Destroy any created resources."""
         # run the testkit client command to provisioner the cluster
-        self._get_client_plugin().system_rm()
+        self._get_client_plugin().destroy()
         self._rm_config_file()
 
     def _write_config_file(self):
