@@ -166,6 +166,18 @@ class SonobuoyClient:
         self._run(cmd)
         self._delete_k8s_crb()
 
+    def version(self) -> Dict[str, str]:
+        """Retrieve sonobuoy version info."""
+        cmd = ["version"]
+        version_string = self._run(cmd, return_output=True)
+        version: Dict[str, str] = {}
+        for version_item_string in version_string.strip().split("\n"):
+            version_item_list = version_item_string.split(":")
+            key = version_item_list[0].strip()
+            value = version_item_list[1].strip()
+            version[key] = value
+        return version
+
     def _run(self, cmd: List[str], ignore_errors: bool = True, return_output: bool = False):
         """Run a sonobuoy command."""
         cmd = [self.bin, f"--kubeconfig={self.kubeconfig}"] + cmd

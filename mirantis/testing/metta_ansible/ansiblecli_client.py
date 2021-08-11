@@ -7,7 +7,7 @@ Metta client plugins for the ansible cli handlers.
 import logging
 from typing import List, Dict
 
-from mirantis.testing.metta.healthcheck import Health
+from mirantis.testing.metta_health.healthcheck import Health
 
 from .ansiblecli import AnsibleClient, AnsiblePlaybookClient
 

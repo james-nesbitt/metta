@@ -114,3 +114,33 @@ class FixturesGroup:
             fixture_info_list.append(fixture.info(deep=deep, children=children))
 
         return cli_output(fixture_info_list)
+
+    # this is what is needed to limit or filter fixture introspection
+    # pylint: disable=too-many-arguments
+    def list(
+        self,
+        plugin_id: str = "",
+        instance_id: str = "",
+        interface: str = "",
+        label: str = "",
+        skip_cli_plugins: bool = True,
+    ):
+        """Return Info for fixtures."""
+        fixture_info_list = []
+        for fixture in self._filter(
+            plugin_id=plugin_id,
+            instance_id=instance_id,
+            interfaces=[interface] if interface else [],
+            labels=[label] if label else [],
+            skip_cli_plugins=skip_cli_plugins,
+        ):
+            fixture_info_list.append(
+                {
+                    "plugin_id": fixture.plugin_id,
+                    "instance_id": fixture.instance_id,
+                    "interfaces": fixture.interfaces,
+                    "labels": fixture.labels,
+                }
+            )
+
+        return cli_output(fixture_info_list)

@@ -11,6 +11,12 @@ monitoring:
 
 workload:
   # default/template values for the npods helm workload yaml
+  #
+  # Here we set only a modest workload as we want the test case itself to
+  # apply a load by scaling up the helm chart.  The values below are used
+  # to configure the deployment/pod/service settings for the app, and to
+  # provide an early health check.
+
   scale:
     name: 'npods-workload-default'
     replicas: 100
@@ -33,10 +39,8 @@ workload:
 tests:
   # Control the scaling test
   scale:
-    duration: 600
-    period: 60
+    duration: 30
 
   # Configure the stability test
   stability:
-    duration: 3600
-    period: 60
+    duration: 60

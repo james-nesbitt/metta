@@ -1,0 +1,20 @@
+{{- range .Values.workloads }}
+---
+# Internal service (clusterIP) which any pod can use to continue the relay
+apiVersion: v1
+kind: Service
+metadata:
+  name: npods-relay-{{ default "default" .name }}
+  labels:
+    app: npods-workload
+    workload: npods-workload-{{ .name }}
+spec:
+  type: ClusterIP
+  selector:
+    workload: npods-workload-{{ .name }}
+  ports:
+    - name: relay
+      protocol: TCP
+      port: 80
+      targetPort: 80
+{{- end -}}

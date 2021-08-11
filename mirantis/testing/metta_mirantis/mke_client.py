@@ -24,7 +24,7 @@ import requests
 import toml
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.healthcheck import Health, HealthStatus
+from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
 from mirantis.testing.metta.fixtures import Fixtures
 from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
@@ -59,7 +59,7 @@ class MKENodeState(Enum):
         return self.value == compare
 
 
-# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-instance-attributes, too-many-public-methods
 class MKEAPIClientPlugin:
     """Metta Client plugin for API Connections to MKE."""
 
@@ -107,14 +107,14 @@ class MKEAPIClientPlugin:
         self._instance_id = instance_id
         """ Unique id for this plugin instance """
 
-        self.accesspoint = accesspoint
-        self.username = username
-        self.password = password
+        self.accesspoint: str = accesspoint
+        self.username: str = username
+        self.password: str = password
 
-        self.hosts = hosts
+        self.hosts: List[Dict] = hosts
         """ List of hosts """
 
-        self._bundle_root = bundle_root
+        self._bundle_root: str = bundle_root
         """ String path which should be used as a root path for storing client
            bundles """
 
@@ -122,7 +122,7 @@ class MKEAPIClientPlugin:
             # use the first host as an accesspoint if none was delivered
             self.accesspoint = self._node_address(0)
 
-        self.verify = False
+        self.verify: bool = False
         """ should we verify ssl certs """
         if not self.verify:
             # pylint: disable=no-member
@@ -130,8 +130,11 @@ class MKEAPIClientPlugin:
                 requests.packages.urllib3.exceptions.InsecureRequestWarning
             )
 
-        self.auth_token = None
+        self.auth_token: str = None
         """ hold the bearer auth token created by ._auth_headers() (cache) """
+
+        self._timeout = 10.00
+        """Python requests timeout to use."""
 
         self.fixtures = Fixtures()
         """ This plugin keeps fixtures """
@@ -194,7 +197,7 @@ class MKEAPIClientPlugin:
         else:
             endpoint = self._accesspoint_url("_ping")
 
-        with requests.get(endpoint, verify=self.verify) as response:
+        with requests.get(endpoint, verify=self.verify, timeout=self._timeout) as response:
             response.raise_for_status()
             return response.ok
 
@@ -204,6 +207,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url("id"),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
             return json.loads(response.content)
@@ -214,6 +218,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url("version"),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
             return json.loads(response.content)
@@ -224,9 +229,34 @@ class MKEAPIClientPlugin:
             self._accesspoint_url("info"),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
             return json.loads(response.content)
+
+    def api_logs(self):
+        """Retrieve config toml as a struct."""
+        endpoint = "logs"
+        with requests.get(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+            timeout=self._timeout,
+        ) as response:
+            response.raise_for_status()
+            return response.text
+
+    def api_logs_path(self, path: str):
+        """Retrieve config toml as a struct."""
+        endpoint = f"logs/{path}"
+        with requests.get(
+            self._accesspoint_url(endpoint),
+            headers=self._auth_headers(),
+            verify=self.verify,
+            timeout=self._timeout,
+        ) as response:
+            response.raise_for_status()
+            return response.text
 
     def api_nodes(self, node_id: str = "") -> Dict:
         """Retrieve the API nodes."""
@@ -235,6 +265,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url(endpoint),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
             return json.loads(response.content)
@@ -246,6 +277,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url(endpoint),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
             return json.loads(response.content)
@@ -257,6 +289,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url(endpoint),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
             return json.loads(response.content)
@@ -268,6 +301,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url(endpoint),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
             return json.loads(response.content)
@@ -279,6 +313,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url(endpoint),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
             return json.loads(response.content)
@@ -290,6 +325,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url(endpoint),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
             return toml.loads(response.text)
@@ -302,6 +338,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url(endpoint),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
             data=data_toml,
         ) as response:
             response.raise_for_status()
@@ -324,6 +361,7 @@ class MKEAPIClientPlugin:
             self._accesspoint_url(endpoint),
             headers=self._auth_headers(),
             verify=self.verify,
+            timeout=self._timeout,
         ) as response:
             response.raise_for_status()
 
@@ -459,6 +497,7 @@ class MKEAPIClientPlugin:
                 self._accesspoint_url("auth/login"),
                 data=json.dumps(data),
                 verify=self.verify,
+                timeout=self._timeout,
             ) as response:
                 response.raise_for_status()
                 content = json.loads(response.content)
@@ -511,16 +550,13 @@ class MKEAPIClientPlugin:
 
         info = self.api_info()
 
-        health.info(f"MKE: Cluster ID: {info['ID']}")
+        health.info(f"MKE:API: Cluster: ID: {info['ID']}")
 
-        no_warnings = True
-        if hasattr(info, "Warnings"):
+        if hasattr(info, "Warnings") and len(info["Warnings"]) > 0:
             for warning in info["Warnings"]:
-                health.warning(f"Warning : {warning}")
-                no_warnings = False
-
-        if no_warnings:
-            health.healthy("MKE: reports no warnings.")
+                health.warning(f"MKE:API: Warning : {warning}")
+        else:
+            health.healthy("MKE:API: reports no warnings.")
 
         return health
 
@@ -533,13 +569,13 @@ class MKEAPIClientPlugin:
         all_healthy = True
         for node in nodes:
             if MKENodeState.READY.match(node["Status"]["State"]):
-                health.healthy(f"MKE: NODE {node['ID']} : {node['Status']['Message']}")
+                health.healthy(f"MKE:Node: {node['ID']} : {node['Status']['Message']}")
             else:
-                health.warning(f"MKE: NODE {node['ID']} : {node['Status']['Message']}")
+                health.warning(f"MKE:Node: {node['ID']} : {node['Status']['Message']}")
                 all_healthy = False
 
         if all_healthy:
-            health.healthy("MKE: reports all nodes are healthy.")
+            health.healthy("MKE:Nodes: reports all nodes are healthy.")
 
         return health
 
@@ -557,12 +593,12 @@ class MKEAPIClientPlugin:
 
             if swarm_info["Error"] == 0:
                 swarm_error = swarm_info["Error"]
-                health.errorf(f"MKE: reports error {swarm_error}")
+                health.errorf(f"MKE:swarm: {swarm_error}")
             if swarm_info["Nodes"] == 0:
-                health.error("MKE: reports no nodes in the cluster")
+                health.error("MKE:Nodes: reports no nodes in the cluster")
 
         if info["Warnings"]:
             warnings = info["Warnings"]
-            health.warning(f"MKE: warnings: {warnings}")
+            health.warning(f"MKE:Warning: {warnings}")
 
         return health

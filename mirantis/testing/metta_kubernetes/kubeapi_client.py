@@ -17,7 +17,7 @@ import kubernetes
 from kubernetes.client import models
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.healthcheck import Health, HealthStatus
+from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
 
 logger = logging.getLogger("metta.contrib.kubernetes.client.kubeapi")
 
@@ -168,8 +168,6 @@ class KubernetesApiClientPlugin:
         In such cases the readyz approach does not suffice, as it only
         guarantees that enough nodes are online to allow api calls to
         work.
-
-        An example is a daemonset.
 
         """
         err = None
@@ -419,7 +417,7 @@ class KubernetesApiClientPlugin:
 
             if not deployment.status.conditions:
                 health.unknown(
-                    f"Deployment: [{namespace}/{name}] "
+                    f"KubeAPI:Deployment: [{namespace}/{name}] "
                     "Deployment does not have any conditions (yet?)"
                 )
                 continue
@@ -444,16 +442,23 @@ class KubernetesApiClientPlugin:
                 pass
             elif progressing_condition and progressing_condition.status == "True":
                 health.warning(
-                    f"Deployment: [{namespace}/{name}] "
+                    f"KubeAPI:Deployment: [{namespace}/{name}] "
                     "Deployment is progressing "
                     f"-> {progressing_condition.message}"
                 )
                 no_issues = False
             else:
+                messages = "\n".join(
+                    list(
+                        condition.message
+                        for condition in [progressing_condition, available_condition]
+                        if condition is not None
+                    )
+                )
                 health.warning(
-                    f"Deployment: [{namespace}/{name}] "
+                    f"KubeAPI:Deployment: [{namespace}/{name}] "
                     "Deployment is neither progressing nor available "
-                    f"-> {condition.message}"
+                    f"-> {messages}"
                 )
                 no_issues = False
 
@@ -463,15 +468,15 @@ class KubernetesApiClientPlugin:
 
                 elif condition.status != "True":
                     health.warning(
-                        f"Deployment: [{namespace}/{name}] {condition.type} "
+                        f"KubeAPI:Deployment: [{namespace}/{name}] {condition.type} "
                         f"-> {condition.message}"
                     )
                     no_issues = False
 
             if no_issues:
-                health.healthy(f"Deployment: [{namespace}/{name}] is healthy")
+                health.healthy(f"KubeAPI:Deployment: [{namespace}/{name}] is healthy")
             else:
-                health.warning(f"Deployment: [{namespace}/{name}] is not healthy")
+                health.warning(f"KubeAPI:Deployment: [{namespace}/{name}] is not healthy")
                 unhealthy_dep_count += 1
 
         if unhealthy_dep_count == 0:
@@ -497,21 +502,21 @@ class KubernetesApiClientPlugin:
 
             if status.collision_count is not None and status.collision_count > 0:
                 health.warning(
-                    f"Daemonset: [{namespace}/{name}] {condition.type} "
+                    f"Daemonset: [{namespace}/{name}] collision_count "
                     "-> Reports some collisions: "
                     f"{status.collision_count}"
                 )
                 unhealthy_dae_count += 1
             if status.number_unavailable is not None and status.number_unavailable > 0:
                 health.warning(
-                    f"Daemonset: [{namespace}/{name}] {condition.type} "
+                    f"Daemonset: [{namespace}/{name}] number_unavailable "
                     "-> Reports some unavailable pods: "
                     f"{status.number_unavailable}"
                 )
                 unhealthy_dae_count += 1
             if status.desired_number_scheduled < status.current_number_scheduled:
                 health.warning(
-                    f"Daemonset: [{namespace}/{name}] {condition.type} "
+                    f"Daemonset: [{namespace}/{name}] desired_number_scheduled "
                     "-> Does not have the desired number scheduled: "
                     f"{status.desired_number_scheduled} < "
                     f"{status.current_number_scheduled}"
@@ -553,39 +558,34 @@ class KubernetesApiClientPlugin:
             name = statefulset.metadata.name
             status = statefulset.status
 
+            # {'collision_count': 0,
+            #  'conditions': None,
+            #  'current_replicas': 1,
+            #  'current_revision': 'loki-workload-67877b465c',
+            #  'observed_generation': 1,
+            #  'ready_replicas': 1,
+            #  'replicas': 1,
+            #  'update_revision': 'loki-workload-67877b465c',
+            #  'updated_replicas': 1}
+
             if status.collision_count is not None and status.collision_count > 0:
                 health.warning(
-                    f"Statefulset: [{namespace}/{name}] {condition.type} "
+                    f"KubeAPI:Statefulset: [{namespace}/{name}] {condition.type} "
                     "-> Reports some collisions: "
                     f"{status.collision_count}"
                 )
                 unhealthycount += 1
-            if status.number_unavailable is not None and status.number_unavailable > 0:
-                health.warning(
-                    f"Statefulset: [{namespace}/{name}] {condition.type} "
-                    "-> Reports some unavailable pods: "
-                    f"{status.number_unavailable}"
-                )
-                unhealthy_count += 1
-            if status.desired_number_scheduled < status.current_number_scheduled:
-                health.warning(
-                    f"Statefulset: [{namespace}/{name}] {condition.type} "
-                    "-> Does not have the desired number scheduled: "
-                    f"{status.desired_number_scheduled} < "
-                    f"{status.current_number_scheduled}"
-                )
-                unhealthy_count += 1
 
             if status.conditions:
                 for condition in status.conditions:
                     if condition.status == "True":
                         health.healthy(
-                            f"Statefulset: [{namespace}/{name}] {condition.type} "
+                            f"KubeAPI:Statefulset: [{namespace}/{name}] {condition.type} "
                             f"-> {condition.message}"
                         )
                     else:
                         health.warning(
-                            f"Statefulset: [{namespace}/{name}] {condition.type} "
+                            f"KubeAPI:Statefulset: [{namespace}/{name}] {condition.type} "
                             f"-> {condition.message}"
                         )
                         unhealthy_dae_count += 1

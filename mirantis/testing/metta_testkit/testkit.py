@@ -97,6 +97,10 @@ class TestkitClient:
             )
         )
 
+    def machine_ssh(self, machine: str, cmd: str = ""):
+        """Run an ssh command onto a host."""
+        return self._run(["machine", "ssh", machine, cmd])
+
     # this syntax makes it easier to read
     # pylint: disable=inconsistent-return-statements
     def _run(self, args: List[str], return_output=False, use_config_file: bool = True):

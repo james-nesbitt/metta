@@ -6,14 +6,14 @@ Run a workload stability test.
 import logging
 import time
 
-from mirantis.testing.metta.healthcheck import HealthStatus
+from mirantis.testing.metta_health.healthcheck import HealthStatus
 
 
 logger = logging.getLogger("stability-test")
 
 
 # pylint: disable=unused-argument
-def test_01_workloads_up(healthpoller, nginx_deployment, metrics_deployment):
+def test_01_workloads_up(healthpoller, workloads_up):
     """Ensure that the fixtures are healthy after 1 minute."""
 
     time.sleep(60)

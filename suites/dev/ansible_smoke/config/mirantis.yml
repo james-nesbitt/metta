@@ -15,7 +15,9 @@
 # sees a big changes.
 #
 presets:
-    # include metta_mirantis/config/cluster/poc
-    cluster: poc
-    # include metta_mirantis/config/platform/public/ubuntu/20.04
+    # include metta_mirantis/config/variation/X
+    variation: terraform-ansible-mcr
+    # include metta_mirantis/config/cluster/X
+    cluster: enterprise
+    # include metta_mirantis/config/platform/public/X
     platform: public/ubuntu/20.04

@@ -63,14 +63,9 @@ class MKEAPICliGroup:
         )
 
     def info(self, instance_id: str = "", deep: bool = False, children: bool = True):
-        """Get info about a plugin."""
+        """Get info about the plugin."""
         fixture = self._select_fixture(instance_id=instance_id)
         return cli_output(fixture.info(deep=deep, children=children))
-
-    def children(self, instance_id: str = "", deep: bool = False):
-        """Get info about a plugin."""
-        fixture = self._select_fixture(instance_id=instance_id)
-        return cli_output(fixture.plugin.fixtures.info(deep=deep))
 
     def health(self, instance_id: str = ""):
         """Get health for the plugin."""
@@ -116,7 +111,7 @@ class MKEAPICliGroup:
 
     # pylint: disable=invalid-name
     def id(self, instance_id: str = ""):
-        """Get auth id from MKE."""
+        """Get API id from MKE."""
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return cli_output(plugin.api_id())
@@ -161,6 +156,12 @@ class MKEAPICliGroup:
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         return cli_output(plugin.api_metrics_discovery())
+
+    def logs(self, path: str, instance_id: str = ""):
+        """Get the logs from the api."""
+        fixture = self._select_fixture(instance_id=instance_id)
+        plugin = fixture.plugin
+        return cli_output(plugin.api_logs_path(path=path))
 
     # we violate private method to provide manual access on the cli
     # pylint: disable=protected-access

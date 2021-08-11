@@ -9,7 +9,7 @@ period of time.
 import logging
 import time
 
-from mirantis.testing.metta.healthcheck import HealthStatus
+from mirantis.testing.metta_health.healthcheck import HealthStatus
 
 logger = logging.getLogger("test-longevity")
 

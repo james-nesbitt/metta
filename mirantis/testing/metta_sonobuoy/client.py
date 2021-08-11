@@ -8,11 +8,11 @@ These are typically provided by the other plugins, but could be created
 directly if you can pass the arguments in.
 
 """
-from typing import List
+from typing import List, Dict
 import subprocess
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.healthcheck import Health
+from mirantis.testing.metta_health.healthcheck import Health
 
 from mirantis.testing.metta_kubernetes.kubeapi_client import KubernetesApiClientPlugin
 
@@ -84,6 +84,10 @@ class SonobuoyClientPlugin:
     def destroy(self, wait: bool = False):
         """Delete sonobuoy resources."""
         return self._sonobuoy.destroy(wait=wait)
+
+    def version(self) -> Dict[str, str]:
+        """Retrieve sonobuoy version."""
+        return self._sonobuoy.version()
 
     def health(self) -> Health:
         """Perform a health check on the workload."""

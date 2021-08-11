@@ -19,7 +19,7 @@ import requests
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.healthcheck import Health, HealthStatus
+from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
 
 logger = logging.getLogger("metta.contrib.metta_mirantis.client.msrapi")
 
@@ -298,9 +298,10 @@ class MSRAPIClientPlugin:
 
         node_health = self.api_health()
         if node_health["Healthy"]:
-            health.healthy("MSR: API is healthy")
+            health.healthy("MSR:API: healthy")
         else:
-            health.error(node_health["Error"])
+            node_health_error = str(node_health["Error"])
+            health.error(f"MSR:API: {node_health_error}")
 
         return health
 
@@ -311,9 +312,10 @@ class MSRAPIClientPlugin:
         for node_index in range(self.host_count()):
             node_health = self.api_health(node=node_index)
             if node_health["Healthy"]:
-                health.healthy(f"MSR: Node [{node_index}] is healthy")
+                health.healthy(f"MSR:Node: [{node_index}] is healthy")
             else:
-                health.error(node_health["Error"])
+                node_health_error = str(node_health["Error"])
+                health.error(f"MSR:Node: {node_health_error}")
 
         return health
 
@@ -326,12 +328,14 @@ class MSRAPIClientPlugin:
 
         if replica_health is None:
             health.warning(
-                "MSR: cluster reports a null replica health. This occurs for MSR on K8s."
+                "MSR:Replicas: cluster reports a null replica health. This occurs for MSR on K8s."
             )
         else:
             for replica_id, replica_health in status["replica_health"].items():
                 if not MSRReplicaHealth.OK.match(replica_health):
-                    health.error(f"MSR: Replica [{replica_id}] is not READY : {replica_health}")
+                    health.error(
+                        f"MSR:Replicas: Replica [{replica_id}] is not READY : {replica_health}"
+                    )
 
         return health
 
@@ -343,7 +347,7 @@ class MSRAPIClientPlugin:
 
         for alert in alerts:
             health.warning(
-                f"MSR: alert: {alert['id']} {alert['class']}: {alert['message']}"
+                f"MSR:Alert: {alert['id']} {alert['class']}: {alert['message']}"
                 f" {alert['url'] if hasattr(alert, 'url') else ''}"
             )
 

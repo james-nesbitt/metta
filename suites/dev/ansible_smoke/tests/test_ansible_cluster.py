@@ -6,7 +6,7 @@ Test that the ansible provisioner works
 
 import logging
 
-from mirantis.testing.metta_common.healthpoll_workload import health_poller_output_log
+from mirantis.testing.metta_health.healthpoll_workload import health_poller_output_log
 from mirantis.testing.metta_cli.base import cli_output
 
 logger = logging.getLogger("test_ansible")

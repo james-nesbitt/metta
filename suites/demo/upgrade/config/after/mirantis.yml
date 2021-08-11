@@ -1,5 +1,5 @@
 # Environment: AFTER mirantis config
 presets:
     # release preset is set per environment, so we ignore it heres
-    # this will tell metta to include metta_mirantis/config/release/patch/202106
-    release: patch/202106 
+    # this will tell metta to include metta_mirantis/config/release/X
+    release: patch/202108-C

@@ -17,12 +17,11 @@ from typing import Dict, Any
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixtures import Fixtures
-from mirantis.testing.metta.provisioner import ProvisionerBase
 
 logger = logging.getLogger("metta.contrib.dummy.provisioner")
 
 
-class DummyProvisionerPlugin(ProvisionerBase):
+class DummyProvisionerPlugin:
     """Dummy provisioner class"""
 
     def __init__(

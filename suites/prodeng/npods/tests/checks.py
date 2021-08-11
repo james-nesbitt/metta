@@ -5,9 +5,11 @@ NPods health detection.
 Various functions used to determine if a cluster is healthy.
 
 """
+from typing import Dict, List
 import logging
 
-from mirantis.testing.metta_common.healthpoll_workload import health_poller_output_log
+from mirantis.testing.metta_health.healthpoll_workload import HealthPollWorkload
+from mirantis.testing.metta_health.healthcheck import Health, HealthStatus, HealthException
 
 logger = logging.getLogger("npods-test")
 """ test-suite logger """
@@ -17,7 +19,11 @@ logger = logging.getLogger("npods-test")
 
 
 # pylint: disable=too-many-arguments,unused-argument
-def stability_test(healthpoller, logger, period, duration):
+def stability_test(
+    healthpoller: HealthPollWorkload,
+    logger: logging.Logger,
+    required_status: HealthStatus = HealthStatus.ERROR,
+):
     """Run a stability test on the cluster.
 
     Parameters:
@@ -33,19 +39,44 @@ def stability_test(healthpoller, logger, period, duration):
     Raises an exception if more than 1 node is unhealthy
 
     """
-    logger.info(
-        "Stability tests: Following health-check polling [period:%s/duration:%s]",
-        period,
-        duration,
-    )
+    logger.info("Stability tests: Retrieving health-check polling")
 
-    poll_logger = logger.getChild("healthpoller")
-    """Use a new logger just for the health output."""
+    health_by_source: Dict[str, Health] = healthpoller.health_by_source()
+    """Get a Health status from all sources."""
 
-    # use a common function for logging poller status
-    health_poller_output_log(
-        healthpoller=healthpoller,
-        poll_logger=poll_logger,
-        period=period,
-        count=int(duration / period),
-    )
+    errors: List[Exception] = []
+    """Did any errors get returned during the health check."""
+
+    for source, health in health_by_source.items():
+
+        if health.status().is_better_than(HealthStatus.WARNING):
+            logger.info("%s is Healthy", source)
+        elif health.status().is_better_than(HealthStatus.ERROR):
+            messages = (
+                message
+                for message in health.messages()
+                if not message.status.is_better_than(HealthStatus.WARNING)
+            )
+            output = "\n".join(
+                list(
+                    f"{message.status}: {message.time} => {message.message}" for message in messages
+                )
+            )
+            logger.warning("%s has health warnings: %s", source, output)
+        else:
+            messages = (
+                message
+                for message in health.messages()
+                if not message.status.is_better_than(HealthStatus.WARNING)
+            )
+            output = "\n".join(
+                list(
+                    f"{message.status}: {message.time} => {message.message}" for message in messages
+                )
+            )
+            logger.error("[%s] has health errors: %s", source, output)
+
+        if required_status is None or health.status().is_better_than(required_status):
+            continue
+
+        errors.append(HealthException())

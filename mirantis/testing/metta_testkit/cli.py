@@ -79,20 +79,25 @@ class TestkitClientGroup:
         client_plugin = self._select_client(instance_id=client).plugin
         return cli_output(client_plugin.create())
 
-    def system_rm(self, client: str = ""):
+    def destroy(self, client: str = ""):
         """Run testkit system rm."""
         client_plugin = self._select_client(instance_id=client).plugin
         return cli_output(client_plugin.destroy())
 
-    def system_ls(self, client: str = ""):
+    def systems(self, client: str = ""):
         """List the systems that testkit is aware of."""
         client_plugin = self._select_client(instance_id=client).plugin
         return cli_output(client_plugin.system_ls())
 
-    def machine_ls(self, client: str = ""):
+    def machines(self, client: str = ""):
         """List the systems that testkit is aware of."""
         client_plugin = self._select_client(instance_id=client).plugin
         return cli_output(client_plugin.machine_ls())
+
+    def exec(self, host: str, cmd: str, client: str = ""):
+        """List the systems that testkit is aware of."""
+        client_plugin = self._select_client(instance_id=client).plugin
+        client_plugin.exec(host=host, cmd=cmd)
 
 
 class TestkitProvisionerGroup:

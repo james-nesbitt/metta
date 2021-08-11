@@ -97,18 +97,13 @@ def environment_up_unlocked(environment_up, mke, kubeapi):
 
 
 @pytest.fixture(scope="module")
-def healthpoller(environment_up):
+def healthpoller_up(environment_up):
     """Start the healthpoller."""
     healthpoller_plugin = environment_up.fixtures.get_plugin(instance_id="healthpoller")
     """ healthpoller workload defined in fixtures.yml, using fixtures from our environment """
 
-    try:
-        healthpoller_plugin.prepare(environment_up.fixtures)
-        healthpoller_plugin.apply()
-    except Exception as err:
-        raise RuntimeError(
-            "healthpoller workload plugin failed to initialize before running test"
-        ) from err
+    healthpoller_plugin.prepare(environment_up.fixtures)
+    healthpoller_plugin.apply()
 
     yield healthpoller_plugin
 
@@ -116,7 +111,7 @@ def healthpoller(environment_up):
 
 
 @pytest.fixture(scope="module")
-def npods(environment_up_unlocked, healthpoller, npods_config):
+def npods(environment_up_unlocked, healthpoller_up, npods_config):
     """Create helm workload plugin using fixtures from our env."""
     npods_plugin = environment_up_unlocked.fixtures.get_plugin(instance_id="npods-workload")
     """ npods helm workload defined in fixtures.yml, using fixtures from our environment """

@@ -36,3 +36,13 @@ ansible:
             # quick sanity playbook
             sanity:
                 path: "{{paths:metta-mirantis}}/ansible/playbooks/prodeng/sanity"
+
+# Helm chart used that are not yet distributed.
+helm:
+
+    npods:
+        # NPods is a scaling/capacity test app which loads a cluster with a
+        # mild, but configurable load intended to test internal components
+        # of MKE as a K8s cluster without simply testing machine specs.
+        chart:
+            path: "{{paths:metta-mirantis}}/helm/charts/npods"
