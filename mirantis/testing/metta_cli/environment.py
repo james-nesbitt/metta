@@ -7,11 +7,8 @@ Various commands that allow introspection of the available environments.
 """
 import logging
 
-from configerus.contrib.files import PLUGIN_ID_SOURCE_PATH
-from configerus.contrib.dict import PLUGIN_ID_SOURCE_DICT
-
-from mirantis.testing.metta import environment_names, get_environment
-from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.globals import global_fixtures
+from mirantis.testing.metta.environment import Environment, METTA_PLUGIN_INTERFACE_ROLE_ENVIRONMENT
 
 from .base import CliBase, cli_output
 
@@ -33,13 +30,18 @@ class EnvironmentGroup:
 
     def __init__(self, environment: Environment):
         """Create CLI command group."""
-        self._environment = environment
+        self._environment: Environment = environment
 
     # needs to be a method for registration in fire
     # pylint: disable=no-self-use
     def list(self, raw: bool = False):
         """List all of the environment names."""
-        names = environment_names()
+        names = [
+            fixture.instance_id
+            for fixture in global_fixtures.filter(
+                interfaces=[METTA_PLUGIN_INTERFACE_ROLE_ENVIRONMENT]
+            )
+        ]
         if raw:
             return names
         return cli_output(names)
@@ -47,47 +49,26 @@ class EnvironmentGroup:
     def _get_environment(self, environment: str = ""):
         """Select an environment."""
         if not environment:
-            return self._environment
-        return get_environment(environment)
+            environment = self._environment.instance_id()
+        return global_fixtures.get(
+            instance_id=environment, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_ENVIRONMENT]
+        )
 
     def name(self, environment: str = ""):
         """Return env name."""
-        environment_object = self._get_environment(environment)
-        return environment_object.name
+        environment_plugin = self._get_environment(environment).plugin
+        return environment_plugin.instance_id()
 
     def info(self, environment: str = "", deep: bool = False):
         """Return info about an environment."""
-        environment_object = self._get_environment(environment)
+        environment_fixture = self._get_environment(environment)
 
-        info = {"name": environment_object.name}
-
-        if len(environment_object.states) > 0:
-            info["states"] = {
-                "available": environment_object.states,
-                "active": environment_object.state,
-            }
-
-        info["config"] = {"sources": []}
-        for instance in self._environment.config.plugins.get_instances():
-            source = {
-                "plugin_id": instance.plugin_id,
-                "instance_id": instance.instance_id,
-                "priority": instance.priority,
-            }
-
-            if deep:
-                if instance.plugin_id == PLUGIN_ID_SOURCE_PATH:
-                    source["path"] = instance.plugin.path
-                if instance.plugin_id == PLUGIN_ID_SOURCE_DICT:
-                    source["data"] = instance.plugin.data
-
-            info["config"]["sources"].append(source)
-
-        return cli_output(info)
+        return cli_output(environment_fixture.info(deep=deep))
 
     def bootstraps(self, environment: str = ""):
         """List bootstraps that have been applied to the environment."""
-        environment_object = self._get_environment(environment)
-        bootstrap_list = list(bootstrap for bootstrap in environment_object.bootstrapped)
+        environment_plugin = self._get_environment(environment).plugin
+        # pylint: disable=protected-access
+        bootstrap_list = list(bootstrap for bootstrap in environment_plugin._environment_boostraps)
 
         return cli_output(bootstrap_list)

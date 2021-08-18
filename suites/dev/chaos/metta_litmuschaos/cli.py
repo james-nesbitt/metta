@@ -27,7 +27,7 @@ class LitmusChaosCliPlugin(CliBase):
     def fire(self):
         """Return a dict of commands for litmuschaos workloads."""
         if (
-            self.environment.fixtures.get(
+            self.environment.fixtures().get(
                 plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
                 plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
                 exception_if_missing=False,
@@ -50,21 +50,22 @@ class LitmusChaosGroup:
         """Pick a matching workload plugin."""
         try:
             if instance_id:
-                return self.environment.fixtures.get(
+                return self.environment.fixtures().get(
                     plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
                     plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
                     instance_id=instance_id,
                 )
 
             # Get the highest priority provisioner
-            return self.environment.fixtures.get(
+            return self.environment.fixtures().get(
                 plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
                 plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
             )
 
         except KeyError as err:
             raise ValueError(
-                "No usable kubernetes client was found for litmuschaos to " "pull a kubeconfig from"
+                "No usable kubernetes client was found for litmuschaos to "
+                "pull a kubeconfig from"
             ) from err
 
     def _select_instance(self, instance_id: str = ""):
@@ -72,7 +73,7 @@ class LitmusChaosGroup:
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         # @TODO allow filtering of kubernetes client instances
-        instance = plugin.create_instance(self.environment.fixtures)
+        instance = plugin.create_instance(self.environment.fixtures())
         return instance
 
     def info(self, instance_id: str = "", deep: bool = False):

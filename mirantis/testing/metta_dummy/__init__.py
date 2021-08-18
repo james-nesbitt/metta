@@ -71,7 +71,7 @@ def metta_plugin_factory_workload_dummy(
 
 
 # pylint: disable=unused-argument
-def bootstrap(environment: Environment):
+def bootstrap_environment(environment: Environment):
     """METTA_Terraform bootstrap.
 
     Currently we only use this to import plugins.

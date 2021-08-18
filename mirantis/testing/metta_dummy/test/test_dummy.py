@@ -19,7 +19,7 @@ from mirantis.testing.metta import new_environment, environment_names, get_envir
 
 # Used for type hinting and config generation
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta.output import METTA_PLUGIN_INTERFACE_ROLE_OUTPUT
@@ -135,7 +135,7 @@ def _dummy_environment() -> Environment:
     if "dummy" not in environment_names():
         logger.info("Creating new environment for DUMMY test suite")
         environment = new_environment(name="dummy", additional_metta_bootstraps=["metta_dummy"])
-        environment.config.add_source(PLUGIN_ID_SOURCE_DICT).set_data(CONFIG_DATA)
+        environment.config().add_source(PLUGIN_ID_SOURCE_DICT).set_data(CONFIG_DATA)
 
         # this looks magical, but it works because we have structured the
         # fixtures DICT to match expected values properly
@@ -147,13 +147,13 @@ def _dummy_environment() -> Environment:
 def _dummy_provisioner() -> Fixtures:
     """Return a Fixtures of all WORKLOAD plugins"""
     environment = _dummy_environment()
-    return environment.fixtures.get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]).plugin
+    return environment.fixtures().get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]).plugin
 
 
 def _dummy_workloads() -> Fixtures:
     """Return a Fixtures of all WORKLOAD plugins"""
     environment = _dummy_environment()
-    return environment.fixtures.filter(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD])
+    return environment.fixtures().filter(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD])
 
 
 class DummyTesting(unittest.TestCase):
@@ -167,7 +167,7 @@ class DummyTesting(unittest.TestCase):
         """some sanity testing on the shared config object"""
         environment = _dummy_environment()
 
-        dummy_config = environment.config.load("fixtures")
+        dummy_config = environment.config().load("fixtures")
         self.assertEqual(dummy_config.get("prov1.plugin_id"), METTA_PLUGIN_ID_DUMMY_PROVISIONER)
 
         dummy_config.get("work1", validator="jsonschema:plugin")

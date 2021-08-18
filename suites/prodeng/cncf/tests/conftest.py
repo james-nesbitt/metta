@@ -38,7 +38,7 @@ SONOBUOY_TEST_TIMER_STEP = 10
 def kubeapi_client(environment) -> KubernetesApiClientPlugin:
     """Get the kubeapi client plugin."""
     try:
-        kubeapi_client: KubernetesApiClientPlugin = environment.fixtures.get_plugin(
+        kubeapi_client: KubernetesApiClientPlugin = environment.fixtures().get_plugin(
             interfaces=[METTA_PLUGIN_ID_KUBERNETES_CLIENT]
         )
 
@@ -58,13 +58,13 @@ def kubeapi_client(environment) -> KubernetesApiClientPlugin:
 @pytest.fixture(scope="package")
 def cncf_workload(environment_up, kubeapi_client) -> SonobuoyWorkloadPlugin:
     """Retrieve the CNCF workload instance."""
-    plugin: SonobuoyWorkloadPlugin = environment_up.fixtures.get_plugin(
+    plugin: SonobuoyWorkloadPlugin = environment_up.fixtures().get_plugin(
         interfaces=[METTA_SONOBUOY_WORKLOAD_PLUGIN_ID]
     )
 
     # start the CNCF conformance run
     logger.info("Starting sonobuoy run")
-    plugin.prepare(environment_up.fixtures)
+    plugin.prepare(environment_up.fixtures())
     plugin.apply(wait=False)
 
     yield plugin
@@ -75,11 +75,11 @@ def cncf_workload(environment_up, kubeapi_client) -> SonobuoyWorkloadPlugin:
 @pytest.fixture(scope="module")
 def healthpoller(environment_up) -> HealthPollWorkload:
     """Start a running health poll and return it."""
-    healthpoll_workload = environment_up.fixtures.get_plugin(
+    healthpoll_workload = environment_up.fixtures().get_plugin(
         plugin_id=METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL
     )
 
-    healthpoll_workload.prepare(environment_up.fixtures)
+    healthpoll_workload.prepare(environment_up.fixtures())
     healthpoll_workload.apply()
 
     yield healthpoll_workload

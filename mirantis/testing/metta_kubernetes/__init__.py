@@ -89,7 +89,7 @@ def metta_plugin_factory_workload_kubernetes_yaml(
 
 @Factory(
     plugin_id=METTA_PLUGIN_ID_KUBERNETES_HELM_WORKLOAD,
-    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD],
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD, METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK],
 )
 def metta_plugin_factory_workload_kubernetes_helm(
     environment: Environment,
@@ -114,7 +114,7 @@ def metta_terraform_factory_cli_kubernetes(environment: Environment, instance_id
 
 
 # pylint: disable=unused-argument
-def bootstrap(environment: Environment):
+def bootstrap_environment(environment: Environment):
     """METTA_Terraform bootstrap.
 
     Currently we only use this to import plugins.

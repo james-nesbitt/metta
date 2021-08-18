@@ -13,7 +13,7 @@ from typing import Any, Dict
 import kubernetes
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
 
 from .kubeapi_client import KubernetesApiClientPlugin, METTA_PLUGIN_ID_KUBERNETES_CLIENT
@@ -64,7 +64,7 @@ class KubernetesDeploymentWorkloadPlugin:
         self._config_base: str = base
         """ configerus get key that should contain all tf config """
 
-        workload_config = self._environment.config.load(self._config_label)
+        workload_config = self._environment.config().load(self._config_label)
 
         self.name: str = workload_config.get(
             [
@@ -90,18 +90,25 @@ class KubernetesDeploymentWorkloadPlugin:
         self._deployment: object = None
         """KubeAPI get deployment result."""
 
+        # do an initial prepare in case it is never properly run
+        try:
+            self.prepare()
+        # pylint: disable=broad-except
+        except Exception:
+            pass
+        # check if the deployment is already running
         self.read()
 
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
         """Return dict data about this plugin for introspection."""
-        workload_config = self._environment.config.load(self._config_label)
+        workload_config = self._environment.config().load(self._config_label)
 
         if self._kubeapi_client is None:
             # let's take a stab at finding a client for declarative cases
             try:
-                kubeclient = self._environment.fixtures.get_plugin(
+                kubeclient = self._environment.fixtures().get_plugin(
                     plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
                 )
                 kubeclient_info = kubeclient.info()
@@ -150,15 +157,14 @@ class KubernetesDeploymentWorkloadPlugin:
             self.destroy()
 
         if fixtures is None:
-            fixtures = self._environment.fixtures
+            fixtures = self._environment.fixtures()
 
         try:
-            self._kubeapi_client: KubernetesApiClientPlugin = fixtures.get_plugin(
-                plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT
-            )
+            self._kubeapi_client = fixtures.get_plugin(plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
         except KeyError as err:
             raise NotImplementedError(
-                "Workload could not find the needed client: " f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
+                "Workload could not find the needed client: "
+                f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
             ) from err
 
     def apply(self):
@@ -254,7 +260,7 @@ class KubernetesDeploymentWorkloadPlugin:
                     health.error(
                         f"Deployment: [{self.namespace}/{self.name}] "
                         "Deployment is neither progressing nor available "
-                        f"-> {condition.message}"
+                        f"-> {available_condition.message} && {progressing_condition.message}"
                     )
 
                 for condition in status.conditions:

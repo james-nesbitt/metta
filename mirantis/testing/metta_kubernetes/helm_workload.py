@@ -14,8 +14,9 @@ from enum import Enum
 import yaml
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
+from mirantis.testing.metta_health.healthcheck import Health
 
 from .kubeapi_client import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
@@ -59,8 +60,15 @@ KUBERNETES_HELM_WORKLOAD_DEFAULT_WORKINGDIR = "."
 class Status(Enum):
     """A Helm Status enum."""
 
+    UNKNOWN = "unknown"
     DEPLOYED = "deployed"
-    """ Helm Release has been deployed """
+    UNINSTALLED = "uninstalled"
+    SUPERSEDED = "superseded"
+    FAILED = "failed"
+    UNINSTALLING = "uninstalling"
+    PENDING_INSTALL = "pending-install"
+    PENDING_UPGRADE = "pending-upgrade"
+    PENDING_ROLLBACK = "pending-rollback"
 
 
 # This is effectively a struct for interpreting the release status information
@@ -72,25 +80,25 @@ class HelmReleaseStatus:
 
     """
 
-    def __init__(self, status_reponse: dict):
+    def __init__(self, status_response: dict):
         """Interpret status from a status response."""
-        self.name = status_reponse["name"]
-        self.version = status_reponse["version"]
-        self.namespace = status_reponse["namespace"]
+        self.name = status_response["name"]
+        self.version = status_response["version"]
+        self.namespace = status_response["namespace"]
 
-        # self.first_deployed = datetime.strptime(status_reponse['info']['first_deployed'],
+        # self.first_deployed = datetime.strptime(status_response['info']['first_deployed'],
         #                                         '%Y-%m-%dT%H:%M:%S.%fZ')
-        # self.last_deployed = datetime.strptime(status_reponse['info']['last_deployed'],
+        # self.last_deployed = datetime.strptime(status_response['info']['last_deployed'],
         #                                         '%Y-%m-%dT%H:%M:%S.%fZ')
 
-        self.deleted = status_reponse["info"]["deleted"]
-        self.description = status_reponse["info"]["description"]
-        self.status = Status(status_reponse["info"]["status"])
-        self.notes = status_reponse["info"]["notes"]
+        self.deleted = status_response["info"]["deleted"]
+        self.description = status_response["info"]["description"]
+        self.status = Status(status_response["info"]["status"])
+        self.notes = status_response["info"]["notes"] if "notes" in status_response["info"] else ""
 
-        self.config = status_reponse["config"]
+        self.config = status_response["config"]
 
-        self.manifest = status_reponse["manifest"]
+        self.manifest = status_response["manifest"]
 
 
 # pylint: disable=too-many-instance-attributes
@@ -136,7 +144,7 @@ class KubernetesHelmWorkloadPlugin:
         self._kubeconfig: str = ""
         """Path to a kubeconfig file to be used by helm (see .prepare())."""
 
-        workload_config = self._environment.config.load(self._config_label)
+        workload_config = self._environment.config().load(self._config_label)
 
         self.namespace: str = workload_config.get(
             [self._config_base, KUBERNETES_HELM_WORKLOAD_CONFIG_KEY_NAMESPACE],
@@ -182,6 +190,13 @@ class KubernetesHelmWorkloadPlugin:
         self._bin: str = helm_bin
         """Path to the helm binary."""
 
+        # do an initial prepare in case it is never properly run
+        try:
+            self.prepare()
+        # pylint: disable=broad-except
+        except Exception:
+            pass
+
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
@@ -202,6 +217,36 @@ class KubernetesHelmWorkloadPlugin:
             },
         }
 
+    def health(self) -> Health:
+        """Create a Health check for the helm workload."""
+        health: Health = Health(source=self._instance_id)
+
+        status = self.status()
+
+        if status.status in [Status.UNKNOWN, Status.SUPERSEDED, Status.UNINSTALLING]:
+            health.warning(
+                f"Helm: {self._instance_id} release status is at issue: {status.status} : {status.description}"
+            )
+
+        if status.status in [Status.DEPLOYED, Status.UNINSTALLED]:
+            health.healthy(
+                f"Helm: {self._instance_id} release status is good: {status.status} : {status.description}"
+            )
+
+        if status.status == Status.FAILED:
+            health.error(
+                f"Helm: {self._instance_id} release status is not good: {status.status} : {status.description}"
+            )
+
+        if status.status in [
+            Status.PENDING_INSTALL,
+            Status.PENDING_UPGRADE,
+            Status.PENDING_ROLLBACK,
+        ]:
+            health.warning(f"Helm status pending: {status.status}")
+
+        return health
+
     def prepare(self, fixtures: Fixtures = None):
         """Create a workload instance from a set of fixtures.
 
@@ -212,7 +257,7 @@ class KubernetesHelmWorkloadPlugin:
 
         """
         if fixtures is None:
-            fixtures = self._environment.fixtures
+            fixtures = self._environment.fixtures()
 
         try:
             client = fixtures.get_plugin(
@@ -220,7 +265,8 @@ class KubernetesHelmWorkloadPlugin:
             )
         except KeyError as err:
             raise NotImplementedError(
-                "Workload could not find the needed client: " f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
+                "Workload could not find the needed client: "
+                f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
             ) from err
 
         self._kubeconfig = client.config_file
@@ -351,17 +397,19 @@ class KubernetesHelmWorkloadPlugin:
         # pylint: disable=no-else-return
         if return_output:
             logger.debug("running launchpad command with output capture: %s", " ".join(cmd))
-            exec = subprocess.run(
+            return_exec: subprocess.CompletedProcess[bytes] = subprocess.run(
                 cmd,
                 cwd=self._working_dir,
                 shell=False,
                 check=True,
                 stdout=subprocess.PIPE,
             )
-            exec.check_returncode()
-            return exec.stdout.decode("utf-8")
+            return_exec.check_returncode()
+            return return_exec.stdout.decode("utf-8")
         else:
             logger.debug("running launchpad command: %s", " ".join(cmd))
-            exec = subprocess.run(cmd, cwd=self._working_dir, check=True, text=True)
+            exec: subprocess.CompletedProcess[str] = subprocess.run(
+                cmd, cwd=self._working_dir, check=True, text=True
+            )
             exec.check_returncode()
             return exec

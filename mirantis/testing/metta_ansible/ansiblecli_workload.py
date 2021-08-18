@@ -18,7 +18,7 @@ import yaml
 from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 
 from .ansiblecli_client import (
     AnsibleClientPlugin,
@@ -82,8 +82,8 @@ class AnsibleCliCoreWorkloadPlugin:
         self._ansible_client: AnsibleClientPlugin = None
         """AnsibleClientPlugin which this plugin will use to interact with ansible."""
 
-    def info(self, deep: bool = False):
-        """get info about a provisioner plugin"""
+    def info(self, deep: bool = False) -> Dict[str, Any]:
+        """Get info about a provisioner plugin."""
         return {
             "config": {
                 "label": self._config_label,
@@ -97,7 +97,7 @@ class AnsibleCliCoreWorkloadPlugin:
     def prepare(self, fixtures: Fixtures = None):
         """Find the dependent fixtures."""
         if fixtures is None:
-            fixtures = self._environment.fixtures
+            fixtures = self._environment.fixtures()
 
         self._ansible_client = fixtures.get_plugin(
             plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID
@@ -105,8 +105,8 @@ class AnsibleCliCoreWorkloadPlugin:
 
     def apply(self):
         """Apply the workload to the environment."""
-        plugin_config = self._environment.config.load(self._config_label)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config = self._environment.config().load(self._config_label)
 
         args: List[str] = plugin_config.get([self._config_base, ANSIBLE_WORKLOAD_CONFIG_ARGS_KEY])
         envs: Dict[str, str] = plugin_config.get(
@@ -139,9 +139,9 @@ class AnsibleCliPlaybookWorkloadPlugin:
         """AnsiblePlaybookClientPlugin which this plugin will use to interact with ansible."""
 
     def info(self, deep: bool = False):
-        """get info about a provisioner plugin"""
-        plugin_config = self._environment.config.load(self._config_label)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        """Get info about a provisioner plugin."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config = self._environment.config().load(self._config_label)
 
         return {
             "config": {
@@ -175,14 +175,14 @@ class AnsibleCliPlaybookWorkloadPlugin:
     def prepare(self, fixtures: Fixtures = None):
         """Find the dependent fixtures."""
         if fixtures is None:
-            fixtures = self._environment.fixtures
+            fixtures = self._environment.fixtures()
 
-        self._ansibleplaybook_client: AnsiblePlaybookClientPlugin = fixtures.get_plugin(
+        self._ansibleplaybook_client = fixtures.get_plugin(
             plugin_id=METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKCLIENT_PLUGIN_ID
         )
 
-        plugin_config = self._environment.config.load(self._config_label)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config = self._environment.config().load(self._config_label)
 
         playbook_contents: str = plugin_config.get(
             [self._config_base, ANSIBLE_WORKLOAD_CONFIG_PLAYBOOK_KEY], default={}
@@ -216,8 +216,8 @@ class AnsibleCliPlaybookWorkloadPlugin:
 
     def apply(self):
         """Apply the workload to the environment."""
-        plugin_config = self._environment.config.load(self._config_label)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config = self._environment.config().load(self._config_label)
 
         playbook_contents: str = plugin_config.get(
             [self._config_base, ANSIBLE_WORKLOAD_CONFIG_PLAYBOOK_KEY], default={}

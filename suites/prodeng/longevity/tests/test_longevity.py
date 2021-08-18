@@ -30,7 +30,7 @@ def test_02_workloads_apply(workloads_up):
 
 def test_03_longevity_wait(environment, workloads_up, healthpoller):
     """Ensure that the fixtures get created and that they are health for 2 hours."""
-    longevity_config = environment.config.load("longevity")
+    longevity_config = environment.config().load("longevity")
     """Load the longevity(.yml) configuration to get test conf."""
 
     count = int(longevity_config.get("count", default=10))

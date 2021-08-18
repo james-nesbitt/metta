@@ -50,7 +50,7 @@ def test_provisioners(environment: Environment):
 
     # @NOTE all "instance_id" values must match the config/fixtures.yml keys
 
-    combo_fixture = environment.fixtures.get(
+    combo_fixture = environment.fixtures().get(
         interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER], instance_id="combo"
     )
     combo = combo_fixture.plugin
@@ -62,11 +62,13 @@ def test_provisioners(environment: Environment):
 
     # Also test that the combo provisioner is the default one
     assert (
-        environment.fixtures.get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]).instance_id
+        environment.fixtures()
+        .get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER])
+        .instance_id
         == "combo"
     )
 
-    launchpad_fixture = environment.fixtures.get(
+    launchpad_fixture = environment.fixtures().get(
         instance_id="launchpad", interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
     )
     launchpad = launchpad_fixture.plugin
@@ -75,7 +77,7 @@ def test_provisioners(environment: Environment):
     assert launchpad_fixture.instance_id == "launchpad"
     assert isinstance(launchpad, LaunchpadProvisionerPlugin)
 
-    terraform_fixture = environment.fixtures.get(
+    terraform_fixture = environment.fixtures().get(
         instance_id="terraform", interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
     )
     terraform = terraform_fixture.plugin
@@ -93,7 +95,7 @@ def test_workload(environment: Environment):
     # we load some worklaods by instance id, which should match what you
     # see in `metta config get fixtures`. Then we confirm their plugin types.
 
-    sanity_docker_run_fixture = environment.fixtures.get(
+    sanity_docker_run_fixture = environment.fixtures().get(
         instance_id="sanity_docker_run",
     )
     sanity_docker_run = sanity_docker_run_fixture.plugin

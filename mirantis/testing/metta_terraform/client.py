@@ -12,7 +12,7 @@ import os
 import json
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta.output import METTA_PLUGIN_INTERFACE_ROLE_OUTPUT
 from mirantis.testing.metta_common import (
     METTA_PLUGIN_ID_OUTPUT_DICT,
@@ -43,9 +43,9 @@ class TerraformClientPlugin:
         tfvars_path: str,
     ):
         """Initial client configuration."""
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self.tfvars: Dict[str, Any] = tfvars
@@ -179,7 +179,7 @@ class TerraformClientPlugin:
             else:
                 # we only know how to create 2 kinds of outputs
                 if output_type == "object":
-                    fixture = self._environment.add_fixture(
+                    fixture = self._environment.new_fixture(
                         plugin_id=METTA_PLUGIN_ID_OUTPUT_DICT,
                         instance_id=output_key,
                         priority=self._environment.plugin_priority(delta=5),
@@ -190,7 +190,7 @@ class TerraformClientPlugin:
                         },
                     )
                 else:
-                    fixture = self._environment.add_fixture(
+                    fixture = self._environment.new_fixture(
                         plugin_id=METTA_PLUGIN_ID_OUTPUT_TEXT,
                         instance_id=output_key,
                         priority=self._environment.plugin_priority(delta=5),

@@ -33,9 +33,9 @@ class CliBase:
 
     def __init__(self, environment: Environment, instance_id: str):
         """Inject Environment and instance_id into plugin."""
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
     def fire(self):

@@ -7,11 +7,12 @@ Provides functionality to manually run and inspect sonobuoy jobs
 """
 import logging
 import time
+from typing import Dict, Any
 
 from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.fixture import Fixture
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
-from .workload import METTA_SONOBUOY_WORKLOAD_PLUGIN_ID
 from .client import METTA_SONOBUOY_CLIENT_PLUGIN_ID
 from .results import Status
 
@@ -28,16 +29,18 @@ class SonobuoyCliPlugin(CliBase):
 
     def fire(self):
         """Return CLI Command group."""
+        commands: Dict[str, Any] = {}
+
         if (
-            self._environment.fixtures.get(
-                plugin_id=METTA_SONOBUOY_WORKLOAD_PLUGIN_ID,
+            self._environment.fixtures().get(
+                plugin_id=METTA_SONOBUOY_CLIENT_PLUGIN_ID,
                 exception_if_missing=False,
             )
             is not None
         ):
-            return {"sonobuoy": SonobuoyClientGroup(self._environment)}
+            commands["sonobuoy"] = SonobuoyClientGroup(self._environment)
 
-        return {}
+        return commands
 
 
 class SonobuoyClientGroup:
@@ -45,26 +48,30 @@ class SonobuoyClientGroup:
 
     def __init__(self, environment: Environment):
         """Inject Environment into command group."""
-        self._environment = environment
+        self._environment: Environment = environment
 
-    def _select_fixture(self, instance_id: str = ""):
+    def _select_fixture(self, instance_id: str = "") -> Fixture:
         """Pick a matching client plugin."""
         try:
             if instance_id:
-                return self._environment.fixtures.get(
+                return self._environment.fixtures().get(
                     plugin_id=METTA_SONOBUOY_CLIENT_PLUGIN_ID,
                     instance_id=instance_id,
                 )
 
             # Get the highest priority provisioner
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 plugin_id=METTA_SONOBUOY_CLIENT_PLUGIN_ID,
             )
 
         except KeyError as err:
-            raise ValueError(
-                "No usable kubernetes client was found for sonobuoy" "to pull a kubeconfig from"
-            ) from err
+            raise ValueError("No usable sonobuoy client was found.") from err
+
+    def _prepared_fixture(self, instance_id: str = "") -> Fixture:
+        """Pick a matching client plugin and prepare it."""
+        sonobuoy_fixture: Fixture = self._select_fixture(instance_id=instance_id)
+        sonobuoy_fixture.plugin.prepare()
+        return sonobuoy_fixture
 
     def info(self, instance_id: str = "", deep: bool = False):
         """Get info about a sonobuoy plugin."""
@@ -126,10 +133,10 @@ class SonobuoyClientGroup:
             time.sleep(step)
         print("}")
 
-    def destroy(self, instance_id: str = "", wait: bool = False):
+    def delete(self, instance_id: str = "", wait: bool = False):
         """Remove all sonobuoy infrastructure."""
         client_plugin = self._select_fixture(instance_id=instance_id).plugin
-        client_plugin.destroy(wait=wait)
+        client_plugin.delete(wait=wait)
 
     def logs(self, instance_id: str = "", follow: bool = False):
         """Retrieve sonobuoy logs."""

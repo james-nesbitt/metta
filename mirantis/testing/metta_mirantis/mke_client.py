@@ -25,7 +25,7 @@ import toml
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta_docker import METTA_PLUGIN_ID_DOCKER_CLIENT
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
@@ -102,9 +102,9 @@ class MKEAPIClientPlugin:
             bundle will be put into a subfolder based on the username.
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self.accesspoint: str = accesspoint
@@ -346,12 +346,12 @@ class MKEAPIClientPlugin:
 
     def api_get_bundle(self, force: bool = True):
         """Download and extract client bundle to path."""
-        endpoint = "api/clientbundle"
+        endpoint: str = "api/clientbundle"
 
-        bundle_dir = self._bundle_user_path()
-        """ Path in which we should put the client bundle for this user """
-        bundle_zip_file = os.path.join(bundle_dir, METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME)
-        """ Path to the zip file we will download """
+        # Path in which we should put the client bundle for this user
+        bundle_dir: str = self._bundle_user_path()
+        # Path to the zip file we will download
+        bundle_zip_file: str = os.path.join(bundle_dir, METTA_MIRANTIS_MKE_BUNDLE_ZIP_FILENAME)
 
         if (not force) and os.path.isdir(bundle_dir):
             return
@@ -381,15 +381,15 @@ class MKEAPIClientPlugin:
 
     def api_read_bundle_meta(self):
         """Parse and return the client bundle metadata."""
-        client_bundle_meta_file = os.path.join(
+        # Path to the client bundle metadata file.
+        client_bundle_meta_file: str = os.path.join(
             self._bundle_user_path(), METTA_MIRANTIS_MKE_BUNDLE_INFO_FILENAME
         )
-        """ Path to the client bundle metadata file. """
-        bundle_dir = self._bundle_user_path()
-        """ Path in which we should put the client bundle for this user """
+        # Path in which we should put the client bundle for this user
+        bundle_dir: str = self._bundle_user_path()
 
+        # Will hold data pulled from the client meta data file
         data = {}
-        """ Will hold data pulled from the client meta data file """
         try:
             with open(client_bundle_meta_file) as json_file:
                 data = json.load(json_file)
@@ -427,7 +427,7 @@ class MKEAPIClientPlugin:
         kube_config = os.path.join(bundle_info["path"], "kube.yml")
         if os.path.exists(kube_config):
             instance_id = f"{self._instance_id}-{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
-            fixture = self._environment.add_fixture(
+            fixture = self._environment.new_fixture(
                 plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
                 instance_id=instance_id,
                 priority=70,
@@ -457,7 +457,7 @@ class MKEAPIClientPlugin:
             raise err
 
         instance_id = f"{self._instance_id}-{METTA_PLUGIN_ID_DOCKER_CLIENT}"
-        fixture = self._environment.add_fixture(
+        fixture = self._environment.new_fixture(
             plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
             instance_id=instance_id,
             priority=70,

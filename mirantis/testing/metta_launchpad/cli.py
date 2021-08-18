@@ -14,6 +14,7 @@ from typing import List, Dict
 import yaml
 
 from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.fixture import Fixture
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .provisioner import (
@@ -45,7 +46,7 @@ class LaunchpadCliPlugin(CliBase):
         commands: Dict[str, object] = {}
 
         if (
-            self._environment.fixtures.get(
+            self._environment.fixtures().get(
                 plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
                 exception_if_missing=False,
             )
@@ -61,10 +62,10 @@ class LaunchpadClientGroup:
 
     def __init__(self, environment: Environment):
         """Create launchpad command list object."""
-        self._environment = environment
+        self._environment: Environment = environment
 
         if (
-            self._environment.fixtures.get(
+            self._environment.fixtures().get(
                 plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
                 exception_if_missing=False,
             )
@@ -72,16 +73,16 @@ class LaunchpadClientGroup:
         ):
             self.provisioner = LaunchpadProvisionerGroup(self._environment)
 
-    def _select_client(self, instance_id: str = "") -> LaunchpadClientPlugin:
+    def _select_client(self, instance_id: str = "") -> Fixture:
         """Pick a matching client."""
         if instance_id:
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
                 instance_id=instance_id,
             )
 
         # Get the highest priority client
-        return self._environment.fixtures.get(plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID)
+        return self._environment.fixtures().get(plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID)
 
     def info(self, client: str = "", deep: bool = False):
         """Get info about a client plugin."""
@@ -89,35 +90,29 @@ class LaunchpadClientGroup:
         return cli_output(fixture.info(deep=deep))
 
     def hosts(self, client: str = "", deep: bool = False):
-        """List the hosts in the cluster/"""
-        fixture = self._select_client(instance_id=client)
-        plugin = fixture.plugin
-        return cli_output(plugin.host_list(deep=deep))
+        """List the hosts in the cluster."""
+        client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
+        return cli_output(client_plugin.hosts(deep=deep))
 
     def exec(self, cmd: str, client: str = "", host: int = 0):
         """Exec a command."""
-        client_plugin = self._select_client(instance_id=client).plugin
+        client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
         return client_plugin.exec(host_index=host, cmds=cmd.split(" "))
-
-    def connect(self, client: str = "", host: int = 0):
-        """Exec a command."""
-        client_plugin = self._select_client(instance_id=client).plugin
-        client_plugin.exec_interactive(host_index=host, cmds=[])
 
     def client_config(self, client: str = ""):
         """Get the rendered config from the client."""
-        client_plugin = self._select_client(instance_id=client).plugin
+        client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
         return cli_output(client_plugin.describe_config())
 
     def version(self, client: str = ""):
         """Output a launchpad cli report."""
-        client_plugin = self._select_client(instance_id=client).plugin
-        client_plugin.client.version()
+        client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
+        client_plugin.version()
 
     def describe(self, report: str, client: str = ""):
         """Output a launchpad cli report."""
-        client_plugin = self._select_client(instance_id=client).plugin
-        client_plugin.client.describe(report)
+        client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
+        client_plugin.describe(report)
 
     # pylint: disable=redefined-builtin
     def fixtures(
@@ -128,7 +123,7 @@ class LaunchpadClientGroup:
         instance_id: str = "",
     ):
         """List all outputs."""
-        client_plugin = self._select_client(instance_id=client).plugin
+        client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
 
         fixture_list = [
             fixture.info()
@@ -141,7 +136,7 @@ class LaunchpadClientGroup:
 
     def config_file(self, client: str = ""):
         """Dump the config file."""
-        client_plugin = self._select_client(instance_id=client).plugin
+        client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
 
         try:
             with open(client_plugin.config_file) as config_file:
@@ -150,13 +145,6 @@ class LaunchpadClientGroup:
             raise ValueError("No config file was found") from err
 
         return cli_output(config_contents)
-
-    def write_config(self, client: str = ""):
-        """Write config to file."""
-        client_plugin = self._select_client(instance_id=client).plugin
-        # access private method for introspection
-        # pylint: disable=protected-access
-        client_plugin._write_launchpad_file()
 
     def client_bundle(self, client: str = "", user: str = "admin", reload: bool = False):
         """Tell Launchpad to download the client bundle."""
@@ -175,12 +163,12 @@ class LaunchpadClientGroup:
 
     def apply(self, client: str = ""):
         """Run client apply."""
-        client_plugin = self._select_client(instance_id=client).plugin
+        client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
         client_plugin.apply()
 
     def reset(self, client: str = ""):
         """Run client destroy."""
-        client_plugin = self._select_client(instance_id=client).plugin
+        client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
         client_plugin.reset()
 
 
@@ -189,18 +177,18 @@ class LaunchpadProvisionerGroup:
 
     def __init__(self, environment: Environment):
         """Create launchpad command list object."""
-        self._environment = environment
+        self._environment: Environment = environment
 
-    def _select_provisioner(self, instance_id: str = "") -> LaunchpadProvisionerPlugin:
+    def _select_provisioner(self, instance_id: str = "") -> Fixture:
         """Pick a matching provisioner."""
         if instance_id:
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
                 instance_id=instance_id,
             )
 
         # Get the highest priority provisioner
-        return self._environment.fixtures.get(plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID)
+        return self._environment.fixtures().get(plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID)
 
     def info(self, provisioner: str = "", deep: bool = False):
         """Get info about a provisioner plugin."""
@@ -209,15 +197,30 @@ class LaunchpadProvisionerGroup:
 
     def prepare(self, provisioner: str = ""):
         """Run provisioner prepare."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin: LaunchpadProvisionerPlugin = self._select_provisioner(
+            instance_id=provisioner
+        ).plugin
         provisioner_plugin.prepare()
 
     def apply(self, provisioner: str = ""):
         """Run provisioner apply."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin: LaunchpadProvisionerPlugin = self._select_provisioner(
+            instance_id=provisioner
+        ).plugin
         provisioner_plugin.apply()
 
     def destroy(self, provisioner: str = ""):
         """Run provisioner destroy."""
-        provisioner_plugin = self._select_provisioner(instance_id=provisioner).plugin
+        provisioner_plugin: LaunchpadProvisionerPlugin = self._select_provisioner(
+            instance_id=provisioner
+        ).plugin
         provisioner_plugin.destroy()
+
+    def write_config(self, provisioner: str = ""):
+        """Write config to file."""
+        provisioner_plugin: LaunchpadProvisionerPlugin = self._select_provisioner(
+            instance_id=provisioner
+        ).plugin
+        # access private method for introspection
+        # pylint: disable=protected-access
+        provisioner_plugin._write_launchpad_yml()

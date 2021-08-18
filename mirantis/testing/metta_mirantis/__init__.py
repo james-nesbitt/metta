@@ -119,7 +119,7 @@ def metta_terraform_factory_cli_msr(environment: Environment, instance_id: str =
 # ----- METTA bootstraps that we will use on config objects -----
 
 
-def bootstrap_common(environment: Environment):
+def bootstrap_environment_common(environment: Environment):
     """Metta configerus bootstrap.
 
     Add some Mirantis specific config options for presets
@@ -136,7 +136,7 @@ def bootstrap_common(environment: Environment):
     add_common_config(environment)
 
 
-def bootstrap_presets(environment: Environment):
+def bootstrap_environment_presets(environment: Environment):
     """Metta configerus bootstrap.
 
     Add some Mirantis specific config options for presets

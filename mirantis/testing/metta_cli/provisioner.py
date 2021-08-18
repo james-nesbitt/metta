@@ -32,13 +32,13 @@ class ProvisionerGroup:
 
     def __init__(self, environment: Environment):
         """Create CLI command group."""
-        self._environment = environment
+        self._environment: Environment = environment
 
     def list(self, raw: bool = False):
         """List all provisioners."""
         provisioner_list = [
             fixture.plugin.instance_id
-            for fixture in self._environment.fixtures.filter(
+            for fixture in self._environment.fixtures().filter(
                 interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
             )
         ]
@@ -50,12 +50,14 @@ class ProvisionerGroup:
     def _select_provisioner(self, instance_id: str = ""):
         """Pick a matching provisioner."""
         if instance_id:
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
                 instance_id=instance_id,
             )
         # Get the highest priority provisioner
-        return self._environment.fixtures.get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER])
+        return self._environment.fixtures().get(
+            interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER]
+        )
 
     def info(self, provisioner: str = "", deep: bool = True):
         """Get info about a provisioner plugin."""

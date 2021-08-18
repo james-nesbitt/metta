@@ -1,7 +1,7 @@
 
 .PHONY: black
 black:
-	python -m black .
+	python -m black . --line-length=99
 
 .PHONY: lint
 lint:

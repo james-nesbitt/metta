@@ -5,8 +5,8 @@ CLI Plugins base.
 @TODO move to the metta_cli package
 
 Define a base class and some constants for the CLI plugins.  The CLI plugins provide functionality
-for the metta cli tool, which is provided by the metta_cli package.  This is here because the plugin
-types are defined as an enum in this package, and so the base class is here too.
+for the metta cli tool, which is provided by the metta_cli package.  This is here because the
+plugin types are defined as an enum in this package, and so the base class is here too.
 
 """
 import logging
@@ -83,11 +83,10 @@ class Root:
 
         """
         for plugin_id in Factory.plugin_ids(interfaces_filter=[METTA_PLUGIN_INTERFACE_ROLE_CLI]):
-            plugin_dict = {
-                "plugin_id": plugin_id,
-            }
-
-            fixture = self._environment.add_fixture_from_dict(plugin_dict=plugin_dict)
+            # Create a fixture from the plugin_id
+            fixture = self._environment.new_fixture(
+                plugin_id=plugin_id, instance_id=f"{plugin_id}-globalcli", priority=40
+            )
 
             logger.info("loading cli plugin: %s", fixture.plugin_id)
             plugin = fixture.plugin

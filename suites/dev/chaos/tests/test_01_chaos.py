@@ -31,10 +31,10 @@ def myapp_running(environment_up: Environment):
         "that we can run litmus chaos against it."
     )
 
-    sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(
+    sanity_kubernetes_deployment = environment_up.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD, instance_id="myapp_deployment"
     )
-    instance = sanity_kubernetes_deployment.create_instance(environment_up.fixtures)
+    instance = sanity_kubernetes_deployment.create_instance(environment_up.fixtures())
     deployment = instance.apply()
 
     assert deployment is not None
@@ -63,11 +63,11 @@ def litmuschaos_installed(environment_up: Environment):
     """
     logger.info("Preparing Litmus Chaos workload.")
 
-    litmuchchaos_run = environment_up.fixtures.get_plugin(
+    litmuchchaos_run = environment_up.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
         instance_id="chaos_litmuschaos",
     )
-    instance = litmuchchaos_run.create_instance(environment_up.fixtures)
+    instance = litmuchchaos_run.create_instance(environment_up.fixtures())
     instance.prepare()
 
     # @TODOD test the applied

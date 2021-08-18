@@ -27,7 +27,7 @@ class MSRAPICliPlugin(CliBase):
     def fire(self):
         """Return any MSR CLI command groups."""
         if (
-            self._environment.fixtures.get(
+            self._environment.fixtures().get(
                 plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
                 exception_if_missing=False,
             )
@@ -43,18 +43,18 @@ class MSRAPICliGroup:
 
     def __init__(self, environment: Environment):
         """Create a new MSR CLI command group."""
-        self._environment = environment
+        self._environment: Environment = environment
 
     def _select_fixture(self, instance_id: str = ""):
         """Pick a matching fixture in case there are more than one."""
         if instance_id:
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
                 instance_id=instance_id,
             )
 
         # Get the highest priority fixture
-        return self._environment.fixtures.get(
+        return self._environment.fixtures().get(
             plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
         )
 

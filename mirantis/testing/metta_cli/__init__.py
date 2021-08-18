@@ -68,7 +68,7 @@ def metta_plugin_factory_provisioner_config(environment: Environment, instance_i
 
 
 # pylint: disable=unused-argument
-def bootstrap(environment: Environment):
+def bootstrap_environment(environment: Environment):
     """METTA_Terraform bootstrap.
 
     Currently we only use this to import plugins.

@@ -7,7 +7,7 @@ import logging
 from typing import Dict, Any, Generator
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures, Fixture
+from mirantis.testing.metta.fixture import Fixtures, Fixture
 
 from .healthcheck import (
     METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
@@ -27,10 +27,10 @@ class HealthClientPlugin:
 
     # pylint: disable=too-many-arguments
     def __init__(self, environment: Environment, instance_id: str):
-        """Initial client configuration."""
-        self._environment = environment
+        """Create Initial client configuration."""
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
     # deep argument is an info() standard across plugins
@@ -47,8 +47,8 @@ class HealthClientPlugin:
         A Health object that aggregates all available health responses.
 
         """
+        # Start a top level aggregate health object.
         agg_health: Health = Health(source=self._instance_id)
-        """Start a top level aggregate health object."""
 
         for fixture_health in self.healths():
             agg_health.merge(fixture_health)
@@ -78,6 +78,6 @@ class HealthClientPlugin:
 
     def health_fixtures(self) -> Fixtures:
         """Get the fixtures that can provide health check."""
-        return self._environment.fixtures.filter(
+        return self._environment.fixtures().filter(
             interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK]
         )

@@ -16,7 +16,7 @@ from configerus.contrib.jsonschema.validate import (
 from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import (
+from mirantis.testing.metta.fixture import (
     Fixtures,
     Fixture,
     METTA_FIXTURE_CONFIG_KEY_PRIORITY,
@@ -73,16 +73,6 @@ class ComboProvisionerPlugin:
     priority which define the order of their call and every provisioner method
     will follow that order (or reverse it.)
 
-    Parameters:
-    -----------
-    environment (Environment) : All metta plugins receive the environment
-        object in which they were created.
-    instance_id (str) : all metta plugins receive their own string identity.
-
-    label (str) : Configerus load label for finding plugin config.
-    base (str) : Configerus get base key in which the plugin should look for
-        all config.
-
     """
 
     def __init__(
@@ -97,14 +87,24 @@ class ComboProvisionerPlugin:
         Interpret provided config and configure the object with all of the
         needed pieces for executing terraform commands
 
+        Parameters:
+        -----------
+        environment (Environment) : All metta plugins receive the environment
+            object in which they were created.
+        instance_id (str) : all metta plugins receive their own string identity.
+
+        label (str) : Configerus load label for finding plugin config.
+        base (str) : Configerus get base key in which the plugin should look for
+            all config.
+
         """
-        self._environment = environment
-        """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
-        """ Unique id for this plugin instance """
+        self._environment: Environment = environment
+        """Environemnt in which this plugin exists."""
+        self._instance_id: str = instance_id
+        """Unique id for this plugin instance."""
 
         try:
-            combo_config = self._environment.config.load(label)
+            combo_config = self._environment.config().load(label)
         except KeyError as err:
             raise ValueError("Combo provisioner could not find any configurations") from err
 
@@ -130,7 +130,7 @@ class ComboProvisionerPlugin:
         for backend in backends_list:
             backend_instance_id = backend[METTA_PLUGIN_CONFIG_KEY_INSTANCEID]
             try:
-                fixture = self._environment.fixtures.get(
+                fixture = self._environment.fixtures().get(
                     interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
                     instance_id=backend_instance_id,
                 )

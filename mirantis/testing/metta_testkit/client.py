@@ -7,7 +7,8 @@ Metta client plugin for testkit.
 import logging
 from typing import Any, Dict, List
 
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.fixture import Fixtures
 
 from mirantis.testing.metta_mirantis.mke_client import (
     MKEAPIClientPlugin,
@@ -72,9 +73,9 @@ class TestkitClientPlugin:
             This is not an ideal approach but rather a necessity.
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self._system_name: str = system_name
@@ -197,7 +198,7 @@ class TestkitClientPlugin:
                 arguments["accesspoint"] = clean_accesspoint(arguments["accesspoint"])
 
             logger.debug("Launchpad client is creating an MKE client plugin: %s", instance_id)
-            fixture = self._environment.add_fixture(
+            fixture = self._environment.new_fixture(
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
                 instance_id=instance_id,
                 priority=70,
@@ -224,7 +225,7 @@ class TestkitClientPlugin:
                 arguments["accesspoint"] = clean_accesspoint(arguments["accesspoint"])
 
             logger.debug("Launchpad client is creating an MSR client plugin: %s", instance_id)
-            fixture = self._environment.add_fixture(
+            fixture = self._environment.new_fixture(
                 plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
                 instance_id=instance_id,
                 priority=70,

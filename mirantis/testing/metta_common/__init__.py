@@ -27,16 +27,8 @@ from .combo_provisioner import (
     METTA_PLUGIN_ID_PROVISIONER_COMBO,
     COMBO_PROVISIONER_CONFIG_LABEL,
 )
-from .binhelper_utility import (
-    DownloadableExecutableUtility,
-    METTA_PLUGIN_ID_UTILITY_BINHELPER,
-    BINHELPER_UTILITY_CONFIG_LABEL,
-)
 from .config_format_output import ConfigFormatOutputPlugin, PLUGIN_ID_FORMAT_OUTPUT
 from .user_cli import UserCliPlugin, METTA_PLUGIN_ID_CLI_USER
-
-METTA_PLUGIN_INTERFACE_ROLE_UTILITY = "utility"
-""" metta pluging_type for utility plugins """
 
 
 @Factory(
@@ -45,7 +37,7 @@ METTA_PLUGIN_INTERFACE_ROLE_UTILITY = "utility"
 )
 def metta_plugin_factory_output_dict(
     environment: Environment,
-    instance_id: str = "",
+    instance_id: str,
     data: Dict = None,
     validator: str = "",
 ):
@@ -70,26 +62,12 @@ def metta_plugin_factory_output_text(
 )
 def metta_plugin_factory_provisioner_combo(
     environment: Environment,
-    instance_id: str = "",
+    instance_id: str,
     label: str = COMBO_PROVISIONER_CONFIG_LABEL,
     base: Any = LOADED_KEY_ROOT,
 ):
     """Create a provisioner combo plugin."""
     return ComboProvisionerPlugin(environment, instance_id, label=label, base=base)
-
-
-@Factory(
-    plugin_id=METTA_PLUGIN_ID_UTILITY_BINHELPER,
-    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_UTILITY],
-)
-def metta_plugin_factory_utility_binhelper(
-    environment: Environment,
-    instance_id: str = "",
-    label: str = BINHELPER_UTILITY_CONFIG_LABEL,
-    base: Any = LOADED_KEY_ROOT,
-):
-    """Create a bin-helper utility plugin."""
-    return DownloadableExecutableUtility(environment, instance_id, label=label, base=base)
 
 
 # ----- Congiferus formatter for metta output plugins -----
@@ -114,7 +92,20 @@ def metta_plugin_factory_user_config(environment: Environment, instance_id: str 
 
 
 # pylint: disable=unused-argument
-def bootstrap(environment: Environment):
+def bootstrap_bootstrapper(config: Config):
+    """METTA_Terraform bootstrap.
+
+    Currently we only use this to import plugins.
+
+    Parameters:
+    -----------
+    config (Config) : A config object that can be modified.
+
+    """
+
+
+# pylint: disable=unused-argument
+def bootstrap_environment(environment: Environment):
     """METTA_Terraform bootstrap.
 
     Currently we only use this to import plugins.
@@ -126,7 +117,7 @@ def bootstrap(environment: Environment):
     """
 
 
-def bootstrap_common(environment: Environment):
+def bootstrap_environment_common(environment: Environment):
     """Metta configerus bootstrap.
 
     Add some common Mirantis specific config options
@@ -142,7 +133,7 @@ def bootstrap_common(environment: Environment):
 
     # Add a configerus output formatter which can interpret environemnt
     # outputs.
-    output_formatter = environment.config.add_formatter(
+    output_formatter = environment.config().add_formatter(
         plugin_id=PLUGIN_ID_FORMAT_OUTPUT,
         instance_id=PLUGIN_ID_FORMAT_OUTPUT,
         priority=40,

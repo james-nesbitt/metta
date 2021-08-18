@@ -20,10 +20,10 @@ DEFAULT_K8S_NAMESPACE = "default"
 def metrics_workload(environment_up):
     """Get the helm metrics workload from fixtures/yml."""
     # we have a docker run workload fixture called "metrics-helm-workload"
-    plugin = environment_up.fixtures.get_plugin(instance_id="metrics-helm-workload")
+    plugin = environment_up.fixtures().get_plugin(instance_id="metrics-helm-workload")
 
     logger.info("Starting helm instance")
-    plugin.prepare(environment_up.fixtures)
+    plugin.prepare(environment_up.fixtures())
     plugin.apply(wait=True)
 
     yield plugin

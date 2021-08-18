@@ -100,9 +100,9 @@ class NodesClientPlugin:
                 user (str) : username to be used for ssh
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self._nodes: Dict[str, HostNode] = {}
@@ -127,7 +127,7 @@ class NodesClientPlugin:
         This unsets any nodes previously assigned.
         """
         try:
-            self._environment.config.validate(
+            self._environment.config().validate(
                 data=nodes, validate_target=METTA_NODES_PROVISIONER_VALIDATE_TARGET
             )
         except ValidationError as err:

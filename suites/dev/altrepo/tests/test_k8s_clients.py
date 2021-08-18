@@ -22,7 +22,7 @@ def test_launchpad_kubectl_client(environment_up):
     """did we get a good kubectl client"""
 
     logger.info("Getting K8s client")
-    kubectl_client = environment_up.fixtures.get_plugin(
+    kubectl_client = environment_up.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
     )
@@ -37,13 +37,13 @@ def test_launchpad_kubectl_client(environment_up):
 def test_kubernetes_deployment_workload(environment_up):
     """test that we can get a k8s deployment workload to run"""
 
-    sanity_kubernetes_deployment = environment_up.fixtures.get_plugin(
+    sanity_kubernetes_deployment = environment_up.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
         instance_id="sanity_kubernetes_deployment",
     )
     """ workload plugin """
 
-    instance = sanity_kubernetes_deployment.create_instance(environment_up.fixtures)
+    instance = sanity_kubernetes_deployment.create_instance(environment_up.fixtures())
 
     deployment = instance.apply()
     assert deployment is not None

@@ -69,19 +69,19 @@ def environment_up(environment: Environment) -> Environment:
 
     """
 
-    launchpad = environment.fixtures.get_plugin(
+    launchpad = environment.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
         plugin_id=METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID,
     )
 
-    terraform = environment.fixtures.get_plugin(
+    terraform = environment.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER,
         plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
     )
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
-    conf = environment.config.load("config")
+    conf = environment.config().load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("alreadyrunning", default=False):

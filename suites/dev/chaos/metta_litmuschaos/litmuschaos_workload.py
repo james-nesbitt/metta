@@ -13,7 +13,7 @@ from configerus.contrib.jsonschema.validate import (
 from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta.workload import WorkloadBase, WorkloadInstanceBase
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
@@ -92,7 +92,7 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
 
     def info(self):
         """Return plugin info in an dict format for debugging."""
-        config_loaded = self.environment.config.load(self.config_label)
+        config_loaded = self.environment.config().load(self.config_label)
 
         info = {
             "config": {
@@ -113,7 +113,7 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
             retrieve a kubernetes api client plugin.
 
         """
-        loaded = self.environment.config.load(self.config_label)
+        loaded = self.environment.config().load(self.config_label)
         """ get a configerus LoadedConfig for the sonobuoy label """
 
         # Validate the config overall using jsonschema

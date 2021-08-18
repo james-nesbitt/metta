@@ -43,10 +43,8 @@ class AnsibleClient:
 
         Parameters:
         -----------
-
         inventory_path (str) : string path to the ansible inventory file
-
-        ansiblecfg_path (str)
+        ansiblecfg_path (str) : options string path to an ansiblecfg file
 
         """
         self.inventory_path = inventory_path
@@ -133,9 +131,11 @@ class AnsibleClient:
             return res
         else:
             logger.debug("running ansible command with output capture: %s", " ".join(cmd))
-            res = subprocess.run(cmd, env=env, shell=False, check=True, stdout=subprocess.PIPE)
-            res.check_returncode()
-            return res.stdout.decode("utf-8")
+            return_res = subprocess.run(
+                cmd, env=env, shell=False, check=True, stdout=subprocess.PIPE
+            )
+            return_res.check_returncode()
+            return return_res.stdout.decode("utf-8")
 
 
 class AnsiblePlaybookClient:
@@ -153,7 +153,8 @@ class AnsiblePlaybookClient:
 
         Parameters:
         -----------
-
+        inventory_path (str) : string path to the ansible inventory file
+        ansiblecfg_path (str) : options string path to an ansiblecfg file
         """
         self.inventory_path = inventory_path
         """String path to an ansible invetory path."""
@@ -237,6 +238,8 @@ class AnsiblePlaybookClient:
             return res
         else:
             logger.debug("running ansible-playbook command with output capture: %s", " ".join(cmd))
-            res = subprocess.run(cmd, env=allenvs, shell=False, check=True, stdout=subprocess.PIPE)
-            res.check_returncode()
-            return res.stdout.decode("utf-8")
+            return_res = subprocess.run(
+                cmd, env=allenvs, shell=False, check=True, stdout=subprocess.PIPE
+            )
+            return_res.check_returncode()
+            return return_res.stdout.decode("utf-8")

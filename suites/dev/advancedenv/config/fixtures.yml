@@ -1,0 +1,36 @@
+
+# Universal health poller for checking stability
+healthpoller:
+    plugin_id: healthpoll_workload
+
+    from_config: true
+
+    poll:
+        # How often should we poll for health
+        period: 15
+
+ansibledebug:
+  plugin_id: metta_ansible_clicore_ansibleplaybook_workload
+  labels:
+    primary: True
+
+  # tell the plugin to load config from "here"
+  from_config: true
+
+  envs:
+    ANSIBLE_NOT_A_REAL_VAR: nothing
+
+  vars:
+    path: "{{variables:files_path}}/{{variables:files_prefix}}.ansibleping.vars.yml"
+    values:
+      test: test
+
+  playbook:
+    path: "{{variables:files_path}}/{{variables:files_prefix}}.ansibleping.playbook.yml"
+    contents:
+    - name: Debugs all targets
+      hosts: all
+      tasks:
+        - setup: {}
+        - debug: {}
+        - ping: {}

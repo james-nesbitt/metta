@@ -1,8 +1,14 @@
 
 # Create an environment called 'sanity'
 sanity:
+  # Environment plugin to use
+  plugin_id: metta_state_environment
+
+  # this tells metta that this config block should be passed to the plugin
+  # for config use (you could tell it to load from a different source.)
+  from_config: true
+
   bootstraps:
-    metta:
     - metta_common
     - metta_health
     - metta_docker
@@ -12,22 +18,6 @@ sanity:
     - metta_common_config
     - metta_mirantis_common
     - metta_mirantis_presets
-
-  config:
-    sources:
-      # include Environemnt variables as a source of config if they use the format
-      # METTA_LABEL[_STEP]*
-      # config.get(mylabel).get(one.two.three) would be METTA_MYLABEL_ONE_TWO_THREE
-      metta-env:
-        plugin_id: env-specific
-        priority: 90
-        base: "METTA"
-      # Also allow an env variable containing json to be used as a dictionary of
-      # config source.  There is some chance of collision with the previous plugin
-      metta-env-json:
-        plugin_id: env-json
-        priority: 85
-        env: METTA_CONFIGJSON
 
   fixtures:
     from_config:

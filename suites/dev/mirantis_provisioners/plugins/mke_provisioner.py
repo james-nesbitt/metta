@@ -68,7 +68,7 @@ class MKEProvisionerPlugin:
                                  a successful install. Default is False
         :return: A command_record.CommandRecord object for the install command sent.
         """
-        mke_config = self._environment.config.load(self._config_label)
+        mke_config = self._environment.config().load(self._config_label)
         """Loaded config that should contain all of our settings as self._config_base."""
 
         bootstrapper_name = mke_config.get([self._config_base, "bootstrapper"], default="ucp")
@@ -104,7 +104,9 @@ class MKEProvisionerPlugin:
         #
         # If there is an ELB in front of us, we would need to include the
         # DNS name (and/or the route53 DNS name) for that here as well.
-        sans = "--san {0} --san {1}".format(mke_obj.mgr_node.public_ip, mke_obj.mgr_node.private_ip)
+        sans = "--san {0} --san {1}".format(
+            mke_obj.mgr_node.public_ip, mke_obj.mgr_node.private_ip
+        )
         # If there is an external ELB for deployed apps, we can tell UCP about it.
         # This allows UCP UI to display a nice URL for any apps we deploy.
         # --external-service-lb https://<DNS-name-for-ELB-or-route53>
@@ -210,7 +212,9 @@ class MKEProvisionerPlugin:
         mke_obj.mgr_node = mke_obj.cluster.swarm_leader()
         # The docker image.
         log(
-            "Upgrading UCP from {0} to {1}".format(mke_obj.bootstrapper_name, new_bootstrapper_name)
+            "Upgrading UCP from {0} to {1}".format(
+                mke_obj.bootstrapper_name, new_bootstrapper_name
+            )
         )
 
         mke_obj.pull_ucp_images(new_bootstrapper_name)

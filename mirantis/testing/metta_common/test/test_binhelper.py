@@ -104,7 +104,7 @@ class BinHelperTest(unittest.TestCase):
         if "default" not in environment_names():
             logger.debug("Creating new environment for BINHELPER test suite")
             environment = new_environment(name="default")
-            environment.config.add_source(PLUGIN_ID_SOURCE_DICT).set_data(self.config)
+            environment.config().add_source(PLUGIN_ID_SOURCE_DICT).set_data(self.config)
 
             # this looks magical, but it works because we have structured the
             # fixtures DICT to match default values
@@ -119,7 +119,7 @@ class BinHelperTest(unittest.TestCase):
         logger.info("Creating environment object, which will try to download all of the bins")
         environment = self._environment()
 
-        fixtures_config = environment.config.load("fixtures")
+        fixtures_config = environment.config().load("fixtures")
         self.assertEqual(fixtures_config.get("bin-helper.plugin_id"), "bin-helper")
         self.assertEqual(fixtures_config.get("bin-helper.path.local"), self.temp_bin_dir)
 

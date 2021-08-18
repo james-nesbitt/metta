@@ -5,17 +5,17 @@ Run a Sonobuoy run on a k82 client.
 Use this to run the sonobuoy implementation
 
 """
-from typing import Any
+from typing import Any, List, Dict
 import logging
 
-from configerus.loaded import LOADED_KEY_ROOT
+from configerus.loaded import Loaded, LOADED_KEY_ROOT
 from configerus.contrib.jsonschema.validate import (
     PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL,
 )
 from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta_kubernetes import (
     METTA_PLUGIN_ID_KUBERNETES_CLIENT,
@@ -81,7 +81,7 @@ SONOBUOY_VALIDATE_TARGET = {
 
 
 class SonobuoyWorkloadPlugin:
-    """Workload class for the Sonobuoy"""
+    """Workload class for the Sonobuoy."""
 
     def __init__(
         self,
@@ -98,23 +98,23 @@ class SonobuoyWorkloadPlugin:
         base (Any) : configerus base key which should contain all of the config
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         logger.info("Preparing sonobuoy settings")
 
-        self._config_label = label
+        self._config_label: str = label
         """ configerus load label that should contain all of the config """
-        self._config_base = base
+        self._config_base: str = base
         """ configerus get key that should contain all tf config """
 
         # maybe get this from config?
         self._results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH
         """String path to where to keep the results."""
 
-        self.fixtures = Fixtures()
+        self.fixtures: Fixtures = Fixtures()
         """This plugin creates fixtures, so they are tracked here."""
 
         # go for early declarative testing to the plugin.
@@ -128,15 +128,15 @@ class SonobuoyWorkloadPlugin:
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
         """Return dict data about this plugin for introspection."""
-        loaded = self._environment.config.load(self._config_label)
-        """ get a configerus LoadedConfig for the sonobuoy label """
-        sonobuoy_config = loaded.get(self._config_base, default={})
-        """ load the sonobuoy conifg (e.g. sonobuoy.yml) """
+        # get a configerus LoadedConfig for the sonobuoy label
+        loaded: Loaded = self._environment.config().load(self._config_label)
+        # load the sonobuoy conifg (e.g. sonobuoy.yml)
+        sonobuoy_config: Dict[str, Any] = loaded.get(self._config_base, default={})
 
         return {
             "config": {"label": self._config_label, "base": self._config_base},
             "workload": {
-                "cncf": sonobuoy_config,
+                "sonobuoy": {"config": sonobuoy_config},
                 "required_fixtures": {
                     "kubernetes": {
                         "interface": [METTA_PLUGIN_INTERFACE_ROLE_CLIENT],
@@ -156,14 +156,14 @@ class SonobuoyWorkloadPlugin:
 
         """
         if fixtures is None:
-            fixtures = self._environment.fixtures
+            fixtures = self._environment.fixtures()
 
         # Retrieve and Validate the config overall using jsonschema
         try:
-            loaded = self._environment.config.load(
+            # get a configerus LoadedConfig for the sonobuoy label
+            loaded = self._environment.config().load(
                 self._config_label, validator=SONOBUOY_VALIDATE_TARGET
             )
-            """ get a configerus LoadedConfig for the sonobuoy label """
         except ValidationError as err:
             raise ValueError("Invalid sonobuoy config received") from err
 
@@ -173,24 +173,28 @@ class SonobuoyWorkloadPlugin:
         except ValidationError as err:
             raise ValueError("Invalid sonobuoy config received") from err
 
+        # String path to a kubernetes api client.
         kubeclient: KubernetesApiClientPlugin = fixtures.get_plugin(
             plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
         )
-        """String path to a kubernetes api client."""
 
-        mode = loaded.get([self._config_base, SONOBUOY_CONFIG_KEY_MODE])
-        kubernetes_version = loaded.get(
+        mode: str = loaded.get([self._config_base, SONOBUOY_CONFIG_KEY_MODE])
+        kubernetes_version: str = loaded.get(
             [self._config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION], default=""
         )
-        plugins = loaded.get([self._config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[])
-        plugin_envs = loaded.get([self._config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[])
+        plugins: List[str] = loaded.get(
+            [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[]
+        )
+        plugin_envs: List[str] = loaded.get(
+            [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[]
+        )
 
         results_path: str = loaded.get(
             [self._config_base, SONOBUOY_CONFIG_KEY_RESULTSPATH],
             default=SONOBUOY_DEFAULT_RESULTS_PATH,
         )
 
-        client_fixture = self._environment.add_fixture(
+        client_fixture = self._environment.new_fixture(
             plugin_id=METTA_SONOBUOY_CLIENT_PLUGIN_ID,
             instance_id=self.client_instance_id(),
             priority=70,
@@ -230,7 +234,7 @@ class SonobuoyWorkloadPlugin:
     def destroy(self, wait: bool = True):
         """Delete sonobuoy resources."""
         logger.debug("removing sonobuoy infrastructure")
-        self._get_client_plugin().destroy(wait=wait)
+        self._get_client_plugin().delete(wait=wait)
 
     def client_instance_id(self) -> str:
         """Return the instanceid for the child client plugin."""

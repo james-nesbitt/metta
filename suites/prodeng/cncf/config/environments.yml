@@ -1,4 +1,17 @@
-# MKE Environments for testing CNCF conformance.
+# In this file we define configuration used to create a Metta Environment.
+#
+# The environment object acts as a container for fixtures. The object itself
+# will be created by the bootstrapper plugin which is defined in the root
+# metta.yml file (it points here to define environments).
+#
+# Typically the bootstrapper creates this as a globally available fixture
+# and the mirantis.testing.metta.get_environment() function can be used to
+# retrieve it.
+#
+# The environment plugin we use is a BUILDER environment, which will use
+# its own config to automatically build fixtures when it is created. The
+# fixtures definition is below, but it typically redirects to a different
+# fixtures.yml file.
 #
 # Here we create an environment per testing scenario, which comes down to an
 # MKE version, with the relevant MCR version for install, and then the K8S
@@ -9,10 +22,16 @@
 # version pinning, but we dropped it because it was getting too slow.
 #
 
-# Create environment 3_4_2 for version '3.4.2'
+# CNCF testing environment.
 cncf:
+  # Environment plugin to use
+  plugin_id: metta_builder_environment
+
+  # this tells metta that this config block should be passed to the plugin
+  # for config use (you could tell it to load from a different source.)
+  from_config: true
+
   bootstraps:
-    metta:
     - metta_common
     - metta_health
     - metta_docker
@@ -33,20 +52,6 @@ cncf:
         plugin_id: path
         priority: 80
         path: "{{paths:project-config}}/mke_3.4.5"
-
-      # include Environemnt variables as a source of config if they use the format
-      # METTA_LABEL[_STEP]*
-      # config.get(mylabel).get(one.two.three) would be METTA_MYLABEL_ONE_TWO_THREE
-      metta-env:
-        plugin_id: env-specific
-        priority: 90
-        base: "METTA"
-      # Also allow an env variable containing json to be used as a dictionary of
-      # config source.  There is some chance of collision with the previous plugin
-      metta-env-json:
-        plugin_id: env-json
-        priority: 85
-        env: METTA_CONFIGJSON
 
   fixtures:
     from_config:

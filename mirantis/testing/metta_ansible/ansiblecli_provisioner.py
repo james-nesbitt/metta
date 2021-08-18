@@ -13,10 +13,10 @@ from typing import Any, Dict
 import toml
 import yaml
 
-from configerus.loaded import LOADED_KEY_ROOT
+from configerus.loaded import Loaded, LOADED_KEY_ROOT
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 
 from .ansiblecli_client import (
     METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
@@ -53,7 +53,7 @@ ANSIBLE_PROVISIONER_CONFIG_INVENTORY_PATH_KEY = "inventory.path"
 
 # pylint: disable=too-many-instance-attributes
 class AnsiblePlaybookProvisionerPlugin:
-    """Ansible provisioner plugin
+    """Ansible provisioner plugin.
 
     Provisioner plugin that allows control of and interaction with a ansible
     cluster.
@@ -76,9 +76,23 @@ class AnsiblePlaybookProvisionerPlugin:
         label: str = ANSIBLE_PROVISIONER_CONFIG_LABEL,
         base: Any = LOADED_KEY_ROOT,
     ):
-        """Keep metta info and plugin config info."""
+        """Keep metta info and plugin config info.
+
+        Parameters:
+        -----------
+        environment (Environment) : All metta plugins receive the environment
+            object in which they were created.
+        instance_id (str) : all metta plugins receive their own string identity.
+
+        label (str) : Configerus load label for finding plugin config.
+        base (str) : Configerus get base key in which the plugin should look for
+            all config.
+
+        """
         self._environment: Environment = environment
+        """Environemnt in which this plugin exists."""
         self._instance_id: str = instance_id
+        """Unique id for this plugin instance."""
 
         self._config_label: str = label
         """ configerus load label that should contain all of the config """
@@ -102,9 +116,9 @@ class AnsiblePlaybookProvisionerPlugin:
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
-        """get info about a provisioner plugin"""
-        plugin_config = self._environment.config.load(self._config_label)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        """Get info about a provisioner plugin."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config: Loaded = self._environment.config().load(self._config_label)
 
         return {
             "config": {
@@ -154,7 +168,7 @@ class AnsiblePlaybookProvisionerPlugin:
         }
 
     def prepare(self):
-        """Prepare the provisioner to apply resources
+        """Prepare the provisioner to apply resources.
 
         Initial Provisioner plugin is expected to be of very low cost until
         prepare() is executed.  At this point the plugin should load any config
@@ -170,7 +184,7 @@ class AnsiblePlaybookProvisionerPlugin:
         """
 
     def apply(self):
-        """bring a cluster to the configured state
+        """Bring a cluster to the configured state.
 
         Run an ansible playbook to execute functionality on a running cluster.
 
@@ -178,12 +192,15 @@ class AnsiblePlaybookProvisionerPlugin:
         self._update_config()
         self._make_clients()
 
+        # Client plugin which will do all the interaction for us.
         playbook_client = self.fixtures.get_plugin(
             plugin_id=METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKCLIENT_PLUGIN_ID
         )
 
-        plugin_config: Dict[str, Any] = self._environment.config.load(self._config_label)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config: Loaded = self._environment.config().load(
+            self._config_label, force_reload=True
+        )
 
         playbook_path: str = plugin_config.get(
             [self._config_base, ANSIBLE_PROVISIONER_CONFIG_PLAYBOOK_PATH_KEY]
@@ -202,19 +219,19 @@ class AnsiblePlaybookProvisionerPlugin:
         )
 
     def destroy(self):
-        """remove all resources created for the cluster
+        """Remove all resources created for the cluster.
 
         Run an aansible palybook to remove any implemented changes
 
-        @NOTE his plugin ist still very much a stub, and implements no real functionality.
+        @NOTE this plugin ist still very much a stub, and implements no real functionality.
 
         """
         self._rm_ansible_files()
 
     def _make_clients(self):
         """Create and assign an ansible client to this plugin."""
-        plugin_config = self._environment.config.load(self._config_label, force_reload=True)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config: Loaded = self._environment.config().load(self._config_label)
 
         ansiblecfg_path: str = plugin_config.get(
             [self._config_base, ANSIBLE_PROVISIONER_CONFIG_ANSIBLECFG_PATH_KEY],
@@ -236,7 +253,7 @@ class AnsiblePlaybookProvisionerPlugin:
             raise RuntimeError("No inventory provided so we are not creating an ansible client.")
 
         instance_id = f"{self._instance_id}-{METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID}"
-        fixture = self._environment.add_fixture(
+        fixture = self._environment.new_fixture(
             plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID,
             instance_id=instance_id,
             priority=70,
@@ -249,7 +266,7 @@ class AnsiblePlaybookProvisionerPlugin:
         self.fixtures.add(fixture, replace_existing=True)
 
         instance_id = f"{self._instance_id}-{METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKCLIENT_PLUGIN_ID}"
-        fixture = self._environment.add_fixture(
+        fixture = self._environment.new_fixture(
             plugin_id=METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKCLIENT_PLUGIN_ID,
             instance_id=instance_id,
             priority=70,
@@ -264,8 +281,7 @@ class AnsiblePlaybookProvisionerPlugin:
     def _update_config(self):
         """Update config and write the cfg and inventory files."""
         # refresh any loaded config
-        plugin_config = self._environment.config.load(self._config_label, force_reload=True)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        plugin_config = self._environment.config().load(self._config_label, force_reload=True)
 
         # first the ansible cfg file
         ansiblecfg_contents: Dict[str, Any] = plugin_config.get(
@@ -337,11 +353,10 @@ class AnsiblePlaybookProvisionerPlugin:
 
     def _rm_ansible_files(self):
         """Update config and write the cfg and inventory files."""
-
         logger.info("Ansible provisioner removing created files.")
 
-        plugin_config = self._environment.config.load(self._config_label)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config: Loaded = self._environment.config().load(self._config_label)
 
         # first the ansible cfg file
         ansiblecfg_path: str = plugin_config.get(

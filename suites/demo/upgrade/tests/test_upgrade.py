@@ -10,7 +10,7 @@ import time
 import pytest
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta_health.healthcheck import HealthStatus
 from mirantis.testing.metta_health.healthpoll_workload import HealthPollWorkload
 from mirantis.testing.metta_kubernetes.deployment_workload import (
@@ -91,7 +91,9 @@ def test_kube_workload_still_running(
 
 
 @pytest.mark.order(2)
-def test_healthpoller_check(environment_after_up: Environment, healthpoller_up: HealthPollWorkload):
+def test_healthpoller_check(
+    environment_after_up: Environment, healthpoller_up: HealthPollWorkload
+):
     """Ensure that the fixtures get created and that they are health for 2 hours."""
     count = 10
     """How many times should we ask healthpoller for a health update."""

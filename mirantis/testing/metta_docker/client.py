@@ -13,6 +13,7 @@ import os
 
 from docker import DockerClient
 
+from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
 
 logger = logging.getLogger("metta.contrib.docker.client.dockerpy")
@@ -76,9 +77,9 @@ class DockerPyClientPlugin(DockerClient):
             the Docker client use for docker compose.
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         logger.debug("Configuring docker client with args for host: %s", host)

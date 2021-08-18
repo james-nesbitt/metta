@@ -16,8 +16,8 @@ logger = logging.getLogger("test_clients.docker")
 def sanity_docker_run(environment_up):
     """Get the docker run workload from fixtures/yml."""
     # we have a docker run workload fixture called "sanity_docker_run"
-    plugin = environment_up.fixtures.get_plugin(instance_id="sanity_docker_run")
-    plugin.prepare(environment_up.fixtures)
+    plugin = environment_up.fixtures().get_plugin(instance_id="sanity_docker_run")
+    plugin.prepare(environment_up.fixtures())
     return plugin
 
 

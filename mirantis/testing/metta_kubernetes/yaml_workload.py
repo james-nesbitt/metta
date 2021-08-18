@@ -13,7 +13,8 @@ from typing import List, Any, Dict
 
 import yaml
 
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 
 from .kubeapi_client import KubernetesApiClientPlugin, METTA_PLUGIN_ID_KUBERNETES_CLIENT
@@ -56,9 +57,9 @@ class KubernetesYamlWorkloadPlugin:
         config_file (str): String path to the kubernetes config file to use
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self._config_label = label
@@ -66,7 +67,7 @@ class KubernetesYamlWorkloadPlugin:
         self._config_base = base
         """ configerus get key that should contain all tf config """
 
-        workload_config = self._environment.config.load(self._config_label)
+        workload_config = self._environment.config().load(self._config_label)
 
         self.namespace = workload_config.get(
             [self._config_base, KUBERNETES_YAML_WORKLOAD_CONFIG_KEY_NAMESPACE],
@@ -92,11 +93,18 @@ class KubernetesYamlWorkloadPlugin:
         self.k8s_objects: List[object] = []
         """List of resource creation objects."""
 
+        # do an initial prepare in case it is never properly run
+        try:
+            self.prepare()
+        # pylint: disable=broad-except
+        except Exception:
+            pass
+
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
         """Return dict data about this plugin for introspection."""
-        workload_config = self._environment.config.load(self._config_label)
+        workload_config = self._environment.config().load(self._config_label)
 
         return {
             "workload": {
@@ -126,7 +134,7 @@ class KubernetesYamlWorkloadPlugin:
             }
         }
 
-    def prepare(self, fixtures: Fixtures):
+    def prepare(self, fixtures: Fixtures = None):
         """Get the kubeapi client from a set of fixtures.
 
         Parameters:
@@ -135,11 +143,15 @@ class KubernetesYamlWorkloadPlugin:
             retrieve a kubernetes client plugin.
 
         """
+        if fixtures is None:
+            fixtures = self._environment.fixtures()
+
         try:
             self.client = fixtures.get_plugin(plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT)
         except KeyError as err:
             raise NotImplementedError(
-                "Workload could not find the needed client: " f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
+                "Workload could not find the needed client: "
+                f"{METTA_PLUGIN_ID_KUBERNETES_CLIENT}"
             ) from err
 
     def apply(self):

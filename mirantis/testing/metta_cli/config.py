@@ -38,12 +38,12 @@ class ConfigGroup:
 
     def __init__(self, environment: Environment):
         """Store environment in object."""
-        self._environment = environment
+        self._environment: Environment = environment
 
     def plugins(self, plugin_id: str = "", instance_id: str = "", plugin_type: str = ""):
         """List configerus plugins."""
         configerus_plugin_list = []
-        for instance in self._environment.config.plugins.get_instances(
+        for instance in self._environment.config().plugins.get_instances(
             plugin_id=plugin_id, instance_id=instance_id, type=plugin_type
         ):
             configerus_plugin_list.append(
@@ -59,7 +59,7 @@ class ConfigGroup:
     def sources(self, plugin_id: str = "", instance_id: str = "", deep: bool = False):
         """List configerus sources."""
         source_list = []
-        for instance in self._environment.config.plugins.get_instances(
+        for instance in self._environment.config().plugins.get_instances(
             plugin_id=plugin_id, instance_id=instance_id, type=ConfigerusType.SOURCE
         ):
             source = {
@@ -80,7 +80,7 @@ class ConfigGroup:
 
     def loaded(self, raw: bool = False):
         """List loaded config labels."""
-        loaded = self._environment.config.loaded
+        loaded = self._environment.config().loaded
         value = list(loaded)
         if raw:
             return value
@@ -95,7 +95,7 @@ class ConfigGroup:
 
         """
         try:
-            loaded = self._environment.config.load(label)
+            loaded = self._environment.config().load(label)
         except KeyError:
             return f"Could not find the config label '{label}'"
 
@@ -113,7 +113,7 @@ class ConfigGroup:
         try:
             if default_label is None:
                 default_label = "you did not specify a default"
-            value = self._environment.config.format(data=data, default_label=default_label)
+            value = self._environment.config().format(data=data, default_label=default_label)
         except Exception as err:
             return f"Error occured in formatting: '{err}'"
 

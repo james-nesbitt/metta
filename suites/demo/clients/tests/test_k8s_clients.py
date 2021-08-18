@@ -19,8 +19,8 @@ DEFAULT_K8S_NAMESPACE = "default"
 def sanity_kubernetes_deployment(environment_up):
     """Get the sanity kube deployment workload from fixtures/yml."""
     # we have a kube deploment workload fixture called "sanity-kubernetes-deployment"
-    plugin = environment_up.fixtures.get_plugin(instance_id="sanity-kubernetes-deployment")
-    plugin.prepare(environment_up.fixtures)
+    plugin = environment_up.fixtures().get_plugin(instance_id="sanity-kubernetes-deployment")
+    plugin.prepare(environment_up.fixtures())
     plugin.apply()
 
     yield plugin

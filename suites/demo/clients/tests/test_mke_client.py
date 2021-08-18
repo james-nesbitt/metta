@@ -24,7 +24,7 @@ def mke_client(environment_up):
     # We could get this directly from the provisioner if we were worried about
     # which mke client plugin instance we receive,  however there is only one
     # in this case.
-    return environment_up.fixtures.get_plugin(
+    return environment_up.fixtures().get_plugin(
         plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
     )
 

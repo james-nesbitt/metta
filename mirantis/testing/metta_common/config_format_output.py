@@ -32,7 +32,7 @@ class ConfigFormatOutputPlugin:
     def __init__(self, config: Config, instance_id: str):
         """Create configerus format plugin."""
         self.config = config
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
 
         self.pattern = re.compile(OUTPUT_FORMAT_MATCH_PATTERN)
         """ Regex patter for identifying an output replacement """
@@ -71,9 +71,11 @@ class ConfigFormatOutputPlugin:
         output = match.group("output")
 
         try:
-            output_plugin = self._environment.fixtures.get(
-                interfaces=[METTA_PLUGIN_INTERFACE_ROLE_OUTPUT], instance_id=output
-            ).plugin
+            output_plugin = (
+                self._environment.fixtures()
+                .get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_OUTPUT], instance_id=output)
+                .plugin
+            )
 
             if isinstance(output_plugin, DictOutputPlugin):
                 base = match.group("base")

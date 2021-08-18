@@ -29,7 +29,9 @@ class MSRProvisionerPlugin:
         dtr_obj.pull_dtr_images(new_nodes, dtr_obj.bootstrapper_name)
 
         dtr_node = new_nodes.pop(0)
-        log("Installing DTR '{0}' on node {1}".format(dtr_obj.bootstrapper_name, dtr_node.hostname))
+        log(
+            "Installing DTR '{0}' on node {1}".format(dtr_obj.bootstrapper_name, dtr_node.hostname)
+        )
 
         # to enable debug for the install.
         # install_debug = '--debug'

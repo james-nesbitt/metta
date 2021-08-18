@@ -10,7 +10,7 @@ from typing import Any
 import logging
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 
 from .client import DockerPyClientPlugin, METTA_PLUGIN_ID_DOCKER_CLIENT
 
@@ -49,9 +49,9 @@ class DockerPyRunWorkloadPlugin:
             should be requested when working on a provisioner
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self._config_label = label
@@ -59,14 +59,23 @@ class DockerPyRunWorkloadPlugin:
         self._config_base = base
         """ configerus get key that should contain all tf config """
 
-        run_config = self._environment.config.load(self._config_label)
+        run_config = self._environment.config().load(self._config_label)
         """Configerus LoadedConfig for the docker run label."""
 
-        self._run_settings = run_config.get([self._config_base, DOCKER_RUN_WORKLOAD_CONFIG_KEY_RUN])
+        self._run_settings = run_config.get(
+            [self._config_base, DOCKER_RUN_WORKLOAD_CONFIG_KEY_RUN]
+        )
         """Arguments for docker run."""
 
         self._docker_client: DockerPyClientPlugin = None
         """Metta Docker client plugin."""
+
+        # do an initial prepare in case it is never properly run
+        try:
+            self.prepare()
+        # pylint: disable=broad-except
+        except Exception:
+            pass
 
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
@@ -93,12 +102,9 @@ class DockerPyRunWorkloadPlugin:
 
         """
         if fixtures is None:
-            fixtures = self._environment.fixtures
+            fixtures = self._environment.fixtures()
 
-        self._docker_client: DockerPyClientPlugin = fixtures.get_plugin(
-            interfaces=[METTA_PLUGIN_ID_DOCKER_CLIENT]
-        )
-        """Metta_docker client plugin."""
+        self._docker_client = fixtures.get_plugin(interfaces=[METTA_PLUGIN_ID_DOCKER_CLIENT])
 
     def apply(self):
         """Run the workload.

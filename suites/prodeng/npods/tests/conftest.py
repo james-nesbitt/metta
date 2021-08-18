@@ -30,7 +30,7 @@ logger = logging.getLogger("npods-test-conftest")
 @pytest.fixture(scope="session")
 def npods_config(environment):
     """Get the npods yaml config object."""
-    loaded = environment.config.load("npods")
+    loaded = environment.config().load("npods")
     logger.info("Using npods config: %s", json.dumps(loaded.get(), indent=2))
     return loaded
 
@@ -39,7 +39,7 @@ def npods_config(environment):
 def mke(environment):
     """Get the mke client."""
     try:
-        return environment.fixtures.get_plugin(
+        return environment.fixtures().get_plugin(
             plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
         )
 
@@ -51,7 +51,7 @@ def mke(environment):
 def kubeapi(environment):
     """Get the kubeapi client and wait for it to be ready."""
     try:
-        kubeapi_client = environment.fixtures.get_plugin(
+        kubeapi_client = environment.fixtures().get_plugin(
             plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
         )
 
@@ -99,10 +99,10 @@ def environment_up_unlocked(environment_up, mke, kubeapi):
 @pytest.fixture(scope="module")
 def healthpoller_up(environment_up):
     """Start the healthpoller."""
-    healthpoller_plugin = environment_up.fixtures.get_plugin(instance_id="healthpoller")
+    healthpoller_plugin = environment_up.fixtures().get_plugin(instance_id="healthpoller")
     """ healthpoller workload defined in fixtures.yml, using fixtures from our environment """
 
-    healthpoller_plugin.prepare(environment_up.fixtures)
+    healthpoller_plugin.prepare(environment_up.fixtures())
     healthpoller_plugin.apply()
 
     yield healthpoller_plugin

@@ -20,6 +20,8 @@ logger = logging.getLogger("sonobuoy:results")
 class Status(Enum):
     """Enumerator to plugin states."""
 
+    ERROR = "error"
+    """ an error occured trying to interpret sonobuoy """
     PENDING = "pending"
     """ still pending """
     RUNNING = "running"
@@ -39,13 +41,19 @@ class SonobuoyStatus:
 
     def __init__(self, status_json: str):
         """Build from sonobuoy status results."""
-        status = json.loads(status_json)
-        self.status = Status(status["status"])
-        self.tar_info = status["tar-info"]
+        try:
+            status = json.loads(status_json)
+            self.status: Status = Status(status["status"])
+            self.tar_info: str = status["tar-info"]
 
-        self.plugins = {}
-        for plugin in status["plugins"]:
-            self.plugins[plugin["plugin"]] = plugin
+            self.plugins: Dict[str, Dict[str, Any]] = {}
+            for plugin in status["plugins"]:
+                self.plugins[plugin["plugin"]] = plugin
+
+        except json.decoder.JSONDecodeError:
+            logger.warning("json decoding of status failed: %s", status_json)
+            self.status = Status.ERROR
+            self.plugins = {}
 
     def plugin_list(self):
         """Retrieve the list of plugins."""

@@ -11,7 +11,7 @@ from typing import List
 
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 
 from .base import CliBase, cli_output, METTA_PLUGIN_INTERFACE_ROLE_CLI
 
@@ -33,7 +33,7 @@ class FixturesGroup:
 
     def __init__(self, environment: Environment):
         """Attach environment to object."""
-        self._environment = environment
+        self._environment: Environment = environment
 
     # pylint: disable=too-many-arguments
     def _filter(
@@ -45,7 +45,7 @@ class FixturesGroup:
         skip_cli_plugins: bool = True,
     ):
         """Filter fixtures centrally."""
-        matches = self._environment.fixtures.filter(
+        matches = self._environment.fixtures().filter(
             plugin_id=plugin_id, instance_id=instance_id, interfaces=interfaces, labels=labels
         )
         """All matching filtered fixtures."""
@@ -95,7 +95,7 @@ class FixturesGroup:
     def info(
         self,
         deep: bool = False,
-        children: bool = True,
+        children: bool = False,
         plugin_id: str = "",
         instance_id: str = "",
         interface: str = "",

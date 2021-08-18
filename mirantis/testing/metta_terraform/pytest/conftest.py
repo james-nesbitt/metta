@@ -51,7 +51,7 @@ def environment(environment_discover) -> Environment:
 @pytest.fixture(scope="session")
 def terraform_provisioner(environment) -> TerraformProvisionerPlugin:
     """get the metta terraform provisioner plugin"""
-    return environment.fixtures.get_plugin(
+    return environment.fixtures().get_plugin(
         plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
     )
 
@@ -76,7 +76,7 @@ def environment_up(environment, terraform_provisioner) -> Environment:
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
-    conf = environment.config.load("config")
+    conf = environment.config().load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("alreadyrunning", default=False):

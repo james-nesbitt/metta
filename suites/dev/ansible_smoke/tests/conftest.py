@@ -33,9 +33,9 @@ def healthpoller(environment_up):
     A started health-poller workload.
 
     """
-    plugin = environment_up.fixtures.get_plugin(instance_id="healthpoller")
+    plugin = environment_up.fixtures().get_plugin(instance_id="healthpoller")
 
-    plugin.prepare(environment_up.fixtures)
+    plugin.prepare(environment_up.fixtures())
     plugin.apply()
 
     yield plugin
@@ -54,7 +54,7 @@ def ansibleplaybook_provisioner(environment_up):
     An ansible provisioner plugin.
 
     """
-    return environment_up.fixtures.get_plugin(instance_id="ansible")
+    return environment_up.fixtures().get_plugin(instance_id="ansible")
 
 
 @pytest.fixture(scope="session")
@@ -69,7 +69,7 @@ def ansible_client(environment_up):
     An ansible cli client plugin.
 
     """
-    return environment_up.fixtures.get_plugin(
+    return environment_up.fixtures().get_plugin(
         plugin_id=METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID
     )
 
@@ -83,6 +83,6 @@ def ansibleplaybook_debugworkload(environment_up):
     An ansible playbook workload plugin.
 
     """
-    plugin = environment_up.fixtures.get_plugin(instance_id="ansibledebug")
-    plugin.prepare(fixtures=environment_up.fixtures)
+    plugin = environment_up.fixtures().get_plugin(instance_id="ansibledebug")
+    plugin.prepare(fixtures=environment_up.fixtures())
     return plugin
