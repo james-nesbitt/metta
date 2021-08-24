@@ -8,6 +8,7 @@ An output plugin which holds a single string value as its content.
 
 import logging
 
+from mirantis.testing.metta.environment import Environment
 
 logger = logging.getLogger("metta.contrib.common.output.text")
 
@@ -22,7 +23,7 @@ class TextOutputPlugin:
 
     """
 
-    def __init__(self, environment, instance_id, text: str = ""):
+    def __init__(self, environment: Environment, instance_id: str, text: str = ""):
         """Run the super constructor but also set class properties.
 
         Parameters:
@@ -37,9 +38,9 @@ class TextOutputPlugin:
         An AssertionError is raised if you didn't pass in a Dict.
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self.set_text(text)

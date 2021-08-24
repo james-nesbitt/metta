@@ -21,7 +21,7 @@ from mirantis.testing.metta.plugin import Factory
 
 # Imports used for type hinting
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import (
+from mirantis.testing.metta.fixture import (
     Fixtures,
     METTA_FIXTURES_CONFIG_FIXTURES_LABEL,
 )
@@ -53,8 +53,8 @@ class GenericTestPlugin:
 
     def __init__(self, environment: Environment, instance_id: str, *args, **kwargs):
         """Track the environment and instance_id."""
-        self._environment = environment
-        self._instance_id = instance_id
+        self._environment: Environment = environment
+        self._instance_id: str = instance_id
         self.args = args
         self.kwargs = kwargs
 
@@ -285,10 +285,10 @@ class PluginConstruction(unittest.TestCase):
 
         environment.add_fixtures_from_config(label=METTA_FIXTURES_CONFIG_FIXTURES_LABEL)
 
-        cl2 = environment.fixtures.get_plugin(instance_id="cl2")
+        cl2 = environment.fixtures().get_plugin(instance_id="cl2")
         self.assertEqual(cl2.instance_id, "cl2")
 
-        wls = environment.fixtures.filter(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD])
+        wls = environment.fixtures().filter(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD])
 
         self.assertEqual(len(wls), 3)
 

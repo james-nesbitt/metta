@@ -10,7 +10,7 @@ and then test stability for a period of time.
 import logging
 import pytest
 
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta.workload import METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD
 
 from mirantis.testing.metta_health.healthpoll_workload import (
@@ -41,7 +41,7 @@ def workloads(environment_up) -> Fixtures:
     workload_fixtures = Fixtures()
 
     # Take any workload plugin other than the healthpoll plugin
-    for fixture in environment_up.fixtures.filter(
+    for fixture in environment_up.fixtures().filter(
         interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD]
     ):
         if fixture.plugin_id == METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL:
@@ -58,7 +58,7 @@ def workloads_up(environment_up, workloads):
     for workload in workloads:
         plugin = workload.plugin
         if hasattr(plugin, "prepare"):
-            plugin.prepare(environment_up.fixtures)
+            plugin.prepare(environment_up.fixtures())
         if hasattr(plugin, "apply"):
             plugin.apply()
             logger.info("Workload %s applied.", workload.instance_id)
@@ -76,11 +76,11 @@ def workloads_up(environment_up, workloads):
 @pytest.fixture(scope="module")
 def healthpoller(environment_up):
     """Start a running health poll."""
-    healthpoll_workload = environment_up.fixtures.get_plugin(
+    healthpoll_workload = environment_up.fixtures().get_plugin(
         plugin_id=METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL
     )
 
-    healthpoll_workload.prepare(environment_up.fixtures)
+    healthpoll_workload.prepare(environment_up.fixtures())
     healthpoll_workload.apply()
 
     yield healthpoll_workload

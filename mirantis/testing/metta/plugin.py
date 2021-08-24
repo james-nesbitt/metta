@@ -43,7 +43,7 @@ METTA_PLUGIN_CONFIG_KEY_INSTANCEID = "instance_id"
 """ configerus .get() key for plugin_id """
 METTA_PLUGIN_CONFIG_KEY_PLUGININTERFACES = "interfaces"
 """ configerus .get() key for plugin interfaces """
-METTA_PLUGIN_CONFIG_KEY_PLUGINLABELS = "plugin_labels"
+METTA_PLUGIN_CONFIG_KEY_PLUGINLABELS = "labels"
 """ configerus .get() key for plugin labels """
 METTA_PLUGIN_CONFIG_KEY_ARGUMENTS = "arguments"
 """ configerus .get() key for plugin arguments """
@@ -70,7 +70,7 @@ class Instance:
         self.plugin = plugin
 
     def __repr__(self) -> str:
-        """String representation of the instance."""
+        """Create a string representation of the instance."""
         return f"Instance({self.plugin_id}, {self.instance_id}, {self.interfaces}, {self.labels})"
 
 
@@ -111,7 +111,9 @@ class Factory:
     _registry: Dict[str, PluginInstanceFactory] = {}
     """ A dict of registered factory functions."""
 
-    def __init__(self, plugin_id: str, interfaces: List[str] = None, labels: Dict[str, str] = None):
+    def __init__(
+        self, plugin_id: str, interfaces: List[str] = None, labels: Dict[str, str] = None
+    ):
         """Create a new Factory instance.
 
         This is used in two scenarios:
@@ -147,7 +149,7 @@ class Factory:
         """Reproduce string for this object."""
         return f"Factory({self._plugin_id}, {self._interfaces}, {self._labels})"
 
-    def __call__(self, func: Callable) -> PluginInstanceFactory:
+    def __call__(self, func: Callable) -> Callable:
         """Wrap the decorator factory wrapping function.
 
         Returns:
@@ -187,6 +189,8 @@ class Factory:
             plugins, and it will always pass some arguments to every plugin
             factory, which means that plugins are expected to accept those
             arguments.
+            When writing a plugin, know what arguments the factory is expected
+            to handle.
 
         Returns:
         --------
@@ -241,7 +245,7 @@ class Factory:
 
     @classmethod
     def plugin_ids(cls, interfaces_filter: List[str] = None) -> List[str]:
-        """Return a generator of matching registered plugins
+        """Build a generator of matching registered plugins.
 
         Parameters:
         -----------

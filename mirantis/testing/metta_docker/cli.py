@@ -9,7 +9,7 @@ import logging
 from typing import Dict, Any
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta_health.healthcheck import Health
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
@@ -20,6 +20,7 @@ logger = logging.getLogger("metta.cli.docker")
 METTA_PLUGIN_ID_DOCKER_CLI = "metta_docker_cli"
 """ metta plugin_id for the launchpad cli plugin """
 
+
 # this interface is common for all Metta plugins, but CLI plugins underuse it
 # pylint: disable=too-few-public-methods
 class DockerCliPlugin(CliBase):
@@ -28,7 +29,7 @@ class DockerCliPlugin(CliBase):
     def fire(self) -> Dict[str, Any]:
         """Return command groups for Docker plugins."""
         if (
-            self._environment.fixtures.get(
+            self._environment.fixtures().get(
                 plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
                 exception_if_missing=False,
             )
@@ -45,18 +46,18 @@ class DockerClientGroup:
 
     def __init__(self, environment: Environment):
         """Add additional command groups for plugins and inject environment."""
-        self._environment = environment
+        self._environment: Environment = environment
 
     def _select_client(self, instance_id: str = "") -> Fixtures:
         """Pick a matching client."""
         if instance_id:
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
                 instance_id=instance_id,
             )
 
         # Get the highest priority workload
-        return self._environment.fixtures.get(
+        return self._environment.fixtures().get(
             plugin_id=METTA_PLUGIN_ID_DOCKER_CLIENT,
         )
 

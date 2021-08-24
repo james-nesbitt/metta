@@ -1,5 +1,16 @@
-project:
-  name: npods-pytest
+# Project bootstrapping configuration.
+#
+# This config is found and used by the project bootstrapper plugin.
+# METTA_BOOTSTRAPPER_PROJECT_PLUGIN_ID = "project_bootstrap"
+#
+# This format synchs with discovering Metta bootstrapping using the metta
+# discover() method.  Alternate bootstrapping is available.
+#
+# The bootstrapper will create config to provide {{paths:project}}
+#
+
+# Instance ID for the bootstrapper plugin
+instance_id: metta-pytest
 
 # Also include the following sources of configuration
 config:
@@ -11,7 +22,23 @@ config:
       priority: 70
       path: "{{paths:project}}/config"
 
-# Tell metta to create environments from the ./config/environments.yml file
+    # include Environemnt variables as a source of config if they use the format
+    # METTA_LABEL[_STEP]*
+    # config.get(mylabel).get(one.two.three) would be METTA_MYLABEL_ONE_TWO_THREE
+    metta-env:
+      plugin_id: env-specific
+      priority: 90
+      base: "METTA"
+    # Also allow an env variable containing json to be used as a dictionary of
+    # config source.  There is some chance of collision with the previous plugin
+    metta-env-json:
+      plugin_id: env-json
+      priority: 85
+      env: METTA_CONFIGJSON
+
+# Tell metta to create environments by loading the environment config label
+# which means ./config/environments.yml file because above we provided the
+# definition for ./config as a config source.
 environments:
   from_config:
     label: environments

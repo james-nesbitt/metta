@@ -108,7 +108,7 @@ def add_preset_config(environment: Environment, priority=METTA_PRESET_DEFAULT_PR
     # For each preset key found we try to add a path config source for the
     # value
     try:
-        metta_config = environment.config.load(METTA_PRESET_CONFIG_LABEL)
+        metta_config = environment.config().load(METTA_PRESET_CONFIG_LABEL)
     except KeyError:
         logger.debug("metta Presets found no usable config")
         return
@@ -128,7 +128,7 @@ def add_preset_config(environment: Environment, priority=METTA_PRESET_DEFAULT_PR
             preset_key = preset_value.replace("/", "_")
             preset_instance_id = f"{prefix}-{preset_key}"
             # quick check to see if we've already added this preset.
-            if not environment.config.has_source(preset_instance_id):
+            if not environment.config().has_source(preset_instance_id):
                 # build a preset config path and add it as a source if it
                 # exists
                 preset_full_path = os.path.join(preset_root_path, preset_value)
@@ -139,7 +139,7 @@ def add_preset_config(environment: Environment, priority=METTA_PRESET_DEFAULT_PR
                         preset_value,
                         preset_full_path,
                     )
-                    environment.config.add_source(
+                    environment.config().add_source(
                         PLUGIN_ID_SOURCE_PATH, preset_instance_id, preset_priority
                     ).set_path(preset_full_path)
                 else:

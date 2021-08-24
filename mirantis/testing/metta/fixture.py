@@ -18,7 +18,7 @@ from .plugin import (
     METTA_PLUGIN_CONFIG_KEY_INSTANCEID,
 )
 
-logger = logging.getLogger("metta.fixtures")
+logger = logging.getLogger("metta.fixture")
 
 METTA_FIXTURES_CONFIG_FIXTURES_LABEL = "fixtures"
 """ A centralized configerus load label for multiple fixtures """
@@ -105,7 +105,7 @@ class Fixture:
 
         return self.plugin_id == other.plugin_id and self.instance_id == other.instance_id
 
-    def info(self, deep: bool = False, children: bool = True) -> Dict[str, Any]:
+    def info(self, deep: bool = False, children: bool = False) -> Dict[str, Any]:
         """Return some dict metadata about the fixture and plugin.
 
         Parameters:
@@ -141,9 +141,9 @@ class Fixture:
         if hasattr(self.plugin, "info"):
             fixture_info["plugin"] = self.plugin.info(deep=deep)
 
-        if children and hasattr(self.plugin, "fixtures"):
+        if children and hasattr(self.plugin, "fixtures") and callable(self.plugin.fixtures):
             fixture_info["fixtures"] = {}
-            for fixture in self.plugin.fixtures:
+            for fixture in self.plugin.fixtures():
                 fixture_info["fixtures"][fixture.instance_id] = fixture.info(
                     deep=deep, children=children
                 )
@@ -264,9 +264,9 @@ class Fixtures:
 
     def info(self, deep: bool = False) -> Dict[str, Any]:
         """Return some dict metadata about the fixtures and plugins."""
-        fixtures_info = []
+        fixtures_info: Dict[str, Any] = {}
         for fixture in self._fixtures:
-            fixtures_info.append(fixture.info(deep=deep))
+            fixtures_info[fixture.instance_id] = fixture.info(deep=deep)
 
         return fixtures_info
 
@@ -370,7 +370,8 @@ class Fixtures:
         plugin_id: str = "",
         instance_id: str = "",
         interfaces: List[str] = None,
-        labels: List[str] = None,
+        labels: Dict[str, str] = None,
+        has_labels: List[str] = None,
         exception_if_missing: bool = True,
     ) -> Fixture:
         """Retrieve the first matching fixture object based on filters and priority.
@@ -382,7 +383,9 @@ class Fixtures:
         plugin_id (str) : registry plugin_id
         instance_id (str) : plugin instance identifier
         interfaces (List[str]) : List of interfaces which the fixture must have
-        labels (List[str]) : List of labels which the fixture must have
+        labels (Dict[str, str]) : Filter key value pairs which fixtures must match
+        has_labels (List[str]) : List of labels which the fixture must have
+        has_labels (List[str]) : List of labels which the fixture must have
 
         Returns:
         --------
@@ -396,7 +399,11 @@ class Fixtures:
 
         """
         filtered = self.filter(
-            plugin_id=plugin_id, instance_id=instance_id, interfaces=interfaces, labels=labels
+            plugin_id=plugin_id,
+            instance_id=instance_id,
+            interfaces=interfaces,
+            labels=labels,
+            has_labels=has_labels,
         )
 
         if len(filtered) > 0:
@@ -415,7 +422,8 @@ class Fixtures:
         plugin_id: str = "",
         instance_id: str = "",
         interfaces: List[str] = None,
-        labels: List[str] = None,
+        labels: Dict[str, str] = None,
+        has_labels: List[str] = None,
         exception_if_missing: bool = True,
     ) -> object:
         """Retrieve the first matching plugin  based on filters and priority.
@@ -426,7 +434,8 @@ class Fixtures:
 
         plugin_id (str) : registry plugin_id
         interfaces (List[str]) : List of interfaces which the fixture must have
-        labels (List[str]) : List of labels which the fixture must have
+        labels (Dict[str, str]) : Filter key value pairs which fixtures must match
+        has_labels (List[str]) : List of labels which the fixture must have
         instance_id (str) : plugin instance identifier
 
         Returns:
@@ -445,6 +454,7 @@ class Fixtures:
             instance_id=instance_id,
             interfaces=interfaces,
             labels=labels,
+            has_labels=has_labels,
             exception_if_missing=exception_if_missing,
         )
 
@@ -459,7 +469,8 @@ class Fixtures:
         plugin_id: str = "",
         instance_id: str = "",
         interfaces: List[str] = None,
-        labels: List[str] = None,
+        labels: Dict[str, str] = None,
+        has_labels: List[str] = None,
         exception_if_missing: bool = False,
     ) -> "Fixtures":
         """Filter the fixture instances.
@@ -470,7 +481,8 @@ class Fixtures:
 
         plugin_id (str) : registry plugin_id
         interfaces (List[str]) : List of interfaces which the fixture must have
-        labels (List[str]) : List of labels which the fixture must have
+        labels (Dict[str, str]) : Filter key value pairs which fixtures must match
+        has_labels (List[str]) : List of labels which the fixture must have
         instance_id (str) : plugin instance identifier
 
         Returns:
@@ -493,10 +505,17 @@ class Fixtures:
                         if required_interface not in fixture.interfaces:
                             raise DoesNotMatchError("does not contain required interface")
 
-                if labels:
-                    for required_label in labels:
+                if has_labels:
+                    for required_label in has_labels:
                         if required_label not in fixture.labels:
                             raise DoesNotMatchError("does not contain required label")
+
+                if labels:
+                    for key, value in labels.items():
+                        if key not in fixture.labels:
+                            raise DoesNotMatchError("does not contain required label")
+                        if not fixture.labels[key] == value:
+                            raise DoesNotMatchError("required label does not match")
 
                 if plugin_id and not fixture.plugin_id == plugin_id:
                     raise DoesNotMatchError("plugin_id does not match")
@@ -512,14 +531,13 @@ class Fixtures:
             raise KeyError(f"Filter found matches [{plugin_id}][{instance_id}]")
         return filtered
 
-    # I should try to fix the branch count here
-    # pylint: disable=too-many-branches
     def filter_out(
         self,
         plugin_id: str = "",
         instance_id: str = "",
         interfaces: List[str] = None,
-        labels: List[str] = None,
+        labels: Dict[str, str] = None,
+        has_labels: List[str] = None,
         exception_if_missing: bool = False,
     ) -> "Fixtures":
         """Return the fixtures with fixtures removed.
@@ -553,13 +571,21 @@ class Fixtures:
                         if required_interface not in fixture.interfaces:
                             raise DoesNotMatchError("does not contain required interface")
 
-                if labels:
-                    for required_label in labels:
+                if has_labels:
+                    for required_label in has_labels:
                         if required_label not in fixture.labels:
                             raise DoesNotMatchError("does not contain required label")
 
+                if labels:
+                    for key, value in labels.items():
+                        if key not in fixture.labels:
+                            raise DoesNotMatchError("does not contain required label")
+                        if not fixture.labels[key] == value:
+                            raise DoesNotMatchError("required label does not match")
+
                 if plugin_id and not fixture.plugin_id == plugin_id:
                     raise DoesNotMatchError("plugin_id does not match")
+
                 if instance_id and not fixture.instance_id == instance_id:
                     raise DoesNotMatchError("instance_id does not match")
 

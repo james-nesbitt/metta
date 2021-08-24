@@ -16,7 +16,7 @@ import logging
 from typing import Dict, Any
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 
 logger = logging.getLogger("metta.contrib.dummy.provisioner")
 
@@ -30,9 +30,9 @@ class DummyProvisionerPlugin:
         instance_id: str,
         fixtures: Dict[str, Dict[str, Any]] = None,
     ):
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self.fixtures = Fixtures()

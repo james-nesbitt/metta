@@ -1,6 +1,6 @@
 """Callback we can use with the ansible client."""
 
-from typing import Dict, Any, Iterator, List
+from typing import Dict, Any, Iterator, Tuple
 from enum import Enum
 
 from ansible.plugins.callback import CallbackBase
@@ -24,7 +24,7 @@ class Result:
         self.status: ResultStatus = status
         self.host: str = host
         self.result: Dict[str, Any] = result
-        self.args: List[Any] = args
+        self.args: Tuple[Any] = args
         self.kwargs: Dict[str, Any] = kwargs
 
 
@@ -32,8 +32,9 @@ class ResultsCallback(CallbackBase):
     """A sample callback plugin used for collecting results as they come in."""
 
     def __init__(self, *args, **kwargs):
+        """Initialize a results set."""
         super().__init__(*args, **kwargs)
-        self._results: Dict[str, ResultStatus] = {}
+        self._results: Dict[str, Result] = {}
         """Per host ResultStatus for an operation."""
 
     def __len__(self) -> int:
@@ -90,7 +91,7 @@ class ResultsCallback(CallbackBase):
         # Iterate across the to_list() set, as it is sorted.
         return reversed(self._results.values())
 
-    ##### ANSIBLE CALLBACK FUNCTIONALITY
+    # ANSIBLE CALLBACK FUNCTIONALITY
     #
     # The following methods are called by the ansible queue manager strategy object while the queue
     # is being processed.  Here we just try to catch information to produce discoverable results

@@ -43,9 +43,9 @@ class SonobuoyClientPlugin:
         results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH,
     ):
         """Gather enough arguments to configure the SonobuoyClient object."""
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self._sonobuoy: SonobuoyClient = SonobuoyClient(
@@ -81,9 +81,9 @@ class SonobuoyClientPlugin:
         """Retrieve sonobuoy results."""
         return self._sonobuoy.retrieve()
 
-    def destroy(self, wait: bool = False):
+    def delete(self, wait: bool = False):
         """Delete sonobuoy resources."""
-        return self._sonobuoy.destroy(wait=wait)
+        return self._sonobuoy.delete(wait=wait)
 
     def version(self) -> Dict[str, str]:
         """Retrieve sonobuoy version."""

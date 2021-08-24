@@ -13,6 +13,8 @@ from typing import Dict
 
 from configerus.loaded import Loaded, LOADED_KEY_ROOT
 
+from mirantis.testing.metta.environment import Environment
+
 logger = logging.getLogger("metta.contrib.common.output.dict")
 
 METTA_PLUGIN_ID_OUTPUT_DICT = "dict"
@@ -27,7 +29,9 @@ class DictOutputPlugin:
 
     """
 
-    def __init__(self, environment, instance_id, data: Dict = None, validator: str = ""):
+    def __init__(
+        self, environment: Environment, instance_id: str, data: Dict = None, validator: str = ""
+    ):
         """Run the super constructor but also set class properties.
 
         Here we treat the data dict as a configerus.loaded.Loaded instance,
@@ -51,9 +55,9 @@ class DictOutputPlugin:
         An AssertionError is raised if you didn't pass in a Dict.
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         if data is None:
@@ -66,11 +70,11 @@ class DictOutputPlugin:
         assert isinstance(data, dict), f"Expected Dict of data, got {data}"
 
         if validator:
-            self._environment.config.validate(data, validator)
+            self._environment.config().validate(data, validator)
 
         mock_instance_id = f"dict-output-{self._instance_id}"
         self.loaded = Loaded(
-            data=data, parent=self._environment.config, instance_id=mock_instance_id
+            data=data, parent=self._environment.config(), instance_id=mock_instance_id
         )
 
     def get_output(self, key: str = LOADED_KEY_ROOT, validator: str = ""):

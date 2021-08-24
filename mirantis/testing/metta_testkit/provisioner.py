@@ -19,7 +19,8 @@ from configerus.contrib.jsonschema.validate import (
 )
 from configerus.validator import ValidationError
 
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.environment import Environment
+from mirantis.testing.metta.fixture import Fixtures
 
 from .client import TestkitClientPlugin, METTA_TESTKIT_CLIENT_PLUGIN_ID
 from .testkit import TESTKITCLIENT_CLI_CONFIG_FILE_DEFAULT
@@ -118,9 +119,9 @@ class TestkitProvisionerPlugin:
         base (str) : config base for loaded config for plugin configuration.
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self._config_label = label
@@ -144,7 +145,7 @@ class TestkitProvisionerPlugin:
     # pylint: disable=unused-argument
     def info(self, deep: bool = False) -> Dict[str, Any]:
         """Get info about a provisioner plugin."""
-        testkit_config = self._environment.config.load(self._config_label)
+        testkit_config = self._environment.config().load(self._config_label)
 
         return {
             "plugin": {
@@ -185,7 +186,7 @@ class TestkitProvisionerPlugin:
         self._write_config_file()
         self.make_fixtures()
 
-        testkit_config = self._environment.config.load(self._config_label, force_reload=True)
+        testkit_config = self._environment.config().load(self._config_label, force_reload=True)
         """ load the plugin configuration so we can retrieve options """
         opts = testkit_config.get(
             [self._config_base, TESTKIT_CONFIG_KEY_CREATE_OPTIONS], default={}
@@ -211,7 +212,7 @@ class TestkitProvisionerPlugin:
         """Write the config file for testkit."""
         try:
             # load all of the testkit configuration, force a reload to get up to date contents
-            testkit_config = self._environment.config.load(self._config_label, force_reload=True)
+            testkit_config = self._environment.config().load(self._config_label, force_reload=True)
             config = testkit_config.get(
                 [self._config_base, TESTKIT_CONFIG_KEY_CONFIG],
                 validator=TESTKIT_CONFIG_VALIDATE_TARGET,
@@ -235,7 +236,7 @@ class TestkitProvisionerPlugin:
 
     def _rm_config_file(self):
         """Remove the written config file."""
-        testkit_config = self._environment.config.load(self._config_label)
+        testkit_config = self._environment.config().load(self._config_label)
         config_file = testkit_config.get(
             [self._config_base, TESTKIT_CONFIG_KEY_CONFIGFILE],
             default=TESTKIT_CONFIG_DEFAULT_CONFIGFILE,
@@ -252,11 +253,11 @@ class TestkitProvisionerPlugin:
         Testkit client : a client for interaction with the teskit cli
 
         """
-        testkit_config = self._environment.config.load(self._config_label, force_reload=True)
+        testkit_config = self._environment.config().load(self._config_label, force_reload=True)
         """ load the plugin configuration so we can retrieve options """
 
         try:
-            testkit_config = self._environment.config.load(self._config_label, force_reload=True)
+            testkit_config = self._environment.config().load(self._config_label, force_reload=True)
             """ loaded plugin configuration label """
         except KeyError as err:
             raise ValueError("Testkit plugin configuration did not have any config") from err
@@ -278,7 +279,7 @@ class TestkitProvisionerPlugin:
             default={},
         )
 
-        fixture = self._environment.add_fixture(
+        fixture = self._environment.new_fixture(
             plugin_id=METTA_TESTKIT_CLIENT_PLUGIN_ID,
             instance_id=self.client_instance_id(),
             priority=70,

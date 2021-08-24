@@ -58,7 +58,7 @@ def environment_up(environment: Environment) -> Environment:
 
     """
 
-    provisioner = environment.fixtures.get_plugin(
+    provisioner = environment.fixtures().get_plugin(
         interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
     )
     # Get the highest priority provisioner plugin configured.
@@ -66,7 +66,7 @@ def environment_up(environment: Environment) -> Environment:
 
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
-    conf = environment.config.load("config")
+    conf = environment.config().load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("alreadyrunning", default=False):

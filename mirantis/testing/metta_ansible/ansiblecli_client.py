@@ -7,6 +7,7 @@ Metta client plugins for the ansible cli handlers.
 import logging
 from typing import List, Dict
 
+from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta_health.healthcheck import Health
 
 from .ansiblecli import AnsibleClient, AnsiblePlaybookClient
@@ -19,9 +20,10 @@ METTA_ANSIBLE_ANSIBLECLI_CORECLIENT_PLUGIN_ID = "metta_ansible_clicore_ansible_c
 METTA_ANSIBLE_ANSIBLECLI_PLAYBOOKCLIENT_PLUGIN_ID = "metta_ansible_clicore_ansibleplaybook_client"
 """ Ansible-Playbook client plugin id """
 
+
 # pylint: disable=too-many-instance-attributes
 class AnsibleClientPlugin:
-    """Ansible provisioner plugin
+    """Ansible provisioner plugin.
 
     Client plugin that allows control of and interaction with a ansible
     cluster using ansible cli.
@@ -37,8 +39,8 @@ class AnsibleClientPlugin:
 
     def __init__(
         self,
-        environment,
-        instance_id,
+        environment: Environment,
+        instance_id: str,
         inventory_path: str,
         ansiblecfg_path: str = "",
     ):
@@ -46,20 +48,29 @@ class AnsibleClientPlugin:
 
         Parameters:
         -----------
+        environment (Environment) : All metta plugins receive the environment
+            object in which they were created.
+        instance_id (str) : all metta plugins receive their own string identity.
+
+        inventory_path (str) : string path to an inventory file.
+        ansiblecfg_path (str) : string path to an optional ansiblecfg file.
 
         """
-        self._environment = environment
-        self._instance_id = instance_id
+        self._environment: Environment = environment
+        """Environemnt in which this plugin exists."""
+        self._instance_id: str = instance_id
+        """Unique id for this plugin instance."""
 
-        self._ansible = AnsibleClient(
+        self._ansible: AnsibleClient = AnsibleClient(
             ansiblecfg_path=ansiblecfg_path,
             inventory_path=inventory_path,
         )
+        """Backend ansible cli handler."""
 
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
-        """get info about a provisioner plugin"""
+        """Get info about a provisioner plugin."""
         return {
             "client": self._ansible.info(deep=deep) if self._ansible else "MISSING",
         }
@@ -131,7 +142,7 @@ class AnsibleClientPlugin:
 
 # pylint: disable=too-many-instance-attributes
 class AnsiblePlaybookClientPlugin:
-    """Ansible Playbook client plugin
+    """Ansible Playbook client plugin.
 
     Client plugin that allows control of and interaction with a ansible
     cluster using ansible-playbook cli
@@ -156,22 +167,33 @@ class AnsiblePlaybookClientPlugin:
 
         Parameters:
         -----------
+        environment (Environment) : All metta plugins receive the environment
+            object in which they were created.
+        instance_id (str) : all metta plugins receive their own string identity.
+
+        inventory_path (str) : string path to an inventory file.
+        ansiblecfg_path (str) : string path to an optional ansiblecfg file.
 
         """
-        self._environment = environment
-        self._instance_id = instance_id
+        self._environment: Environment = environment
+        """Environemnt in which this plugin exists."""
+        self._instance_id: str = instance_id
+        """Unique id for this plugin instance."""
 
         self._ansibleplaybook = AnsiblePlaybookClient(
             ansiblecfg_path=ansiblecfg_path,
             inventory_path=inventory_path,
         )
+        """Backend ansible-playbook cli handler."""
 
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
-        """get info about a provisioner plugin"""
+        """Get info about a provisioner plugin."""
         return {
-            "client": self._ansibleplaybook.info(deep=deep) if self._ansibleplaybook else "MISSING",
+            "client": self._ansibleplaybook.info(deep=deep)
+            if self._ansibleplaybook
+            else "MISSING",
         }
 
     # pylint: disable=too-many-arguments

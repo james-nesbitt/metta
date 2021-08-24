@@ -122,7 +122,8 @@ class LaunchpadClient:
         Dict of introspective information about this plugin_info
 
         """
-        info = {
+        # Start an info dict
+        info: Dict[str, Any] = {
             "client": {
                 "config_file": self.config_file,
                 "working_dir": self.working_dir,
@@ -250,13 +251,12 @@ class LaunchpadClient:
         If you perform an action, you should consider asking for the client bundle.
 
         """
-        client_bundle_path = self._mke_client_bundle_path(user)
-        client_bundle_meta_file = os.path.join(
+        client_bundle_path: str = self._mke_client_bundle_path(user)
+        client_bundle_meta_file: str = os.path.join(
             client_bundle_path, METTA_USER_LAUNCHPAD_BUNDLE_META_FILE
         )
-
+        # Will hold data pulled from the client meta data file
         data: Dict[str, Any] = {}
-        """ Will hold data pulled from the client meta data file """
         try:
             with open(client_bundle_meta_file) as json_file:
                 data = json.load(json_file)
@@ -287,7 +287,7 @@ class LaunchpadClient:
 
     def rm_client_bundles(self):
         """Remove any downloaded client bundles."""
-        base = os.path.join(
+        base: str = os.path.join(
             METTA_USER_LAUNCHPAD_CLUSTER_PATH,
             self._cluster_name(),
             METTA_USER_LAUNCHPAD_BUNDLE_SUBPATH,
@@ -300,7 +300,7 @@ class LaunchpadClient:
         """Root path to the launchpad user conf."""
         return os.path.join(METTA_USER_LAUNCHPAD_CLUSTER_PATH, self._cluster_name())
 
-    def _mke_client_bundle_path(self, user: str):
+    def _mke_client_bundle_path(self, user: str) -> str:
         """Find the path to a client bundle for a user."""
         return os.path.join(
             METTA_USER_LAUNCHPAD_CLUSTER_PATH,
@@ -312,7 +312,7 @@ class LaunchpadClient:
     def _mke_client_downloaded_bundle_user_paths(self) -> Dict[str, str]:
         """Return a map of user names to downloaded bundle paths."""
         try:
-            base = os.path.join(
+            base: str = os.path.join(
                 METTA_USER_LAUNCHPAD_CLUSTER_PATH,
                 self._cluster_name(),
                 METTA_USER_LAUNCHPAD_BUNDLE_SUBPATH,
@@ -340,8 +340,8 @@ class LaunchpadClient:
 
         try:
             with open(self.config_file) as config_file_object:
+                # keep a parsed copy of the launchpad file
                 config_data = yaml.safe_load(config_file_object)
-                """ keep a parsed copy of the launchpad file """
         except FileNotFoundError as err:
             raise ValueError(
                 "Launchpad yaml file could not be opened" f": {self.config_file}"
@@ -400,15 +400,15 @@ class LaunchpadClient:
         # pylint: disable=no-else-return
         if return_output:
             logger.debug("running launchpad command with output capture: %s", " ".join(cmd))
-            res = subprocess.run(
+            return_res = subprocess.run(
                 cmd,
                 cwd=self.working_dir,
                 shell=False,
                 check=True,
                 stdout=subprocess.PIPE,
             )
-            res.check_returncode()
-            return res.stdout.decode("utf-8")
+            return_res.check_returncode()
+            return return_res.stdout.decode("utf-8")
 
         else:
             logger.debug("running launchpad command: %s", " ".join(cmd))

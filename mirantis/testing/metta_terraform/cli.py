@@ -35,7 +35,7 @@ class TerraformCliPlugin(CliBase):
         commands: Dict[str, object] = {}
 
         if (
-            self._environment.fixtures.get(
+            self._environment.fixtures().get(
                 plugin_id=METTA_TERRAFORM_CLIENT_PLUGIN_ID,
                 exception_if_missing=False,
             )
@@ -51,10 +51,10 @@ class TerraformClientGroup:
 
     def __init__(self, environment: Environment):
         """Inject environment."""
-        self._environment = environment
+        self._environment: Environment = environment
 
         if (
-            self._environment.fixtures.get(
+            self._environment.fixtures().get(
                 plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
                 exception_if_missing=False,
             )
@@ -65,13 +65,13 @@ class TerraformClientGroup:
     def _select_client(self, instance_id: str = ""):
         """Pick a matching terraform provisioner."""
         if instance_id:
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 plugin_id=METTA_TERRAFORM_CLIENT_PLUGIN_ID,
                 instance_id=instance_id,
             )
 
         # Get the highest priority provisioner
-        return self._environment.fixtures.get(
+        return self._environment.fixtures().get(
             plugin_id=METTA_TERRAFORM_CLIENT_PLUGIN_ID,
         )
 
@@ -116,18 +116,18 @@ class TerraformProvisionerGroup:
 
     def __init__(self, environment: Environment):
         """Inject environment."""
-        self._environment = environment
+        self._environment: Environment = environment
 
     def _select_provisioner(self, instance_id: str = ""):
         """Pick a matching terraform provisioner."""
         if instance_id:
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
                 instance_id=instance_id,
             )
 
         # Get the highest priority provisioner
-        return self._environment.fixtures.get(
+        return self._environment.fixtures().get(
             plugin_id=METTA_TERRAFORM_PROVISIONER_PLUGIN_ID,
         )
 

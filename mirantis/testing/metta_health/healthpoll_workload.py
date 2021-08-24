@@ -14,7 +14,7 @@ import threading
 from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 
 from .healthcheck import (
     METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK,
@@ -53,10 +53,10 @@ class HealthPollWorkload:
         base: Any = LOADED_KEY_ROOT,
     ):
         """Configure the health polls worload plugin instances."""
-        self._environment = environment
-        self._instance_id = instance_id
+        self._environment: Environment = environment
+        self._instance_id: str = instance_id
 
-        healthpoll_config = environment.config.load(label)
+        healthpoll_config = environment.config().load(label)
 
         # make period public and let people tune it live.
         self.period = healthpoll_config.get(
@@ -105,7 +105,7 @@ class HealthPollWorkload:
 
         """
         if fixtures is None:
-            fixtures = self._environment.fixtures
+            fixtures = self._environment.fixtures()
 
         self._healthcheck_fixtures = fixtures
 

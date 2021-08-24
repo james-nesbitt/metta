@@ -15,7 +15,7 @@ that a wholistic health check can be run.
 """
 from enum import Enum
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Generator
 import logging
 
 
@@ -131,7 +131,7 @@ class Health:
 
     def messages(
         self, source: str = "", since: int = 0, verbosity: HealthStatus = None
-    ) -> List[HealthMessage]:
+    ) -> Generator[HealthMessage, None, None]:
         """Return filtered health messages."""
         if isinstance(verbosity, str):
             if verbosity.lower() in ["warning", "warn", "w"]:
@@ -154,7 +154,9 @@ class Health:
     def new_message(self, status: HealthStatus, message: str, properties: Dict[str, Any] = None):
         """Add a message of status INFO."""
         self._messages.append(
-            HealthMessage(source=self.source, status=status, message=message, properties=properties)
+            HealthMessage(
+                source=self.source, status=status, message=message, properties=properties
+            )
         )
         self._status = worse_health_status(self._status, status)
 

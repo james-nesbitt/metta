@@ -15,7 +15,7 @@ import subprocess
 from configerus.loaded import Loaded
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 
 from mirantis.testing.metta_mirantis.mke_client import (
     MKEAPIClientPlugin,
@@ -58,10 +58,8 @@ class LaunchpadClientPlugin:
     ):
         """Collect enough data to create a LaunchpadClient object.
 
-
         Parameters:
         -----------
-
         config_file (str) : Path to the launchpad yml config file.
 
         working_dir (str) : Path CWD to use for subprocess with launchpad.  This may be needed
@@ -86,22 +84,22 @@ class LaunchpadClientPlugin:
                 A host list will be added to the arguments.
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
-        self.config_file = config_file
+        self.config_file: str = config_file
         """Path to the launchpad yml file."""
 
-        self.systems = systems
+        self.systems: Dict[str, Dict[str, str]] = systems if systems is not None else {}
         """Access endpoint & U/P for systems created by launchpad, such as the MKE client."""
 
-        self.fixtures = Fixtures()
+        self.fixtures: Fixtures = Fixtures()
         """This plugin makes fixtures, and keeps track of them here."""
 
         logger.debug("Creating Launchpad client handler")
-        self.launchpad = LaunchpadClient(
+        self.launchpad: LaunchpadClient = LaunchpadClient(
             config_file=config_file,
             working_dir=working_dir,
             cli_options=cli_options,
@@ -144,7 +142,7 @@ class LaunchpadClientPlugin:
         return self.launchpad.version()
 
     def hosts(self, deep: bool = False):
-        """List the hosts in the cluster/"""
+        """List the hosts in the cluster."""
         config = self.describe_config()
 
         if deep:
@@ -233,6 +231,10 @@ class LaunchpadClientPlugin:
         """Uninstall using the launchpad client."""
         return self.launchpad.register(name=name, email=email, company=company)
 
+    def describe(self, report: str):
+        """Output one of the launchpad reports."""
+        return self.launchpad.describe(report=report)
+
     def describe_config(self) -> Dict[str, Any]:
         """Return the launchpad config report as interpreted by launchpad."""
         return self.launchpad.describe_config()
@@ -259,27 +261,27 @@ class LaunchpadClientPlugin:
         # make.  If we find a host for a client, then we retrieve needed
         # config and use it to generate the related client.
         hosts = launchpad_config.get(METTA_LAUNCHPAD_CONFIG_HOSTS_KEY, default=[], format=False)
-        """ isolate the list of hosts so that we can separate them into roles """
 
         # MKE Client
         #
         if METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID in self.systems:
-            mke_hosts = [
+            mke_hosts: List[Any] = list(
                 host for host in hosts if host[METTA_LAUNCHPAD_CONFIG_HOST_ROLE_KEY] in ["manager"]
-            ]
+            )
             if len(mke_hosts) > 0:
                 instance_id = f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID}"
-                arguments = self.systems[METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID]
-                arguments["hosts"] = mke_hosts
-                if "accesspoint" in arguments and arguments["accesspoint"]:
-                    arguments["accesspoint"] = clean_accesspoint(arguments["accesspoint"])
+                mke_arguments: Dict[str, Any] = self.systems[METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID]
+                mke_arguments["hosts"] = mke_hosts
+
+                if "accesspoint" in mke_arguments and mke_arguments["accesspoint"]:
+                    mke_arguments["accesspoint"] = clean_accesspoint(mke_arguments["accesspoint"])
 
                 logger.debug("Launchpad client is creating an MKE client plugin: %s", instance_id)
-                fixture = self._environment.add_fixture(
+                fixture = self._environment.new_fixture(
                     plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
                     instance_id=instance_id,
                     priority=70,
-                    arguments=arguments,
+                    arguments=mke_arguments,
                     labels={
                         "parent_plugin_id": METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
                         "parent_instance_id": self._instance_id,
@@ -291,23 +293,23 @@ class LaunchpadClientPlugin:
         # MSR Client
         #
         if METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID in self.systems:
-            msr_hosts = [
+            msr_hosts: List[Any] = list(
                 host for host in hosts if host[METTA_LAUNCHPAD_CONFIG_HOST_ROLE_KEY] in ["msr"]
-            ]
+            )
             if len(msr_hosts) > 0:
                 instance_id = f"{self._instance_id}-{METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID}"
-                arguments = self.systems[METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID]
-                arguments["hosts"] = msr_hosts
+                msr_arguments: Dict[str, Any] = self.systems[METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID]
+                msr_arguments["hosts"] = msr_hosts
 
-                if "accesspoint" in arguments and arguments["accesspoint"]:
-                    arguments["accesspoint"] = clean_accesspoint(arguments["accesspoint"])
+                if "accesspoint" in msr_arguments and msr_arguments["accesspoint"]:
+                    msr_arguments["accesspoint"] = clean_accesspoint(msr_arguments["accesspoint"])
 
                 logger.debug("Launchpad client is creating an MSR client plugin: %s", instance_id)
-                fixture = self._environment.add_fixture(
+                fixture = self._environment.new_fixture(
                     plugin_id=METTA_MIRANTIS_CLIENT_MSR_PLUGIN_ID,
                     instance_id=instance_id,
                     priority=70,
-                    arguments=arguments,
+                    arguments=msr_arguments,
                     labels={
                         "parent_plugin_id": METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
                         "parent_instance_id": self._instance_id,

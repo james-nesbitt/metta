@@ -47,7 +47,7 @@ def environment(environment_discover) -> Environment:
 @pytest.fixture(scope="session")
 def provisioner(environment) -> object:
     """Get the provisioner plugin."""
-    return environment.fixtures.get_plugin(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER])
+    return environment.fixtures().get_plugin(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER])
 
 
 @pytest.fixture(scope="session")
@@ -64,7 +64,7 @@ def environment_up(environment, provisioner) -> Environment:
     """
     # We will use this config to make decisions about what we need to create
     # and destroy for this environment up.
-    conf = environment.config.load("config")
+    conf = environment.config().load("config")
     """ somewhat equivalent to reading ./config/config.yml """
 
     if conf.get("alreadyrunning", default=False):

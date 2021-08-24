@@ -20,7 +20,7 @@ from configerus.contrib.jsonschema.validate import (
 from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 
 from .client import (
     METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
@@ -137,9 +137,9 @@ class LaunchpadProvisionerPlugin:
         base: Any = LOADED_KEY_ROOT,
     ):
         """Configure a new Launchpad provisioner plugin instance."""
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self._config_label = label
@@ -153,8 +153,8 @@ class LaunchpadProvisionerPlugin:
         # attempt to be declarative and make the client plugin in case the
         # terraform chart has already been run.
         try:
+            # Make the child client plugin.
             self.make_fixtures()
-            """Make the child client plugin."""
 
         # dont' block the construction on an exception
         # pylint: disable=broad-except
@@ -169,8 +169,8 @@ class LaunchpadProvisionerPlugin:
         Dict of introspective information about this plugin_info
 
         """
-        launchpad_config_loaded = self._environment.config.load(self._config_label)
-        """Loaded plugin configuration."""
+        # Loaded plugin configuration
+        launchpad_config_loaded = self._environment.config().load(self._config_label)
 
         return {
             "plugin": {
@@ -202,6 +202,7 @@ class LaunchpadProvisionerPlugin:
 
         """
         logger.info("Running Launchpad Prepare().  Launchpad has no prepare stage.")
+        self._write_launchpad_yml()
 
     def apply(self):
         """Bring a cluster up.
@@ -232,22 +233,22 @@ class LaunchpadProvisionerPlugin:
     # ----- CLUSTER INTERACTION -----
 
     def _has_launchpad_yml(self) -> bool:
-        """does the launchpad yml file exist."""
-        plugin_config = self._environment.config.load(self._config_label)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        """Check if the launchpad yml file exists."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config = self._environment.config().load(self._config_label)
 
         config_file: str = plugin_config.get(
             [self._config_base, METTA_LAUNCHPAD_CLI_CONFIG_FILE_KEY],
             default=METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
         )
-        return config_file and os.path.exists(config_file)
+        return bool(config_file) and os.path.exists(config_file)
 
     def _write_launchpad_yml(self):
         """Write config contents to a yaml file for launchpad."""
         self._rm_launchpad_yml()
 
         # load and validation all of the launchpad configuration.
-        launchpad_loaded = self._environment.config.load(
+        launchpad_loaded = self._environment.config().load(
             self._config_label,
             validator=METTA_LAUNCHPAD_PROVISIONER_VALIDATE_TARGET,
             force_reload=True,
@@ -266,7 +267,6 @@ class LaunchpadProvisionerPlugin:
                 default=METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
             )
         )
-        """path to the launchpad yml file """
 
         # Our launchpad config differs slightly from the schema that launchpad
         # consumes, so we need a small conversion
@@ -283,8 +283,8 @@ class LaunchpadProvisionerPlugin:
 
     def _rm_launchpad_yml(self):
         """Update config and write the cfg and inventory files."""
-        plugin_config = self._environment.config.load(self._config_label)
-        """Loaded configerus config for the plugin. Ready for .get()."""
+        # Loaded configerus config for the plugin. Ready for .get().
+        plugin_config = self._environment.config().load(self._config_label)
 
         config_file: str = plugin_config.get(
             [self._config_base, METTA_LAUNCHPAD_CLI_CONFIG_FILE_KEY],
@@ -298,7 +298,7 @@ class LaunchpadProvisionerPlugin:
         """Make the client plugin for terraform interaction."""
         try:
             # load and validation all of the launchpad configuration.
-            launchpad_config_loaded = self._environment.config.load(
+            launchpad_config_loaded = self._environment.config().load(
                 self._config_label,
                 validator=METTA_LAUNCHPAD_PROVISIONER_VALIDATE_TARGET,
                 force_reload=True,
@@ -306,30 +306,27 @@ class LaunchpadProvisionerPlugin:
         except ValidationError as err:
             raise ValueError("Launchpad config failed validation.") from err
 
-        working_dir = launchpad_config_loaded.get(
+        # if launchpad needs to be run in a certain path, set it with this config
+        working_dir: str = launchpad_config_loaded.get(
             [self._config_base, METTA_LAUNCHPAD_CLI_WORKING_DIR_KEY],
             default=METTA_LAUNCHPADCLIENT_WORKING_DIR_DEFAULT,
         )
-        """ if launchpad needs to be run in a certain path, set it with this config """
 
         # decide on a path for the runtime launchpad.yml file
         config_file: str = launchpad_config_loaded.get(
             [self._config_base, METTA_LAUNCHPAD_CLI_CONFIG_FILE_KEY],
             default=METTA_LAUNCHPAD_CLI_CONFIG_FILE_DEFAULT,
         )
-        """path to the launchpad yml file """
-
+        # List of launchpad cli options to pass to the client for all operations.
         cli_options: Dict[str, Any] = launchpad_config_loaded.get(
             [self._config_base, METTA_LAUNCHPAD_CLI_OPTIONS_KEY], default={}
         )
-        """List of launchpad cli options to pass to the client for all operations."""
-
+        # List of systems that the client should configure for children plugins.
         systems: Dict[str, Dict[str, Any]] = launchpad_config_loaded.get(
             [self._config_base, METTA_LAUNCHPAD_CLIENT_SYSTEMS_KEY], default={}
         )
-        """List of systems that the client should configure for children plugins."""
 
-        fixture = self._environment.add_fixture(
+        fixture = self._environment.new_fixture(
             plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
             instance_id=self.client_instance_id(),
             priority=70,

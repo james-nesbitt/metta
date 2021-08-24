@@ -37,4 +37,6 @@ def test_004_health_is_up(healthpoller):
     """Use a new logger just for the health output."""
 
     # use a common function for logging poller status
-    health_poller_output_log(healthpoller=healthpoller, poll_logger=poll_logger, period=60, count=1)
+    health_poller_output_log(
+        healthpoller=healthpoller, poll_logger=poll_logger, period=60, count=1
+    )

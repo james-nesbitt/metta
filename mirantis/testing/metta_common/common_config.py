@@ -45,7 +45,7 @@ MARKER_FILES = {
 
 
 def add_common_config(environment: Environment):
-    """Add some common configuration sources
+    """Add some common configuration sources.
 
     The following could be added:
 
@@ -62,39 +62,36 @@ def add_common_config(environment: Environment):
 
     Parameters:
     -----------
-
     environment (Environment) : METTA environment to be modified
 
     """
 
-    project_root_path = find_project_root_path()
-
     # a user config path (like ~/.config/metta) may contain config
     user_conf_path = appdirs.user_config_dir(METTA_COMMON_APP_NAME)
-    if not environment.config.has_source(METTA_COMMON_CONFIG_USER_INSTANCE_ID) and os.path.isdir(
+    if not environment.config().has_source(METTA_COMMON_CONFIG_USER_INSTANCE_ID) and os.path.isdir(
         user_conf_path
     ):
-        environment.config.add_source(
+        environment.config().add_source(
             CONFIGERUS_SOURCE_PATH,
             METTA_COMMON_CONFIG_USER_INSTANCE_ID,
             METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS,
         ).set_path(user_conf_path)
 
     # Add some dymanic values for config
-    environment.config.add_source(
+    environment.config().add_source(
         CONFIGERUS_SOURCE_DICT,
         METTA_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID,
         priority=METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS,
     ).set_data(
         {
             "user": {"id": getpass.getuser()},  # override user id with a host value
-            "environment": {"name": environment.name},
+            "environment": environment.info(),
             "global": {
                 "datetime": datetime.now(),  # use a single datetime across all checks
             },
-            environment.config.paths_label(): {  # config label for file paths, usually just "paths"
+            environment.config().paths_label(): {  # config label for paths, usually just "paths"
                 # you can use "paths:project" in config to substitute this path
-                "project": project_root_path
+                "project": find_project_root_path(DIR)
             },
             "platform": {
                 "machine": platform.machine(),
@@ -107,8 +104,8 @@ def add_common_config(environment: Environment):
     )
 
 
-def find_project_root_path():
-    """try to find a project root path
+def find_project_root_path(start_path: str) -> str:
+    """Find a project root path.
 
     We start looking in the cwd for certain marker files, and if we don't find
     any then we check the parent, recursively.
@@ -117,12 +114,11 @@ def find_project_root_path():
     root.
 
     """
-
     # Try to add a path from cwd and up that contains a mettac.py file
-    check_path = DIR
+    check_path = start_path
     while check_path:
         if check_path == "/":
-            return DIR
+            break
 
         for marker_file in MARKER_FILES:
             marker_path = os.path.join(check_path, marker_file)
@@ -130,3 +126,5 @@ def find_project_root_path():
                 return check_path
 
         check_path = os.path.dirname(check_path)
+
+    return check_path

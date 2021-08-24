@@ -12,7 +12,7 @@ from typing import List
 
 from mirantis.testing.metta.plugin import Factory
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixture, Fixtures
+from mirantis.testing.metta.fixture import Fixture, Fixtures
 
 
 ##### Register pluging for testing ############################################
@@ -21,7 +21,7 @@ class TestPlugin:
 
     def __init__(self, environment: Environment):
         """Attach an environment object to the plugin."""
-        self._environment = environment
+        self._environment: Environment = environment
 
 
 TEST_PLUGIN_ID: str = "fixture_test"

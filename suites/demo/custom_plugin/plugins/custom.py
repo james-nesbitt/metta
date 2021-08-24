@@ -59,7 +59,7 @@ class MyMessageClientPlugin:
         self.environment = environment
         self.instance_id = instance_id
 
-        self.messages = environment.config.load(label).get([base, "messages"])
+        self.messages = environment.config().load(label).get([base, "messages"])
         """ keep a list of string messages which we will serve one at a time """
 
     def __len__(self):

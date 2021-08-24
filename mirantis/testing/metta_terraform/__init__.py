@@ -84,7 +84,7 @@ def metta_terraform_factory_cli_terraform(
 
 
 # pylint: disable=unused-argument
-def bootstrap(environment: Environment):
+def bootstrap_environment(environment: Environment):
     """METTA_Terraform bootstrap.
 
     Currently we only use this to import plugins.

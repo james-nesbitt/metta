@@ -59,7 +59,8 @@ def stability_test(
             )
             output = "\n".join(
                 list(
-                    f"{message.status}: {message.time} => {message.message}" for message in messages
+                    f"{message.status}: {message.time} => {message.message}"
+                    for message in messages
                 )
             )
             logger.warning("%s has health warnings: %s", source, output)
@@ -71,7 +72,8 @@ def stability_test(
             )
             output = "\n".join(
                 list(
-                    f"{message.status}: {message.time} => {message.message}" for message in messages
+                    f"{message.status}: {message.time} => {message.message}"
+                    for message in messages
                 )
             )
             logger.error("[%s] has health errors: %s", source, output)

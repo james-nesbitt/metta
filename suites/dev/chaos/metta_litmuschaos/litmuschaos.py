@@ -181,7 +181,9 @@ class LitmusChaos:
 
                 resources_yaml = yaml.safe_load_all(res.text)
                 for resource in resources_yaml:
-                    self.kube_client.utils_create_from_dict(data=resource, namespace=self.namespace)
+                    self.kube_client.utils_create_from_dict(
+                        data=resource, namespace=self.namespace
+                    )
 
         # 3. RBAC
         self.kube_client.utils_create_from_yaml(

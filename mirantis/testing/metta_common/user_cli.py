@@ -43,13 +43,13 @@ class UserGroup:
 
     def __init__(self, environment: Environment):
         """Add environment to command group."""
-        self._environment = environment
+        self._environment: Environment = environment
 
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
         """Output any user related information."""
-        user_config = self._environment.config.load("user")
+        user_config = self._environment.config().load("user")
         user_config_dir = _user_path()
 
         info = {

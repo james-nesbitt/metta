@@ -17,7 +17,7 @@ from configerus.contrib.jsonschema.validate import (
 from configerus.validator import ValidationError
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import (
+from mirantis.testing.metta.fixture import (
     Fixtures,
 )
 
@@ -120,9 +120,9 @@ class TerraformProvisionerPlugin:
         needed pieces for executing terraform commands
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         self._config_label = label
@@ -148,7 +148,7 @@ class TerraformProvisionerPlugin:
         Dict of keyed introspective information about the plugin.
 
         """
-        terraform_config = self._environment.config.load(self._config_label)
+        terraform_config = self._environment.config().load(self._config_label)
         """ get a configerus LoadedConfig for the terraform label """
 
         info = {
@@ -200,7 +200,7 @@ class TerraformProvisionerPlugin:
     def make_fixtures(self):
         """Make the client plugin for terraform interaction."""
         try:
-            terraform_config = self._environment.config.load(
+            terraform_config = self._environment.config().load(
                 self._config_label, force_reload=True, validator=TERRAFORM_VALIDATE_TARGET
             )
             """ get a configerus LoadedConfig for the label """
@@ -237,7 +237,7 @@ class TerraformProvisionerPlugin:
 
         logger.debug("Creating Terraform client")
 
-        fixture = self._environment.add_fixture(
+        fixture = self._environment.new_fixture(
             plugin_id=METTA_TERRAFORM_CLIENT_PLUGIN_ID,
             instance_id=self.client_instance_id(),
             priority=70,

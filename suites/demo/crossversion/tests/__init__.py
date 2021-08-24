@@ -12,7 +12,7 @@ import pytest
 from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta import get_environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta.provisioner import METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
 from mirantis.testing.metta_health.healthcheck import (
@@ -51,7 +51,7 @@ class EnvManager:
         environment = get_environment(self.env_name)
         environment.set_state(state)
 
-        variables = environment.config.load("variables")
+        variables = environment.config().load("variables")
         logger.info(
             "%s::%s --> variables: %s",
             self.env_name,
@@ -63,7 +63,7 @@ class EnvManager:
 
     def install(self, environment):
         """Bring up all provisioners as needed."""
-        provisioner = environment.fixtures.get_plugin(
+        provisioner = environment.fixtures().get_plugin(
             interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
         )
         provisioner.prepare()
@@ -80,7 +80,7 @@ class EnvManager:
 
     def upgrade(self, environment):
         """Upgrade the environment to the second state."""
-        provisioner = environment.fixtures.get_plugin(
+        provisioner = environment.fixtures().get_plugin(
             interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
         )
 
@@ -95,7 +95,7 @@ class EnvManager:
     # pylint: disable=no-self-use
     def destroy(self, environment):
         """Destroy all created resources."""
-        provisioner = environment.fixtures.get_plugin(
+        provisioner = environment.fixtures().get_plugin(
             interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER],
         )
         provisioner.destroy()
@@ -150,6 +150,6 @@ class TestBase:
         # We could get this from the launchpad provisioner if we were worried about
         # which mke client plugin instance we receive,  however there is only one
         # in this case.
-        return environment.fixtures.filter(
+        return environment.fixtures().filter(
             interfaces=[METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK],
         )

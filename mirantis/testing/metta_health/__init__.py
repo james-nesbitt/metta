@@ -62,7 +62,7 @@ def metta_plugin_factory_cli_health(environment: Environment, instance_id: str =
 
 
 # pylint: disable=unused-argument
-def bootstrap(environment: Environment):
+def bootstrap_environment(environment: Environment):
     """METTA_Health bootstrap.
 
     Use this to create a generic health client in any environment passed
@@ -73,8 +73,15 @@ def bootstrap(environment: Environment):
 
     """
     environment.add_fixture_from_dict(
-        plugin_dict={"plugin_id": METTA_HEALTH_CLIENT_PLUGIN_ID, "priority": 50},
-        instance_id="all-health",
-        labels={"source": "metta_health::bootstrap"},
-        arguments={},
+        plugin_dict={
+            "plugin_id": METTA_HEALTH_CLIENT_PLUGIN_ID,
+            "priority": 50,
+            "instance_id": "all-health",
+            "labels": {
+                "source": "metta_health::bootstrap",
+                "container": "environment",
+                "container_id": environment.instance_id(),
+            },
+            "arguments": {},
+        }
     )

@@ -5,11 +5,11 @@ Metta cli plugin for the healthpoll workload.
 Metta cli handling and interacting with a healthpoll workload.
 
 """
-
+from typing import Dict, Any
 import time
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixture
+from mirantis.testing.metta.fixture import Fixture
 from mirantis.testing.metta_cli.base import CliBase, cli_output
 
 from .healthcheck import Health, HealthStatus
@@ -33,7 +33,7 @@ class HealthCliPlugin(CliBase):
         """Return a dict of commands."""
         if (
             len(
-                self._environment.fixtures.filter(
+                self._environment.fixtures().filter(
                     plugin_id=METTA_HEALTH_CLIENT_PLUGIN_ID,
                     exception_if_missing=False,
                 )
@@ -45,8 +45,8 @@ class HealthCliPlugin(CliBase):
         return {}
 
 
-def _fixture_health_output(fixture: Fixture, verbosity: HealthStatus = None) -> str:
-    """Helper to run a fixture's health function and create cli output."""
+def _fixture_health_output(fixture: Fixture, verbosity: HealthStatus = None) -> Dict[str, Any]:
+    """Run Helper to run a fixture's health function and create cli output."""
     health: Health = fixture.plugin.health()
 
     fixture_health_info = {
@@ -60,7 +60,7 @@ def _fixture_health_output(fixture: Fixture, verbosity: HealthStatus = None) -> 
     messages = list(health.messages(verbosity=verbosity))
     if len(messages) > 0:
         fixture_health_info["messages"] = messages
-    return cli_output(fixture_health_info)
+    return fixture_health_info
 
 
 class HealthcheckClientGroup:
@@ -68,11 +68,11 @@ class HealthcheckClientGroup:
 
     def __init__(self, environment: Environment):
         """Create CLI command group."""
-        self._environment = environment
+        self._environment: Environment = environment
 
         if (
             len(
-                self._environment.fixtures.filter(
+                self._environment.fixtures().filter(
                     plugin_id=METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
                     exception_if_missing=False,
                 )
@@ -84,13 +84,13 @@ class HealthcheckClientGroup:
     def _select_client(self, instance_id: str = ""):
         """Pick a matching client."""
         if instance_id:
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 plugin_id=[METTA_HEALTH_CLIENT_PLUGIN_ID],
                 instance_id=instance_id,
             )
 
         # Get the highest priority provisioner
-        return self._environment.fixtures.get(
+        return self._environment.fixtures().get(
             plugin_id=METTA_HEALTH_CLIENT_PLUGIN_ID,
         )
 
@@ -104,36 +104,44 @@ class HealthcheckClientGroup:
         healthclient_plugin = self._select_client(instance_id=client).plugin
         return cli_output(healthclient_plugin.health_fixtures().info(deep=deep))
 
-    def check(self, verbosity: str = "", per_plugin: bool = False, client: str = ""):
+    def check(self, verbosity: str = "", client: str = ""):
         """Output health status of healthchecks."""
         fixture = self._select_client(instance_id=client)
-
-        # return a dict of healtchecks per plugin instance_id
-        if per_plugin:
-            return {
-                fixture.instance_id: _fixture_health_output(fixture, verbosity=verbosity)
-                for fixture in fixture.plugin.health_fixtures()
-            }
+        verbosity_status = HealthStatus[verbosity.upper()] if verbosity else None
 
         # return a single aggregate health object
-        return _fixture_health_output(fixture, verbosity=verbosity)
+        return cli_output(_fixture_health_output(fixture, verbosity=verbosity_status))
+
+    def checks(self, verbosity: str = "", client: str = ""):
+        """Output health status of healthchecks per plugin."""
+        fixture = self._select_client(instance_id=client)
+        verbosity_status = HealthStatus[verbosity.upper()] if verbosity else None
+
+        # return a dict of healtchecks per plugin instance_id
+        return cli_output(
+            {
+                fixture.instance_id: _fixture_health_output(fixture, verbosity=verbosity_status)
+                for fixture in fixture.plugin.health_fixtures()
+            }
+        )
 
     def check_plugin(self, instance_id: str, client: str = ""):
         """Output health status of a specific fixture/plugin."""
+        # Health Client plugin for asking health questions.
         healthclient_plugin = self._select_client(instance_id=client).plugin
-        """Health Client plugin for asking health questions."""
+        # Speific plugin to check.
         fixture = healthclient_plugin.health_fixtures().get(instance_id=instance_id)
-        """Speific plugin to check."""
         return cli_output(fixture)
 
     def poll(self, period: int = 15, verbosity: str = "", client: str = ""):
         """Poll health periodically."""
         health_client_fixture = self._select_client(instance_id=client)
+        verbosity_status = HealthStatus[verbosity.upper()] if verbosity else None
         iteration = 0
         while True:
             for fixture in health_client_fixture.plugin.health_fixtures():
                 print(f"[{iteration}] {fixture.instance_id} -->")
-                print(_fixture_health_output(fixture=fixture, verbosity=verbosity))
+                print(_fixture_health_output(fixture=fixture, verbosity=verbosity_status))
             time.sleep(period)
 
 
@@ -142,18 +150,18 @@ class HealthpollWorkloadGroup:
 
     def __init__(self, environment: Environment):
         """Create new cli group object."""
-        self._environment = environment
+        self._environment: Environment = environment
 
     def _select_fixture(self, instance_id: str = ""):
         """Pick a matching fixture in case there are more than one."""
         if instance_id:
-            return self._environment.fixtures.get(
+            return self._environment.fixtures().get(
                 plugin_id=METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
                 instance_id=instance_id,
             )
 
         # Get the highest priority fixture
-        return self._environment.fixtures.get(
+        return self._environment.fixtures().get(
             plugin_id=METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL,
         )
 
@@ -169,7 +177,7 @@ class HealthpollWorkloadGroup:
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
 
-        plugin.prepare(self._environment.fixtures)
+        plugin.prepare(self._environment.fixtures())
         healths = plugin._healthcheck()
 
         health_info = {}
@@ -186,7 +194,7 @@ class HealthpollWorkloadGroup:
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
 
-        plugin.prepare(self._environment.fixtures)
+        plugin.prepare(self._environment.fixtures())
         plugin.apply()
         time.sleep(5)
 

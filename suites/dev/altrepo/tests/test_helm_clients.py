@@ -19,13 +19,13 @@ DEFAULT_K8S_NAMESPACE = "default"
 def test_kubernetes_helm_workload(environment_up):
     """test that we can get a helm workload to run"""
 
-    metrics_helm_workload = environment_up.fixtures.get_plugin(
+    metrics_helm_workload = environment_up.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
         instance_id="metrics-helm-workload",
     )
     """ workload plugin we will use to run helm """
 
-    kubectl_client = environment_up.fixtures.get_plugin(
+    kubectl_client = environment_up.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
     )
@@ -34,7 +34,7 @@ def test_kubernetes_helm_workload(environment_up):
     """ kubernetes client api we will use to detect the helm release in k8s """
 
     logger.info("Building the helm workload instance from the environment")
-    instance = metrics_helm_workload.create_instance(environment_up.fixtures)
+    instance = metrics_helm_workload.create_instance(environment_up.fixtures())
 
     # use some instance overrides
     # instance.name = f"{instance.name}-{0}"

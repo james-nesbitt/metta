@@ -19,7 +19,7 @@ logger = logging.getLogger("test_clients.launchpad_exec")
 @pytest.fixture(scope="module")
 def launchpad_exec_client(environment_up):
     """Get the launchpad client plugin."""
-    return environment_up.fixtures.get_plugin(plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID)
+    return environment_up.fixtures().get_plugin(plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID)
 
 
 def test_launchpad_exec_client_hosts(launchpad_exec_client):

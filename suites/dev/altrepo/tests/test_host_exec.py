@@ -20,7 +20,7 @@ def test_launchpad_exec_client_hosts(environment_up):
     """do we get good hosts info from the client ?"""
 
     logger.info("Getting exec client")
-    exec_client = environment_up.fixtures.get_plugin(
+    exec_client = environment_up.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
     )
@@ -35,7 +35,7 @@ def test_launchpad_exec_client_hosts(environment_up):
 def test_launchpad_exec_client_exec(environment_up):
     """did we get a good launchpad exec client ?"""
     logger.info("Getting exec client")
-    exec_client = environment_up.fixtures.get_plugin(
+    exec_client = environment_up.fixtures().get_plugin(
         plugin_type=METTA_PLUGIN_INTERFACE_ROLE_CLIENT,
         plugin_id=METTA_LAUNCHPAD_CLIENT_PLUGIN_ID,
     )

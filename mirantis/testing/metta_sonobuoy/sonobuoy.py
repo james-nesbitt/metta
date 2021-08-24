@@ -106,7 +106,7 @@ class SonobuoyClient:
             cmd += [f"--mode={self.mode}"]
 
         if self.kubernetes_version:
-            cmd += [f"--kube-conformance-image-version={self.kubernetes_version}"]
+            cmd += [f"--kubernetes-version={self.kubernetes_version}"]
 
         if self.plugins:
             cmd += [f"--plugin={plugin_id}" for plugin_id in self.plugins]
@@ -129,10 +129,9 @@ class SonobuoyClient:
         """Retrieve Sonobuoy status return."""
         cmd = ["status", "--json"]
         status = self._run(cmd, return_output=True)
-        if status:
-            return SonobuoyStatus(status)
-
-        return None
+        if status is None:
+            raise ValueError("Sonobuoy did not return a status.")
+        return SonobuoyStatus(status)
 
     def logs(self, follow: bool = True):
         """Output sonobuoy logs."""
@@ -156,12 +155,15 @@ class SonobuoyClient:
         except Exception as err:
             raise RuntimeError("Could not retrieve sonobuoy results") from err
 
-    def destroy(self, wait: bool = False):
+    # pylint: disable=redefined-builtin
+    def delete(self, all: bool = True, wait: bool = False):
         """Delete sonobuoy resources."""
         cmd = ["delete"]
 
         if wait:
             cmd += ["--wait"]
+        if all:
+            cmd += ["--all"]
 
         self._run(cmd)
         self._delete_k8s_crb()
@@ -186,13 +188,13 @@ class SonobuoyClient:
         # pylint: disable=no-else-return
         if return_output:
             logger.debug("running sonobuoy command with output capture: %s", " ".join(cmd))
-            res = subprocess.run(cmd, shell=False, check=True, stdout=subprocess.PIPE)
+            return_res = subprocess.run(cmd, shell=False, check=True, stdout=subprocess.PIPE)
 
             # sonobuoy's uses of subprocess error is overly inclusive for us
             if not ignore_errors:
-                res.check_returncode()
+                return_res.check_returncode()
 
-            return res.stdout.decode("utf-8")
+            return return_res.stdout.decode("utf-8")
 
         else:
             logger.debug("running sonobuoy command: %s", " ".join(cmd))

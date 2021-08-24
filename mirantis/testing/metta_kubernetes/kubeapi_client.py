@@ -104,9 +104,9 @@ class KubernetesApiClientPlugin:
         config_file (str): String path to the kubernetes config file to use
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists """
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
         logger.debug("Creating Kuberentes client from config file")

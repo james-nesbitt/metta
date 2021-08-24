@@ -37,7 +37,6 @@ class AnsiblePlay:
 
     def __init__(self, inventory_path: str, ansiblecfg_path: str = None):
         """Initial configuration of ansible plugin."""
-
         self.inventory_path: str = inventory_path
         """Path to the ansible inventory file."""
 
@@ -137,8 +136,8 @@ class AnsiblePlay:
         Parameters:
         -----------
         play: dict representation of a yaml playbook file
-        callback: callback option. If you want real data out of the callbacks then pass in an object
-            which can capture the data.
+        callback: callback option. If you want real data out of the callbacks then pass in an
+            object which can capture the data.
             You can use this to send a custom object that you intend to use to retrieve results.
 
             @NOTE this looks like the wrong approach.  We should probably ensure that a custom
@@ -150,14 +149,13 @@ class AnsiblePlay:
 
         """
         # initialize needed objects
+
+        # Takes care of finding and reading yaml, json and ini files.
         loader = DataLoader()
-        """Takes care of finding and reading yaml, json and ini files."""
-
+        # Will handle our host/inventories.
         inventory = InventoryManager(loader=loader, sources=[self.inventory_path])
-        """Will handle our host/inventories."""
-
+        # takes care of merging all the different sources to give you unified view of variable
         variable_manager = VariableManager(loader=loader, inventory=inventory)
-        """takes care of merging all the different sources to give you unified view of variables"""
 
         # instantiate task queue manager, which takes care of forking and setting up all objects to
         # iterate over host list and tasks
@@ -172,7 +170,7 @@ class AnsiblePlay:
         )
 
         # Create play object, playbook objects use .load instead of init or new methods,
-        # this will also automatically create the task objects from the info provided in play_source
+        # this will also automatically create the task objects from info provided in play_source
         play_instance = Play().load(
             play,
             variable_manager=variable_manager,

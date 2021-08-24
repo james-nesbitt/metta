@@ -18,7 +18,7 @@ from enum import Enum
 import requests
 
 from mirantis.testing.metta.environment import Environment
-from mirantis.testing.metta.fixtures import Fixtures
+from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
 
 logger = logging.getLogger("metta.contrib.metta_mirantis.client.msrapi")
@@ -78,9 +78,9 @@ class MSRAPIClientPlugin:
             endpoint is specified.
 
         """
-        self._environment = environment
+        self._environment: Environment = environment
         """ Environemnt in which this plugin exists."""
-        self._instance_id = instance_id
+        self._instance_id: str = instance_id
         """ Unique id for this plugin instance."""
 
         self.accesspoint = accesspoint
@@ -229,7 +229,9 @@ class MSRAPIClientPlugin:
         """Get the requests auth handler."""
         return requests.auth.HTTPBasicAuth(self.username, self.password)
 
-    def _accesspoint_url(self, endpoint: str = "", root_api: bool = False, node: int = None) -> str:
+    def _accesspoint_url(
+        self, endpoint: str = "", root_api: bool = False, node: int = None
+    ) -> str:
         """Convert an endpoint into a full URL for an API Call.
 
         Pass in a sub-url endpoint and this will convert it into a full URL.

@@ -89,7 +89,7 @@ def metta_plugin_factory_cli_sonobuoy(environment: Environment, instance_id: str
 
 
 # pylint: disable=unused-argument
-def bootstrap(environment: Environment):
+def bootstrap_environment(environment: Environment):
     """METTA_Terraform bootstrap.
 
     Currently we only use this to import plugins.
