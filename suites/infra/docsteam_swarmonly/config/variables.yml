@@ -12,7 +12,7 @@
 # Used in terraform resource tagging (user:id gets set in conftest.py)
 user: "engdocs"
 #  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
-task: "swarmonly"
+task: "swarmC"
 # One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.
 project: "TAR-TLNG-ATMTN"
 

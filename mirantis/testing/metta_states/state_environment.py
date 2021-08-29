@@ -68,12 +68,18 @@ class StateBasedEnvironment(FixtureBuilderEnvironment):
             "container_id": self.instance_id(),
             "environment": self.instance_id(),
         }
-        self.add_fixtures_from_config(
-            label=label,
-            base=[base, METTA_FIXTURES_CONFIG_STATES_KEY],
-            labels=labels,
-            exception_if_missing=True,
-        )
+
+        try:
+            self.add_fixtures_from_config(
+                label=label,
+                base=[base, METTA_FIXTURES_CONFIG_STATES_KEY],
+                labels=labels,
+                exception_if_missing=True,
+            )
+
+        except KeyError as err:
+            raise RuntimeError(f"State environment could't create states: {err}") from err
+
         # Activate the highest priority state plugin
         self.set_state(
             self._fixtures.get(
@@ -87,6 +93,7 @@ class StateBasedEnvironment(FixtureBuilderEnvironment):
         return {
             "name": self.instance_id(),
             "boostraps": self._environment_boostraps,
+            "active_state": self._active_state_id,
             "states": self._fixtures.filter(
                 interfaces=[METTA_PLUGIN_INTERFACE_ROLE_ENVIRONMENTSTATE]
             ).info(deep=deep),
@@ -94,14 +101,18 @@ class StateBasedEnvironment(FixtureBuilderEnvironment):
 
     def set_state(self, state: str):
         """Change to a different active state."""
-        state_fixture: Fixture = self._fixtures.get(
-            instance_id=state, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_ENVIRONMENTSTATE]
-        )
-        self._active_state_id = state_fixture.instance_id
+        try:
+            state_fixture: Fixture = self._fixtures.get(
+                instance_id=state, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_ENVIRONMENTSTATE]
+            )
+            self._active_state_id = state_fixture.instance_id
 
-        # activate the state plugin
-        if hasattr(state_fixture.plugin, "activate"):
-            state_fixture.plugin.activate()
+            # activate the state plugin
+            if hasattr(state_fixture.plugin, "activate"):
+                state_fixture.plugin.activate()
+
+        except KeyError as err:
+            raise RuntimeError(f"Unknown State requested for activation: {state}") from err
 
     def _get_active_state_fixture(self) -> Fixture:
         """Get the active state fixture."""

@@ -6,6 +6,7 @@ Package for common shared Metta plugins that can be used by various
 other plugins as a based.
 
 """
+from logging import getLogger
 from typing import Dict, Any
 
 from configerus import Config
@@ -29,6 +30,9 @@ from .combo_provisioner import (
 )
 from .config_format_output import ConfigFormatOutputPlugin, PLUGIN_ID_FORMAT_OUTPUT
 from .user_cli import UserCliPlugin, METTA_PLUGIN_ID_CLI_USER
+
+
+logger = getLogger("metta_common:init")
 
 
 @Factory(
@@ -133,9 +137,16 @@ def bootstrap_environment_common(environment: Environment):
 
     # Add a configerus output formatter which can interpret environemnt
     # outputs.
-    output_formatter = environment.config().add_formatter(
-        plugin_id=PLUGIN_ID_FORMAT_OUTPUT,
-        instance_id=PLUGIN_ID_FORMAT_OUTPUT,
-        priority=40,
-    )
-    output_formatter.set_environemnt(environment)
+    instance_id = PLUGIN_ID_FORMAT_OUTPUT
+    config: Config = environment.config()
+    if config.has_formatter(instance_id):
+        logger.debug("Existing output formatter for %s", environment.instance_id())
+        output_formatter = environment.config().plugins[PLUGIN_ID_FORMAT_OUTPUT]
+    else:
+        logger.debug("New output formatter for %s", environment.instance_id())
+        output_formatter = config.add_formatter(
+            plugin_id=PLUGIN_ID_FORMAT_OUTPUT,
+            instance_id=instance_id,
+            priority=40,
+        )
+    output_formatter.set_environment(environment)

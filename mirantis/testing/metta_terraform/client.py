@@ -70,6 +70,26 @@ class TerraformClientPlugin:
         except Exception:
             pass
 
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
+        """Get info about the client plugin.
+
+        Returns:
+        --------
+        Dict of keyed introspective information about the plugin.
+
+        """
+        info = {
+            "config": {
+                "tfvars": self.tfvars,
+                "tfvars_path": self._tfvars_path,
+            },
+            "client": self._tf_handler.info(deep=deep),
+        }
+
+        return info
+
     def state(self):
         """Return the terraform state contents."""
         return self._tf_handler.state()
@@ -158,11 +178,9 @@ class TerraformClientPlugin:
             # output_sensitive = bool(output_struct['sensitive'])
             # """ Whether or not the output contains sensitive data """
             output_type = output_struct["type"][0]
-            """ output primitive type (usually string|object|number) """
             # output_spec = output_struct['type'][1]
             # """ A structured spec for the type """
             output_value = output_struct["value"]
-            """ output value """
 
             # see if we already have an output plugin for this name
             fixture = self.fixtures.get(

@@ -202,7 +202,6 @@ class LaunchpadProvisionerPlugin:
 
         """
         logger.info("Running Launchpad Prepare().  Launchpad has no prepare stage.")
-        self._write_launchpad_yml()
 
     def apply(self):
         """Bring a cluster up.
@@ -273,7 +272,7 @@ class LaunchpadProvisionerPlugin:
         config_contents = self._convert_launchpad_config_to_file_format(config_contents)
 
         # write the launchpad output to our yaml file target (after creating the path)
-        logger.debug(
+        logger.warning(
             "Updating launchpad yaml file: %s => %s",
             config_path,
             yaml.dump(config_contents),

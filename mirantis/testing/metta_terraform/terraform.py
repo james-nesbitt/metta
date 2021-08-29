@@ -57,6 +57,24 @@ class TerraformClient:
 
         self._terraform_bin = binary
 
+    # deep argument is an info() standard across plugins
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
+        """Get info about the client plugin.
+
+        Returns:
+        --------
+        Dict of keyed introspective information about the plugin.
+
+        """
+        info = {
+            "working_dir": self._working_dir,
+            "state_path": self._state_path,
+            "tfvars_path": self._tfvars_path,
+        }
+
+        return info
+
     def init(self):
         """Run terraform init.
 
@@ -227,8 +245,7 @@ class TerraformClient:
         dict of outputs is returned.
 
         """
-        args = ["output", "-json"]
-        """ collect subprocess args to pass """
+        args: List[str] = ["output", "-json"]
 
         try:
             if name:

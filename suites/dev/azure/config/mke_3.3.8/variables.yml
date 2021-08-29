@@ -1,0 +1,11 @@
+# OS Platform to test on
+platform_repo: public
+platform: ubuntu_18.04
+# Versions to test against.
+mcr_channel: stable
+mcr_version: 19.03.15
+mke_image_repo: docker.io/mirantis
+mke_version: 3.2.13
+
+# What version of Kubernetes should sonobuoy check conformance on.
+sonobuoy_kubernetes_version: v1.18.14

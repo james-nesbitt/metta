@@ -48,7 +48,6 @@ class FixturesGroup:
         matches = self._environment.fixtures().filter(
             plugin_id=plugin_id, instance_id=instance_id, interfaces=interfaces, labels=labels
         )
-        """All matching filtered fixtures."""
 
         if not skip_cli_plugins:
             return matches

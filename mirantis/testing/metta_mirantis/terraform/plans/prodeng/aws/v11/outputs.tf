@@ -145,24 +145,8 @@ locals {
 
 # Various outputs for different format
 
-output "hosts" {
-  value = local.hosts
-}
-
 output "launchpad" {
   value = local.launchpad_1_3
-}
-
-output "mke_cluster" {
-  value = yamlencode(local.launchpad_1_3)
-}
-
-output "nodes" {
-  value = local.nodes
-}
-
-output "nodes_yaml" {
-  value = yamlencode(local.nodes)
 }
 
 output "cluster_name" {
@@ -187,4 +171,3 @@ output "msr_lb" {
 output "ansible_inventory" {
   value = local.ansible_inventory
 }
-

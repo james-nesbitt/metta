@@ -113,8 +113,10 @@ def core_bootstrap(config: Config, instance_id: str) -> "BootStrapFixtureBuilder
             labels=labels,
             exception_if_missing=True,
         )
-    except KeyError:
-        logger.error("Bootstrapper was unable to find any environments to create from config.")
+    except KeyError as err:
+        raise RuntimeError(
+            f"Bootstrapper encountered an issue creating environments from config: {err}"
+        ) from err
 
     return builder
 

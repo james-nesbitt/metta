@@ -95,7 +95,7 @@ class LaunchpadClientPlugin:
         self.systems: Dict[str, Dict[str, str]] = systems if systems is not None else {}
         """Access endpoint & U/P for systems created by launchpad, such as the MKE client."""
 
-        self.fixtures: Fixtures = Fixtures()
+        self._fixtures: Fixtures = Fixtures()
         """This plugin makes fixtures, and keeps track of them here."""
 
         logger.debug("Creating Launchpad client handler")
@@ -136,6 +136,10 @@ class LaunchpadClientPlugin:
             "systems": self.systems,
             "client": self.launchpad.info(deep=deep),
         }
+
+    def fixtures(self) -> Fixtures:
+        """Return children fixtures of the client."""
+        return self._fixtures
 
     def version(self):
         """Get the launchpad version."""
@@ -206,7 +210,7 @@ class LaunchpadClientPlugin:
         """Ask the client to remove installed resources."""
         # tell the MKE client to remove its bundles
         try:
-            mke = self.fixtures.get_plugin(
+            mke = self._fixtures.get_plugin(
                 plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID,
             )
             mke.rm_bundle()
@@ -288,7 +292,7 @@ class LaunchpadClientPlugin:
                     },
                     replace_existing=True,
                 )
-                self.fixtures.add(fixture, replace_existing=True)
+                self._fixtures.add(fixture, replace_existing=True)
 
         # MSR Client
         #
@@ -316,12 +320,12 @@ class LaunchpadClientPlugin:
                     },
                     replace_existing=True,
                 )
-                self.fixtures.add(fixture, replace_existing=True)
+                self._fixtures.add(fixture, replace_existing=True)
 
     def _get_mke_client_plugin(self) -> MKEAPIClientPlugin:
         """Retrieve the MKE client plugin if we can."""
         try:
-            return self.fixtures.get_plugin(plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
+            return self._fixtures.get_plugin(plugin_id=METTA_MIRANTIS_CLIENT_MKE_PLUGIN_ID)
         except KeyError as err:
             raise RuntimeError(
                 "Launchpad client cannot find its MKE client plugin, and "
