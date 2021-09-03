@@ -32,7 +32,7 @@ logger = logging.getLogger("pytest-conftest")
 
 @pytest.fixture(scope="session")
 def environment_discover():
-    """discover the metta environments"""
+    """Discover the metta environments."""
     # Tell metta to scan for automatic configuration of itself.
     # It starts my looking in paths upwards for a 'metta.yml' file; if it finds
     # one then it uses that path as a root source of config
@@ -41,60 +41,17 @@ def environment_discover():
 
 @pytest.fixture(scope="session")
 def environment(environment_discover) -> Environment:
-    """get the metta environment"""
+    """Get the metta environment."""
     # we don't use the discover fixture, we just need it to run first
     # we don't pass an environment name, which gives us the default environment
-    return get_environment()
+    environment = get_environment()
 
-
-@pytest.fixture(scope="session")
-def provisioner(environment) -> object:
-    """Get the provisioner plugin."""
-    return environment.fixtures().get_plugin(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER])
-
-
-@pytest.fixture(scope="session")
-def environment_up(environment, provisioner) -> Environment:
-    """get the environment but start the provisioners before returning
-
-    This is preferable to the raw provisioner in cases where you want a running
-    cluster so that the cluster startup cost does not get reflected in the
-    first test case which uses the fixture.  Also it can tear itself down
-
-    You can still use the provsioners to update the resources if the provisioner
-    plugins can handle it.
-
-    """
-    # We will use this config to make decisions about what we need to create
-    # and destroy for this environment up.
-    conf = environment.config().load("config")
-    """ somewhat equivalent to reading ./config/config.yml """
-
-    if conf.get("alreadyrunning", default=False):
-        logger.info("test infrastructure is aready in place, and does not need to be provisioned.")
-    else:
-        try:
-            logger.info("Preparing the testing cluster using the provisioner")
-            provisioner.prepare()
-        except Exception as err:
-            logger.error("Provisioner failed to init: %s", err)
-            raise err
-        try:
-            logger.info("Starting up the testing cluster using the provisioner")
-            provisioner.apply()
-        except Exception as err:
-            logger.error("Provisioner failed to start: %s", err)
-            raise err
-
-    # yield the environment, and all following functionality will be used for teardown.
+    # yield the environment so that we can run some cleanup aferwards.
     yield environment
 
-    if conf.get("keeponfinish", default=False):
-        logger.info("Leaving test infrastructure in place on shutdown")
-    else:
-        try:
-            logger.info("Stopping the test cluster using the provisioner as directed by config")
-            provisioner.destroy()
-        except Exception as err:
-            logger.error("Provisioner failed to stop: %s", err)
-            raise err
+    # if a provisioner is available, then tear down the cluster.
+    provisioner_plugin = environment.fixtures().get_plugin(
+        interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER], exception_if_missing=False
+    )
+    if provisioner_plugin is not None:
+        provisioner_plugin.destroy()

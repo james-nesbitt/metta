@@ -296,7 +296,7 @@ class AnsiblePlaybookProvisionerPlugin:
             ansiblecfg_contents = toml.dumps(ansiblecfg_contents)
             ansiblecfg_contents = ansiblecfg_contents.replace('"', "")
             os.makedirs(os.path.dirname(os.path.realpath(ansiblecfg_path)), exist_ok=True)
-            with open(ansiblecfg_path, "w") as ansiblecfg_fileobject:
+            with open(ansiblecfg_path, "w", encoding="utf8") as ansiblecfg_fileobject:
                 ansiblecfg_fileobject.write(ansiblecfg_contents)
 
         else:
@@ -313,7 +313,7 @@ class AnsiblePlaybookProvisionerPlugin:
         )
         if inventory_contents:
             os.makedirs(os.path.dirname(os.path.realpath(inventory_path)), exist_ok=True)
-            with open(inventory_path, "w") as inventory_fileobject:
+            with open(inventory_path, "w", encoding="utf8") as inventory_fileobject:
                 inventory_fileobject.write(inventory_contents)
         else:
             if inventory_path and os.path.exists(inventory_path):
@@ -329,7 +329,7 @@ class AnsiblePlaybookProvisionerPlugin:
         )
         if playbook_contents:
             os.makedirs(os.path.dirname(os.path.realpath(playbook_path)), exist_ok=True)
-            with open(playbook_path, "w") as playbook_fileobject:
+            with open(playbook_path, "w", encoding="utf8") as playbook_fileobject:
                 yaml.safe_dump(playbook_contents, playbook_fileobject)
         else:
             if playbook_path and os.path.exists(playbook_path):
@@ -345,7 +345,7 @@ class AnsiblePlaybookProvisionerPlugin:
         )
         if vars_values:
             os.makedirs(os.path.dirname(os.path.realpath(vars_path)), exist_ok=True)
-            with open(vars_path, "w") as vars_fileobject:
+            with open(vars_path, "w", encoding="utf8") as vars_fileobject:
                 yaml.safe_dump(vars_values, vars_fileobject)
         else:
             if vars_path and os.path.exists(vars_path):

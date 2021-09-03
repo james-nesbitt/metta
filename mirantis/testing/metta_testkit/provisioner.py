@@ -231,7 +231,7 @@ class TestkitProvisionerPlugin:
 
         # write the configto our yaml file target (creating the path)
         os.makedirs(os.path.dirname(os.path.realpath(config_file)), exist_ok=True)
-        with open(os.path.realpath(config_file), "w") as file:
+        with open(os.path.realpath(config_file), "w", encoding="utf8") as file:
             yaml.dump(config, file)
 
     def _rm_config_file(self):

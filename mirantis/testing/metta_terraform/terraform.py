@@ -102,7 +102,7 @@ class TerraformClient:
                         raise BlockingIOError("Timed out when waiting for init lock to go away")
             else:
                 os.makedirs(os.path.dirname(os.path.abspath(lockfile)), exist_ok=True)
-                with open(lockfile, "w") as lockfile_object:
+                with open(lockfile, "w", encoding="utf8") as lockfile_object:
                     lockfile_object.write(f"{os.getpid()} is running init")
                 try:
                     self._run(["init"], with_tfvars=False, with_state=False)
@@ -219,7 +219,9 @@ class TerraformClient:
     def state(self):
         """Return the terraform state contents."""
         try:
-            with open(os.path.join(self._working_dir, "terraform.tfstate")) as json_file:
+            with open(
+                os.path.join(self._working_dir, "terraform.tfstate"), encoding="utf8"
+            ) as json_file:
                 return json.load(json_file)
         except FileNotFoundError:
             logger.debug("Terraform client found no state file")

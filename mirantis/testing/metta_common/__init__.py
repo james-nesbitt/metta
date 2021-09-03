@@ -104,7 +104,6 @@ def bootstrap_bootstrapper(config: Config):
     Parameters:
     -----------
     config (Config) : A config object that can be modified.
-
     """
 
 
@@ -117,7 +116,6 @@ def bootstrap_environment(environment: Environment):
     Parameters:
     -----------
     env (Environment) : an environment which should have validation config added to.
-
     """
 
 
@@ -132,6 +130,7 @@ def bootstrap_environment_common(environment: Environment):
 
     @see .config.add_common_config() for details
 
+    Also add the output formatter plugin to the environment config
     """
     add_common_config(environment)
 

@@ -16,6 +16,7 @@ from mirantis.testing.metta import (
     get_environment,
     discover,
     new_environment,
+    DEFAULT_BOOTSTRAPPER,
 )
 from mirantis.testing.metta.plugin import Factory
 
@@ -37,7 +38,9 @@ class Root:
 
     """
 
-    def __init__(self, environment: str = "", state: str = ""):
+    def __init__(
+        self, bootstrapper: str = DEFAULT_BOOTSTRAPPER, environment: str = "", state: str = ""
+    ):
         """Configure initial root object.
 
         Parameters:
@@ -51,7 +54,7 @@ class Root:
         """
         # Try to make an environment using the core discover approach.  This looks for a metta.yml
         # file and uses it as a config source, to load all other configuration.
-        discover()
+        discover(boostrapper_plugin_id=bootstrapper)
 
         try:
             if environment == "":

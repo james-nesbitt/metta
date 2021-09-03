@@ -85,14 +85,14 @@ class UserGroup:
 
         config_path_user = os.path.join(user_config_dir, "user.yml")
         try:
-            with open(config_path_user, "r") as user_config_file:
+            with open(config_path_user, "r", encoding="utf8") as user_config_file:
                 user_config = yaml.load(user_config_file)
         except FileNotFoundError:
             user_config = {}
 
         user_config["id"] = uid
 
-        with open(config_path_user, "w") as user_config_file:
+        with open(config_path_user, "w", encoding="utf8") as user_config_file:
             yaml.dump(user_config, user_config_file)
 
 

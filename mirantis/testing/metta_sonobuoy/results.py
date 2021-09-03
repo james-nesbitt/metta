@@ -92,7 +92,7 @@ class SonobuoyResultsPluginItem:
 
     def meta_file(self):
         """Get the contents of the file."""
-        with open(self.meta_file_path()) as meta_file:
+        with open(self.meta_file_path(), encoding="utf8") as meta_file:
             return yaml.safe_load(meta_file)
 
 
@@ -101,7 +101,7 @@ class SonobuoyResultsPlugin:
 
     def __init__(self, path: str):
         """Load results for a plugin results call."""
-        with open(os.path.join(path, "sonobuoy_results.yaml")) as results_yaml:
+        with open(os.path.join(path, "sonobuoy_results.yaml"), encoding="utf8") as results_yaml:
             self.summary = yaml.safe_load(results_yaml)
 
     def name(self) -> str:
@@ -132,11 +132,11 @@ class SonobuoyResults:
 
         self.results_path = folder
 
-        with open(os.path.join(folder, "meta", "config.json")) as config_json:
+        with open(os.path.join(folder, "meta", "config.json"), encoding="utf8") as config_json:
             self.meta_config = json.load(config_json)
-        with open(os.path.join(folder, "meta", "info.json")) as info_json:
+        with open(os.path.join(folder, "meta", "info.json"), encoding="utf8") as info_json:
             self.meta_info = json.load(info_json)
-        with open(os.path.join(folder, "meta", "query-time.json")) as qt_json:
+        with open(os.path.join(folder, "meta", "query-time.json"), encoding="utf8") as qt_json:
             self.meta_querytime = json.load(qt_json)
 
         self.plugins = []

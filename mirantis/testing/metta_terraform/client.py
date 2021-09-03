@@ -137,7 +137,7 @@ class TerraformClientPlugin:
     def _make_tfvars_file(self):
         """Write the vars file."""
         os.makedirs(os.path.dirname(self._tfvars_path), exist_ok=True)
-        with open(self._tfvars_path, "w") as var_file:
+        with open(self._tfvars_path, "w", encoding="utf8") as var_file:
             json.dump(self.tfvars, var_file, sort_keys=True, indent=4)
 
     def _rm_tfvars_file(self):

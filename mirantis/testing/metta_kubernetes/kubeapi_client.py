@@ -15,6 +15,7 @@ from typing import Dict, Any, List
 
 import kubernetes
 from kubernetes.client import models
+from kubernetes.client import api
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta_health.healthcheck import Health, HealthStatus
@@ -96,8 +97,8 @@ class KubernetesApiClientPlugin:
         This implements the args part of the client interface.
 
         Here we expect to receive a path to a KUBECONFIG file with a context set
-        and we create a Kubernetes client for replace_existing=Trueuse.  After that this can provide
-        Core api clients as per the kubernetes SDK
+        and we create a Kubernetes client for replace_existing=Trueuse.  After
+        that this can provide Core api clients as per the kubernetes SDK
 
         Parameters:
         -----------
@@ -118,7 +119,7 @@ class KubernetesApiClientPlugin:
 
     def info(self, deep: bool = False) -> Dict[str, Any]:
         """Return dict data about this plugin for introspection."""
-        info = {"kubernetes": {"config_file": self.config_file}}
+        info: Dict[str, Any] = {"kubernetes": {"config_file": self.config_file}}
 
         if deep:
             try:
@@ -406,9 +407,10 @@ class KubernetesApiClientPlugin:
         """Check if kubernetes thinks all the deployments are healthy."""
         health = Health(source=self._instance_id)
 
-        apps_v1_api = self.get_api("AppsV1Api")
+        apps_v1_api: api.apps_v1_api.AppsV1Api = self.get_api("AppsV1Api")
 
         unhealthy_dep_count = 0
+        # pylint: disable=no-member
         for deployment in apps_v1_api.list_deployment_for_all_namespaces().items:
             namespace = deployment.metadata.namespace
             name = deployment.metadata.name
@@ -492,9 +494,10 @@ class KubernetesApiClientPlugin:
         """Check if kubernetes thinks all the daemonsets are healthy."""
         health = Health(source=self._instance_id)
 
-        apps_v1_api = self.get_api("AppsV1Api")
+        apps_v1_api: api.apps_v1_api.AppsV1Api = self.get_api("AppsV1Api")
 
         unhealthy_dae_count = 0
+        # pylint: disable=no-member
         for daemonset in apps_v1_api.list_daemon_set_for_all_namespaces().items:
             namespace = daemonset.metadata.namespace
             name = daemonset.metadata.name
@@ -550,9 +553,10 @@ class KubernetesApiClientPlugin:
         """Check if kubernetes thinks all the statefulsets are healthy."""
         health = Health(source=self._instance_id)
 
-        apps_v1_api = self.get_api("AppsV1Api")
+        apps_v1_api: api.apps_v1_api.AppsV1Api = self.get_api("AppsV1Api")
 
         unhealthy_count = 0
+        # pylint: disable=no-member
         for statefulset in apps_v1_api.list_stateful_set_for_all_namespaces().items:
             namespace = statefulset.metadata.namespace
             name = statefulset.metadata.name
@@ -570,11 +574,11 @@ class KubernetesApiClientPlugin:
 
             if status.collision_count is not None and status.collision_count > 0:
                 health.warning(
-                    f"KubeAPI:Statefulset: [{namespace}/{name}] {condition.type} "
+                    f"KubeAPI:Statefulset: [{namespace}/{name}] "
                     "-> Reports some collisions: "
                     f"{status.collision_count}"
                 )
-                unhealthycount += 1
+                unhealthy_count += 1
 
             if status.conditions:
                 for condition in status.conditions:
@@ -588,7 +592,7 @@ class KubernetesApiClientPlugin:
                             f"KubeAPI:Statefulset: [{namespace}/{name}] {condition.type} "
                             f"-> {condition.message}"
                         )
-                        unhealthy_dae_count += 1
+                        unhealthy_count += 1
 
         if unhealthy_count == 0:
             health.healthy("KubeAPI: all statefulsets report as healthy")

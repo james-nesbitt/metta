@@ -139,7 +139,7 @@ class LaunchpadClientGroup:
         client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
 
         try:
-            with open(client_plugin.config_file) as config_file:
+            with open(client_plugin.config_file, encoding="utf8") as config_file:
                 config_contents = yaml.load(config_file)
         except FileNotFoundError as err:
             raise ValueError("No config file was found") from err

@@ -358,7 +358,7 @@ class FixtureBuilderEnvironment(
             except KeyError as err:
                 logger.warning(
                     "%s Environment plugin encountered an issue creating fixtures: %s",
-                    __class__,
+                    self.__class__,
                     err,
                 )
 
