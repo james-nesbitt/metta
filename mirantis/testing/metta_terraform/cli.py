@@ -105,6 +105,11 @@ class TerraformClientGroup:
         plugin = self._select_client(instance_id=client).plugin
         plugin.check()
 
+    def state(self, client: str = ""):
+        """Run client check."""
+        plugin = self._select_client(instance_id=client).plugin
+        return cli_output(plugin.state())
+
     def output(self, client: str = "", name: str = ""):
         """Retrieve Terraform outputs."""
         plugin = self._select_client(instance_id=client).plugin

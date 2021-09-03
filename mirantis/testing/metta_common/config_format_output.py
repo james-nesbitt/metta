@@ -9,6 +9,7 @@ import re
 import logging
 
 from configerus.config import Config
+from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.output import METTA_PLUGIN_INTERFACE_ROLE_OUTPUT
@@ -40,7 +41,13 @@ class ConfigFormatOutputPlugin:
         self._environment: Environment = None
         """ environment which contains the outputs. Must be added """
 
-    def set_environemnt(self, environment: Environment):
+    def copy(self):
+        """Make a copy of this plugin."""
+        plugin_copy = ConfigFormatOutputPlugin(self.config, self._instance_id)
+        plugin_copy.set_environment(self._environment)
+        return plugin_copy
+
+    def set_environment(self, environment: Environment):
         """Set the output environment.
 
         @NOTE this is obligatory
@@ -79,9 +86,9 @@ class ConfigFormatOutputPlugin:
 
             if isinstance(output_plugin, DictOutputPlugin):
                 base = match.group("base")
-                if base is not None:
-                    return output_plugin.get_output(base)
-                return output_plugin.get_output()
+                if not base:
+                    base = LOADED_KEY_ROOT
+                return output_plugin.get_output(base)
             if isinstance(output_plugin, TextOutputPlugin):
                 return output_plugin.get_output()
             if hasattr(output_plugin, "get_output"):

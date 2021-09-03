@@ -225,17 +225,20 @@ class KubernetesHelmWorkloadPlugin:
 
         if status.status in [Status.UNKNOWN, Status.SUPERSEDED, Status.UNINSTALLING]:
             health.warning(
-                f"Helm: {self._instance_id} release status is at issue: {status.status} : {status.description}"
+                f"Helm: {self._instance_id} release status is at issue: {status.status} "
+                f": {status.description}"
             )
 
         if status.status in [Status.DEPLOYED, Status.UNINSTALLED]:
             health.healthy(
-                f"Helm: {self._instance_id} release status is good: {status.status} : {status.description}"
+                f"Helm: {self._instance_id} release status is good: {status.status} "
+                f": {status.description}"
             )
 
         if status.status == Status.FAILED:
             health.error(
-                f"Helm: {self._instance_id} release status is not good: {status.status} : {status.description}"
+                f"Helm: {self._instance_id} release status is not good: {status.status} "
+                f": {status.description}"
             )
 
         if status.status in [

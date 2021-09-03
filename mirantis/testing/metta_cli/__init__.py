@@ -14,6 +14,7 @@ from .config import ConfigCliPlugin
 from .environment import EnvironmentCliPlugin
 from .fixtures import FixturesCliPlugin
 from .provisioner import ProvisionerCliPlugin
+from .output import OutputCliPlugin
 
 logger = logging.getLogger("metta.cli")
 
@@ -62,6 +63,19 @@ METTA_PLUGIN_ID_CLI_PROVISIONER = "provisioner_cli"
 def metta_plugin_factory_provisioner_config(environment: Environment, instance_id: str = ""):
     """Create a provisioner cli plugin."""
     return ProvisionerCliPlugin(environment, instance_id)
+
+
+METTA_PLUGIN_ID_CLI_OUTPUT = "output_cli"
+""" cli plugin_id for the output plugin """
+
+
+@Factory(
+    plugin_id=METTA_PLUGIN_ID_CLI_OUTPUT,
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI],
+)
+def metta_plugin_factory_output_config(environment: Environment, instance_id: str = ""):
+    """Create a output cli plugin."""
+    return OutputCliPlugin(environment, instance_id)
 
 
 # ----- SetupTools EntryPoint BootStrapping ------

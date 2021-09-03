@@ -25,9 +25,10 @@ I think that these state plugins are not safe to generate across threads at the
 same time. This comes down to the need to copy/duplicate the config option.
 
 """
-from typing import Dict, Any, List
+from typing import Dict, Any
 from logging import getLogger
 
+from configerus.config import Config
 from configerus.loaded import LOADED_KEY_ROOT
 
 from mirantis.testing.metta.fixture import (
@@ -93,6 +94,9 @@ class EnvironmentStatePlugin(FixtureBuilderEnvironment):
         self._instance_id: str = instance_id
         """ Unique id for this plugin instance """
 
+        self._config: Config = environment._config
+        """Config object, overridden in activate()."""
+
         self._config_label = label
         """ configerus load label that should contain all of the config """
         self._config_base = base
@@ -101,42 +105,47 @@ class EnvironmentStatePlugin(FixtureBuilderEnvironment):
         self._fixtures: Fixtures = Fixtures()
         """Children fixtures, typically just the client plugin."""
 
-        # Steak the config object from the parent environment for ENV init
-        config = environment._config.copy()
+    # Use State bootstrappers as well as env bootastrappers
+    def activate(self):
+        """Respond to the state being activated."""
+        logger.debug("Default state plugin activated: %s", self.instance_id())
 
-        Environment.__init__(self, config=config, instance_id=self._instance_id)
+        # Use the protected config so that we don't use a state config by accident
+        # pylint: disable=protected-access`
+        self._config = self._config.copy()
+        Environment.__init__(self, config=self._config, instance_id=self._instance_id)
         FixtureBuildingFromConfigMixin.__init__(
-            self, config=config, builder_callback=self.new_fixture
+            self, config=self._config, builder_callback=self.new_fixture
         )
         FixtureBuildingFromDictMixin.__init__(self, builder_callback=self.new_fixture)
 
-        self._environment_boostraps: List[str] = []
-        """Track what bootstaps we have applied for introspection."""
-
         # If we received any config directiosn, then we self-bootstrap from the config
-        if label:
-            env_config = config.load(label)
-
+        if self._config_label:
             # 1. add any config sources specified in config
             # (Here config tells us to load more config. It is weird but ok.)
             add_config_sources_from_config(
-                config=config, label=label, base=[base, METTA_CONFIG_CONFIG_SOURCE_KEY]
+                config=self._config,
+                label=self._config_label,
+                base=[self._config_base, METTA_CONFIG_CONFIG_SOURCE_KEY],
             )
 
             # 2. import any python code requested, to make sure that all funxtionality
             #    is in scope that is needed.
             #    Here we say look in the "metta" config for a "imports" section.
             add_imports_from_config(
-                config=config, label=label, base=[base, METTA_IMPORT_CONFIG_LABEL]
+                config=self._config,
+                label=self._config_label,
+                base=[self._config_base, METTA_IMPORT_CONFIG_LABEL],
             )
 
             # 3. run an setuptools bootstrap entrypoints
-            self._environment_boostraps = env_config.get(
-                [base, METTA_CONFIG_SETUPTOOLS_BOOTSTRAPS_KEY], default=[]
+            env_config = self._config.load(self._config_label)
+            environment_boostraps = env_config.get(
+                [self._config_base, METTA_CONFIG_SETUPTOOLS_BOOTSTRAPS_KEY], default=[]
             )
             setuptools_entrypoint(
                 entrypoint=METTA_ENTRYPOINT_BOOTSTRAP_ENVIRONMENT,
-                entries=self._environment_boostraps,
+                entries=environment_boostraps,
                 args=[self],
                 kwargs={},
             )
@@ -149,8 +158,8 @@ class EnvironmentStatePlugin(FixtureBuilderEnvironment):
                 "environment": self._environment.instance_id(),
             }
             self.add_fixtures_from_config(
-                label=label,
-                base=[base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL],
+                label=self._config_label,
+                base=[self._config_base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL],
                 labels=labels,
             )
 
@@ -159,15 +168,10 @@ class EnvironmentStatePlugin(FixtureBuilderEnvironment):
         """Return dict plugin info."""
         state_info = {
             "name": self.instance_id(),
-            "boostraps": self._environment_boostraps,
+            # "boostraps": self._environment_boostraps,
         }
 
         if deep:
             state_info["fixtures"] = self._fixtures.info(deep=deep)
 
         return state_info
-
-    # Use State bootstrappers as well as env bootastrappers
-    def activate(self):
-        """Respond to the state being activated."""
-        logger.debug("Default state plugin activated: %s", self.instance_id())

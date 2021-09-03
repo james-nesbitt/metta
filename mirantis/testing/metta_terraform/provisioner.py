@@ -10,7 +10,7 @@ import logging
 import os
 from typing import Any
 
-from configerus.loaded import LOADED_KEY_ROOT
+from configerus.loaded import Loaded, LOADED_KEY_ROOT
 from configerus.contrib.jsonschema.validate import (
     PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL,
 )
@@ -141,15 +141,14 @@ class TerraformProvisionerPlugin:
     # deep argument is an info() standard across plugins
     # pylint: disable=unused-argument
     def info(self, deep: bool = False):
-        """Get info about a provisioner plugin.
+        """Get info about the provisioner plugin.
 
         Returns:
         --------
         Dict of keyed introspective information about the plugin.
 
         """
-        terraform_config = self._environment.config().load(self._config_label)
-        """ get a configerus LoadedConfig for the terraform label """
+        terraform_config: Loaded = self._environment.config().load(self._config_label)
 
         info = {
             "config": {

@@ -356,7 +356,11 @@ class FixtureBuilderEnvironment(
                     labels=labels,
                 )
             except KeyError as err:
-                logger.warning("Error w: %s", err)
+                logger.warning(
+                    "%s Environment plugin encountered an issue creating fixtures: %s",
+                    __class__,
+                    err,
+                )
 
     # pylint: disable=unused-argument
     def info(self, deep: bool = False) -> Dict[str, Any]:

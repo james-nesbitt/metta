@@ -12,7 +12,7 @@
 # Used in terraform resource tagging (user:id gets set in conftest.py)
 user: "doceng"
 #  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
-task: "dual"
+task: "dualC"
 # One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.
 project: "TAR-TLNG-ATMTN"
 

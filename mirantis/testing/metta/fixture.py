@@ -2,9 +2,27 @@
 
 Fixture management code.
 
-A Fixture is a plugin isntance wrapper that keeps metadata about the plugin
-instance. A Fixtures object is a collection of plugin instances kept as an
+A Fixture is a plugin instance wrapper that keeps metadata about the plugin
+instance.
+A Fixtures object is a collection of plugin instances kept as an
 ordered, managed set.
+
+A fixture saves us from applying any required interface onto a plugin for
+maintaining metadata about the plugin, however, as a wrapper, it also leaves
+the plugin in the dark about its own metadata.
+
+## TODO
+
+* Fixtures are now a pivotal cental component in metta, because most of the
+  core and contrib functionality is provided by plugins, even bootstrapping
+  and environments are plugins.  This means that even the core uses a lot of
+  Fixtures searching and managemeng.
+  Because of this prevalence, the Fixtures object could use some streamlining
+  and optimization for its implementation.
+  Some ideas:
+    1. low volume (<100) optimization of filtering/searching methods; perhaps
+       caching.
+    2. optimization of merging and copying?
 
 """
 import logging
@@ -138,9 +156,10 @@ class Fixture:
                 "priority": self.priority,
             }
         }
+        # If a plugin has a callable info method then add it to the info
         if hasattr(self.plugin, "info"):
             fixture_info["plugin"] = self.plugin.info(deep=deep)
-
+        # if the plugin hsa child, optionally add their info
         if children and hasattr(self.plugin, "fixtures") and callable(self.plugin.fixtures):
             fixture_info["fixtures"] = {}
             for fixture in self.plugin.fixtures():
@@ -385,7 +404,6 @@ class Fixtures:
         interfaces (List[str]) : List of interfaces which the fixture must have
         labels (Dict[str, str]) : Filter key value pairs which fixtures must match
         has_labels (List[str]) : List of labels which the fixture must have
-        has_labels (List[str]) : List of labels which the fixture must have
 
         Returns:
         --------
@@ -607,10 +625,11 @@ class Fixtures:
 
         Returns:
         --------
-        A List[Fixture] of the contained fixtures sorted using their priority.
+        A List[Fixture] of the contained fixtures sorted using their priority,
+        sorted from lowest to highest priority.
 
         """
-        return sorted(self._fixtures, key=lambda i: 1 / i.priority if i.priority > 0 else 0)
+        return sorted(self._fixtures, key=lambda i: 1 / i.priority if i.priority > 0 else 100)
 
 
 class DoesNotMatchError(Exception):
