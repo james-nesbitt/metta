@@ -105,14 +105,15 @@ class StateBasedEnvironment(FixtureBuilderEnvironment):
             state_fixture: Fixture = self._fixtures.get(
                 instance_id=state, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_ENVIRONMENTSTATE]
             )
-            self._active_state_id = state_fixture.instance_id
-
-            # activate the state plugin
-            if hasattr(state_fixture.plugin, "activate"):
-                state_fixture.plugin.activate()
 
         except KeyError as err:
             raise RuntimeError(f"Unknown State requested for activation: {state}") from err
+
+        self._active_state_id = state_fixture.instance_id
+
+        # activate the state plugin
+        if hasattr(state_fixture.plugin, "activate"):
+            state_fixture.plugin.activate()
 
     def _get_active_state_fixture(self) -> Fixture:
         """Get the active state fixture."""
