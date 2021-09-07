@@ -134,7 +134,7 @@ class LaunchpadClient:
         }
 
         try:
-            with open(self.config_file) as conf_file_obj:
+            with open(self.config_file, encoding="utf8") as conf_file_obj:
                 info["config"]["contents"] = yaml.safe_load(conf_file_obj)
         except FileNotFoundError:
             pass
@@ -258,7 +258,7 @@ class LaunchpadClient:
         # Will hold data pulled from the client meta data file
         data: Dict[str, Any] = {}
         try:
-            with open(client_bundle_meta_file) as json_file:
+            with open(client_bundle_meta_file, encoding="utf8") as json_file:
                 data = json.load(json_file)
 
                 # helm complains if this file has loose permissions
@@ -339,7 +339,7 @@ class LaunchpadClient:
             return str(self.cluster_name_override)
 
         try:
-            with open(self.config_file) as config_file_object:
+            with open(self.config_file, encoding="utf8") as config_file_object:
                 # keep a parsed copy of the launchpad file
                 config_data = yaml.safe_load(config_file_object)
         except FileNotFoundError as err:

@@ -277,7 +277,7 @@ class LaunchpadProvisionerPlugin:
             config_path,
             yaml.dump(config_contents),
         )
-        with open(config_path, "w") as config_file_object:
+        with open(config_path, "w", encoding="utf8") as config_file_object:
             yaml.dump(config_contents, config_file_object)
 
     def _rm_launchpad_yml(self):

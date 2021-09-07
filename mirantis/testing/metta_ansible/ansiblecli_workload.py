@@ -201,14 +201,14 @@ class AnsibleCliPlaybookWorkloadPlugin:
 
         if playbook_contents:
             os.makedirs(os.path.dirname(os.path.realpath(playbook_path)), exist_ok=True)
-            with open(playbook_path, "w") as playbook_fileobject:
+            with open(playbook_path, "w", encoding="utf8") as playbook_fileobject:
                 yaml.safe_dump(playbook_contents, playbook_fileobject)
         else:
             if playbook_path and os.path.exists(playbook_path):
                 os.remove(playbook_path)
         if vars_values:
             os.makedirs(os.path.dirname(os.path.realpath(vars_path)), exist_ok=True)
-            with open(vars_path, "w") as vars_fileobject:
+            with open(vars_path, "w", encoding="utf8") as vars_fileobject:
                 yaml.safe_dump(vars_values, vars_fileobject)
         else:
             if vars_path and os.path.exists(vars_path):
@@ -239,14 +239,14 @@ class AnsibleCliPlaybookWorkloadPlugin:
 
         if playbook_contents:
             os.makedirs(os.path.dirname(os.path.realpath(playbook_path)), exist_ok=True)
-            with open(playbook_path, "w") as playbook_fileobject:
+            with open(playbook_path, "w", encoding="utf8") as playbook_fileobject:
                 yaml.safe_dump(playbook_contents, playbook_fileobject)
         else:
             if playbook_path and os.path.exists(playbook_path):
                 os.remove(playbook_path)
         if vars_values:
             os.makedirs(os.path.dirname(os.path.realpath(vars_path)), exist_ok=True)
-            with open(vars_path, "w") as vars_fileobject:
+            with open(vars_path, "w", encoding="utf8") as vars_fileobject:
                 yaml.safe_dump(vars_values, vars_fileobject)
         else:
             if vars_path and os.path.exists(vars_path):

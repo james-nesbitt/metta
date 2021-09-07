@@ -102,6 +102,7 @@ class ResultsCallback(CallbackBase):
     # pylint: disable=protected-access
 
     def v2_runner_on_unreachable(self, result):
+        """Register and unreachable runner."""
         self._results[result._host.get_name()] = Result(
             status=ResultStatus.UNREACHABLE,
             host=result._host,
@@ -109,11 +110,13 @@ class ResultsCallback(CallbackBase):
         )
 
     def v2_runner_on_ok(self, result, *args, **kwargs):
+        """Register an OK runner."""
         self._results[result._host.get_name()] = Result(
             status=ResultStatus.OK, host=result._host, result=result._result, *args, **kwargs
         )
 
     def v2_runner_on_failed(self, result, *args, **kwargs):
+        """Register a failed runner."""
         self._results[result._host.get_name()] = Result(
             status=ResultStatus.FAILED, host=result._host, result=result._result, *args, **kwargs
         )

@@ -163,7 +163,7 @@ class KubernetesYamlWorkloadPlugin:
 
         """
         if self.file:
-            with open(self.file) as res_file:
+            with open(self.file, encoding="utf8") as res_file:
                 resources_yaml = yaml.safe_load_all(res_file)
 
                 for resource in resources_yaml:

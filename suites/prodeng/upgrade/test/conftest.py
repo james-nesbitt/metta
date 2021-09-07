@@ -1,9 +1,6 @@
 """
 
-Fixtures for the testing stack.
-
-The parent scope conftest is focused on managing cluster resources, and this
-focuses on fixtures used for the testing scope.
+PyTest fixtures for the upgrade test.
 
 """
 import logging
@@ -26,7 +23,7 @@ logger = logging.getLogger("stability-conftest")
 
 
 @pytest.fixture(scope="session")
-def workloads(environment_up) -> Fixtures:
+def workloads(environment) -> Fixtures:
     """Return a Fixtures set of workload plugins.
 
     These are the plugins that are meant to apply load
@@ -35,12 +32,12 @@ def workloads(environment_up) -> Fixtures:
 
     Returns:
     --------
-    Fixtures list of workloads.
+    Fixtures list of workloads but without the healthpoller.
     """
     workload_fixtures = Fixtures()
 
     # Take any workload plugin other than the healthpoll plugin
-    for fixture in environment_up.fixtures().filter(
+    for fixture in environment.fixtures().filter(
         interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD]
     ):
         if fixture.plugin_id == METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL:
@@ -52,34 +49,13 @@ def workloads(environment_up) -> Fixtures:
 
 
 @pytest.fixture(scope="module")
-def workloads_up(environment_up, workloads) -> Fixtures:
-    """Create and apply instances for all workloads."""
-    for workload in workloads:
-        plugin = workload.plugin
-        if hasattr(plugin, "prepare"):
-            plugin.prepare(environment_up.fixtures())
-        if hasattr(plugin, "apply"):
-            plugin.apply()
-            logger.info("Workload %s applied.", workload.instance_id)
-        else:
-            logger.info("Workload %s created.", workload.instance_id)
-
-    yield workloads
-
-    for workload in workloads:
-        plugin = workload.plugin
-        if hasattr(plugin, "destroy"):
-            plugin.destroy()
-
-
-@pytest.fixture(scope="module")
-def healthpoller(environment_up) -> HealthPollWorkload:
+def healthpoller(environment) -> HealthPollWorkload:
     """Start a running health poll and return it."""
-    healthpoll_workload = environment_up.fixtures().get_plugin(
+    healthpoll_workload = environment.fixtures().get_plugin(
         plugin_id=METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL
     )
 
-    healthpoll_workload.prepare(environment_up.fixtures())
+    healthpoll_workload.prepare(environment.fixtures())
     healthpoll_workload.apply()
 
     yield healthpoll_workload

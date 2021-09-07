@@ -19,5 +19,5 @@ presets:
     variation: tal
     # include metta_mirantis/config/cluster/X
     cluster: smallbusiness
-    # include metta_mirantis/config/platform/public/X
+    # include metta_mirantis/config/platform/X
     platform: public/ubuntu/20.04

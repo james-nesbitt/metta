@@ -70,6 +70,8 @@ METTA_STATE_DEFAULT_PLUGIN_ID = "metta_state_default"
 """ Metta plugin id for the standard environment state plugin."""
 
 
+# we use the parent methods, but override the constructor.
+# pylint: disable=super-init-not-called
 class EnvironmentStatePlugin(FixtureBuilderEnvironment):
     """A State piece of a StateBasedEnvironment."""
 

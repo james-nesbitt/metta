@@ -313,7 +313,7 @@ class KubernetesHelmWorkloadPlugin:
 
         if len(self.values):
             # turn the values into a file, and add it to the command
-            with open(self._file, "w") as val_file:
+            with open(self._file, "w", encoding="utf8") as val_file:
                 yaml.dump(self.values, val_file)
 
             cmd += ["--values", self._file]

@@ -391,7 +391,7 @@ class MKEAPIClientPlugin:
         # Will hold data pulled from the client meta data file
         data = {}
         try:
-            with open(client_bundle_meta_file) as json_file:
+            with open(client_bundle_meta_file, encoding="utf8") as json_file:
                 data = json.load(json_file)
 
                 # helm complains if this file has loose permissions
@@ -593,7 +593,7 @@ class MKEAPIClientPlugin:
 
             if swarm_info["Error"] == 0:
                 swarm_error = swarm_info["Error"]
-                health.errorf(f"MKE:swarm: {swarm_error}")
+                health.error(f"MKE:swarm: {swarm_error}")
             if swarm_info["Nodes"] == 0:
                 health.error("MKE:Nodes: reports no nodes in the cluster")
 

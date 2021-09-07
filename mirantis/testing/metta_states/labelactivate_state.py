@@ -24,6 +24,9 @@ METTA_STATE_LABELACTIVATE_PLUGIN_ID = "metta_state_labelactivate"
 METTA_STATE_FIXTURE_LABEL_ACTIVATE = "state-activate"
 """Metta fixture label that indicates that this fixture should activate on a state."""
 
+METTA_STATE_FIXTURE_LABEL_DEACTIVATE = "state-deactivate"
+"""Metta fixture label that indicates that this fixture should deactivate on a state."""
+
 
 class EnvironmentLabelActivateStatePlugin(EnvironmentStatePlugin):
     """A State piece of a StateBasedEnvironment that processes fixture labels on activate."""
@@ -75,7 +78,6 @@ class EnvironmentLabelActivateStatePlugin(EnvironmentStatePlugin):
             if isinstance(fixture_def, str):
                 fixture_def = {"instance_id": fixture_def}
             fixture = self.fixtures().get(**fixture_def)
-
 
             try:
                 _activate_fixture(fixture)
@@ -147,9 +149,9 @@ def _activate_fixture(fixture: Fixture):
         fixture.plugin.prepare()
         fixture.plugin.apply()
 
-    elif METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK in fixture.interfaces:
-        logger.warning("Checking fixture health %s:%s", fixture.plugin_id, fixture.instance_id)
-        fixture.plugin.health()
+    # elif METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK in fixture.interfaces:
+    #     logger.warning("Checking fixture health %s:%s", fixture.plugin_id, fixture.instance_id)
+    #     fixture.plugin.health()
 
     else:
         raise ValueError(
