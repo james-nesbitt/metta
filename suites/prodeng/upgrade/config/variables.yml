@@ -25,7 +25,7 @@ files_path: "{{paths:project}}/.metta"
 # Tag any resources with the suite name, and metta preset information
 extra_tags:
   metta-suite: "{{task}}"
-  metta-mirantis.preset.variation: "{{mirantis:presets.variation}}"
-  metta-mirantis.preset.cluster: "{{mirantis:presets.cluster}}"
-  metta-mirantis.preset.platform: "{{mirantis:presets.platform}}"
-  metta-mirantis.preset.release: "{{mirantis:presets.release}}"
+  metta-mirantis.preset.variation: "{{mirantis:presets.variation?NOT-PROVIDED}}"
+  metta-mirantis.preset.cluster: "{{mirantis:presets.cluster?NOT-PROVIDED}}"
+  metta-mirantis.preset.platform: "{{mirantis:presets.platform?NOT-PROVIDED}}"
+  metta-mirantis.preset.release: "{{mirantis:presets.release?NOT-PROVIDED}}"

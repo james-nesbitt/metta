@@ -42,6 +42,7 @@ upgrade:
       # Initial state with no active plugins.  Used to allow manual interaction
       # and management before any activations have taken place.
 
+      # standard state plugin
       plugin_id: metta_state_default
 
       bootstraps:

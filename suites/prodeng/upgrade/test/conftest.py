@@ -22,32 +22,6 @@ logger = logging.getLogger("stability-conftest")
 # pylint: disable=unused-argument
 
 
-@pytest.fixture(scope="session")
-def workloads(environment) -> Fixtures:
-    """Return a Fixtures set of workload plugins.
-
-    These are the plugins that are meant to apply load
-    to the cluster during the longevity test, and will
-    not include the healthpolling workload.
-
-    Returns:
-    --------
-    Fixtures list of workloads but without the healthpoller.
-    """
-    workload_fixtures = Fixtures()
-
-    # Take any workload plugin other than the healthpoll plugin
-    for fixture in environment.fixtures().filter(
-        interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD]
-    ):
-        if fixture.plugin_id == METTA_PLUGIN_ID_WORKLOAD_HEALTHPOLL:
-            continue
-
-        workload_fixtures.add(fixture)
-
-    return workload_fixtures
-
-
 @pytest.fixture(scope="module")
 def healthpoller(environment) -> HealthPollWorkload:
     """Start a running health poll and return it."""
