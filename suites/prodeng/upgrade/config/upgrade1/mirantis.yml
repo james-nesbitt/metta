@@ -16,4 +16,4 @@
 #
 presets:
     # this will tell metta to include metta_mirantis/config/release/X
-    release: patch/202107-C
+    # release: patch/202107-C
