@@ -209,7 +209,7 @@ upgrade:
           upgrade-config:
             plugin_id: path
             priority: 70
-            path: "{{paths:project-config}}/upgrade1"
+            path: "{{paths:project-config}}/upgrade2"
 
       # this tells metta that this config block should be passed to the plugin
       # for config use (you could tell it to load from a different source.)
