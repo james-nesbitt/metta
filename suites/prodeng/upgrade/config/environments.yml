@@ -48,6 +48,7 @@ upgrade:
       bootstraps:
         - metta_mirantis_presets
         - metta_common_config
+        - metta_health
 
       config:
         sources:
@@ -81,6 +82,7 @@ upgrade:
       bootstraps:
         - metta_mirantis_presets
         - metta_common_config
+        - metta_health
 
       config:
         sources:
@@ -123,6 +125,7 @@ upgrade:
       bootstraps:
         - metta_mirantis_presets
         - metta_common_config
+        - metta_health
 
       config:
         sources:
@@ -162,6 +165,7 @@ upgrade:
       bootstraps:
         - metta_mirantis_presets
         - metta_common_config
+        - metta_health
 
       config:
         sources:
@@ -201,6 +205,7 @@ upgrade:
       bootstraps:
         - metta_mirantis_presets
         - metta_common_config
+        - metta_health
 
       config:
         sources:
@@ -243,6 +248,7 @@ upgrade:
       bootstraps:
         - metta_mirantis_presets
         - metta_common_config
+        - metta_health
 
       config:
         sources:

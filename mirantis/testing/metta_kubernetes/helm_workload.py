@@ -223,7 +223,13 @@ class KubernetesHelmWorkloadPlugin:
 
         status = self.status()
 
-        if status.status in [Status.UNKNOWN, Status.SUPERSEDED, Status.UNINSTALLING]:
+        if status.status in [Status.UNKNOWN]:
+            health.unknown(
+                f"Helm: {self._instance_id} release status is unknown: {status.status} "
+                f": {status.description}"
+            )
+
+        if status.status in [Status.SUPERSEDED, Status.UNINSTALLING]:
             health.warning(
                 f"Helm: {self._instance_id} release status is at issue: {status.status} "
                 f": {status.description}"
@@ -379,14 +385,30 @@ class KubernetesHelmWorkloadPlugin:
 
     def status(self) -> HelmReleaseStatus:
         """Get status of the installed helm release."""
-        return HelmReleaseStatus(
-            yaml.safe_load(
-                self._run(
-                    cmd=["status", self._instance_id, "--output=yaml"],
-                    return_output=True,
+        try:
+            return HelmReleaseStatus(
+                yaml.safe_load(
+                    self._run(
+                        cmd=["status", self._instance_id, "--output=yaml"],
+                        return_output=True,
+                    )
                 )
             )
-        )
+
+        except (subprocess.CalledProcessError, AttributeError) as err:
+            return HelmReleaseStatus({
+                "name": "unknown",
+                "version": "unknown",
+                "namespace": "unknown",
+                "info": {
+                    "deleted": "unknown",
+                    "description": str(err),
+                    "status": "unknown",
+                },
+                "notes": "Status not found",
+                "config": {},
+                "manifest": []
+            })
 
     def _run(self, cmd: List[str], return_output: bool = False):
         """Run a helm v3 command."""
@@ -406,6 +428,7 @@ class KubernetesHelmWorkloadPlugin:
                 shell=False,
                 check=True,
                 stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
             return_exec.check_returncode()
             return return_exec.stdout.decode("utf-8")
