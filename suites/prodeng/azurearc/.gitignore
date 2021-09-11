@@ -1,0 +1,7 @@
+.metta
+reports
+results*
+__pycache__
+
+# The SP is a credential and should not be stored.
+config/serviceprincipal.*

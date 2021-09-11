@@ -1,0 +1,152 @@
+# In this file we define configuration used to create a Metta Environment.
+#
+# The environment object acts as a container for fixtures. The object itself
+# will be created by the bootstrapper plugin which is defined in the root
+# metta.yml file (it points here to define environments).
+#
+# Typically the bootstrapper creates this as a globally available fixture
+# and the mirantis.testing.metta.get_environment() function can be used to
+# retrieve it.
+#
+# The environment plugin we use is a BUILDER environment, which will use
+# its own config to automatically build fixtures when it is created. The
+# fixtures definition is below, but it typically redirects to a different
+# fixtures.yml file.
+#
+# Here we create an environment per testing scenario, which comes down to an
+# MKE version, with the relevant MCR version for install, and then the K8S
+# version to test against.
+#
+# @NOTE we initially created an environment per version to test against
+# with each environment using a subfolder for MKE/MCR and Kubernetes
+# version pinning, but we dropped it because it was getting too slow.
+#
+
+# CNCF testing environment.
+azurearc:
+  # Environment plugin to use
+  plugin_id: metta_state_environment
+
+  # this tells metta that this config block should be passed to the plugin
+  # for config use (you could tell it to load from a different source.)
+  from_config: true
+
+  bootstraps:
+    - metta_common
+    - metta_health
+    - metta_docker
+    - metta_kubernetes
+    - metta_terraform
+    - metta_ansible
+    - metta_launchpad
+    - metta_common_config
+    - metta_mirantis_common
+    - metta_mirantis_presets
+    - metta_sonobuoy
+
+  states:
+
+    345-138:
+      # MKE 3.4.5 for azure arc 1.3.8
+
+      # standard state plugin
+      plugin_id: metta_state_default
+
+      bootstraps:
+        - metta_mirantis_presets
+        - metta_common_config
+        - metta_health
+
+      config:
+        sources:
+          mke:
+            # Include the config/X path as a config source for this environment
+            # to include results for a specific MKE version
+            plugin_id: path
+            priority: 80
+            path: "{{paths:project-config}}/mke_3.4.5"
+          arc:
+            # Include the config/X path as a config source for this environment
+            # to include results for a specific Azure Arc version
+            plugin_id: path
+            priority: 80
+            path: "{{paths:project-config}}/azurearc_1.3.8"
+
+      # this tells metta that this config block should be passed to the plugin
+      # for config use (you could tell it to load from a different source.)
+      from_config: true
+
+      fixtures:
+        from_config:
+          # Load the fixtures from fixtures(.yml) source.
+          label: fixtures
+
+    345-120:
+      # MKE 3.4.5 for azure arc 1.2.0
+
+      # standard state plugin
+      plugin_id: metta_state_default
+
+      bootstraps:
+        - metta_mirantis_presets
+        - metta_common_config
+        - metta_health
+
+      config:
+        sources:
+          mke:
+            # Include the config/X path as a config source for this environment
+            # to include results for a specific MKE version
+            plugin_id: path
+            priority: 80
+            path: "{{paths:project-config}}/mke_3.4.5"
+          arc:
+            # Include the config/X path as a config source for this environment
+            # to include results for a specific Azure Arc version
+            plugin_id: path
+            priority: 80
+            path: "{{paths:project-config}}/azurearc_1.2.0"
+
+      # this tells metta that this config block should be passed to the plugin
+      # for config use (you could tell it to load from a different source.)
+      from_config: true
+
+      fixtures:
+        from_config:
+          # Load the fixtures from fixtures(.yml) source.
+          label: fixtures
+
+    345-110:
+      # MKE 3.4.5 for azure arc 1.1.1
+
+      # standard state plugin
+      plugin_id: metta_state_default
+
+      bootstraps:
+        - metta_mirantis_presets
+        - metta_common_config
+        - metta_health
+
+      config:
+        sources:
+          mke:
+            # Include the config/X path as a config source for this environment
+            # to include results for a specific MKE version
+            plugin_id: path
+            priority: 80
+            path: "{{paths:project-config}}/mke_3.4.5"
+          arc:
+            # Include the config/X path as a config source for this environment
+            # to include results for a specific Azure Arc version
+            plugin_id: path
+            priority: 80
+            path: "{{paths:project-config}}/azurearc_1.1.0"
+
+      # this tells metta that this config block should be passed to the plugin
+      # for config use (you could tell it to load from a different source.)
+      from_config: true
+
+      fixtures:
+        from_config:
+          # Load the fixtures from fixtures(.yml) source.
+          label: fixtures

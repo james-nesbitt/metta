@@ -149,9 +149,9 @@ def _activate_fixture(fixture: Fixture):
         fixture.plugin.prepare()
         fixture.plugin.apply()
 
-    # elif METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK in fixture.interfaces:
-    #     logger.warning("Checking fixture health %s:%s", fixture.plugin_id, fixture.instance_id)
-    #     fixture.plugin.health()
+    elif METTA_PLUGIN_INTERFACE_ROLE_HEALTHCHECK in fixture.interfaces:
+        logger.warning("Checking fixture health %s:%s", fixture.plugin_id, fixture.instance_id)
+        fixture.plugin.health()
 
     else:
         raise ValueError(

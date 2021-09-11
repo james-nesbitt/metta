@@ -131,10 +131,10 @@ class KubernetesApiClientPlugin:
 
         return info
 
-    def get_api(self, api: str):
+    def get_api(self, name: str):
         """Get an kubernetes API."""
-        if hasattr(kubernetes.client, api):
-            return getattr(kubernetes.client, api)(self._api_client)
+        if hasattr(kubernetes.client, name):
+            return getattr(kubernetes.client, name)(self._api_client)
 
         raise KeyError(f"Unknown API requested: {api}")
 

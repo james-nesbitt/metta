@@ -396,19 +396,21 @@ class KubernetesHelmWorkloadPlugin:
             )
 
         except (subprocess.CalledProcessError, AttributeError) as err:
-            return HelmReleaseStatus({
-                "name": "unknown",
-                "version": "unknown",
-                "namespace": "unknown",
-                "info": {
-                    "deleted": "unknown",
-                    "description": str(err),
-                    "status": "unknown",
-                },
-                "notes": "Status not found",
-                "config": {},
-                "manifest": []
-            })
+            return HelmReleaseStatus(
+                {
+                    "name": "unknown",
+                    "version": "unknown",
+                    "namespace": "unknown",
+                    "info": {
+                        "deleted": "unknown",
+                        "description": str(err),
+                        "status": "unknown",
+                    },
+                    "notes": "Status not found",
+                    "config": {},
+                    "manifest": [],
+                }
+            )
 
     def _run(self, cmd: List[str], return_output: bool = False):
         """Run a helm v3 command."""

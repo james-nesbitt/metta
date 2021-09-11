@@ -1,18 +1,19 @@
 # All of the below config is read by the sonobuoy plugin, as directed in the
 # fixtures.yml file.
 
-mode: certified-conformance
-
-kubernetes:
-  # Pull the kubernetes version from the variables config file
-  version: "{{variables:sonobuoy_kubernetes_version}}"
-
 results:
   # unique path for each retrieve (this path contains a space)
   path: "{{paths:project}}/results"
 
-plugin:
-    plugins:
-    - e2e
+# Args for sonobuoy run
+run:
+  mode: certified-conformance
+  kubernetes-version: "{{variables:sonobuoy_kubernetes_version}}"
+  ssh-key: "{{terraform:vars.ssh_key_file_path}}"
+  # we should get this from hosts or something.
+  ssh-user: ubuntu
+
+plugins:
+  e2e:
     envs:
-    - e2e.E2E_EXTRA_ARGS=--non-blocking-taints=com.docker.ucp.manager
+      E2E_EXTRA_ARGS: "--non-blocking-taints=com.docker.ucp.manager --progress-report-url=http://localhost:8099/progress"

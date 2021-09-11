@@ -216,6 +216,9 @@ class FixtureBuildingFromConfigMixin:
             return fixtures
 
         for instance_id in plugin_list.keys():
+            # We only accept string instance ids
+            instance_id = str(instance_id)
+
             # This fixture gets effectively added to 2 different Fixtures object.
             # 1. we manually add it to our Fixtures object for this function call
             # 2. the add_fixture_from_config() adds it to the fixture for this

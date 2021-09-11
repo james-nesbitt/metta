@@ -15,6 +15,7 @@ import kubernetes
 
 from mirantis.testing.metta_kubernetes.kubeapi_client import KubernetesApiClientPlugin
 
+from .plugin import Plugin
 from .results import SonobuoyResults, SonobuoyStatus
 
 logger = logging.getLogger("sonobuoy")
@@ -46,26 +47,19 @@ class SonobuoyClient:
     def __init__(
         self,
         kubeclient: KubernetesApiClientPlugin,
-        mode: str,
-        kubernetes_version: str = "",
-        plugins: List[str] = None,
-        plugin_envs: List[str] = None,
+        plugins: List[Plugin] = None,
         binary: str = SONOBUOY_DEFAULT_BIN,
         results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH,
+        create_crbs: bool = False,
     ):
         """Initialize the workload instance."""
         self._api_client = kubeclient
         """Kube API metta client, used for a config file and for creating K8s resources."""
         self.kubeconfig = kubeclient.config_file
-        """ metta kube client, which gives us a kubeconfig """
-        self.mode = mode
-        """ sonobuoy mode, passed to the cli """
-        self.kubernetes_version = kubernetes_version
-        """ Kubernetes version to test compare against """
+        """String path to a kubeconfig file."""
+
         self.plugins = plugins if plugins is not None else []
-        """ which sonobuoy plugins to run """
-        self.plugin_envs = plugin_envs if plugin_envs is not None else []
-        """ Plugin specific ENVs to pass to sonobuoy """
+        """Which sonobuoy plugins to run."""
 
         if shutil.which(binary) is None:
             raise ValueError(
@@ -74,52 +68,47 @@ class SonobuoyClient:
             )
 
         self.bin = binary
-        """ path to the sonobuoy binary """
+        """Path to the sonobuoy binary."""
 
         self.results_path = os.path.realpath(results_path)
-        """ path to where to download sonobuoy results """
+        """Path to where to download sonobuoy results."""
+
+        self.create_crbs: bool = create_crbs
+        """Whether or not this client should create sonobuoy CRB resources."""
 
     # deep is a metta info standard and expected to be here
     # pylint: disable=unused-argument
     def info(self, deep: bool = False) -> Dict[str, Any]:
-        """return a Dict of info about the client."""
+        """Provide a Dict of info about the client."""
         return {
             "config": {
-                "mode": self.mode,
                 "kubeconfig": self.kubeconfig,
-                "kubernetes_version": self.kubernetes_version,
-                "plugins": self.plugins,
-                "plugin_envs": self.plugin_envs,
                 "results_path": self.results_path,
             },
+            "plugins": [plugin.info(deep=deep) for plugin in self.plugins],
             "client": {
                 "sonobuoy_bin_path": self.bin,
             },
         }
 
-    def run(self, wait: bool = True):
+    def run(self, wait: bool = True, run_args: List[str] = None):
         """Run sonobuoy."""
         cmd = ["run"]
-        # we don't need to add --kubeconfig here as self._run() does that
 
-        if self.mode:
-            cmd += [f"--mode={self.mode}"]
-
-        if self.kubernetes_version:
-            cmd += [f"--kubernetes-version={self.kubernetes_version}"]
+        if run_args is not None:
+            cmd += run_args
 
         if self.plugins:
-            cmd += [f"--plugin={plugin_id}" for plugin_id in self.plugins]
-
-        if self.plugin_envs:
-            cmd += [f"--plugin-env={plugin_env}" for plugin_env in self.plugin_envs]
+            for plugin in self.plugins:
+                cmd += plugin.run_args()
 
         if wait:
             cmd += [f"--wait={SONODBUOY_DEFAULT_WAIT_PERIOD_SECS}"]
 
         try:
-            logger.info("Ensuring that we have needed K8s CRBs")
-            self._create_k8s_crb()
+            if self.create_crbs:
+                logger.info("Ensuring that we have needed K8s CRBs")
+                self._create_k8s_crb()
             logger.info("Starting Sonobuoy run : %s", cmd)
             self._run(cmd)
         except subprocess.CalledProcessError as err:
@@ -166,7 +155,8 @@ class SonobuoyClient:
             cmd += ["--all"]
 
         self._run(cmd)
-        self._delete_k8s_crb()
+        if self.create_crbs:
+            self._delete_k8s_crb()
 
     def version(self) -> Dict[str, str]:
         """Retrieve sonobuoy version info."""

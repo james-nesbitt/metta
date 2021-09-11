@@ -1,0 +1,73 @@
+# All of the below config is read by the sonobuoy plugin, as directed in the
+# fixtures.yml file.
+
+resources:
+  path: "{{paths:project}}/.metta/"
+  prefix: "{{variables:id}}-sonobuoy-"
+
+results:
+  # unique path for each retrieve (this path contains a space)
+  path: "{{paths:project}}/results"
+
+# Args for sonobuoy run
+run:
+  mode: certified-conformance
+  kubernetes-version: "{{variables:sonobuoy_kubernetes_version}}"
+  ssh-key: "{{terraform:vars.ssh_key_file_path}}"
+  # we should get this from hosts or something.
+  ssh-user: ubuntu
+
+
+plugins:
+  azure-arc-platform:
+    definition:
+      sonobuoy-config:
+        driver: Job
+        plugin-name: azure-arc-platform
+        result-type: junit
+      spec:
+        image: arck8sconformance.azurecr.io/arck8sconformance/platform:0.1.1
+        imagePullPolicy: IfNotPresent
+        name: plugin
+        resources: {}
+        volumes:
+        - name: results
+          emptyDir: {}
+        volumeMounts:
+        - mountPath: /tmp/results
+          name: results
+    envs:
+      TENANT_ID: "{{azurearc:azure.tenant}}"
+      SUBSCRIPTION_ID: "{{azurearc:azure.subscription}}"
+      RESOURCE_GROUP: "{{azurearc:azure.resource_group}}"
+      CLUSTER_NAME: "{{azurearc:cluster.name}}"
+      LOCATION: "{{azurearc:azure.location}}"
+      CLIENT_ID: "{{serviceprincipal:name}}"
+      CLIENT_SECRET: "{{serviceprincipal:password}}"
+      HELMREGISTRY: "mcr.microsoft.com/azurearck8s/batch1/stable/azure-arc-k8sagents:{{azurearc:arc.arc_platform_version?NOTSET}}"
+
+  azure-arc-agent-cleanup:
+    definition:
+      sonobuoy-config:
+        driver: Job
+        plugin-name: azure-arc-agent-cleanup
+        result-format: junit
+      spec:
+        image: arck8sconformance.azurecr.io/arck8sconformance/agentcleanup:0.1.0
+        imagePullPolicy: IfNotPresent
+        name: plugin
+        resources: {}
+        volumes:
+        - name: results
+          emptyDir: {}
+        volumeMounts:
+        - mountPath: /tmp/results
+          name: results
+    envs:
+      TENANT_ID: "{{azurearc:azure.tenant}}"
+      SUBSCRIPTION_ID: "{{azurearc:azure.subscription}}"
+      RESOURCE_GROUP: "{{azurearc:azure.resource_group}}"
+      CLUSTER_NAME: "{{azurearc:cluster.name}}"
+      CLEANUP_TIMEOUT: "{{azurearc:cleanup.timeout}}"
+      CLIENT_ID: "{{serviceprincipal:name}}"
+      CLIENT_SECRET: "{{serviceprincipal:password}}"

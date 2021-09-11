@@ -22,6 +22,7 @@ from .workload import (
     SONOBUOY_WORKLOAD_CONFIG_LABEL,
     SONOBUOY_WORKLOAD_CONFIG_BASE,
 )
+from .plugin import Plugin
 from .client import SonobuoyClientPlugin, METTA_SONOBUOY_CLIENT_PLUGIN_ID
 from .sonobuoy import SONOBUOY_DEFAULT_RESULTS_PATH
 from .cli import SonobuoyCliPlugin, METTA_PLUGIN_ID_SONOBUOY_CLI
@@ -57,10 +58,7 @@ def metta_plugin_factory_client_sonobuoy(
     environment: Environment,
     instance_id: str,
     kubeclient: KubernetesApiClientPlugin,
-    mode: str,
-    kubernetes_version: str = "",
-    plugins: List[str] = None,
-    plugin_envs: List[str] = None,
+    plugins: List[Plugin] = None,
     results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH,
 ) -> SonobuoyClientPlugin:
     """Create a metta client plugin."""
@@ -68,10 +66,7 @@ def metta_plugin_factory_client_sonobuoy(
         environment,
         instance_id,
         kubeclient=kubeclient,
-        mode=mode,
-        kubernetes_version=kubernetes_version,
         plugins=plugins,
-        plugin_envs=plugin_envs,
         results_path=results_path,
     )
 

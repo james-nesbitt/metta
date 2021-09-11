@@ -17,6 +17,7 @@ from mirantis.testing.metta_health.healthcheck import Health
 from mirantis.testing.metta_kubernetes.kubeapi_client import KubernetesApiClientPlugin
 
 from .sonobuoy import SonobuoyClient, SONOBUOY_DEFAULT_RESULTS_PATH
+from .plugin import Plugin
 from .results import (
     Status,
     SonobuoyStatus,
@@ -36,10 +37,7 @@ class SonobuoyClientPlugin:
         environment: Environment,
         instance_id: str,
         kubeclient: KubernetesApiClientPlugin,
-        mode: str,
-        kubernetes_version: str = "",
-        plugins: List[str] = None,
-        plugin_envs: List[str] = None,
+        plugins: List[Plugin] = None,
         results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH,
     ):
         """Gather enough arguments to configure the SonobuoyClient object."""
@@ -50,10 +48,7 @@ class SonobuoyClientPlugin:
 
         self._sonobuoy: SonobuoyClient = SonobuoyClient(
             kubeclient=kubeclient,
-            mode=mode,
-            kubernetes_version=kubernetes_version,
             plugins=plugins,
-            plugin_envs=plugin_envs,
             results_path=results_path,
         )
 
@@ -65,9 +60,9 @@ class SonobuoyClientPlugin:
             "client": self._sonobuoy.info(deep=deep) if self._sonobuoy is not None else "MISSING"
         }
 
-    def run(self, wait: bool = True):
+    def run(self, wait: bool = True, run_args: List[str] = None):
         """Run sonobuoy."""
-        return self._sonobuoy.run(wait=wait)
+        return self._sonobuoy.run(wait=wait, run_args=run_args)
 
     def status(self) -> SonobuoyStatus:
         """Retrieve Sonobuoy status return."""
