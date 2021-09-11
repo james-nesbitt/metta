@@ -8,6 +8,8 @@ Use this to run the sonobuoy implementation
 from typing import Any, List, Dict
 import logging
 
+import yaml
+
 from configerus.loaded import Loaded, LOADED_KEY_ROOT
 from configerus.contrib.jsonschema.validate import (
     PLUGIN_ID_VALIDATE_JSONSCHEMA_SCHEMA_CONFIG_LABEL,
@@ -23,6 +25,7 @@ from mirantis.testing.metta_kubernetes import (
 )
 
 from .client import METTA_SONOBUOY_CLIENT_PLUGIN_ID, SonobuoyClientPlugin
+from .plugin import Plugin
 from .sonobuoy import (
     SONOBUOY_DEFAULT_RESULTS_PATH,
 )
@@ -45,33 +48,34 @@ SONOBUOY_CONFIG_KEY_MODE = "mode"
 """ config key for mode """
 SONOBUOY_CONFIG_KEY_KUBERNETESVERSION = "kubernetes.version"
 """ config key for kubernetes version """
-SONOBUOY_CONFIG_KEY_PLUGINS = "plugin.plugins"
+SONOBUOY_CONFIG_KEY_PLUGINS = "plugins"
 """ config key for what plugins to run """
-SONOBUOY_CONFIG_KEY_PLUGINENVS = "plugin.envs"
-""" config key for plugin env flags """
+SONOBUOY_CONFIG_KEY_PLUGINDEF = "definition"
+""" config key for plugin definition """
+SONOBUOY_CONFIG_KEY_PLUGINPATH = "path"
+""" config key for plugin file path """
+SONOBUOY_CONFIG_KEY_PLUGINENVS = "envs"
+""" config key for plugin env vars"""
 SONOBUOY_CONFIG_KEY_RESULTSPATH = "results.path"
 """ config key for path to put results """
 
+# THIS IS OUT OF DATSE
 SONOBUOY_VALIDATE_JSONSCHEMA = {
     "type": "object",
-    "properties": {
-        "type": {"type": "string"},
-        "plugin_id": {"type": "string"},
-        "mode": {"type": "string"},
-        "kubernetes": {
-            "type": "object",
-            "properties": {"version": {"type": "string"}},
-        },
-        "kubernetes_version": {"type": "string"},
+    "properties": {"plugins": {"$ref": "#/definitions/plugin"}},
+    "definitions": {
         "plugin": {
             "type": "object",
             "properties": {
-                "plugins": {"type": "array", "items": {"type": "string"}},
-                "plugin_envs": {"type": "array", "items": {"type": "string"}},
+                # Optionally provide a plugin path
+                "path": {"type": "string"},
+                # Optionally provide a definition
+                "definition": {"type": "object"},
+                # dict of plugin env variables.
+                "envs": {"$ref": "string"},
             },
-        },
+        }
     },
-    "required": ["mode", "kubernetes"],
 }
 """ Validation jsonschema for terraform config contents """
 SONOBUOY_VALIDATE_TARGET = {
@@ -110,10 +114,6 @@ class SonobuoyWorkloadPlugin:
         self._config_base: str = base
         """ configerus get key that should contain all tf config """
 
-        # maybe get this from config?
-        self._results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH
-        """String path to where to keep the results."""
-
         self.fixtures: Fixtures = Fixtures()
         """This plugin creates fixtures, so they are tracked here."""
 
@@ -136,13 +136,14 @@ class SonobuoyWorkloadPlugin:
         return {
             "config": {"label": self._config_label, "base": self._config_base},
             "workload": {
-                "sonobuoy": {"config": sonobuoy_config},
+                "config": sonobuoy_config,
                 "required_fixtures": {
                     "kubernetes": {
                         "interface": [METTA_PLUGIN_INTERFACE_ROLE_CLIENT],
                         "plugin_id": METTA_PLUGIN_ID_KUBERNETES_CLIENT,
                     }
                 },
+                "run": {"args": loaded.get([self._config_base, "run"], default="NONE")},
             },
         }
 
@@ -167,31 +168,91 @@ class SonobuoyWorkloadPlugin:
         except ValidationError as err:
             raise ValueError("Invalid sonobuoy config received") from err
 
-        # Validate the config overall using jsonschema
-        try:
-            loaded.get(self._config_base, validator=SONOBUOY_VALIDATE_TARGET)
-        except ValidationError as err:
-            raise ValueError("Invalid sonobuoy config received") from err
-
-        # String path to a kubernetes api client.
-        kubeclient: KubernetesApiClientPlugin = fixtures.get_plugin(
-            plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
+        # We need to discover all of the plugins to run.
+        #
+        # For plugins with inline definitions, we need to create file definitions
+        # to pass to sonobuoy.
+        resources_path: str = loaded.get([self._config_base, "resources.path"], default="./")
+        resources_prefix: str = loaded.get(
+            [self._config_base, "resources.prefix"], default="sonobuoy-plugin-"
         )
 
-        mode: str = loaded.get([self._config_base, SONOBUOY_CONFIG_KEY_MODE])
-        kubernetes_version: str = loaded.get(
-            [self._config_base, SONOBUOY_CONFIG_KEY_KUBERNETESVERSION], default=""
-        )
-        plugins: List[str] = loaded.get(
-            [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default=[]
-        )
-        plugin_envs: List[str] = loaded.get(
-            [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINENVS], default=[]
-        )
+        plugins: List[Plugin] = []
+        for plugin_id in loaded.get(
+            [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default={}
+        ).keys():
 
+            plugin_envs = loaded.get(
+                [
+                    self._config_base,
+                    SONOBUOY_CONFIG_KEY_PLUGINS,
+                    plugin_id,
+                    SONOBUOY_CONFIG_KEY_PLUGINENVS,
+                ],
+                default=plugin_id,
+            )
+
+            # plugin_def gives us a plugin definition which defines what we pass
+            # to sonobuoy using the -p flag.
+            #
+            # If a plugin def is missing then plugin_id is used.
+            #
+            # It can be one of three types:
+            # 1. a core plugin id like 'e2e'
+            # 2. a path to a plugin yml file which defines a plugin.
+            # 3. an object which defines the plugin conf which will be written
+            #    to a yaml file.
+            plugin_def = loaded.get(
+                [
+                    self._config_base,
+                    SONOBUOY_CONFIG_KEY_PLUGINS,
+                    plugin_id,
+                    SONOBUOY_CONFIG_KEY_PLUGINDEF,
+                ],
+                default="",
+            )
+            plugin_path = loaded.get(
+                [
+                    self._config_base,
+                    SONOBUOY_CONFIG_KEY_PLUGINS,
+                    plugin_id,
+                    SONOBUOY_CONFIG_KEY_PLUGINPATH,
+                ],
+                default="",
+            )
+
+            if plugin_def:
+                # here we received a plugin definition which we must write to
+                # a file.
+                if not plugin_path:
+                    plugin_path = resources_path + resources_prefix + plugin_id + ".yml"
+
+                with open(plugin_path, "w") as plugin_file:
+                    yaml.dump(plugin_def, plugin_file, encoding="utf-8")
+                plugin_def = plugin_path
+
+                plugins.append(
+                    Plugin(plugin_id=plugin_id, plugin_def=plugin_path, envs=plugin_envs)
+                )
+                continue
+
+            if plugin_path:
+                plugins.append(
+                    Plugin(plugin_id=plugin_id, plugin_def=plugin_path, envs=plugin_envs)
+                )
+                continue
+
+            plugins.append(Plugin(plugin_id=plugin_id, plugin_def=plugin_id, envs=plugin_envs))
+
+        # String path to where to keep the results.
+        # maybe get this from config?
         results_path: str = loaded.get(
             [self._config_base, SONOBUOY_CONFIG_KEY_RESULTSPATH],
             default=SONOBUOY_DEFAULT_RESULTS_PATH,
+        )
+
+        kubeclient: KubernetesApiClientPlugin = fixtures.get_plugin(
+            plugin_id=METTA_PLUGIN_ID_KUBERNETES_CLIENT,
         )
 
         client_fixture = self._environment.new_fixture(
@@ -200,13 +261,12 @@ class SonobuoyWorkloadPlugin:
             priority=70,
             arguments={
                 "kubeclient": kubeclient,
-                "mode": mode,
-                "kubernetes_version": kubernetes_version,
                 "plugins": plugins,
-                "plugin_envs": plugin_envs,
                 "results_path": results_path,
             },
             labels={
+                "container": "plugin",
+                "environment": self._environment.instance_id(),
                 "parent_plugin_id": METTA_SONOBUOY_WORKLOAD_PLUGIN_ID,
                 "parent_instance_id": self._instance_id,
             },
@@ -220,7 +280,20 @@ class SonobuoyWorkloadPlugin:
     def apply(self, wait: bool = True):
         """Run sonobuoy."""
         logger.info("Starting Sonobuoy run")
-        return self._get_client_plugin().run(wait=wait)
+
+        # Retrieve and Validate the config overall using jsonschema
+        try:
+            # get a configerus LoadedConfig for the sonobuoy label
+            loaded = self._environment.config().load(self._config_label)
+        except ValidationError as err:
+            raise ValueError("Invalid sonobuoy config received") from err
+
+        # Get the run time arguments
+        run_args: List[str] = []
+        for (key, value) in loaded.get([self._config_base, "run"], default={}).items():
+            run_args.append(f"--{key}={value}")
+
+        return self._get_client_plugin().run(wait=wait, run_args=run_args)
 
     def status(self) -> SonobuoyStatus:
         """Retrieve Sonobuoy status return."""
