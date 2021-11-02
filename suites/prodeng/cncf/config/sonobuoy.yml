@@ -8,12 +8,18 @@ results:
 # Args for sonobuoy run
 run:
   mode: certified-conformance
+  rbac: Enable
   kubernetes-version: "{{variables:sonobuoy_kubernetes_version}}"
-  ssh-key: "{{terraform:vars.ssh_key_file_path}}"
-  # we should get this from hosts or something.
-  ssh-user: ubuntu
+  level: debug
 
 plugins:
   e2e:
     envs:
-      E2E_EXTRA_ARGS: "--non-blocking-taints=com.docker.ucp.manager --progress-report-url=http://localhost:8099/progress"
+      E2E_EXTRA_ARGS: "--non-blocking-taints=com.docker.ucp.manager"
+      # E2E_PARALLEL:          true
+      # E2E_EXTRA_ARGS:        "--non-blocking-taints=com.docker.ucp.manager"
+      # E2E_FOCUS:             "[Conformance]"
+      # E2E_SKIP:              "[Disruptive]|NoExecuteTaintManager"
+      # E2E_SKIP: ""
+      # E2E_USE_GO_RUNNER:     true
+      # SONOBUOY_K8S_VERSION:  "{{variables:sonobuoy_kubernetes_version}}"

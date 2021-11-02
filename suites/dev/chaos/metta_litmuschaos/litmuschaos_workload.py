@@ -15,7 +15,6 @@ from configerus.validator import ValidationError
 from mirantis.testing.metta.environment import Environment
 from mirantis.testing.metta.fixture import Fixtures
 from mirantis.testing.metta.client import METTA_PLUGIN_INTERFACE_ROLE_CLIENT
-from mirantis.testing.metta.workload import WorkloadBase, WorkloadInstanceBase
 from mirantis.testing.metta_kubernetes import METTA_PLUGIN_ID_KUBERNETES_CLIENT
 
 from .litmuschaos import (
@@ -63,7 +62,7 @@ LITMUSCHAOS_VALIDATE_TARGET = {
 """ configerus validation target to match the jsonschema config """
 
 
-class LitmusChaosWorkloadPlugin(WorkloadBase):
+class LitmusChaosWorkloadPlugin:
     """Workload class for the LitmusChaos."""
 
     def __init__(
@@ -81,18 +80,24 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
         base (Any) : configerus base key which should contain all of the config
 
         """
-        WorkloadBase.__init__(self, environment, instance_id)
-
-        logger.info("Preparing litmuschaos settings")
+        self._environment: Environment = environment
+        """ Environemnt in which this plugin exists """
+        self._instance_id: str = instance_id
+        """ Unique id for this plugin instance """
 
         self.config_label = label
         """ configerus load label that should contain all of the config """
         self.config_base = base
         """ configerus get key that should contain all tf config """
 
-    def info(self):
+        self.litmuschaos: LitmusChaos = None
+        """LitmusChaos cli handler created in prepare()."""
+
+    # the deep argument is a standard for the info hook
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
         """Return plugin info in an dict format for debugging."""
-        config_loaded = self.environment.config().load(self.config_label)
+        config_loaded = self._environment.config().load(self.config_label)
 
         info = {
             "config": {
@@ -104,8 +109,8 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
 
         return info
 
-    def create_instance(self, fixtures: Fixtures):
-        """Create a workload instance from a set of fixtures.
+    def prepare(self, fixtures: Fixtures = None):
+        """Prepare workload prepare.
 
         Parameters:
         -----------
@@ -113,8 +118,10 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
             retrieve a kubernetes api client plugin.
 
         """
-        loaded = self.environment.config().load(self.config_label)
-        """ get a configerus LoadedConfig for the sonobuoy label """
+        if fixtures is None:
+            fixtures = self._environment.fixtures()
+
+        loaded = self._environment.config().load(self.config_label)
 
         # Validate the config overall using jsonschema
         try:
@@ -142,48 +149,12 @@ class LitmusChaosWorkloadPlugin(WorkloadBase):
             default=LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS,
         )
 
-        return LitmusChaosWorkloadPluginInstance(
-            kube_client=kube_client,
-            namespace=namespace,
-            version=version,
-            experiments=experiments,
-        )
-
-
-class LitmusChaosWorkloadPluginInstance(WorkloadInstanceBase):
-    """Individual instance of the LitmusChaos workload for execution"""
-
-    def __init__(self, kube_client: str, namespace: str, version: str, experiments: List[str]):
-        """Configure the worload instance.
-
-        Parameters:
-        -----------
-        kube_client (METTA_PLUGIN_ID_KUBERNETES_CLIENT) : metta_kubernetes
-            kube_client client plugin. Used to interact with the kubernetes cluster
-
-        namespace (str) : kubernetes namespace to run chaos in
-
-        version (str) : litmus chaos version to use
-
-        experiments (List[str]) : litmus chaos experiments to run
-
-        """
         self.litmuschaos = LitmusChaos(
             kube_client=kube_client,
             namespace=namespace,
             version=version,
             experiments=experiments,
         )
-
-    def info(self):
-        """Return an object/dict of inforamtion about the instance for debugging."""
-        info = {"client": self.litmuschaos.info()}
-
-        return info
-
-    def prepare(self):
-        """Prepare to run litmus chaos by installing all of the pre-requisites."""
-        self.litmuschaos.prepare()
 
     def apply(self):
         """Run the Litmus Chaos experiments."""

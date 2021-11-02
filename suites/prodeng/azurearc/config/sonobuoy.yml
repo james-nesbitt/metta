@@ -11,12 +11,8 @@ results:
 
 # Args for sonobuoy run
 run:
-  mode: certified-conformance
-  kubernetes-version: "{{variables:sonobuoy_kubernetes_version}}"
-  ssh-key: "{{terraform:vars.ssh_key_file_path}}"
-  # we should get this from hosts or something.
-  ssh-user: ubuntu
-
+  rbac: Enable
+  level: debug
 
 plugins:
   azure-arc-platform:

@@ -27,14 +27,13 @@ class LitmusChaosCliPlugin(CliBase):
     def fire(self):
         """Return a dict of commands for litmuschaos workloads."""
         if (
-            self.environment.fixtures().get(
-                plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
+            self._environment.fixtures().get(
                 plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
                 exception_if_missing=False,
             )
             is not None
         ):
-            return {"contrib": {"litmuschaos": LitmusChaosGroup(self.environment)}}
+            return {"litmuschaos": LitmusChaosGroup(self._environment)}
 
         return {}
 
@@ -44,20 +43,20 @@ class LitmusChaosGroup:
 
     def __init__(self, environment: Environment):
         """Configure command group."""
-        self.environment = environment
+        self._environment = environment
 
     def _select_fixture(self, instance_id: str = ""):
         """Pick a matching workload plugin."""
         try:
             if instance_id:
-                return self.environment.fixtures().get(
+                return self._environment.fixtures().get(
                     plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
                     plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
                     instance_id=instance_id,
                 )
 
             # Get the highest priority provisioner
-            return self.environment.fixtures().get(
+            return self._environment.fixtures().get(
                 plugin_type=METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD,
                 plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
             )
@@ -73,30 +72,13 @@ class LitmusChaosGroup:
         fixture = self._select_fixture(instance_id=instance_id)
         plugin = fixture.plugin
         # @TODO allow filtering of kubernetes client instances
-        instance = plugin.create_instance(self.environment.fixtures())
+        instance = plugin.create_instance(self._environment.fixtures())
         return instance
 
     def info(self, instance_id: str = "", deep: bool = False):
         """Get info about the plugin."""
         fixture = self._select_fixture(instance_id=instance_id)
-
-        info = {
-            "fixture": {
-                "plugin_type": fixture.plugin_type,
-                "plugin_id": fixture.plugin_id,
-                "instance_id": fixture.instance_id,
-                "priority": fixture.priority,
-            },
-        }
-
-        if deep:
-            if hasattr(fixture.plugin, "info"):
-                info.update(fixture.plugin.info(True))
-
-            instance = self._select_instance(instance_id=instance_id)
-            info["instance"] = instance.info()
-
-        return cli_output(info)
+        return cli_output(fixture.info(deep=deep))
 
     def prepare(self, instance_id: str = ""):
         """Prepare the workload instance for running."""

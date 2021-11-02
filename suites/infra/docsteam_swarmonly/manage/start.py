@@ -22,7 +22,7 @@ def main():
     discover()
 
     env = get_environment()
-    prov_fixture = env.fixtures.get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER])
+    prov_fixture = env.fixtures().get(interfaces=[METTA_PLUGIN_INTERFACE_ROLE_PROVISIONER])
     prov_plugin = prov_fixture.plugin
 
     logger.info("Starting DocsTeam infrastructure")

@@ -10,7 +10,7 @@
 # other folders in metta_mirantis/config. You can still override those values here
 
 # Used in terraform resource tagging (user:id gets set in conftest.py)
-user: "doceng"
+user: "engdocs"
 #  arbitrary yet unique string which represents the deployment, eg, 'refactor', 'unicorn', 'stresstest'.
 task: "dualC"
 # One of the official cost-tracking project names. Without this, your cluster may get terminated without warning.

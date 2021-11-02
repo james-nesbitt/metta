@@ -1,5 +1,5 @@
 cluster:
-  name: "MKE-{{variables:mke_version}}"
+  name: "MKE-{{variables:mke_version}}-2"
 azure:
   tenant: 8548a469-8c0e-4aa4-b534-ac75ca1e02f7
   subscription: 3959ec86-5353-4b0c-b5d7-3877122861a0

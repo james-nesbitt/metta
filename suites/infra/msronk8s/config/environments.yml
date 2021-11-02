@@ -16,7 +16,7 @@
 # Create an environment called 'clients'
 clients:
   # Environment plugin to use
-  plugin_id: metta_state_environment
+  plugin_id: metta_builder_environment
 
   # this tells metta that this config block should be passed to the plugin
   # for config use (you could tell it to load from a different source.)

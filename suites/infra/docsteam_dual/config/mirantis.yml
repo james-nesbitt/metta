@@ -15,11 +15,11 @@
 # sees a big changes.
 #
 presets:
-    # include metta_mirantis/config/variation/tal
+    # include metta_mirantis/config/variation/XXXX
     variation: tal
-    # this will tell metta to include metta_mirantis/config/release/X
-    release: patch/202108-C
-    # include metta_mirantis/config/cluster/X
+    # this will tell metta to include metta_mirantis/config/XXXX
+    release: release/2021Q4
+    # include metta_mirantis/config/cluster/XXXX
     cluster: poc
-    # include metta_mirantis/config/platform/public/X
+    # include metta_mirantis/config/platform/public/XXXX
     platform: public/ubuntu/20.04

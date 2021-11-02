@@ -14,6 +14,9 @@ from typing import List
 import requests
 import yaml
 
+from mirantis.testing.metta_kubernetes.kubeapi_client import KubernetesApiClientPlugin
+
+
 logger = logging.getLogger("litmuschaos.client")
 
 LITMUSCHAOS_YAML_RBAC_PERMISSIVE = """---
@@ -101,7 +104,7 @@ class LitmusChaos:
 
     def __init__(
         self,
-        kube_client: str,
+        kube_client: KubernetesApiClientPlugin,
         namespace: str,
         version: str = LITMUSCHAOS_OPERATOR_DEFAULT_VERSION,
         experiments: List[str] = None,
@@ -109,8 +112,7 @@ class LitmusChaos:
         """
         Parameters:
         -----------
-
-        kube_client (str) : metta_kubernets kubeapi client object, which will
+        kube_client (str) : metta_kubernetes kubeapi client object, which will
             be used to interact with the kubernetes cluster.
 
         namespace (str) : kubernetes namespace to use for chaos engineering
@@ -119,23 +121,23 @@ class LitmusChaos:
 
         experiments (List[str]) : litmus chaos experiments to run
         """
-        self.kube_client = kube_client
-        self.namespace = namespace
-        self.version = version
-        self.experiments = (
+        self.kube_client: KubernetesApiClientPlugin = kube_client
+        self.namespace: str = namespace
+        self.version: str = version
+        self.experiments: List[str] = (
             experiments if experiments is not None else LITMUSCHAOS_CONFIG_DEFAULT_EXPERIMENTS
         )
 
-    def info(self):
+    # the deep argument is a standard for the info hook
+    # pylint: disable=unused-argument
+    def info(self, deep: bool = False):
         """Return an object/dict of inforamtion about the instance for debugging."""
-        info = {"kubeconfig": self.kube_client.config_file, "namespace": self.namespace}
-
-        return info
+        return {"kubeconfig": self.kube_client.config_file, "namespace": self.namespace}
 
     def prepare(self):
-        """Prepare to run litmus chaos by installing all of the pre-requisites
+        """Prepare to run litmus chaos by installing all of the pre-requisites.
 
-        @see: hhttps://docs.litmuschaos.io/docs/getstarted/#uninstallation
+        @see: https://docs.litmuschaos.io/docs/getstarted/#uninstallation
 
         1. install the LitmusChaos operator:RbacAuthorizationV1Api
             '''kubectl apply -f https://litmuschaos.github.io/litmus/litmus-operator-v1.13.3.yaml'''

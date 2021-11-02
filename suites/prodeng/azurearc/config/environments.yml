@@ -64,7 +64,7 @@ azurearc:
             # to include results for a specific MKE version
             plugin_id: path
             priority: 80
-            path: "{{paths:project-config}}/mke_3.4.5"
+            path: "{{paths:project-config}}/mke_3.4.6"
           arc:
             # Include the config/X path as a config source for this environment
             # to include results for a specific Azure Arc version
