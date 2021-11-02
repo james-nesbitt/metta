@@ -125,8 +125,7 @@ def add_preset_config(environment: Environment, priority=METTA_PRESET_DEFAULT_PR
 
         if preset_value:
             prefix = METTA_CONFIG_SOURCE_INSTANCE_ID_PREFIX
-            preset_key = preset_value.replace("/", "_")
-            preset_instance_id = f"{prefix}-{preset_key}"
+            preset_instance_id = f"{prefix}-{preset_key}-{preset_value}".replace("/", "_")
             # quick check to see if we've already added this preset.
             if not environment.config().has_source(preset_instance_id):
                 # build a preset config path and add it as a source if it
