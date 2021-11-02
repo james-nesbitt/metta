@@ -228,7 +228,9 @@ class SonobuoyClient:
 
         # if the CRB does not exist then create it.
         try:
-            return rbac_authorization_v1_api.read_cluster_role_binding(name=SONOBUOY_CRB_NAME).to_dict()
+            return rbac_authorization_v1_api.read_cluster_role_binding(
+                name=SONOBUOY_CRB_NAME
+            ).to_dict()
         except kubernetes.client.exceptions.ApiException:
             logger.debug("Sonobuoy CRB not found. Creating it now.")
             body = kubernetes.client.V1ClusterRoleBinding(
@@ -259,7 +261,9 @@ class SonobuoyClient:
         rbac_authorization_v1_api = self._api_client.get_api("RbacAuthorizationV1Api")
 
         try:
-            return rbac_authorization_v1_api.delete_cluster_role_binding(name=SONOBUOY_CRB_NAME).to_dict()
+            return rbac_authorization_v1_api.delete_cluster_role_binding(
+                name=SONOBUOY_CRB_NAME
+            ).to_dict()
         except kubernetes.client.exceptions.ApiException as err:
             logger.error("Could not delete sonobuoy CRB: %s", err)
             return None

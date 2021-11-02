@@ -22,7 +22,7 @@ from .cli import LitmusChaosCliPlugin, METTA_PLUGIN_ID_LITMUSCHAOS_CLI
 
 @Factory(
     plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_WORKLOAD,
-    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD]
+    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_WORKLOAD],
 )
 def metta_plugin_factory_workload_litmuschaos(
     environment: Environment,
@@ -34,10 +34,7 @@ def metta_plugin_factory_workload_litmuschaos(
     return LitmusChaosWorkloadPlugin(environment, instance_id, label=label, base=base)
 
 
-@Factory(
-    plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_CLI,
-    interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI]
-)
+@Factory(plugin_id=METTA_PLUGIN_ID_LITMUSCHAOS_CLI, interfaces=[METTA_PLUGIN_INTERFACE_ROLE_CLI])
 def metta_plugin_factory_cli_litmuschaos(environment: Environment, instance_id: str = ""):
     """Create an litmuschaos cli plugin."""
     return LitmusChaosCliPlugin(environment, instance_id)

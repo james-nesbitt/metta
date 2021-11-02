@@ -191,6 +191,7 @@ class SonobuoyClientGroup:
         client_plugin = self._select_fixture(instance_id=instance_id).plugin
         return cli_output(client_plugin._sonobuoy.delete_k8s_crb())
 
+
 class SonobuoyWorkloadGroup:
     """Sonobuoy workload commands."""
 
