@@ -127,7 +127,7 @@ class LaunchpadClientGroup:
 
         fixture_list = [
             fixture.info()
-            for fixture in client_plugin.fixtures.filter(
+            for fixture in client_plugin.fixtures().filter(
                 interfaces=interfaces, plugin_id=plugin_id, instance_id=instance_id
             )
         ]
@@ -161,10 +161,10 @@ class LaunchpadClientGroup:
 
         return cli_output(bundle)
 
-    def apply(self, client: str = ""):
+    def apply(self, debug: bool = False, client: str = ""):
         """Run client apply."""
         client_plugin: LaunchpadClientPlugin = self._select_client(instance_id=client).plugin
-        client_plugin.apply()
+        client_plugin.apply(debug=debug)
 
     def reset(self, client: str = ""):
         """Run client destroy."""
@@ -202,12 +202,12 @@ class LaunchpadProvisionerGroup:
         ).plugin
         provisioner_plugin.prepare()
 
-    def apply(self, provisioner: str = ""):
+    def apply(self, debug: bool = False, provisioner: str = ""):
         """Run provisioner apply."""
         provisioner_plugin: LaunchpadProvisionerPlugin = self._select_provisioner(
             instance_id=provisioner
         ).plugin
-        provisioner_plugin.apply()
+        provisioner_plugin.apply(debug=debug)
 
     def destroy(self, provisioner: str = ""):
         """Run provisioner destroy."""

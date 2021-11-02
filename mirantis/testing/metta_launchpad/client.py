@@ -164,7 +164,7 @@ class LaunchpadClientPlugin:
 
         return host_list
 
-    def apply(self):
+    def apply(self, debug: bool = False):
         """Bring a cluster up.
 
         We assume that the cluster is running and the we can pull the required
@@ -187,7 +187,7 @@ class LaunchpadClientPlugin:
 
         """
         logger.info("Using launchpad to install products onto backend cluster")
-        self.launchpad.apply()
+        self.launchpad.apply(debug=debug)
         self.make_fixtures()
 
         try:
