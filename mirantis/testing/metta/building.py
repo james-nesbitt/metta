@@ -314,34 +314,23 @@ class FixtureBuildingFromConfigMixin:
         except KeyError as err:
             raise KeyError(f"Could not load plugin config source {label}") from err
 
-        # If arguments were given then pass them on
+        # if no arguments were specified, then consider a special case of
+        # 'from_config' which build arguments for a config based plugin
+        # which will take a config label/base-key pair as config arguments
+        #
+        # There is a special case where if the passed from_config is not a
+        # dict then the same config label/base received is used.
         try:
-            config_arguments = plugin_loaded.get([base, METTA_PLUGIN_CONFIG_KEY_ARGUMENTS])
-            config_arguments.update(arguments)
-            arguments = config_arguments
-        except KeyError:
-            if not arguments:
-                # if no arguments were specified, then consider a special case of
-                # 'from_config' which build arguments for a config based plugin
-                # which will take a config label/base-key pair as config arguments
-                #
-                # There is a special case where if the passed from_config is not a
-                # dict then the same config label/base received is used.
-                try:
-                    config_fromconfig = plugin_loaded.get(
-                        [base, METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG]
-                    )
+            config_fromconfig = plugin_loaded.get([base, METTA_PLUGIN_CONFIG_KEY_FROM_CONFIG])
 
-                    if isinstance(config_fromconfig, dict):
-                        logger.debug("Using from_config, and passing label/base as arguments")
-                        arguments = config_fromconfig
-                    else:
-                        logger.debug(
-                            "Using from_config, and passing current label/base as arguments"
-                        )
-                        arguments = {"label": label, "base": base}
-                except KeyError:
-                    pass
+            if isinstance(config_fromconfig, dict):
+                logger.debug("Using from_config, and passing label/base as arguments")
+                arguments = config_fromconfig
+            else:
+                logger.debug("Using from_config, and passing current label/base as arguments")
+                arguments = {"label": label, "base": base}
+        except KeyError:
+            pass
 
         return self.add_fixture_from_loadedconfig(
             loaded=plugin_loaded,

@@ -37,21 +37,21 @@ METTA_LAUNCHPAD_PROVISIONER_PLUGIN_ID = "metta_launchpad_provisioner"
 """ Metta plugin_id for the launchpad provisioner plugin """
 
 METTA_LAUNCHPAD_CONFIG_LABEL = "launchpad"
-""" Launchpad config label for configuration """
+"""Launchpad config label for configuration"""
 METTA_LAUNCHPAD_CLIENT_SYSTEMS_KEY = "systems"
-""" If provided, this config key provide a dictionary of configuration of client system plugins. """
+"""If provided, this config key provide a dictionary of configuration of client system plugins."""
 METTA_LAUNCHPAD_CONFIG_ROOT_PATH_KEY = "root.path"
-""" config key for a base file path that should be used for any relative paths """
+"""Config key for a base file path that should be used for any relative paths"""
 METTA_LAUNCHPAD_CONFIG_KEY = "config"
-""" which config key will provide the launchpad yml """
+"""Which config key will provide the launchpad yml"""
 METTA_LAUNCHPAD_CLI_CONFIG_FILE_KEY = "config_file"
-""" Launchpad config cli key to tell us where to put the launchpad yml file """
+"""Launchpad config cli key to tell us where to put the launchpad yml file"""
 METTA_LAUNCHPAD_CLI_WORKING_DIR_KEY = "working_dir"
-""" Launchpad config cli configuration working dir key """
+"""Launchpad config cli configuration working dir key """
 METTA_LAUNCHPAD_CLI_CLUSTEROVERRIDE_KEY = "cluster_name"
-""" If provided, this config key will override a cluster name pulled from yaml"""
+"""If provided, this config key will override a cluster name pulled from yaml"""
 METTA_LAUNCHPAD_CLI_OPTIONS_KEY = "cli"
-""" If provided, these will be passed to the launchpad client to be used on all operations"""
+"""If provided, these will be passed to the launchpad client to be used on all operations"""
 
 METTA_LAUNCHPAD_VALIDATE_JSONSCHEMA = {
     "type": "object",
@@ -203,7 +203,7 @@ class LaunchpadProvisionerPlugin:
         """
         logger.info("Running Launchpad Prepare().  Launchpad has no prepare stage.")
 
-    def apply(self):
+    def apply(self, debug: bool = False):
         """Bring a cluster up.
 
         Not that we re-write the yaml file as it may depend on config which was not
@@ -220,7 +220,7 @@ class LaunchpadProvisionerPlugin:
         logger.info("Using launchpad to install products onto backend cluster")
         self._write_launchpad_yml()
         self.make_fixtures()  # we wouldn't need this if we could update the systems
-        self._get_client_plugin().apply()
+        self._get_client_plugin().apply(debug=debug)
 
     def destroy(self):
         """Ask the client to remove installed resources."""
@@ -272,8 +272,8 @@ class LaunchpadProvisionerPlugin:
         config_contents = self._convert_launchpad_config_to_file_format(config_contents)
 
         # write the launchpad output to our yaml file target (after creating the path)
-        logger.warning(
-            "Updating launchpad yaml file: %s => %s",
+        logger.debug(
+            "Updating launchpad yaml file: %s =>/n%s",
             config_path,
             yaml.dump(config_contents),
         )
@@ -402,7 +402,7 @@ class LaunchpadProvisionerPlugin:
         except KeyError:
             pass
 
-        # xi32. is no msrs, then drop the msr block and force the type.
+        # If no msrs, then drop the msr block and force the type.
         if len(msrs) == 0:
             config["kind"] = "mke"
             config["spec"].pop("msr")
