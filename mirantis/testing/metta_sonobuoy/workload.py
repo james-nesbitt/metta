@@ -293,27 +293,27 @@ class SonobuoyWorkloadPlugin:
         for (key, value) in loaded.get([self._config_base, "run"], default={}).items():
             run_args.append(f"--{key}={value}")
 
-        return self._get_client_plugin().run(wait=wait, run_args=run_args)
+        return self.get_client_plugin().run(wait=wait, run_args=run_args)
 
     def status(self) -> SonobuoyStatus:
         """Retrieve Sonobuoy status return."""
-        return self._get_client_plugin().status()
+        return self.get_client_plugin().status()
 
     def retrieve(self) -> SonobuoyResults:
         """Retrieve sonobuoy results."""
         logger.debug("retrieving sonobuoy results")
-        return self._get_client_plugin().retrieve()
+        return self.get_client_plugin().retrieve()
 
     def destroy(self, wait: bool = True):
         """Delete sonobuoy resources."""
         logger.debug("removing sonobuoy infrastructure")
-        self._get_client_plugin().delete(wait=wait)
+        self.get_client_plugin().delete(wait=wait)
 
     def client_instance_id(self) -> str:
         """Return the instanceid for the child client plugin."""
         return f"{self._instance_id}-{METTA_SONOBUOY_CLIENT_PLUGIN_ID}"
 
-    def _get_client_plugin(self) -> SonobuoyClientPlugin:
+    def get_client_plugin(self) -> SonobuoyClientPlugin:
         """Retrieve the client plugin if we can."""
         try:
             return self.fixtures.get_plugin(plugin_id=METTA_SONOBUOY_CLIENT_PLUGIN_ID)

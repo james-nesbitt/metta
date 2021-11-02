@@ -10,6 +10,7 @@ import logging
 import subprocess
 import os
 import shutil
+import tempfile
 
 import kubernetes
 
@@ -22,6 +23,8 @@ logger = logging.getLogger("sonobuoy")
 
 SONODBUOY_DEFAULT_WAIT_PERIOD_SECS = 1440
 """ Default time for sonobuoy to wait when running """
+SONODBUOY_DEFAULT_WAIT_OUTPUT = "progress"
+"""What type of --wait-ouput to pass to sonobuoy run with --wait."""
 SONOBUOY_DEFAULT_BIN = "sonobuoy"
 """ Default Bin Name for running sonobuoy """
 SONOBUOY_DEFAULT_RESULTS_PATH = "./results"
@@ -50,7 +53,7 @@ class SonobuoyClient:
         plugins: List[Plugin] = None,
         binary: str = SONOBUOY_DEFAULT_BIN,
         results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH,
-        create_crbs: bool = False,
+        create_crbs: bool = True,
     ):
         """Initialize the workload instance."""
         self._api_client = kubeclient
@@ -104,11 +107,12 @@ class SonobuoyClient:
 
         if wait:
             cmd += [f"--wait={SONODBUOY_DEFAULT_WAIT_PERIOD_SECS}"]
+            cmd += [f"--wait-output={SONODBUOY_DEFAULT_WAIT_OUTPUT}"]
 
         try:
             if self.create_crbs:
                 logger.info("Ensuring that we have needed K8s CRBs")
-                self._create_k8s_crb()
+                self.create_k8s_crb()
             logger.info("Starting Sonobuoy run : %s", cmd)
             self._run(cmd)
         except subprocess.CalledProcessError as err:
@@ -144,6 +148,21 @@ class SonobuoyClient:
         except Exception as err:
             raise RuntimeError("Could not retrieve sonobuoy results") from err
 
+    def results(self) -> str:
+        """Report on sonobuoy results."""
+        logger.debug("retrieving sonobuoy results to %s", self.results_path)
+        try:
+            with tempfile.TemporaryDirectory() as tmpdirname:
+                print("created temporary directory", tmpdirname)
+                cmd = ["retrieve", tmpdirname]
+                file_name = self._run(cmd=cmd, return_output=True).rstrip("\n")
+                if not os.path.isfile(file_name):
+                    raise RuntimeError("Sonobuoy did not retrieve a results tarball.")
+                cmd = ["results", os.path.join(tmpdirname, file_name)]
+                return self._run(cmd=cmd, include_kubeconfig=False, return_output=True)
+        except Exception as err:
+            raise RuntimeError("Could not retrieve sonobuoy results") from err
+
     # pylint: disable=redefined-builtin
     def delete(self, all: bool = True, wait: bool = False):
         """Delete sonobuoy resources."""
@@ -151,12 +170,11 @@ class SonobuoyClient:
 
         if wait:
             cmd += ["--wait"]
-        if all:
-            cmd += ["--all"]
+            cmd += [f"--wait-output={SONODBUOY_DEFAULT_WAIT_OUTPUT}"]
 
         self._run(cmd)
         if self.create_crbs:
-            self._delete_k8s_crb()
+            self.delete_k8s_crb()
 
     def version(self) -> Dict[str, str]:
         """Retrieve sonobuoy version info."""
@@ -170,9 +188,18 @@ class SonobuoyClient:
             version[key] = value
         return version
 
-    def _run(self, cmd: List[str], ignore_errors: bool = True, return_output: bool = False):
+    def _run(
+        self,
+        cmd: List[str],
+        ignore_errors: bool = True,
+        return_output: bool = False,
+        include_kubeconfig: bool = True,
+    ):
         """Run a sonobuoy command."""
-        cmd = [self.bin, f"--kubeconfig={self.kubeconfig}"] + cmd
+        cmd = [self.bin] + cmd
+
+        if include_kubeconfig:
+            cmd += [f"--kubeconfig={self.kubeconfig}"]
 
         # this else makes it much more readable
         # pylint: disable=no-else-return
@@ -187,7 +214,7 @@ class SonobuoyClient:
             return return_res.stdout.decode("utf-8")
 
         else:
-            logger.debug("running sonobuoy command: %s", " ".join(cmd))
+            logger.warning("running sonobuoy command: %s", " ".join(cmd))
             res = subprocess.run(cmd, check=True, text=True)
 
             if not ignore_errors:
@@ -195,13 +222,13 @@ class SonobuoyClient:
 
             return res
 
-    def _create_k8s_crb(self):
+    def create_k8s_crb(self):
         """Create the cluster role binding that sonobuoy needs."""
         rbac_authorization_v1_api = self._api_client.get_api("RbacAuthorizationV1Api")
 
         # if the CRB does not exist then create it.
         try:
-            return rbac_authorization_v1_api.read_cluster_role_binding(name=SONOBUOY_CRB_NAME)
+            return rbac_authorization_v1_api.read_cluster_role_binding(name=SONOBUOY_CRB_NAME).to_dict()
         except kubernetes.client.exceptions.ApiException:
             logger.debug("Sonobuoy CRB not found. Creating it now.")
             body = kubernetes.client.V1ClusterRoleBinding(
@@ -216,7 +243,7 @@ class SonobuoyClient:
                     )
                 ],
                 role_ref=kubernetes.client.V1RoleRef(
-                    kind=SONOBUOY_CRB_ROLEREF_KIND,
+                    kind="ClusterRole",
                     name=SONOBUOY_CRB_ROLEREF_NAME,
                     api_group="rbac.authorization.k8s.io",
                 ),
@@ -227,12 +254,12 @@ class SonobuoyClient:
             except kubernetes.client.exceptions.ApiException as err:
                 raise RuntimeError("Sonobuoy could not create the needed K8s CRB.") from err
 
-    def _delete_k8s_crb(self):
+    def delete_k8s_crb(self):
         """Remove the cluster role binding that we created."""
         rbac_authorization_v1_api = self._api_client.get_api("RbacAuthorizationV1Api")
 
         try:
-            return rbac_authorization_v1_api.delete_cluster_role_binding(name=SONOBUOY_CRB_NAME)
+            return rbac_authorization_v1_api.delete_cluster_role_binding(name=SONOBUOY_CRB_NAME).to_dict()
         except kubernetes.client.exceptions.ApiException as err:
             logger.error("Could not delete sonobuoy CRB: %s", err)
             return None

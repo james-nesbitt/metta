@@ -72,6 +72,10 @@ class SonobuoyClientPlugin:
         """Output sonobuoy logs."""
         return self._sonobuoy.logs(follow=follow)
 
+    def results(self) -> str:
+        """Retrieve sonobuoy results."""
+        return self._sonobuoy.results()
+
     def retrieve(self) -> SonobuoyResults:
         """Retrieve sonobuoy results."""
         return self._sonobuoy.retrieve()
@@ -104,3 +108,11 @@ class SonobuoyClientPlugin:
             health.unknown(f"No status found. Sonobuoy is likely not running: {err}")
 
         return health
+
+    def create_k8s_crb(self):
+        """Create the cluster role binding that sonobuoy needs."""
+        return self._sonobuoy.create_k8s_crb()
+
+    def delete_k8s_crb(self):
+        """Remove the cluster role binding that we created."""
+        return self._sonobuoy.delete_k8s_crb()
