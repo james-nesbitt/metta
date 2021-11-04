@@ -5,3 +5,6 @@ __pycache__
 
 # The SP is a credential and should not be stored.
 config/serviceprincipal.*
+
+# This folder keeps a local copy of the upstream docs
+azurearc
