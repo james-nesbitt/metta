@@ -1,4 +1,0 @@
----
-docker_ee_url: "https://s3.amazonaws.com/repos-internal.mirantis.com"
-docker_ee_version: "20.10"
-mcr_channel: "test"

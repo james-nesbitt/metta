@@ -1,6 +1,0 @@
-config:
-  spec:
-      mke:
-        # metta_launchpad will convert this dict to a list
-        installFlags:
-          swarm-only: true

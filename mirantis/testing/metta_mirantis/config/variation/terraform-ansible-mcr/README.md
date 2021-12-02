@@ -1,1 +1,0 @@
-# Terraform - Ansible : MCR only

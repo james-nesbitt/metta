@@ -1,7 +1,0 @@
-mcr_repo_url: "https://repos-internal.mirantis.com"
-mcr_channel: stable
-mcr_version: 20.10.7
-mke_image_repo: docker.io/mirantiseng
-mke_version: 3.5.0-ad96485
-msr_image_repo: docker.io/mirantis
-msr_version: 2.9.0
