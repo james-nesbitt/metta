@@ -1,3 +1,0 @@
-# The Linux platform to use for manager/worker/DTR replica nodes
-platform_repo: public
-platform: ubuntu_18.04

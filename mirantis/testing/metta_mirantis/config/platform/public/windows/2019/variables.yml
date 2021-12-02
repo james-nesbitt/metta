@@ -1,4 +1,0 @@
-# The Windows platform to use for manager/worker/DTR replica nodes
-platform_repo: public
-platform: win_full2019
-manager_platform: ubuntu_20.04

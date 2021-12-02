@@ -1,5 +1,0 @@
-vars:
-    # description = "The number of UCP Linux workers to create."
-    worker_count: "0"
-    # description = "The number of UCP Windows workers to create."
-    windows_worker_count: "{{variables:worker_count}}"
