@@ -429,7 +429,7 @@ class FixtureBuildingFromConfigMixin:
         # it might be expensive to retrieve all this but we do it to catch early
         # faults in config.
         if not loaded.has(base):
-            raise ValueError("Cannot build plugin as provided config was empty.")
+            raise ValueError(f"Cannot build plugin as provided config was empty: {base}")
 
         # get any validators from config, defaulting to just the jsonschema
         # validator for a fixture

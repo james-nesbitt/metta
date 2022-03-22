@@ -74,6 +74,12 @@ Builder plugin which has more code to generate plugins automatically.
 
 """
 
+METTA_BUILDER_ENVIRONMENT_SOURCE_PRIORITY = 35
+""" configerus source priority for environment details added by the builder."""
+
+METTA_BUILDER_ENVIRONMENT_SOURCE_LABEL = "environment"
+""" An environment configerud label that contains info about the environment."""
+
 
 @Factory(
     plugin_id=METTA_CORE_ENVIRONMENT_PLUGIN_ID,
@@ -306,6 +312,10 @@ class FixtureBuilderEnvironment(
         config (Config) : Configerus Config object used internally and by any
             functionality that wants to consider itself inside the environment.
         """
+        # Make each environment use its own config object to keep config
+        # changes isolated to each environment.
+        config: Config = config.copy()
+
         Environment.__init__(self, config=config, instance_id=instance_id)
         FixtureBuildingFromConfigMixin.__init__(
             self, config=config, builder_callback=self.new_fixture
@@ -344,23 +354,16 @@ class FixtureBuilderEnvironment(
             )
 
             # 4. build fixtures from config
-            try:
-                labels: Dict[str, str] = {
-                    "container": "environment",
-                    "container_id": self.instance_id(),
-                    "environment": self.instance_id(),
-                }
-                self.add_fixtures_from_config(
-                    label=label,
-                    base=[base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL],
-                    labels=labels,
-                )
-            except KeyError as err:
-                logger.warning(
-                    "%s Environment plugin encountered an issue creating fixtures: %s",
-                    self.__class__,
-                    err,
-                )
+            labels: Dict[str, str] = {
+                "container": "environment",
+                "container_id": self.instance_id(),
+                "environment": self.instance_id(),
+            }
+            self.add_fixtures_from_config(
+                label=label,
+                base=[base, METTA_FIXTURES_CONFIG_FIXTURES_LABEL],
+                labels=labels,
+            )
 
     # pylint: disable=unused-argument
     def info(self, deep: bool = False) -> Dict[str, Any]:

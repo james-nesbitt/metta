@@ -75,7 +75,7 @@ class TerraformClient:
 
         return info
 
-    def init(self):
+    def init(self, upgrade: bool = False):
         """Run terraform init.
 
         init is something that can be run once for a number of jobs in parallel
@@ -105,7 +105,10 @@ class TerraformClient:
                 with open(lockfile, "w", encoding="utf8") as lockfile_object:
                     lockfile_object.write(f"{os.getpid()} is running init")
                 try:
-                    self._run(["init"], with_tfvars=False, with_state=False)
+                    cmds: List[string] = ["init"]
+                    if upgrade:
+                        cmds.append("-upgrade")
+                    self._run(cmds, with_tfvars=False, with_state=False)
                 finally:
                     os.remove(lockfile)
         except subprocess.CalledProcessError as err:
@@ -198,6 +201,44 @@ class TerraformClient:
                 err.output,
             )
             raise RuntimeError("Terraform client failed to run validate") from err
+
+    def providers_schema(self):
+        """Output providers schema."""
+        try:
+            output = self._run(
+                ["providers", "schema", "-json"],
+                with_state=False,
+                with_tfvars=False,
+                return_output=True,
+            )
+        except subprocess.CalledProcessError as err:
+            logger.error(
+                "Terraform client failed to run providers_schema() in %s: %s",
+                self._working_dir,
+                err.output,
+            )
+            raise RuntimeError("Terraform client failed to retrieve providers schema.") from err
+
+        return json.loads(output)
+
+    def graph(self, type: str = "plan"):
+        """Output terraform graph."""
+        try:
+            output = self._run(
+                ["graph", f"-type={type}"],
+                with_state=False,
+                with_tfvars=False,
+                return_output=True,
+            )
+        except subprocess.CalledProcessError as err:
+            logger.error(
+                "Terraform client failed to run graph() in %s: %s",
+                self._working_dir,
+                err.output,
+            )
+            raise RuntimeError("Terraform client failed to retrieve graph.") from err
+
+        return output
 
     def test(self):
         """Apply a terraform plan."""

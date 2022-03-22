@@ -80,10 +80,10 @@ class TerraformClientGroup:
         fixture = self._select_client(instance_id=client)
         return cli_output(fixture.info(deep=deep))
 
-    def init(self, client: str = ""):
+    def init(self, upgrade: bool = False, client: str = ""):
         """Run terraform init."""
         plugin = self._select_client(instance_id=client).plugin
-        plugin.init()
+        plugin.init(upgrade=upgrade)
 
     def plan(self, client: str = ""):
         """Run client plan."""
@@ -114,6 +114,16 @@ class TerraformClientGroup:
         """Retrieve Terraform outputs."""
         plugin = self._select_client(instance_id=client).plugin
         return cli_output(plugin.output(name=name))
+
+    def graph(self, type: str = "plan", client: str = ""):
+        """Retrieve Terraform graph."""
+        plugin = self._select_client(instance_id=client).plugin
+        return plugin.graph()
+
+    def providers_schema(self, client: str = ""):
+        """Retrieve Terraform providers schema."""
+        plugin = self._select_client(instance_id=client).plugin
+        return cli_output(plugin.providers_schema())
 
 
 class TerraformProvisionerGroup:

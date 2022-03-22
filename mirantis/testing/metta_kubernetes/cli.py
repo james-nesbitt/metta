@@ -228,12 +228,18 @@ class KubernetesHelmWorkloadGroup:
 
         return cli_output(fixture.info(deep=deep))
 
-    def health(self, workload: str = "") -> str:
+    def health(self, verbosity: str = "", workload: str = "") -> str:
         """Get health status info about a helm workload plugin."""
         workload_plugin = self._select_fixture(instance_id=workload).plugin
         workload_plugin.prepare()
 
-        return cli_output(workload_plugin.health())
+        health = workload_plugin.health()
+        return cli_output(
+            {
+                "status": health.status(),
+                "messages": list(health.messages()),
+            }
+        )
 
     def apply(self, workload: str = "", wait: bool = True, debug: bool = False) -> str:
         """Run helm workload apply."""

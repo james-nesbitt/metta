@@ -94,9 +94,9 @@ class TerraformClientPlugin:
         """Return the terraform state contents."""
         return self._tf_handler.state()
 
-    def init(self):
+    def init(self, upgrade: bool = False):
         """Run terraform init."""
-        self._tf_handler.init()
+        self._tf_handler.init(upgrade=upgrade)
 
     def apply(self, lock: bool = True):
         """Apply a terraform plan."""
@@ -118,6 +118,26 @@ class TerraformClientPlugin:
         """Check a terraform plan."""
         self._make_tfvars_file()
         return self._tf_handler.plan()
+
+    def providers_schema(self):
+        """Retrieve terraform providers schema.
+
+        Returns:
+        --------
+        json Schema
+
+        """
+        return self._tf_handler.providers_schema()
+
+    def graph(self, type: str = "plan"):
+        """Retrieve terraform graph.
+
+        Returns:
+        --------
+        Terraform graph
+
+        """
+        return self._tf_handler.graph(type=type)
 
     def output(self, name: str = ""):
         """Retrieve terraform outputs.

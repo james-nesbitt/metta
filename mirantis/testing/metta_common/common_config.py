@@ -26,9 +26,9 @@ DIR = os.path.abspath(os.getcwd())
 
 METTA_COMMON_APP_NAME = "metta"
 """ used for some path building for config sources """
-METTA_COMMON_CONFIG_USER_INSTANCE_ID = "user"
+METTA_COMMON_CONFIG_USER_INSTANCE_ID = "metta_common-user"
 """ config source instance id for user path """
-METTA_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID = "project_dynamic"
+METTA_COMMON_CONFIG_PROJECT_DYNAMIC_INSTANCE_ID = "metta_common-project_dynamic"
 """ config source instance id for dynamic dict of commonly used value """
 METTA_COMMON_DEFAULT_SOURCE_PRIORITY_DEFAULTS = 35
 """ Config source priority for added common config """
