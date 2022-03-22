@@ -59,6 +59,7 @@ def metta_plugin_factory_client_sonobuoy(
     instance_id: str,
     kubeclient: KubernetesApiClientPlugin,
     plugins: List[Plugin] = None,
+    config_path: str = "",
     results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH,
 ) -> SonobuoyClientPlugin:
     """Create a metta client plugin."""
@@ -67,6 +68,7 @@ def metta_plugin_factory_client_sonobuoy(
         instance_id,
         kubeclient=kubeclient,
         plugins=plugins,
+        config_path=config_path,
         results_path=results_path,
     )
 

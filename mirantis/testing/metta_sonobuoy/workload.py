@@ -5,8 +5,9 @@ Run a Sonobuoy run on a k82 client.
 Use this to run the sonobuoy implementation
 
 """
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Dict
 import logging
+import json
 
 import yaml
 
@@ -170,13 +171,23 @@ class SonobuoyWorkloadPlugin:
 
         # We need to discover all of the plugins to run.
         #
-        # For plugins with inline definitions, we need to create file definitions
-        # to pass to sonobuoy.
+        # For plugins with inline definitions, we need to create file
+        # definitions to pass to sonobuoy.
         resources_path: str = loaded.get([self._config_base, "resources.path"], default="./")
         resources_prefix: str = loaded.get(
-            [self._config_base, "resources.prefix"], default="sonobuoy-plugin-"
+            [self._config_base, "resources.prefix"], default="sonobuoy-"
         )
+        resources_plugin_prefix: str = f"{resources_prefix}plugin"
 
+        # If we have config then write then to a file
+        config_path: str = ""
+        sonobuoy_config: Dict[str, Any] = loaded.get([self._config_base, "config"], default=[])
+        if sonobuoy_config:
+            config_path = resources_path + resources_prefix + "config.json"
+            with open(config_path, "w", encoding="utf-8") as config_file:
+                json.dump(sonobuoy_config, config_file)
+
+        # if we have plugins then prepare them
         plugins: List[Plugin] = []
         for plugin_id in loaded.get(
             [self._config_base, SONOBUOY_CONFIG_KEY_PLUGINS], default={}
@@ -192,7 +203,7 @@ class SonobuoyWorkloadPlugin:
                 default=plugin_id,
             )
 
-            # plugin_def gives us a plugin definition which defines what we pass
+            # plugin_def gives us a plugin definition which defines how we pass
             # to sonobuoy using the -p flag.
             #
             # If a plugin def is missing then plugin_id is used.
@@ -225,9 +236,11 @@ class SonobuoyWorkloadPlugin:
                 # here we received a plugin definition which we must write to
                 # a file.
                 if not plugin_path:
-                    plugin_path = resources_path + resources_prefix + plugin_id + ".yml"
+                    plugin_path = (
+                        resources_path + resources_plugin_prefix + "-" + plugin_id + ".yml"
+                    )
 
-                with open(plugin_path, "w") as plugin_file:
+                with open(plugin_path, "w", encoding="utf-8") as plugin_file:
                     yaml.dump(plugin_def, plugin_file, encoding="utf-8")
                 plugin_def = plugin_path
 
@@ -262,6 +275,7 @@ class SonobuoyWorkloadPlugin:
             arguments={
                 "kubeclient": kubeclient,
                 "plugins": plugins,
+                "config_path": config_path,
                 "results_path": results_path,
             },
             labels={

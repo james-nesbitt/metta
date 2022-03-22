@@ -38,6 +38,7 @@ class SonobuoyClientPlugin:
         instance_id: str,
         kubeclient: KubernetesApiClientPlugin,
         plugins: List[Plugin] = None,
+        config_path: str = "",
         results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH,
     ):
         """Gather enough arguments to configure the SonobuoyClient object."""
@@ -50,6 +51,7 @@ class SonobuoyClientPlugin:
             kubeclient=kubeclient,
             plugins=plugins,
             results_path=results_path,
+            config_path=config_path,
         )
 
     # the deep argument is a standard for the info hook

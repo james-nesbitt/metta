@@ -51,18 +51,22 @@ class SonobuoyClient:
         self,
         kubeclient: KubernetesApiClientPlugin,
         plugins: List[Plugin] = None,
+        config_path: str = "",
         binary: str = SONOBUOY_DEFAULT_BIN,
         results_path: str = SONOBUOY_DEFAULT_RESULTS_PATH,
-        create_crbs: bool = True,
+        create_crbs: bool = False,
     ):
         """Initialize the workload instance."""
-        self._api_client = kubeclient
+        self._api_client: KubernetesApiClientPlugin = kubeclient
         """Kube API metta client, used for a config file and for creating K8s resources."""
-        self.kubeconfig = kubeclient.config_file
+        self.kubeconfig: str = kubeclient.config_file
         """String path to a kubeconfig file."""
 
         self.plugins = plugins if plugins is not None else []
         """Which sonobuoy plugins to run."""
+
+        self.config_path: str = config_path
+        """Sonobuoy config file path."""
 
         if shutil.which(binary) is None:
             raise ValueError(
@@ -96,52 +100,52 @@ class SonobuoyClient:
 
     def run(self, wait: bool = True, run_args: List[str] = None):
         """Run sonobuoy."""
-        cmd = ["run"]
+        args = ["run"]
 
         if run_args is not None:
-            cmd += run_args
+            args += run_args
 
         if self.plugins:
             for plugin in self.plugins:
-                cmd += plugin.run_args()
+                args += plugin.run_args()
 
         if wait:
-            cmd += [f"--wait={SONODBUOY_DEFAULT_WAIT_PERIOD_SECS}"]
-            cmd += [f"--wait-output={SONODBUOY_DEFAULT_WAIT_OUTPUT}"]
+            args += [f"--wait={SONODBUOY_DEFAULT_WAIT_PERIOD_SECS}"]
+            args += [f"--wait-output={SONODBUOY_DEFAULT_WAIT_OUTPUT}"]
 
         try:
             if self.create_crbs:
                 logger.info("Ensuring that we have needed K8s CRBs")
                 self.create_k8s_crb()
-            logger.info("Starting Sonobuoy run : %s", cmd)
-            self._run(cmd)
+            logger.debug("Starting Sonobuoy run : %s", args)
+            self._run(args)
         except subprocess.CalledProcessError as err:
             raise RuntimeError("Sonobuoy RUN failed") from err
 
     def status(self) -> "SonobuoyStatus":
         """Retrieve Sonobuoy status return."""
-        cmd = ["status", "--json"]
-        status = self._run(cmd, return_output=True)
+        args = ["status", "--json"]
+        status = self._run(args, return_output=True)
         if status is None:
             raise ValueError("Sonobuoy did not return a status.")
         return SonobuoyStatus(status)
 
     def logs(self, follow: bool = True):
         """Output sonobuoy logs."""
-        cmd = ["logs"]
+        args = ["logs"]
 
         if follow:
-            cmd += ["--follow"]
+            args += ["--follow"]
 
-        self._run(cmd)
+        self._run(args)
 
     def retrieve(self) -> "SonobuoyResults":
         """Retrieve sonobuoy results."""
         logger.debug("retrieving sonobuoy results to %s", self.results_path)
         try:
             os.makedirs(self.results_path, exist_ok=True)
-            cmd = ["retrieve", self.results_path]
-            file = self._run(cmd=cmd, return_output=True).rstrip("\n")
+            args = ["retrieve", self.results_path]
+            file = self._run(args=args, return_output=True).rstrip("\n")
             if not os.path.isfile(file):
                 raise RuntimeError("Sonobuoy did not retrieve a results tarball.")
             return SonobuoyResults(tarball=file, folder=self.results_path)
@@ -154,32 +158,32 @@ class SonobuoyClient:
         try:
             with tempfile.TemporaryDirectory() as tmpdirname:
                 print("created temporary directory", tmpdirname)
-                cmd = ["retrieve", tmpdirname]
-                file_name = self._run(cmd=cmd, return_output=True).rstrip("\n")
+                args = ["retrieve", tmpdirname]
+                file_name = self._run(args=args, return_output=True).rstrip("\n")
                 if not os.path.isfile(file_name):
                     raise RuntimeError("Sonobuoy did not retrieve a results tarball.")
-                cmd = ["results", os.path.join(tmpdirname, file_name)]
-                return self._run(cmd=cmd, include_kubeconfig=False, return_output=True)
+                args = ["results", os.path.join(tmpdirname, file_name)]
+                return self._run(args=args, include_kubeconfig=False, return_output=True)
         except Exception as err:
             raise RuntimeError("Could not retrieve sonobuoy results") from err
 
     # pylint: disable=redefined-builtin
     def delete(self, all: bool = True, wait: bool = False):
         """Delete sonobuoy resources."""
-        cmd = ["delete"]
+        args = ["delete"]
 
         if wait:
-            cmd += ["--wait"]
-            cmd += [f"--wait-output={SONODBUOY_DEFAULT_WAIT_OUTPUT}"]
+            args += ["--wait"]
+            args += [f"--wait-output={SONODBUOY_DEFAULT_WAIT_OUTPUT}"]
 
-        self._run(cmd)
+        self._run(args)
         if self.create_crbs:
             self.delete_k8s_crb()
 
     def version(self) -> Dict[str, str]:
         """Retrieve sonobuoy version info."""
-        cmd = ["version"]
-        version_string = self._run(cmd, return_output=True)
+        args = ["version"]
+        version_string = self._run(args, return_output=True)
         version: Dict[str, str] = {}
         for version_item_string in version_string.strip().split("\n"):
             version_item_list = version_item_string.split(":")
@@ -190,16 +194,22 @@ class SonobuoyClient:
 
     def _run(
         self,
-        cmd: List[str],
+        args: List[str],
         ignore_errors: bool = True,
         return_output: bool = False,
         include_kubeconfig: bool = True,
     ):
         """Run a sonobuoy command."""
-        cmd = [self.bin] + cmd
+        cmd = [self.bin]
+        cmd1: str = args[0]
 
         if include_kubeconfig:
             cmd += [f"--kubeconfig={self.kubeconfig}"]
+
+        if self.config_path and cmd1 in ["run"]:
+            cmd += [f"--config={self.config_path}"]
+
+        cmd += args
 
         # this else makes it much more readable
         # pylint: disable=no-else-return
@@ -214,7 +224,7 @@ class SonobuoyClient:
             return return_res.stdout.decode("utf-8")
 
         else:
-            logger.warning("running sonobuoy command: %s", " ".join(cmd))
+            logger.debug("running sonobuoy command: %s", " ".join(cmd))
             res = subprocess.run(cmd, check=True, text=True)
 
             if not ignore_errors:

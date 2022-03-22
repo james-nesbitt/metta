@@ -45,7 +45,7 @@ class HealthCliPlugin(CliBase):
         return {}
 
 
-def _fixture_health_output(fixture: Fixture, verbosity: HealthStatus = None) -> Dict[str, Any]:
+def cli_fixture_health_output(fixture: Fixture, verbosity: HealthStatus = None) -> Dict[str, Any]:
     """Run Helper to run a fixture's health function and create cli output."""
     health: Health = fixture.plugin.health()
 
@@ -110,7 +110,7 @@ class HealthcheckClientGroup:
         verbosity_status = HealthStatus[verbosity.upper()] if verbosity else None
 
         # return a single aggregate health object
-        return cli_output(_fixture_health_output(fixture, verbosity=verbosity_status))
+        return cli_output(cli_fixture_health_output(fixture, verbosity=verbosity_status))
 
     def checks(self, verbosity: str = "", client: str = ""):
         """Output health status of healthchecks per plugin."""
@@ -120,7 +120,7 @@ class HealthcheckClientGroup:
         # return a dict of healtchecks per plugin instance_id
         return cli_output(
             {
-                fixture.instance_id: _fixture_health_output(fixture, verbosity=verbosity_status)
+                fixture.instance_id: cli_fixture_health_output(fixture, verbosity=verbosity_status)
                 for fixture in fixture.plugin.health_fixtures()
             }
         )
@@ -141,7 +141,7 @@ class HealthcheckClientGroup:
         while True:
             for fixture in health_client_fixture.plugin.health_fixtures():
                 print(f"[{iteration}] {fixture.instance_id} -->")
-                print(_fixture_health_output(fixture=fixture, verbosity=verbosity_status))
+                print(cli_fixture_health_output(fixture=fixture, verbosity=verbosity_status))
             time.sleep(period)
 
 
